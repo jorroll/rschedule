@@ -1,7 +1,7 @@
 {
-  "name": "@rschedule/standard-date-adapter",
+  "name": "@rschedule/moment-date-adapter",
   "version": "0.0.6",
-  "description": "An rSchedule DateAdapter for the standard javascript Date object.",
+  "description": "An rSchedule DateAdapter for momentjs date objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
   "bugs": "https://gitlab.com/john.carroll.p/rschedule/issues",
@@ -12,6 +12,7 @@
   "license": "MIT",
   "keywords": [
     "rschedule",
+    "momentjs",
     "javascript",
     "typescript",
     "recurring",
@@ -71,9 +72,14 @@
     "core-js": "^2.5.7"
   },
   "peerDependencies": {
-    "date-fns": "^1.29.0"    
+    "moment": "^2.0.0"
+  },
+  "optionalDependencies": {
+    "moment-timezone": "^0.5.21"
   },
   "devDependencies": {
+    "@types/moment": "^2.13.0",
+    "@types/moment-timezone": "^0.5.7",
     "codecov": "^3.0.2",
     "cz-conventional-changelog": "^2.1.0",
     "gh-pages": "^1.2.0",

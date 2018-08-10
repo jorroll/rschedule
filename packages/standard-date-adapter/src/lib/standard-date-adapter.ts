@@ -1,4 +1,4 @@
-import { DateAdapter } from '@rschedule/rschedule';
+import { DateAdapter, Schedule, Rule, Calendar } from '@rschedule/rschedule';
 
 import {
   addDays,
@@ -35,20 +35,21 @@ function dateToStandardizedString<T extends DateAdapter<T>>(date: T) {
   )}`
 }
 
-export class StandardDateAdapter<R = any, S = any, C = any>
+export class StandardDateAdapter
   implements DateAdapter<StandardDateAdapter> {
   public date: Date
-  public timezone: 'UTC' | undefined
+  public timezone: 'UTC' | 'DATE' | undefined
 
   /** The `Rule` which generated this `DateAdapter` */
-  public rule: R | undefined
+  public rule: Rule<StandardDateAdapter> | undefined
   /** The `Schedule` which generated this `DateAdapter` */
-  public schedule: S | undefined
+  public schedule: Schedule<StandardDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: C | undefined
+  public calendar: Calendar<StandardDateAdapter> | undefined
 
-  constructor(date?: Date) {
+  constructor(date?: Date, args: {timezone?: 'UTC' | 'DATE' | undefined} = {}) {
     this.date = date ? new Date(date) : new Date()
+    this.timezone = args.timezone
     this.assertIsValid()
   }
 
@@ -76,12 +77,12 @@ export class StandardDateAdapter<R = any, S = any, C = any>
         case 'UTC':
           // TS doesn't like my use of the spread operator
           // @ts-ignore
-          return new StandardDateAdapter(new Date(Date.UTC(...datetime)))
+          return new StandardDateAdapter(new Date(Date.UTC(...datetime)), {timezone: 'UTC'})
         case undefined:
         case 'DATE':
           // TS doesn't like my use of the spread operator
           // @ts-ignore
-          return new StandardDateAdapter(new Date(...datetime))
+          return new StandardDateAdapter(new Date(...datetime), {timezone: args.timezone})
         default:
           throw new DateAdapter.InvalidDateError(
             'The `StandardDateAdapter` only supports datetimes in UTC or LOCAL time. ' +
@@ -101,8 +102,8 @@ export class StandardDateAdapter<R = any, S = any, C = any>
     return StandardDateAdapter.isInstance(object)
   }
 
-  isEqual(object: any): object is StandardDateAdapter {
-    return this.isSameClass(object) && object.date.valueOf() === this.date.valueOf()
+  isEqual<T extends DateAdapter<T>>(object?: T): boolean {
+    return !!object && object.toISOString() === this.toISOString()
   }
   isBefore(object: StandardDateAdapter): boolean {
     return this.date.valueOf() < object.date.valueOf()
@@ -117,7 +118,6 @@ export class StandardDateAdapter<R = any, S = any, C = any>
     return this.date.valueOf() >= object.date.valueOf()
   }
 
-  // clones date before manipulating it
   add(amount: number, unit: DateAdapter.Unit): StandardDateAdapter {
     switch (unit) {
       case 'year':
@@ -153,7 +153,6 @@ export class StandardDateAdapter<R = any, S = any, C = any>
     return this
   }
 
-  // clones date before manipulating it
   subtract(amount: number, unit: DateAdapter.Unit): StandardDateAdapter {
     switch (unit) {
       case 'year':

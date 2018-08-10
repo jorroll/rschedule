@@ -161,6 +161,12 @@ export function parseDTStart(text?: string) {
   }
 }
 
+export type ParsedDatetime =
+  | [number,number,number,number,number,number]
+  | [number,number,number,number,number]
+  | [number,number,number,number]
+  | [number,number,number]
+
 /**
  * This function parses an ICAL time string, throwing a `ICalStringParseError`
  * if it runs into problems, and returns an object with three properties:
@@ -181,14 +187,7 @@ export function parseDatetime(text: string) {
   const parts = text.split(':')
 
   let unparsedTime: string
-  let datetimes: Array<[
-    number,
-    number,
-    number,
-    number | undefined,
-    number | undefined,
-    number | undefined
-  ]>
+  let datetimes: ParsedDatetime[]
   let timezone: string | undefined
 
   try {
@@ -214,14 +213,7 @@ export function parseDatetime(text: string) {
       const newTime = time.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)
       newTime && newTime.shift()
       if (newTime) {
-        return newTime.map(str => parseInt(str)) as [
-          number,
-          number,
-          number,
-          number | undefined,
-          number | undefined,
-          number | undefined
-        ]
+        return newTime.map(str => parseInt(str)) as ParsedDatetime
       }
       else { throw new Error('') }
     })

@@ -6,13 +6,12 @@ import {
   OccurrencesArgs,
   RunnableIterator,
 } from '../interfaces'
-import { Rule } from '../rule'
 import { Schedule } from '../schedule/schedule'
 import { Utils } from '../utilities'
 import { CollectionIterator, CollectionsArgs } from './collection'
 
 export class Calendar<
-  T extends DateAdapter<T, Rule<T>, Schedule<T>, Calendar<T, D>>,
+  T extends DateAdapter<T>,
   D = any
 > extends HasOccurrences<T>
   implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, D>> {

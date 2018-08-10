@@ -13,7 +13,7 @@ import { PipeController } from '../pipes'
 import { Utils } from '../utilities'
 import { buildValidatedRuleOptions, Options } from './rule-options'
 
-export abstract class Rule<T extends DateAdapter<T, Rule<T, D>>, D = any>
+export abstract class Rule<T extends DateAdapter<T>, D = any>
   extends HasOccurrences<T>
   implements Serializable, RunnableIterator<T>, IHasOccurrences<T, Rule<T, D>> {
   /**

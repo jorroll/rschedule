@@ -17,7 +17,7 @@ import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
 export class Schedule<
-  T extends DateAdapter<T, Rule<T>, Schedule<T, D>>,
+  T extends DateAdapter<T>,
   D = any
 > extends HasOccurrences<T>
   implements

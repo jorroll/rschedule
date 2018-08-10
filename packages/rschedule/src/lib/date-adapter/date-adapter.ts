@@ -1,11 +1,13 @@
-export interface DateAdapter<T, R = any, S = any, C = any> {
+import { ParsedDatetime } from "../ical/parser";
+
+export interface DateAdapter<T> {
 
   /** The `Rule` which generated this `DateAdapter` */
-  rule: R | undefined
+  rule: any | undefined
   /** The `Schedule` which generated this `DateAdapter` */
-  schedule: S | undefined
+  schedule: any | undefined
   /** The `Calendar` which generated this `DateAdapter` */
-  calendar: C | undefined
+  calendar: any | undefined
   /** Returns a duplicate of original DateAdapter */
   clone(): T
 
@@ -44,7 +46,9 @@ export interface DateAdapter<T, R = any, S = any, C = any> {
 
   isSameClass(object: any): object is T
 
-  isEqual(object: any): object is T
+  // Compares to `DateAdapter` objects using `toISOString()`
+  // to see if they are occuring at the same time.
+  isEqual<T extends DateAdapter<T>>(object?: T): boolean
 
   isBefore(date: T): boolean
   isBeforeOrEqual(date: T): boolean
@@ -70,14 +74,7 @@ export interface IDateAdapterConstructor<T extends Constructor> {
   new (n: any): InstanceType<T>
   isInstance(object: any): object is InstanceType<T>
   fromTimeObject(args: {
-    datetimes: Array<[
-      number,
-      number,
-      number,
-      number | undefined,
-      number | undefined,
-      number | undefined
-    ]>
+    datetimes: ParsedDatetime[]
     timezone?: string
     raw: string
   }): Array<InstanceType<T>>
