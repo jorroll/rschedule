@@ -1,0 +1,90 @@
+import { DateAdapter } from '../date-adapter'
+import { Options } from '../rule/rule-options'
+import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
+
+export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
+  implements IPipeRule<T> {
+
+  private upcomingMonths: DateAdapter.IMonth[] = []
+  public run(args: IPipeRunFn<T>) {
+    if (args.invalidDate) { return this.nextPipe.run(args) }
+
+    if (this.options.frequency === 'YEARLY') {
+      return this.expand(args)
+    } else { return this.filter(args) }
+  }
+  public expand(args: IPipeRunFn<T>) {
+    const date = args.date
+
+    if (this.upcomingMonths.length === 0) {
+      this.upcomingMonths = this.options.byMonthOfYear!.filter(
+        month => date.get('month') <= month
+      )
+
+      if (this.upcomingMonths.length === 0) {
+        return this.nextPipe.run({ date, invalidDate: true })
+      }
+
+      this.expandingPipes.push(this)
+    } else {
+      if (this.options.byDayOfMonth || this.options.byDayOfWeek) {
+        date.set('day', 1)
+      }
+      if (this.options.byHourOfDay) { date.set('hour', 0) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
+      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+    }
+
+    const nextMonth = this.upcomingMonths.shift()!
+
+    date.set('month', nextMonth)
+
+    if (this.upcomingMonths.length === 0) { this.expandingPipes.pop() }
+
+    return this.nextPipe.run({ date })
+  }
+
+  public filter(args: IPipeRunFn<T>) {
+    let validMonth = false
+    let nextValidMonthThisYear: Options.ByMonthOfYear | null = null
+
+    // byMonthOfYear array is sorted
+    for (const month of this.options.byMonthOfYear!) {
+      if (args.date.get('month') === month) {
+        validMonth = true
+        break
+      } else if (args.date.get('month') < month) {
+        nextValidMonthThisYear = month
+        break
+      }
+    }
+
+    if (validMonth) { return this.nextPipe.run({ date: args.date }) }
+
+    let next: T
+
+    // if the current date does not pass this filter,
+    // is it possible for a date to pass this filter for the remainder of the year?
+    //
+    // - We know the current `options.frequency` is not yearly
+
+    if (nextValidMonthThisYear !== null) {
+      // if yes, advance the current date forward to the next month which would pass
+      // this filter
+      next = this.cloneDateWithGranularity(args.date, 'month')
+      next.set('month', nextValidMonthThisYear)
+    } else {
+      // if no, advance the current date forward one year &
+      // and set the date to whatever month would pass this filter
+      next = this.cloneDateWithGranularity(args.date, 'year')
+      next.add(1, 'year')
+      next.set('month', this.options.byMonthOfYear![0])
+    }
+
+    return this.nextPipe.run({
+      invalidDate: true,
+      skipToIntervalOnOrAfter: next,
+      date: args.date,
+    })
+  }
+}
