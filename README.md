@@ -363,6 +363,7 @@ Feel free to open an issue if you have questions.
   - "By week of year" is different though. I spent a fair bit trying to get it to work and its just SUPER annoying (because it can create a valid date for year A in year B. e.g. the Saturday of the last week of 1998 *is in the year 1999*). Anyway, obviously doable, I have no plans to implement it though.
 - Currently, the `count` option of a rule simply counts the number of occurrences you're received and then cuts you off as appropriate. If you pass in a different start date when requesting occurrences though, you'll still receive the same total count of occurrences, they'll just be pushed back in time. This is *probably* not what people want.
   - E.g. If someone creates a daily rule starting on Monday with a count of 3, and iterates over it the occurrence stream will cut off after Wednesday. If you pass a new start date in as an argument though, say show me occurrences for this rule starting on Tuesday, then you'll receive Tuesday, Wednesday, and Thursday. The probem is that the `count` didn't begin on the rule's start date. I don't think there's anything fancy to be done about this. You'd need to start at the beginning and just skip forward to the section you're interested in. For example
+
 ```
 const rule = new Rule({frequency: 'DAILY', start: new StandardDateAdapter(), count: 3})
 
