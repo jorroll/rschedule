@@ -1,4 +1,3 @@
-import { isLeapYear } from 'date-fns'
 import uniq from 'lodash.uniq'
 import { DateAdapter } from '../date-adapter'
 import { Options } from '../rule/rule-options'
@@ -160,7 +159,7 @@ function getUpcomingDays<T extends DateAdapter<T>>(
   date: T,
   options: Options.ProcessedOptions<T>
 ) {
-  const daysInMonth = getDaysInMonth(date.get('month'), date.get('year'))
+  const daysInMonth = Utils.getDaysInMonth(date.get('month'), date.get('year'))
 
   return uniq(
     options
@@ -174,27 +173,4 @@ function getUpcomingDays<T extends DateAdapter<T>>(
         else { return 0 }
       })
   ).filter(day => date.get('day') <= day)
-}
-
-function getDaysInMonth(month: number, year: number) {
-  const block = {
-    1: 31,
-    2: getDaysInFebruary(year),
-    3: 31,
-    4: 30,
-    5: 31,
-    6: 30,
-    7: 31,
-    8: 31,
-    9: 30,
-    10: 31,
-    11: 30,
-    12: 31,
-  }
-
-  return (block as { [key: number]: number })[month]
-}
-
-function getDaysInFebruary(year: number) {
-  return isLeapYear(new Date(year, 0, 1)) ? 29 : 28
 }

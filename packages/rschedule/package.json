@@ -47,8 +47,7 @@
     "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
     "reset": "git clean -dfx && git reset --hard && yarn i",
     "clean": "trash build test",
-    "all": "run-s reset test cov:check doc:html",
-    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('rschedule must be installed with Yarn: https://yarnpkg.com/')\""
+    "all": "run-s reset test cov:check doc:html"
   },
   "scripts-info": {
     "info": "Display information about the package scripts",
@@ -76,7 +75,6 @@
     "@types/lodash.sorteduniq": "^4.2.4",
     "@types/lodash.uniq": "^4.5.4",
     "@types/lodash.uniqwith": "^4.5.4",
-    "ava": "^1.0.0-beta.5.1",
     "codecov": "^3.0.2",
     "cz-conventional-changelog": "^2.1.0",
     "gh-pages": "^1.2.0",
@@ -91,15 +89,6 @@
     "tslint-immutable": "^4.5.4",
     "typedoc": "^0.11.1",
     "typescript": "^2.9.1"
-  },
-  "ava": {
-    "failFast": true,
-    "files": [
-      "build/main/**/*.spec.js"
-    ],
-    "sources": [
-      "build/main/**/*.js"
-    ]
   },
   "config": {
     "commitizen": {

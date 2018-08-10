@@ -364,7 +364,7 @@ Feel free to open an issue if you have questions.
 - Currently, the `count` option of a rule simply counts the number of occurrences you're received and then cuts you off as appropriate. If you pass in a different start date when requesting occurrences though, you'll still receive the same total count of occurrences, they'll just be pushed back in time. This is *probably* not what people want.
   - E.g. If someone creates a daily rule starting on Monday with a count of 3, and iterates over it the occurrence stream will cut off after Wednesday. If you pass a new start date in as an argument though, say show me occurrences for this rule starting on Tuesday, then you'll receive Tuesday, Wednesday, and Thursday. The probem is that the `count` didn't begin on the rule's start date. I don't think there's anything fancy to be done about this. You'd need to start at the beginning and just skip forward to the section you're interested in. For example
 
-```
+```typescript
 const rule = new Rule({frequency: 'DAILY', start: new StandardDateAdapter(), count: 3})
 
 rule.occurrences().toArray() // [today, tomorrow, the next day]

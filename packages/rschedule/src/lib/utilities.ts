@@ -1,4 +1,3 @@
-import { isLeapYear as dateFnIsLeapYear } from 'date-fns'
 import { DateAdapter } from './date-adapter'
 import { Options } from './rule'
 
@@ -95,8 +94,9 @@ export namespace Utils {
     return isLeapYear(year) ? 29 : 28
   }
 
+  // taken from date-fn
   export function isLeapYear(year: number) {
-    return dateFnIsLeapYear(new Date(year, 0, 1))
+    return year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0)  
   }
 
   export function getDaysInYear(year: number) {

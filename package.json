@@ -4,29 +4,10 @@
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "lint": "tslint -t codeFrame 'src/**/*.ts' 'tests/**/*.ts'",
-    "prebuild": "rimraf dist",
-    "build": "tsc --module commonjs && rollup -c rollup.config.ts && typedoc --out docs --target es6 --theme minimal --mode file src",
-    "start": "rollup -c rollup.config.ts -w",
     "test": "jest --config './jest.config.json'",
     "test:watch": "jest --config './jest.config.json' --watch",
     "test:prod": "yarn lint && yarn test --coverage --no-cache",
     "report-coverage": "cat ./coverage/lcov.info | coveralls"
-  },
-  "lint-staged": {
-    "{src,tests}/**/*.ts": [
-      "prettier --write --trailing-comma=es5",
-      "git add"
-    ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "node_modules/cz-conventional-changelog"
-    },
-    "validate-commit-msg": {
-      "types": "conventional-commit-types",
-      "helpMessage": "Use \"npm run commit\" instead, we use conventional-changelog format :) (https://github.com/commitizen/cz-cli)"
-    }
   },
   "prettier": {
     "semi": false,
@@ -40,6 +21,8 @@
     "@types/lodash.uniq": "^4.5.4",
     "@types/lodash.uniqwith": "^4.5.4",
     "@types/node": "^10.0.3",
+    "ava": "^1.0.0-beta.5.1",
+    "codecov": "^3.0.2",
     "colors": "^1.1.2",
     "commitizen": "^2.9.6",
     "coveralls": "^3.0.0",
@@ -50,27 +33,24 @@
     "lerna": "^3.0.1",
     "lint-staged": "^7.1.3",
     "lodash.camelcase": "^4.3.0",
+    "npm-run-all": "^4.1.3",
+    "nyc": "^12.0.2",
+    "opn-cli": "^3.1.0",
     "prettier": "^1.13.4",
     "prompt": "^1.0.0",
     "rimraf": "^2.6.1",
     "semantic-release": "^15.0.0",
-    "ts-jest": "^22.0.0",
-    "ts-node": "^6.0.0",
-    "tslint-config-standard": "^7.0.0",
-    "typescript-starter": "^2.3.8",
-    "validate-commit-msg": "^2.12.2",
-    "ava": "^1.0.0-beta.5.1",
-    "codecov": "^3.0.2",
-    "gh-pages": "^1.2.0",
-    "npm-run-all": "^4.1.3",
-    "nyc": "^12.0.2",
-    "opn-cli": "^3.1.0",
     "standard-version": "^4.4.0",
     "trash-cli": "^1.4.0",
+    "ts-jest": "^22.0.0",
+    "ts-node": "^6.0.0",
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.13.0",
+    "tslint-config-standard": "^7.0.0",
     "tslint-immutable": "^4.5.4",
     "typedoc": "^0.11.1",
-    "typescript": "^2.9.1"
+    "typescript": "^2.9.1",
+    "typescript-starter": "^2.3.8",
+    "validate-commit-msg": "^2.12.2"
   }
 }
