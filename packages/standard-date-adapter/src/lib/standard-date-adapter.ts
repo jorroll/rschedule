@@ -1,4 +1,4 @@
-import { DateAdapter, Schedule, Rule, Calendar } from '@rschedule/rschedule';
+import { DateAdapter, Schedule, Rule, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
 
 import {
   addDays,
@@ -15,30 +15,32 @@ import {
   subHours,
   subMinutes,
   subSeconds,
-  getDayOfYear,
   addMilliseconds,
   subMilliseconds,
 } from 'date-fns'
 
-const WEEKDAYS: Array<DateAdapter.Weekday> = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']
-
-function toTwoCharString(int: number) {
-  if (int < 10) return `0${int}`
-  else return `${int}`
-}
-
-function dateToStandardizedString<T extends DateAdapter<T>>(date: T) {
-  return `${date.get('year')}${toTwoCharString(date.get('month'))}${toTwoCharString(
-    date.get('day')
-  )}T${toTwoCharString(date.get('hour'))}${toTwoCharString(date.get('minute'))}${toTwoCharString(
-    date.get('second')
-  )}`
-}
-
 export class StandardDateAdapter
-  implements DateAdapter<StandardDateAdapter> {
+  implements DateAdapter<StandardDateAdapter, Date> {
   public date: Date
-  public timezone: 'UTC' | 'DATE' | undefined
+  
+  private _timezone: 'UTC' | undefined
+  public get timezone() { return this._timezone }
+  public set timezone(value) {
+    switch (value) {
+      case 'UTC':
+      case undefined:
+        this._timezone = value
+        break
+      default:
+        throw new DateAdapter.InvalidDateError(
+          `StandardDateAdapter does not support "${value}" timezone.`
+        )
+    }
+  }
+
+  public get utcOffset() {
+    return this.timezone === 'UTC' ? 0 : this.date.getTimezoneOffset()
+  }
 
   /** The `Rule` which generated this `DateAdapter` */
   public rule: Rule<StandardDateAdapter> | undefined
@@ -47,7 +49,7 @@ export class StandardDateAdapter
   /** The `Calendar` which generated this `DateAdapter` */
   public calendar: Calendar<StandardDateAdapter> | undefined
 
-  constructor(date?: Date, args: {timezone?: 'UTC' | 'DATE' | undefined} = {}) {
+  constructor(date?: Date, args: {timezone?: 'UTC' | undefined} = {}) {
     this.date = date ? new Date(date) : new Date()
     this.timezone = args.timezone
     this.assertIsValid()
@@ -58,14 +60,7 @@ export class StandardDateAdapter
   }
 
   static fromTimeObject(args: {
-    datetimes: [
-      number,
-      number,
-      number,
-      number | undefined,
-      number | undefined,
-      number | undefined
-    ][]
+    datetimes: ParsedDatetime[]
     timezone: string | undefined
     raw: string
   }): StandardDateAdapter[] {
@@ -82,7 +77,7 @@ export class StandardDateAdapter
         case 'DATE':
           // TS doesn't like my use of the spread operator
           // @ts-ignore
-          return new StandardDateAdapter(new Date(...datetime), {timezone: args.timezone})
+          return new StandardDateAdapter(new Date(...datetime))
         default:
           throw new DateAdapter.InvalidDateError(
             'The `StandardDateAdapter` only supports datetimes in UTC or LOCAL time. ' +
@@ -102,20 +97,22 @@ export class StandardDateAdapter
     return StandardDateAdapter.isInstance(object)
   }
 
+  // While we constrain the argument to be another DateAdapter in typescript
+  // we handle the case of someone passing in another type of object in javascript
   isEqual<T extends DateAdapter<T>>(object?: T): boolean {
-    return !!object && object.toISOString() === this.toISOString()
+    return !!object && typeof object.valueOf === 'function' && object.valueOf() === this.valueOf()
   }
-  isBefore(object: StandardDateAdapter): boolean {
-    return this.date.valueOf() < object.date.valueOf()
+  isBefore<T extends DateAdapter<T>>(object: T): boolean {
+    return this.valueOf() < object.valueOf()
   }
-  isBeforeOrEqual(object: StandardDateAdapter): boolean {
-    return this.date.valueOf() <= object.date.valueOf()
+  isBeforeOrEqual<T extends DateAdapter<T>>(object: T): boolean {
+    return this.valueOf() <= object.valueOf()
   }
-  isAfter(object: StandardDateAdapter): boolean {
-    return this.date.valueOf() > object.date.valueOf()
+  isAfter<T extends DateAdapter<T>>(object: T): boolean {
+    return this.valueOf() > object.valueOf()
   }
-  isAfterOrEqual(object: StandardDateAdapter): boolean {
-    return this.date.valueOf() >= object.date.valueOf()
+  isAfterOrEqual<T extends DateAdapter<T>>(object: T): boolean {
+    return this.valueOf() >= object.valueOf()
   }
 
   add(amount: number, unit: DateAdapter.Unit): StandardDateAdapter {
@@ -197,9 +194,6 @@ export class StandardDateAdapter
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
-  get(unit: 'ordinal'): number
-  get(unit: 'tzoffset'): number
-  get(unit: 'timezone'): 'UTC' | undefined
   get(
     unit:
       | 'year'
@@ -211,9 +205,6 @@ export class StandardDateAdapter
       | 'minute'
       | 'second'
       | 'millisecond'
-      | 'ordinal'
-      | 'tzoffset'
-      | 'timezone'
   ) {
     if (this.timezone === undefined) {
       switch (unit) {
@@ -222,9 +213,9 @@ export class StandardDateAdapter
         case 'month':
           return this.date.getMonth() + 1
         case 'yearday':
-          return getDayOfYear(this.date)
+          return Utils.getYearDay(this.get('year'), this.get('month'), this.get('day'))
         case 'weekday':
-          return WEEKDAYS[this.date.getDay()]
+          return Utils.WEEKDAYS[this.date.getDay()]
         case 'day':
           return this.date.getDate()
         case 'hour':
@@ -235,12 +226,6 @@ export class StandardDateAdapter
           return this.date.getSeconds()
         case 'millisecond':
           return this.date.getMilliseconds()
-        case 'ordinal':
-          return this.date.valueOf()
-        case 'tzoffset':
-          return this.date.getTimezoneOffset() * 60
-        case 'timezone':
-          return this.timezone
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
       }
@@ -251,13 +236,9 @@ export class StandardDateAdapter
         case 'month':
           return this.date.getUTCMonth() + 1
         case 'yearday':
-          return getDayOfYear(
-            new Date(
-              Date.UTC(this.date.getUTCFullYear(), this.date.getUTCMonth(), this.date.getUTCDate())
-            )
-          )
+          return Utils.getYearDay(this.get('year'), this.get('month'), this.get('day'))
         case 'weekday':
-          return WEEKDAYS[this.date.getUTCDay()]
+          return Utils.WEEKDAYS[this.date.getUTCDay()]
         case 'day':
           return this.date.getUTCDate()
         case 'hour':
@@ -268,21 +249,13 @@ export class StandardDateAdapter
           return this.date.getUTCSeconds()
         case 'millisecond':
           return this.date.getUTCMilliseconds()
-        case 'ordinal':
-          return this.date.valueOf()
-        case 'tzoffset':
-          return 0
-        case 'timezone':
-          return this.timezone
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
       }
     }
   }
 
-  set(unit: DateAdapter.Unit, value: number): StandardDateAdapter
-  set(unit: 'timezone', value: 'UTC' | undefined): StandardDateAdapter
-  set(unit: DateAdapter.Unit | 'timezone', value: number | 'UTC' | undefined): StandardDateAdapter {
+  set(unit: DateAdapter.Unit, value: number): StandardDateAdapter {
     if (this.timezone === undefined) {
       switch (unit) {
         case 'year':
@@ -305,9 +278,6 @@ export class StandardDateAdapter
           break
         case 'millisecond':
           this.date.setMilliseconds(value as number)
-          break
-        case 'timezone':
-          this.timezone = value as 'UTC' | undefined
           break
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
@@ -335,9 +305,6 @@ export class StandardDateAdapter
         case 'millisecond':
           this.date.setUTCMilliseconds(value as number)
           break
-        case 'timezone':
-          this.timezone = value as 'UTC' | undefined
-          break
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
       }
@@ -354,12 +321,14 @@ export class StandardDateAdapter
 
   toICal(utc?: boolean): string {
     if (utc || this.timezone === 'UTC')
-      return `${dateToStandardizedString(this as StandardDateAdapter)}Z`
-    else return `${dateToStandardizedString(this as StandardDateAdapter)}`
+      return `${Utils.dateToStandardizedString(this as StandardDateAdapter)}Z`
+    else return `${Utils.dateToStandardizedString(this as StandardDateAdapter)}`
   }
 
+  valueOf() { return this.date.valueOf() }
+
   assertIsValid() {
-    if (isNaN(this.date.valueOf()) || !['UTC', undefined].includes(this.timezone)) {
+    if (isNaN(this.valueOf()) || !['UTC', undefined].includes(this.timezone)) {
       throw new DateAdapter.InvalidDateError()
     }
 

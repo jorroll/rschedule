@@ -18,13 +18,14 @@
     "downlevelIteration": true,
     "paths": {
       "@rschedule/*": [
-        "packages/*"
+        "packages/*/src"
       ]
     },
     "moduleResolution": "node"
   },
   "include": [
-    "packages"
+    "packages",
+    "tests"
   ],
   "exclude": [
     "tmp"

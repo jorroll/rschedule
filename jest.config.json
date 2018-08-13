@@ -30,7 +30,7 @@
   "verbose": true,
   "testURL": "http://localhost/",
   "moduleNameMapper": {
-    "@rschedule/(.*)": "<rootDir>/packages/$1"
+    "@rschedule/(.*)": "<rootDir>/packages/$1/src"
   },
   "globals": {
     "ts-jest": {

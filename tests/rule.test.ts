@@ -4,21 +4,13 @@
  * which itself credits the python library `dateutil.rrule` for first creating the tests.
  */
 
-// @ts-ignore
-import { RRule } from '@rschedule/rschedule'
-// @ts-ignore
+import { RRule, Utils } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
+import { dateAdapter } from './utilities'
 
-const datetime = function(y, m, d, h = 0, i = 0, s = 0) {
-  h = h || 0
-  i = i || 0
-  s = s || 0
-  return new StandardDateAdapter(new Date(y, m - 1, d, h, i, s))
-}
-
-const parse = function(str) {
+const parse = function(str: string) {
   const parts = str.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)
-  let [_, y, m, d, h, i, s] = parts // eslint-disable-line
+  let [_, y, m, d, h, i, s]: any = parts // eslint-disable-line
   m = Number(m[0] === '0' ? m[1] : m) - 1
   d = d[0] === '0' ? d[1] : d
   h = h[0] === '0' ? h[1] : h
@@ -37,7 +29,7 @@ function testRecurring(
       const expected = expectedDates.map(date => date.toISOString())
       const actual = rule
         .occurrences()
-        .toArray()
+        .toArray()!
         .map(date => date.toISOString())
 
       expect(actual).toEqual(expected)
@@ -70,7 +62,7 @@ function testRecurring(
         const expected = newExpectedDates.map(date => date.toISOString())
         const actual = rule
           .occurrences({ end })
-          .toArray()
+          .toArray()!
           .map(date => date.toISOString())
 
         expect(actual).toEqual(expected)
@@ -89,7 +81,7 @@ function testRecurringBetween(
 ) {
   describe(testName, () => {
     it('matches expected dates', () => {
-      let occurrences = rule.occurrences({ start, end }).toArray()
+      let occurrences = rule.occurrences({ start, end }).toArray()!
 
       if (!inclusive) {
         occurrences = occurrences.filter(date => !(date.isEqual(start) || date.isEqual(end)))
@@ -129,7 +121,7 @@ function testNextOccurrence(
         break
       }
 
-      expect(occurrence.toISOString()).toEqual(expectedDate.toISOString())
+      expect(occurrence!.toISOString()).toEqual(expectedDate.toISOString())
     })
   })
 }
@@ -142,7 +134,7 @@ testPreviousOccurrence(
   }),
   parse('19970905T090000'),
   false,
-  datetime(1997, 9, 4, 9, 0)
+  dateAdapter(1997, 9, 4, 9, 0)
 )
 
 testPreviousOccurrence(
@@ -153,7 +145,7 @@ testPreviousOccurrence(
   }),
   parse('19970905T090000'),
   true,
-  datetime(1997, 9, 5, 9, 0)
+  dateAdapter(1997, 9, 5, 9, 0)
 )
 
 testNextOccurrence(
@@ -164,7 +156,7 @@ testNextOccurrence(
   }),
   parse('19970904T090000'),
   false,
-  datetime(1997, 9, 5, 9, 0)
+  dateAdapter(1997, 9, 5, 9, 0)
 )
 
 testNextOccurrence(
@@ -175,7 +167,7 @@ testNextOccurrence(
   }),
   parse('19970904T090000'),
   true,
-  datetime(1997, 9, 4, 9, 0)
+  dateAdapter(1997, 9, 4, 9, 0)
 )
 
 testRecurringBetween(
@@ -187,7 +179,7 @@ testRecurringBetween(
   parse('19970902T090000'),
   parse('19970906T090000'),
   false,
-  [datetime(1997, 9, 3, 9, 0), datetime(1997, 9, 4, 9, 0), datetime(1997, 9, 5, 9, 0)]
+  [dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 5, 9, 0)]
 )
 
 testRecurringBetween(
@@ -200,11 +192,11 @@ testRecurringBetween(
   parse('19970906T090000'),
   true,
   [
-    datetime(1997, 9, 2, 9, 0),
-    datetime(1997, 9, 3, 9, 0),
-    datetime(1997, 9, 4, 9, 0),
-    datetime(1997, 9, 5, 9, 0),
-    datetime(1997, 9, 6, 9, 0),
+    dateAdapter(1997, 9, 2, 9, 0),
+    dateAdapter(1997, 9, 3, 9, 0),
+    dateAdapter(1997, 9, 4, 9, 0),
+    dateAdapter(1997, 9, 5, 9, 0),
+    dateAdapter(1997, 9, 6, 9, 0),
   ]
 )
 
@@ -216,7 +208,7 @@ describe('YEARLY', () => {
       count: 3,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1998, 9, 2, 9, 0), datetime(1999, 9, 2, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1998, 9, 2, 9, 0), dateAdapter(1999, 9, 2, 9, 0)]
   )
 
   testRecurring(
@@ -227,7 +219,7 @@ describe('YEARLY', () => {
       interval: 2,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1999, 9, 2, 9, 0), datetime(2001, 9, 2, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1999, 9, 2, 9, 0), dateAdapter(2001, 9, 2, 9, 0)]
   )
 
   testRecurring(
@@ -238,7 +230,7 @@ describe('YEARLY', () => {
       interval: 100,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(2097, 9, 2, 9, 0), datetime(2197, 9, 2, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(2097, 9, 2, 9, 0), dateAdapter(2197, 9, 2, 9, 0)]
   )
 
   testRecurring(
@@ -249,7 +241,7 @@ describe('YEARLY', () => {
       byMonthOfYear: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 2, 9, 0), datetime(1998, 3, 2, 9, 0), datetime(1999, 1, 2, 9, 0)]
+    [dateAdapter(1998, 1, 2, 9, 0), dateAdapter(1998, 3, 2, 9, 0), dateAdapter(1999, 1, 2, 9, 0)]
   )
 
   testRecurring(
@@ -260,7 +252,7 @@ describe('YEARLY', () => {
       byDayOfMonth: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 3, 9, 0), datetime(1997, 10, 1, 9, 0), datetime(1997, 10, 3, 9, 0)]
+    [dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 10, 1, 9, 0), dateAdapter(1997, 10, 3, 9, 0)]
   )
 
   testRecurring(
@@ -272,7 +264,7 @@ describe('YEARLY', () => {
       byDayOfMonth: [5, 7],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 5, 9, 0), datetime(1998, 1, 7, 9, 0), datetime(1998, 3, 5, 9, 0)]
+    [dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
   )
 
   testRecurring(
@@ -283,7 +275,7 @@ describe('YEARLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 4, 9, 0), datetime(1997, 9, 9, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
   )
 
   testRecurring(
@@ -294,7 +286,7 @@ describe('YEARLY', () => {
       byDayOfWeek: [['TU', 1], ['TH', -1]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 12, 25, 9, 0), datetime(1998, 1, 6, 9, 0), datetime(1998, 12, 31, 9, 0)]
+    [dateAdapter(1997, 12, 25, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 12, 31, 9, 0)]
   )
 
   testRecurring(
@@ -305,7 +297,7 @@ describe('YEARLY', () => {
       byDayOfWeek: [['TU', 3], ['TH', -3]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 12, 11, 9, 0), datetime(1998, 1, 20, 9, 0), datetime(1998, 12, 17, 9, 0)]
+    [dateAdapter(1997, 12, 11, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 12, 17, 9, 0)]
   )
 
   testRecurring(
@@ -317,7 +309,7 @@ describe('YEARLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 1, 6, 9, 0), datetime(1998, 1, 8, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
   )
 
   testRecurring(
@@ -329,7 +321,7 @@ describe('YEARLY', () => {
       byDayOfWeek: [['TU', 1], ['TH', -1]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 6, 9, 0), datetime(1998, 1, 29, 9, 0), datetime(1998, 3, 3, 9, 0)]
+    [dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 29, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
   )
 
   testRecurring(
@@ -341,7 +333,7 @@ describe('YEARLY', () => {
       byDayOfWeek: [['TU', 3], ['TH', -3]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 15, 9, 0), datetime(1998, 1, 20, 9, 0), datetime(1998, 3, 12, 9, 0)]
+    [dateAdapter(1998, 1, 15, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 3, 12, 9, 0)]
   )
 
   testRecurring(
@@ -353,7 +345,7 @@ describe('YEARLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 2, 3, 9, 0), datetime(1998, 3, 3, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
   )
 
   testRecurring(
@@ -366,7 +358,7 @@ describe('YEARLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 3, 3, 9, 0), datetime(2001, 3, 1, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)]
   )
 
   testRecurring(
@@ -377,7 +369,7 @@ describe('YEARLY', () => {
       byHourOfDay: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0), datetime(1998, 9, 2, 6, 0), datetime(1998, 9, 2, 18, 0)]
+    [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1998, 9, 2, 6, 0), dateAdapter(1998, 9, 2, 18, 0)]
   )
 
   testRecurring(
@@ -388,7 +380,7 @@ describe('YEARLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6), datetime(1997, 9, 2, 9, 18), datetime(1998, 9, 2, 9, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1998, 9, 2, 9, 6)]
   )
 
   testRecurring(
@@ -399,7 +391,7 @@ describe('YEARLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1998, 9, 2, 9, 0, 6)]
+    [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1998, 9, 2, 9, 0, 6)]
   )
 
   testRecurring(
@@ -411,7 +403,7 @@ describe('YEARLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 6), datetime(1997, 9, 2, 18, 18), datetime(1998, 9, 2, 6, 6)]
+    [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1998, 9, 2, 6, 6)]
   )
 
   testRecurring(
@@ -423,7 +415,7 @@ describe('YEARLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0, 6), datetime(1997, 9, 2, 18, 0, 18), datetime(1998, 9, 2, 6, 0, 6)]
+    [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1998, 9, 2, 6, 0, 6)]
   )
 
   testRecurring(
@@ -435,7 +427,7 @@ describe('YEARLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 6), datetime(1997, 9, 2, 9, 6, 18), datetime(1997, 9, 2, 9, 18, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
   )
 
   testRecurring(
@@ -449,9 +441,9 @@ describe('YEARLY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 6, 6),
-      datetime(1997, 9, 2, 18, 6, 18),
-      datetime(1997, 9, 2, 18, 18, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 18),
+      dateAdapter(1997, 9, 2, 18, 18, 6),
     ]
   )
 
@@ -464,7 +456,7 @@ describe('YEARLY', () => {
     parse('20160101T000000'),
     parse('20160101T000000'),
     true,
-    [datetime(2016, 1, 1)]
+    [dateAdapter(2016, 1, 1)]
   )
 
   testRecurringBetween(
@@ -476,7 +468,7 @@ describe('YEARLY', () => {
     parse('20160101T000000'),
     parse('20160101T000000'),
     true,
-    [datetime(2016, 1, 1)]
+    [dateAdapter(2016, 1, 1)]
   )
 
   testRecurringBetween(
@@ -488,7 +480,7 @@ describe('YEARLY', () => {
     parse('20160101T000000'),
     parse('20170101T000000'),
     true,
-    [datetime(2016, 1, 1), datetime(2017, 1, 1)]
+    [dateAdapter(2016, 1, 1), dateAdapter(2017, 1, 1)]
   )
 })
 
@@ -500,7 +492,7 @@ describe('MONTHLY', () => {
       count: 3,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 10, 2, 9, 0), datetime(1997, 11, 2, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 10, 2, 9, 0), dateAdapter(1997, 11, 2, 9, 0)]
   )
 
   testRecurring(
@@ -511,7 +503,7 @@ describe('MONTHLY', () => {
       interval: 2,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 11, 2, 9, 0), datetime(1998, 1, 2, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 11, 2, 9, 0), dateAdapter(1998, 1, 2, 9, 0)]
   )
 
   testRecurring(
@@ -522,7 +514,7 @@ describe('MONTHLY', () => {
       interval: 18,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1999, 3, 2, 9, 0), datetime(2000, 9, 2, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1999, 3, 2, 9, 0), dateAdapter(2000, 9, 2, 9, 0)]
   )
 
   testRecurring(
@@ -533,7 +525,7 @@ describe('MONTHLY', () => {
       byMonthOfYear: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 2, 9, 0), datetime(1998, 3, 2, 9, 0), datetime(1999, 1, 2, 9, 0)]
+    [dateAdapter(1998, 1, 2, 9, 0), dateAdapter(1998, 3, 2, 9, 0), dateAdapter(1999, 1, 2, 9, 0)]
   )
 
   testRecurring(
@@ -544,7 +536,7 @@ describe('MONTHLY', () => {
       byDayOfMonth: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 3, 9, 0), datetime(1997, 10, 1, 9, 0), datetime(1997, 10, 3, 9, 0)]
+    [dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 10, 1, 9, 0), dateAdapter(1997, 10, 3, 9, 0)]
   )
 
   testRecurring(
@@ -556,7 +548,7 @@ describe('MONTHLY', () => {
       byDayOfMonth: [5, 7],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 5, 9, 0), datetime(1998, 1, 7, 9, 0), datetime(1998, 3, 5, 9, 0)]
+    [dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
   )
 
   testRecurring(
@@ -567,7 +559,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 4, 9, 0), datetime(1997, 9, 9, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
   )
 
   testRecurring(
@@ -578,7 +570,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: [['TU', 1], ['TH', -1]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 25, 9, 0), datetime(1997, 10, 7, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 25, 9, 0), dateAdapter(1997, 10, 7, 9, 0)]
   )
 
   testRecurring(
@@ -589,7 +581,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: [['TU', 3], ['TH', -3]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 11, 9, 0), datetime(1997, 9, 16, 9, 0), datetime(1997, 10, 16, 9, 0)]
+    [dateAdapter(1997, 9, 11, 9, 0), dateAdapter(1997, 9, 16, 9, 0), dateAdapter(1997, 10, 16, 9, 0)]
   )
 
   testRecurring(
@@ -601,7 +593,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 1, 6, 9, 0), datetime(1998, 1, 8, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
   )
 
   testRecurring(
@@ -613,7 +605,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: [['TU', 1], ['TH', -1]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 6, 9, 0), datetime(1998, 1, 29, 9, 0), datetime(1998, 3, 3, 9, 0)]
+    [dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 29, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
   )
 
   testRecurring(
@@ -625,7 +617,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: [['TU', 3], ['TH', -3]],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 15, 9, 0), datetime(1998, 1, 20, 9, 0), datetime(1998, 3, 12, 9, 0)]
+    [dateAdapter(1998, 1, 15, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 3, 12, 9, 0)]
   )
 
   testRecurring(
@@ -637,7 +629,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 2, 3, 9, 0), datetime(1998, 3, 3, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
   )
 
   testRecurring(
@@ -650,7 +642,7 @@ describe('MONTHLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 3, 3, 9, 0), datetime(2001, 3, 1, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)]
   )
 
   testRecurring(
@@ -661,7 +653,7 @@ describe('MONTHLY', () => {
       byHourOfDay: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0), datetime(1997, 10, 2, 6, 0), datetime(1997, 10, 2, 18, 0)]
+    [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 10, 2, 6, 0), dateAdapter(1997, 10, 2, 18, 0)]
   )
 
   testRecurring(
@@ -672,7 +664,7 @@ describe('MONTHLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6), datetime(1997, 9, 2, 9, 18), datetime(1997, 10, 2, 9, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 10, 2, 9, 6)]
   )
 
   testRecurring(
@@ -683,7 +675,7 @@ describe('MONTHLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1997, 10, 2, 9, 0, 6)]
+    [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 10, 2, 9, 0, 6)]
   )
 
   testRecurring(
@@ -695,7 +687,7 @@ describe('MONTHLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 6), datetime(1997, 9, 2, 18, 18), datetime(1997, 10, 2, 6, 6)]
+    [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 10, 2, 6, 6)]
   )
 
   testRecurring(
@@ -708,9 +700,9 @@ describe('MONTHLY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 0, 6),
-      datetime(1997, 9, 2, 18, 0, 18),
-      datetime(1997, 10, 2, 6, 0, 6),
+      dateAdapter(1997, 9, 2, 18, 0, 6),
+      dateAdapter(1997, 9, 2, 18, 0, 18),
+      dateAdapter(1997, 10, 2, 6, 0, 6),
     ]
   )
 
@@ -723,7 +715,7 @@ describe('MONTHLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 6), datetime(1997, 9, 2, 9, 6, 18), datetime(1997, 9, 2, 9, 18, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
   )
 
   testRecurring(
@@ -737,9 +729,9 @@ describe('MONTHLY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 6, 6),
-      datetime(1997, 9, 2, 18, 6, 18),
-      datetime(1997, 9, 2, 18, 18, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 18),
+      dateAdapter(1997, 9, 2, 18, 18, 6),
     ]
   )
 
@@ -752,10 +744,10 @@ describe('MONTHLY', () => {
       start: parse('20131201T0900000'),
     }),
     [
-      datetime(2013, 12, 31, 9, 0),
-      datetime(2014, 1, 31, 9, 0),
-      datetime(2014, 2, 28, 9, 0),
-      datetime(2014, 3, 31, 9, 0),
+      dateAdapter(2013, 12, 31, 9, 0),
+      dateAdapter(2014, 1, 31, 9, 0),
+      dateAdapter(2014, 2, 28, 9, 0),
+      dateAdapter(2014, 3, 31, 9, 0),
     ]
   )
 
@@ -768,10 +760,10 @@ describe('MONTHLY', () => {
       start: parse('20151201T0900000'),
     }),
     [
-      datetime(2015, 12, 31, 9, 0),
-      datetime(2016, 1, 31, 9, 0),
-      datetime(2016, 2, 29, 9, 0),
-      datetime(2016, 3, 31, 9, 0),
+      dateAdapter(2015, 12, 31, 9, 0),
+      dateAdapter(2016, 1, 31, 9, 0),
+      dateAdapter(2016, 2, 29, 9, 0),
+      dateAdapter(2016, 3, 31, 9, 0),
     ]
   )
 })
@@ -784,7 +776,7 @@ describe('WEEKLY', () => {
       count: 3,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 9, 9, 0), datetime(1997, 9, 16, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 9, 9, 0), dateAdapter(1997, 9, 16, 9, 0)]
   )
 
   testRecurring(
@@ -795,7 +787,7 @@ describe('WEEKLY', () => {
       interval: 2,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 16, 9, 0), datetime(1997, 9, 30, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 16, 9, 0), dateAdapter(1997, 9, 30, 9, 0)]
   )
 
   testRecurring(
@@ -806,7 +798,7 @@ describe('WEEKLY', () => {
       interval: 20,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1998, 1, 20, 9, 0), datetime(1998, 6, 9, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 6, 9, 9, 0)]
   )
 
   testRecurring(
@@ -817,7 +809,7 @@ describe('WEEKLY', () => {
       byMonthOfYear: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 6, 9, 0), datetime(1998, 1, 13, 9, 0), datetime(1998, 1, 20, 9, 0)]
+    [dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 13, 9, 0), dateAdapter(1998, 1, 20, 9, 0)]
   )
 
   testRecurring(
@@ -828,7 +820,7 @@ describe('WEEKLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 4, 9, 0), datetime(1997, 9, 9, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
   )
 
   testRecurring(
@@ -843,7 +835,7 @@ describe('WEEKLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 1, 6, 9, 0), datetime(1998, 1, 8, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
   )
 
   testRecurring(
@@ -854,7 +846,7 @@ describe('WEEKLY', () => {
       byHourOfDay: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0), datetime(1997, 9, 9, 6, 0), datetime(1997, 9, 9, 18, 0)]
+    [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 9, 6, 0), dateAdapter(1997, 9, 9, 18, 0)]
   )
 
   testRecurring(
@@ -865,7 +857,7 @@ describe('WEEKLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6), datetime(1997, 9, 2, 9, 18), datetime(1997, 9, 9, 9, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 9, 9, 6)]
   )
 
   testRecurring(
@@ -876,7 +868,7 @@ describe('WEEKLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1997, 9, 9, 9, 0, 6)]
+    [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 9, 9, 0, 6)]
   )
 
   testRecurring(
@@ -888,7 +880,7 @@ describe('WEEKLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 6), datetime(1997, 9, 2, 18, 18), datetime(1997, 9, 9, 6, 6)]
+    [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 9, 6, 6)]
   )
 
   testRecurring(
@@ -900,7 +892,7 @@ describe('WEEKLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0, 6), datetime(1997, 9, 2, 18, 0, 18), datetime(1997, 9, 9, 6, 0, 6)]
+    [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1997, 9, 9, 6, 0, 6)]
   )
 
   testRecurring(
@@ -912,7 +904,7 @@ describe('WEEKLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 6), datetime(1997, 9, 2, 9, 6, 18), datetime(1997, 9, 2, 9, 18, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
   )
 
   testRecurring(
@@ -926,9 +918,9 @@ describe('WEEKLY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 6, 6),
-      datetime(1997, 9, 2, 18, 6, 18),
-      datetime(1997, 9, 2, 18, 18, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 18),
+      dateAdapter(1997, 9, 2, 18, 18, 6),
     ]
   )
 })
@@ -941,7 +933,7 @@ describe('DAILY', () => {
       count: 3,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 3, 9, 0), datetime(1997, 9, 4, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
   )
 
   testRecurring(
@@ -952,7 +944,7 @@ describe('DAILY', () => {
       interval: 2,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 4, 9, 0), datetime(1997, 9, 6, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 6, 9, 0)]
   )
 
   testRecurring(
@@ -963,7 +955,7 @@ describe('DAILY', () => {
       interval: 92,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 12, 3, 9, 0), datetime(1998, 3, 5, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 12, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
   )
 
   testRecurring(
@@ -974,7 +966,7 @@ describe('DAILY', () => {
       byMonthOfYear: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 1, 2, 9, 0), datetime(1998, 1, 3, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 2, 9, 0), dateAdapter(1998, 1, 3, 9, 0)]
   )
 
   testRecurring(
@@ -985,7 +977,7 @@ describe('DAILY', () => {
       byDayOfMonth: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 3, 9, 0), datetime(1997, 10, 1, 9, 0), datetime(1997, 10, 3, 9, 0)]
+    [dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 10, 1, 9, 0), dateAdapter(1997, 10, 3, 9, 0)]
   )
 
   testRecurring(
@@ -997,7 +989,7 @@ describe('DAILY', () => {
       byDayOfMonth: [5, 7],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 5, 9, 0), datetime(1998, 1, 7, 9, 0), datetime(1998, 3, 5, 9, 0)]
+    [dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
   )
 
   testRecurring(
@@ -1008,7 +1000,7 @@ describe('DAILY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 4, 9, 0), datetime(1997, 9, 9, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
   )
 
   testRecurring(
@@ -1020,7 +1012,7 @@ describe('DAILY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 1, 6, 9, 0), datetime(1998, 1, 8, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
   )
 
   testRecurring(
@@ -1032,7 +1024,7 @@ describe('DAILY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 2, 3, 9, 0), datetime(1998, 3, 3, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
   )
 
   testRecurring(
@@ -1045,7 +1037,7 @@ describe('DAILY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 9, 0), datetime(1998, 3, 3, 9, 0), datetime(2001, 3, 1, 9, 0)]
+    [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)]
   )
 
   testRecurring(
@@ -1056,7 +1048,7 @@ describe('DAILY', () => {
       byHourOfDay: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0), datetime(1997, 9, 3, 6, 0), datetime(1997, 9, 3, 18, 0)]
+    [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 3, 6, 0), dateAdapter(1997, 9, 3, 18, 0)]
   )
 
   testRecurring(
@@ -1067,7 +1059,7 @@ describe('DAILY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6), datetime(1997, 9, 2, 9, 18), datetime(1997, 9, 3, 9, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 3, 9, 6)]
   )
 
   testRecurring(
@@ -1078,7 +1070,7 @@ describe('DAILY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1997, 9, 3, 9, 0, 6)]
+    [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 3, 9, 0, 6)]
   )
 
   testRecurring(
@@ -1090,7 +1082,7 @@ describe('DAILY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 6), datetime(1997, 9, 2, 18, 18), datetime(1997, 9, 3, 6, 6)]
+    [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 3, 6, 6)]
   )
 
   testRecurring(
@@ -1102,7 +1094,7 @@ describe('DAILY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0, 6), datetime(1997, 9, 2, 18, 0, 18), datetime(1997, 9, 3, 6, 0, 6)]
+    [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1997, 9, 3, 6, 0, 6)]
   )
 
   testRecurring(
@@ -1114,7 +1106,7 @@ describe('DAILY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 6), datetime(1997, 9, 2, 9, 6, 18), datetime(1997, 9, 2, 9, 18, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
   )
 
   testRecurring(
@@ -1128,9 +1120,9 @@ describe('DAILY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 6, 6),
-      datetime(1997, 9, 2, 18, 6, 18),
-      datetime(1997, 9, 2, 18, 18, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 18),
+      dateAdapter(1997, 9, 2, 18, 18, 6),
     ]
   )
 })
@@ -1143,7 +1135,7 @@ describe('HOURLY', () => {
       count: 3,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 2, 10, 0), datetime(1997, 9, 2, 11, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 10, 0), dateAdapter(1997, 9, 2, 11, 0)]
   )
 
   testRecurring(
@@ -1154,7 +1146,7 @@ describe('HOURLY', () => {
       interval: 2,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 2, 11, 0), datetime(1997, 9, 2, 13, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 11, 0), dateAdapter(1997, 9, 2, 13, 0)]
   )
 
   testRecurring(
@@ -1165,7 +1157,7 @@ describe('HOURLY', () => {
       interval: 769,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 10, 4, 10, 0), datetime(1997, 11, 5, 11, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 10, 4, 10, 0), dateAdapter(1997, 11, 5, 11, 0)]
   )
 
   testRecurring(
@@ -1176,7 +1168,7 @@ describe('HOURLY', () => {
       byMonthOfYear: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 1, 0), datetime(1998, 1, 1, 2, 0)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
   )
 
   testRecurring(
@@ -1187,7 +1179,7 @@ describe('HOURLY', () => {
       byDayOfMonth: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 3, 0, 0), datetime(1997, 9, 3, 1, 0), datetime(1997, 9, 3, 2, 0)]
+    [dateAdapter(1997, 9, 3, 0, 0), dateAdapter(1997, 9, 3, 1, 0), dateAdapter(1997, 9, 3, 2, 0)]
   )
 
   testRecurring(
@@ -1199,7 +1191,7 @@ describe('HOURLY', () => {
       byDayOfMonth: [5, 7],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 5, 0, 0), datetime(1998, 1, 5, 1, 0), datetime(1998, 1, 5, 2, 0)]
+    [dateAdapter(1998, 1, 5, 0, 0), dateAdapter(1998, 1, 5, 1, 0), dateAdapter(1998, 1, 5, 2, 0)]
   )
 
   testRecurring(
@@ -1210,7 +1202,7 @@ describe('HOURLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 2, 10, 0), datetime(1997, 9, 2, 11, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 10, 0), dateAdapter(1997, 9, 2, 11, 0)]
   )
 
   testRecurring(
@@ -1222,7 +1214,7 @@ describe('HOURLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 1, 0), datetime(1998, 1, 1, 2, 0)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
   )
 
   testRecurring(
@@ -1234,7 +1226,7 @@ describe('HOURLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 1, 0), datetime(1998, 1, 1, 2, 0)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
   )
 
   testRecurring(
@@ -1247,7 +1239,7 @@ describe('HOURLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 1, 0), datetime(1998, 1, 1, 2, 0)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
   )
 
   testRecurring(
@@ -1258,7 +1250,7 @@ describe('HOURLY', () => {
       byHourOfDay: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0), datetime(1997, 9, 3, 6, 0), datetime(1997, 9, 3, 18, 0)]
+    [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 3, 6, 0), dateAdapter(1997, 9, 3, 18, 0)]
   )
 
   testRecurring(
@@ -1269,7 +1261,7 @@ describe('HOURLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6), datetime(1997, 9, 2, 9, 18), datetime(1997, 9, 2, 10, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 2, 10, 6)]
   )
 
   testRecurring(
@@ -1280,7 +1272,7 @@ describe('HOURLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1997, 9, 2, 10, 0, 6)]
+    [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 10, 0, 6)]
   )
 
   testRecurring(
@@ -1292,7 +1284,7 @@ describe('HOURLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 6), datetime(1997, 9, 2, 18, 18), datetime(1997, 9, 3, 6, 6)]
+    [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 3, 6, 6)]
   )
 
   testRecurring(
@@ -1304,7 +1296,7 @@ describe('HOURLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0, 6), datetime(1997, 9, 2, 18, 0, 18), datetime(1997, 9, 3, 6, 0, 6)]
+    [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1997, 9, 3, 6, 0, 6)]
   )
 
   testRecurring(
@@ -1316,7 +1308,7 @@ describe('HOURLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 6), datetime(1997, 9, 2, 9, 6, 18), datetime(1997, 9, 2, 9, 18, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
   )
 
   testRecurring(
@@ -1330,9 +1322,9 @@ describe('HOURLY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 6, 6),
-      datetime(1997, 9, 2, 18, 6, 18),
-      datetime(1997, 9, 2, 18, 18, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 18),
+      dateAdapter(1997, 9, 2, 18, 18, 6),
     ]
   )
 })
@@ -1345,7 +1337,7 @@ describe('MINUTELY', () => {
       count: 3,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 2, 9, 1), datetime(1997, 9, 2, 9, 2)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 1), dateAdapter(1997, 9, 2, 9, 2)]
   )
 
   testRecurring(
@@ -1356,7 +1348,7 @@ describe('MINUTELY', () => {
       interval: 2,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 2, 9, 2), datetime(1997, 9, 2, 9, 4)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 2), dateAdapter(1997, 9, 2, 9, 4)]
   )
 
   testRecurring(
@@ -1367,7 +1359,7 @@ describe('MINUTELY', () => {
       interval: 1501,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 3, 10, 1), datetime(1997, 9, 4, 11, 2)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 10, 1), dateAdapter(1997, 9, 4, 11, 2)]
   )
 
   testRecurring(
@@ -1378,7 +1370,7 @@ describe('MINUTELY', () => {
       byMonthOfYear: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 0, 1), datetime(1998, 1, 1, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
   )
 
   testRecurring(
@@ -1389,7 +1381,7 @@ describe('MINUTELY', () => {
       byDayOfMonth: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 3, 0, 0), datetime(1997, 9, 3, 0, 1), datetime(1997, 9, 3, 0, 2)]
+    [dateAdapter(1997, 9, 3, 0, 0), dateAdapter(1997, 9, 3, 0, 1), dateAdapter(1997, 9, 3, 0, 2)]
   )
 
   testRecurring(
@@ -1401,7 +1393,7 @@ describe('MINUTELY', () => {
       byDayOfMonth: [5, 7],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 5, 0, 0), datetime(1998, 1, 5, 0, 1), datetime(1998, 1, 5, 0, 2)]
+    [dateAdapter(1998, 1, 5, 0, 0), dateAdapter(1998, 1, 5, 0, 1), dateAdapter(1998, 1, 5, 0, 2)]
   )
 
   testRecurring(
@@ -1412,7 +1404,7 @@ describe('MINUTELY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 2, 9, 1), datetime(1997, 9, 2, 9, 2)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 1), dateAdapter(1997, 9, 2, 9, 2)]
   )
 
   testRecurring(
@@ -1424,7 +1416,7 @@ describe('MINUTELY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 0, 1), datetime(1998, 1, 1, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
   )
 
   testRecurring(
@@ -1436,7 +1428,7 @@ describe('MINUTELY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 0, 1), datetime(1998, 1, 1, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
   )
 
   testRecurring(
@@ -1449,7 +1441,7 @@ describe('MINUTELY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0), datetime(1998, 1, 1, 0, 1), datetime(1998, 1, 1, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
   )
 
   testRecurring(
@@ -1460,7 +1452,7 @@ describe('MINUTELY', () => {
       byHourOfDay: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0), datetime(1997, 9, 2, 18, 1), datetime(1997, 9, 2, 18, 2)]
+    [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 2, 18, 1), dateAdapter(1997, 9, 2, 18, 2)]
   )
 
   testRecurring(
@@ -1471,7 +1463,7 @@ describe('MINUTELY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6), datetime(1997, 9, 2, 9, 18), datetime(1997, 9, 2, 10, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 2, 10, 6)]
   )
 
   testRecurring(
@@ -1482,7 +1474,7 @@ describe('MINUTELY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1997, 9, 2, 9, 1, 6)]
+    [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 9, 1, 6)]
   )
 
   testRecurring(
@@ -1494,7 +1486,7 @@ describe('MINUTELY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 6), datetime(1997, 9, 2, 18, 18), datetime(1997, 9, 3, 6, 6)]
+    [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 3, 6, 6)]
   )
 
   testRecurring(
@@ -1507,9 +1499,9 @@ describe('MINUTELY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 0, 6),
-      datetime(1997, 9, 2, 18, 0, 18),
-      datetime(1997, 9, 2, 18, 1, 6),
+      dateAdapter(1997, 9, 2, 18, 0, 6),
+      dateAdapter(1997, 9, 2, 18, 0, 18),
+      dateAdapter(1997, 9, 2, 18, 1, 6),
     ]
   )
 
@@ -1522,7 +1514,7 @@ describe('MINUTELY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 6), datetime(1997, 9, 2, 9, 6, 18), datetime(1997, 9, 2, 9, 18, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
   )
 
   testRecurring(
@@ -1536,9 +1528,9 @@ describe('MINUTELY', () => {
       start: parse('19970902T180606'),
     }),
     [
-      datetime(1997, 9, 2, 18, 6, 6),
-      datetime(1997, 9, 2, 18, 6, 18),
-      datetime(1997, 9, 2, 18, 18, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 18),
+      dateAdapter(1997, 9, 2, 18, 18, 6),
     ]
   )
 })
@@ -1551,7 +1543,7 @@ describe('SECONDLY', () => {
       count: 3,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 0), datetime(1997, 9, 2, 9, 0, 1), datetime(1997, 9, 2, 9, 0, 2)]
+    [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 2, 9, 0, 1), dateAdapter(1997, 9, 2, 9, 0, 2)]
   )
 
   testRecurring(
@@ -1562,7 +1554,7 @@ describe('SECONDLY', () => {
       interval: 2,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 0), datetime(1997, 9, 2, 9, 0, 2), datetime(1997, 9, 2, 9, 0, 4)]
+    [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 2, 9, 0, 2), dateAdapter(1997, 9, 2, 9, 0, 4)]
   )
 
   testRecurring(
@@ -1573,7 +1565,7 @@ describe('SECONDLY', () => {
       interval: 90061,
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 0), datetime(1997, 9, 3, 10, 1, 1), datetime(1997, 9, 4, 11, 2, 2)]
+    [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 3, 10, 1, 1), dateAdapter(1997, 9, 4, 11, 2, 2)]
   )
 
   testRecurring(
@@ -1584,7 +1576,7 @@ describe('SECONDLY', () => {
       byMonthOfYear: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0, 0), datetime(1998, 1, 1, 0, 0, 1), datetime(1998, 1, 1, 0, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
   )
 
   testRecurring(
@@ -1595,7 +1587,7 @@ describe('SECONDLY', () => {
       byDayOfMonth: [1, 3],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 3, 0, 0, 0), datetime(1997, 9, 3, 0, 0, 1), datetime(1997, 9, 3, 0, 0, 2)]
+    [dateAdapter(1997, 9, 3, 0, 0, 0), dateAdapter(1997, 9, 3, 0, 0, 1), dateAdapter(1997, 9, 3, 0, 0, 2)]
   )
 
   testRecurring(
@@ -1607,7 +1599,7 @@ describe('SECONDLY', () => {
       byDayOfMonth: [5, 7],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 5, 0, 0, 0), datetime(1998, 1, 5, 0, 0, 1), datetime(1998, 1, 5, 0, 0, 2)]
+    [dateAdapter(1998, 1, 5, 0, 0, 0), dateAdapter(1998, 1, 5, 0, 0, 1), dateAdapter(1998, 1, 5, 0, 0, 2)]
   )
 
   testRecurring(
@@ -1618,7 +1610,7 @@ describe('SECONDLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 0), datetime(1997, 9, 2, 9, 0, 1), datetime(1997, 9, 2, 9, 0, 2)]
+    [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 2, 9, 0, 1), dateAdapter(1997, 9, 2, 9, 0, 2)]
   )
 
   testRecurring(
@@ -1630,7 +1622,7 @@ describe('SECONDLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0, 0), datetime(1998, 1, 1, 0, 0, 1), datetime(1998, 1, 1, 0, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
   )
 
   testRecurring(
@@ -1642,7 +1634,7 @@ describe('SECONDLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0, 0), datetime(1998, 1, 1, 0, 0, 1), datetime(1998, 1, 1, 0, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
   )
 
   testRecurring(
@@ -1655,7 +1647,7 @@ describe('SECONDLY', () => {
       byDayOfWeek: ['TU', 'TH'],
       start: parse('19970902T090000'),
     }),
-    [datetime(1998, 1, 1, 0, 0, 0), datetime(1998, 1, 1, 0, 0, 1), datetime(1998, 1, 1, 0, 0, 2)]
+    [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
   )
 
   testRecurring(
@@ -1666,7 +1658,7 @@ describe('SECONDLY', () => {
       byHourOfDay: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 0, 0), datetime(1997, 9, 2, 18, 0, 1), datetime(1997, 9, 2, 18, 0, 2)]
+    [dateAdapter(1997, 9, 2, 18, 0, 0), dateAdapter(1997, 9, 2, 18, 0, 1), dateAdapter(1997, 9, 2, 18, 0, 2)]
   )
 
   testRecurring(
@@ -1677,7 +1669,7 @@ describe('SECONDLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 0), datetime(1997, 9, 2, 9, 6, 1), datetime(1997, 9, 2, 9, 6, 2)]
+    [dateAdapter(1997, 9, 2, 9, 6, 0), dateAdapter(1997, 9, 2, 9, 6, 1), dateAdapter(1997, 9, 2, 9, 6, 2)]
   )
 
   testRecurring(
@@ -1688,7 +1680,7 @@ describe('SECONDLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1997, 9, 2, 9, 1, 6)]
+    [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 9, 1, 6)]
   )
 
   testRecurring(
@@ -1700,7 +1692,7 @@ describe('SECONDLY', () => {
       byMinuteOfHour: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 18, 6, 0), datetime(1997, 9, 2, 18, 6, 1), datetime(1997, 9, 2, 18, 6, 2)]
+    [dateAdapter(1997, 9, 2, 18, 6, 0), dateAdapter(1997, 9, 2, 18, 6, 1), dateAdapter(1997, 9, 2, 18, 6, 2)]
   )
 
   testRecurring(
@@ -1713,9 +1705,9 @@ describe('SECONDLY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 0, 6),
-      datetime(1997, 9, 2, 18, 0, 18),
-      datetime(1997, 9, 2, 18, 1, 6),
+      dateAdapter(1997, 9, 2, 18, 0, 6),
+      dateAdapter(1997, 9, 2, 18, 0, 18),
+      dateAdapter(1997, 9, 2, 18, 1, 6),
     ]
   )
 
@@ -1728,7 +1720,7 @@ describe('SECONDLY', () => {
       bySecondOfMinute: [6, 18],
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 6, 6), datetime(1997, 9, 2, 9, 6, 18), datetime(1997, 9, 2, 9, 18, 6)]
+    [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
   )
 
   testRecurring(
@@ -1742,9 +1734,9 @@ describe('SECONDLY', () => {
       start: parse('19970902T090000'),
     }),
     [
-      datetime(1997, 9, 2, 18, 6, 6),
-      datetime(1997, 9, 2, 18, 6, 18),
-      datetime(1997, 9, 2, 18, 18, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 6),
+      dateAdapter(1997, 9, 2, 18, 6, 18),
+      dateAdapter(1997, 9, 2, 18, 18, 6),
     ]
   )
 })
@@ -1758,7 +1750,7 @@ describe('UNTIL', () => {
       start: parse('19970902T090000'),
       until: parse('19970905T080000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 3, 9, 0), datetime(1997, 9, 4, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
   )
 
   testRecurring(
@@ -1769,7 +1761,7 @@ describe('UNTIL', () => {
       start: parse('19970902T090000'),
       until: parse('19970904T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 3, 9, 0), datetime(1997, 9, 4, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
   )
 
   testRecurring(
@@ -1780,7 +1772,7 @@ describe('UNTIL', () => {
       start: parse('19970902T090000'),
       until: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0)]
   )
 
   testRecurring(
@@ -1800,9 +1792,9 @@ describe('UNTIL', () => {
       frequency: 'DAILY',
       // count: 3,
       start: parse('19970902T090000'),
-      until: datetime(1997, 9, 5),
+      until: dateAdapter(1997, 9, 5),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 3, 9, 0), datetime(1997, 9, 4, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
   )
 })
 
@@ -1817,7 +1809,7 @@ describe('WKST', () => {
       weekStart: 'MO',
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 7, 9, 0), datetime(1997, 9, 16, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 7, 9, 0), dateAdapter(1997, 9, 16, 9, 0)]
   )
 
   testRecurring(
@@ -1830,7 +1822,7 @@ describe('WKST', () => {
       weekStart: 'SU',
       start: parse('19970902T090000'),
     }),
-    [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 14, 9, 0), datetime(1997, 9, 16, 9, 0)]
+    [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 14, 9, 0), dateAdapter(1997, 9, 16, 9, 0)]
   )
 })
 
@@ -1839,9 +1831,9 @@ testRecurring(
   new RRule({
     frequency: 'DAILY',
     count: 3,
-    start: datetime(1997, 9, 2),
+    start: dateAdapter(1997, 9, 2),
   }),
-  [datetime(1997, 9, 2, 0, 0), datetime(1997, 9, 3, 0, 0), datetime(1997, 9, 4, 0, 0)]
+  [dateAdapter(1997, 9, 2, 0, 0), dateAdapter(1997, 9, 3, 0, 0), dateAdapter(1997, 9, 4, 0, 0)]
 )
 
 testRecurring(
@@ -1851,7 +1843,7 @@ testRecurring(
     count: 3,
     start: parse('19970902T090000.5'),
   }),
-  [datetime(1997, 9, 2, 9, 0), datetime(1997, 9, 3, 9, 0), datetime(1997, 9, 4, 9, 0)]
+  [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
 )
 
 describe('testMaxYear', () => {
@@ -1890,7 +1882,7 @@ testRecurring(
 //         bySecondOfMinute: [6, 18],
 //         start: parse('19970902T090000'),
 //       }),
-//       [datetime(1997, 9, 2, 9, 0, 6), datetime(1997, 9, 2, 9, 0, 18), datetime(1997, 9, 2, 9, 1, 6)]
+//       [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 9, 1, 6)]
 //     )
 //   })
 // })

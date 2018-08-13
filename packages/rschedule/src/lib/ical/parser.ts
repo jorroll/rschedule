@@ -257,7 +257,7 @@ export function parseUntil<T extends DateAdapterConstructor<T>>(
   }
 
   const date = dateAdapterConstructor.fromTimeObject(parsedDatetime)[0]
-  date.set('timezone', start.get('timezone'))
+  date.timezone = start.timezone
   return date
 }
 
@@ -323,12 +323,12 @@ export function parseByDay(text: string) {
         weekday = text.slice(1)
       }
 
-      if (!Utils.weekdays.includes(weekday as any)) {
+      if (!Utils.WEEKDAYS.includes(weekday as any)) {
         throw new ICalStringParseError(`Invalid BYDAY value "${text}"`)
       }
 
       return [weekday, number] as [DateAdapter.Weekday, number]
-    } else if (!Utils.weekdays.includes(text as any)) {
+    } else if (!Utils.WEEKDAYS.includes(text as any)) {
       throw new ICalStringParseError(`Invalid BYDAY value "${text}"`)
     } else {
       return text as DateAdapter.Weekday
@@ -357,7 +357,7 @@ export function parseByMonth(text: string) {
 }
 
 export function parseWkst(text: string) {
-  if (!Utils.weekdays.includes(text as any)) {
+  if (!Utils.WEEKDAYS.includes(text as any)) {
     throw new ICalStringParseError(`Invalid WKST value "${text}"`)
   }
 

@@ -11,7 +11,8 @@ export { OccurrencesArgs, OccurrenceIterator } from './interfaces'
 export * from './rule/public_api'
 
 /**
- * These lower level `ICAL` related functions may be useful to someone making
+ * These lower level functions may be useful to someone making
  * their own `DateAdapter`
  */
 export * from './ical'
+export { Utils } from './utilities'

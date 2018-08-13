@@ -60,17 +60,17 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
   private incrementInterval() {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
-    const oldTZOffset = this.intervalStartDate.get('tzoffset')
+    const oldTZOffset = this.intervalStartDate.utcOffset * 60
 
     this.intervalStartDate.add(this.options.interval, unit)
 
-    const newTZOffset = this.intervalStartDate.get('tzoffset')
+    const newTZOffset = this.intervalStartDate.utcOffset * 60
 
     const tzOffset = newTZOffset - oldTZOffset
 
     const newDate = this.intervalStartDate.clone().add(tzOffset, 'second')
 
-    if (newDate.get('tzoffset') !== this.intervalStartDate.get('tzoffset')) {
+    if (newDate.utcOffset !== this.intervalStartDate.utcOffset) {
       throw new DateAdapter.InvalidDateError(
         `A date was created on the border of daylight savings time: "${newDate.toISOString()}"`
       )
@@ -88,12 +88,12 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
    */
   private skipToIntervalOnOrAfter(newDate: T) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
-    const intervalStart = this.intervalStartDate.get('ordinal')
+    const intervalStart = this.intervalStartDate.valueOf()
     const intervalEnd = this.intervalStartDate
       .clone()
       .add(1, unit)
-      .get('ordinal')
-    const date = newDate.get('ordinal')
+      .valueOf()
+    const date = newDate.valueOf()
 
     const intervalDuration = intervalEnd - intervalStart
 

@@ -1,6 +1,4 @@
 import { dateAdapter, isoString, context } from './utilities'
-// for some reason the `@rschedule` moduleNameMapper isn't registering here, compiles fine though
-// @ts-ignore
 import {
   Calendar,
   OccurrencesArgs,
@@ -8,7 +6,6 @@ import {
   Schedule,
   CollectionsGranularity,
 } from '@rschedule/rschedule'
-// @ts-ignore
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
 function toISOStringsOCC(
@@ -17,7 +14,7 @@ function toISOStringsOCC(
 ) {
   return calendar
     .occurrences(args)
-    .toArray()
+    .toArray()!
     .map(occ => occ.toISOString())
 }
 
@@ -27,7 +24,7 @@ function toISOStringsCOL(
 ) {
   return calendar
     .collections(args)
-    .toArray()
+    .toArray()!
     .map(col =>
       // {start: col.periodStart.toISOString(), end: col.periodEnd.toISOString()},
       col.dates.map(date => date.toISOString())
@@ -236,7 +233,7 @@ describe('Calendar', () => {
   })
 
   describe('#collections()', () => {
-    context('INSTANTANIOUS', (granularity: CollectionsGranularity) => {
+    context('INSTANTANIOUSLY', (granularity: CollectionsGranularity) => {
       it('with a single schedule', () => {
         // YearlyByMonthAndMonthDay
         const schedule = new Schedule({

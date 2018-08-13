@@ -14,9 +14,7 @@ import {
   parseByHour,
   parseByDay,
   ruleOptionsToIcalString,
-  // @ts-ignore
 } from '@rschedule/rschedule'
-// @ts-ignore
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 import { test, datetime } from './utilities'
 
@@ -381,15 +379,15 @@ describe('parseICalStrings()', () => {
       ical => {
         expect(parseICalStrings([ical], StandardDateAdapter)).toEqual({
           rdates: [
-            new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30))),
-            new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30))),
+            new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30)), {timezone: 'UTC'}),
+            new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30)), {timezone: 'UTC'}),
           ],
-          exdates: [new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30)))],
+          exdates: [new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30)), {timezone: 'UTC'})],
           rrules: [
             {
               start: new StandardDateAdapter(datetime(1997, 9, 2, 9)),
               frequency: 'WEEKLY',
-              until: new StandardDateAdapter(new Date(Date.UTC(1997, 9, 7))),
+              until: new StandardDateAdapter(new Date(1997, 9, 6, 17)),
               weekStart: 'SU',
               byDayOfWeek: ['TU', 'TH'],
             },

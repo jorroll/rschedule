@@ -1,7 +1,5 @@
-import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime } from '@rschedule/rschedule';
-import moment from 'moment';
-import { WEEKDAYS } from './utilities';
-import { Moment } from 'moment-timezone';
+import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
+import moment from 'moment-timezone';
 
 /**
  * The `MomentTZDateAdapter` is for using with momentjs and it's optional
@@ -11,9 +9,24 @@ import { Moment } from 'moment-timezone';
  * use the `MomentDateAdapter`.
  */
 export class MomentTZDateAdapter
-  implements DateAdapter<MomentTZDateAdapter> {
-  public date: Moment
+  implements DateAdapter<MomentTZDateAdapter, moment.Moment> {
+  public date: moment.Moment
   public get timezone() { return this.date.tz() }
+  public set timezone(value) {
+    if (value)
+      this.date.tz(value)
+    else {
+      this.date = moment(this.date.valueOf())
+    }
+
+    if (this.date.tz() !== value) {
+      throw new DateAdapter.InvalidDateError(
+        `MomentTZDateAdapter provided invalid timezone "${value}".`
+      )
+    }
+  }
+
+  public get utcOffset() { return this.date.utcOffset() }
 
   /** The `Rule` which generated this `DateAdapter` */
   public rule: Rule<MomentTZDateAdapter> | undefined
@@ -22,8 +35,18 @@ export class MomentTZDateAdapter
   /** The `Calendar` which generated this `DateAdapter` */
   public calendar: Calendar<MomentTZDateAdapter> | undefined
 
-  constructor(date?: Moment, args: {} = {}) {
-    this.date = date ? date.clone() : moment()
+  constructor(date?: moment.Moment, args: {} = {}) {
+    if (moment.isMoment(date) && typeof date.tz === 'function') {
+      this.date = date.clone()
+    }
+    else if (date) {
+      throw new DateAdapter.InvalidDateError(
+        'The `MomentTZDateAdapter` constructor only accepts `moment()` dates ' +
+        'which have been created with "moment-timezone".'
+      )
+    }
+    else this.date = moment();
+    
     this.assertIsValid()
   }
 
@@ -68,7 +91,7 @@ export class MomentTZDateAdapter
   }
 
   isEqual<T extends DateAdapter<T>>(object?: T): boolean {
-    return !!object && object.toISOString() === this.toISOString()
+    return !!object && typeof object.toISOString === 'function' && object.toISOString() === this.toISOString()
   }
   isBefore(object: MomentTZDateAdapter): boolean {
     return this.date.valueOf() < object.date.valueOf()
@@ -89,7 +112,7 @@ export class MomentTZDateAdapter
         this.date.add(amount, 'year')
         break
       case 'month':
-        this.date.add(amount, 'month')
+        this.date.add(amount, 'months')
         break
       case 'week':
         this.date.add(amount, 'week')
@@ -163,9 +186,6 @@ export class MomentTZDateAdapter
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
-  get(unit: 'ordinal'): number
-  get(unit: 'tzoffset'): number
-  get(unit: 'timezone'): 'UTC' | undefined
   get(
     unit:
       | 'year'
@@ -177,9 +197,6 @@ export class MomentTZDateAdapter
       | 'minute'
       | 'second'
       | 'millisecond'
-      | 'ordinal'
-      | 'tzoffset'
-      | 'timezone'
   ) {
     switch (unit) {
       case 'year':
@@ -189,7 +206,7 @@ export class MomentTZDateAdapter
       case 'yearday':
         return this.date.get('dayOfYear')
       case 'weekday':
-        return WEEKDAYS[this.date.get('weekday')]
+        return Utils.WEEKDAYS[this.date.get('weekday')]
       case 'day':
         return this.date.get('date')
       case 'hour':
@@ -200,20 +217,12 @@ export class MomentTZDateAdapter
         return this.date.get('second')
       case 'millisecond':
         return this.date.get('millisecond')
-      case 'ordinal':
-        return this.date.valueOf()
-      case 'tzoffset':
-        return this.date.utcOffset() * 60
-      case 'timezone':
-        return this.timezone
       default:
         throw new Error('Invalid unit provided to `MomentTZDateAdapter#set`')
     }
   }
 
-  set(unit: DateAdapter.Unit, value: number): MomentTZDateAdapter
-  set(unit: 'timezone', value: 'UTC' | undefined): MomentTZDateAdapter
-  set(unit: DateAdapter.Unit | 'timezone', value: number | 'UTC' | undefined): MomentTZDateAdapter {
+  set(unit: DateAdapter.Unit, value: number): MomentTZDateAdapter {
     switch (unit) {
       case 'year':
         this.date.set('year', value as number)
@@ -222,7 +231,7 @@ export class MomentTZDateAdapter
         this.date.set('month', (value as number) - 1)
         break
       case 'day':
-        this.date.set('day', value as number)
+        this.date.set('date', value as number)
         break
       case 'hour':
         this.date.set('hour', value as number)
@@ -235,9 +244,6 @@ export class MomentTZDateAdapter
         break
       case 'millisecond':
         this.date.set('millisecond', value as number)
-        break
-      case 'timezone':
-        value ? this.date.tz(value as string) : moment(this.date.valueOf())
         break
       default:
         throw new Error('Invalid unit provided to `MomentTZDateAdapter#set`')
@@ -254,9 +260,14 @@ export class MomentTZDateAdapter
 
   toICal(utc?: boolean): string {
     if (utc || this.timezone === 'UTC')
-      return this.date.clone().tz('UTC').format('YYYYMMDDTHHMMSSZ')
-    else return this.date.format('YYYYMMDDTHHMMSSZ')
+      return this.date.clone().tz('UTC').format('YYYYMMDDTHHmmss[Z]')
+    else if (!this.timezone)
+      return this.date.format('YYYYMMDDTHHmmss')
+    else
+      return `TZID=${this.timezone}:${this.date.format('YYYYMMDDTHHmmss')}`
   }
+
+  valueOf() { return this.date.valueOf() }
 
   assertIsValid() {
     if (!this.date.isValid()) {

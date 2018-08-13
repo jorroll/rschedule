@@ -1,3 +1,3 @@
-# standard-date-adapter
+# moment-date-adapter
 
-An rSchedule DateAdapter for momentjs date objects.
+An rSchedule DateAdapter for "moment" date objects.

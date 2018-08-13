@@ -132,7 +132,7 @@ function selectNextUpcomingCacheObj<T extends DateAdapter<T>>(
 
   return cache.reduce((prev, curr) => {
     if (!curr.date) { return prev }
-    else if (curr.date.isBefore(prev.date!)) { return curr }
+    else if (curr.date.isBefore(prev.date as T)) { return curr }
     else { return prev }
   }, current)
 }

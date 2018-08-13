@@ -1,6 +1,6 @@
 import { ParsedDatetime } from "../ical/parser";
 
-export interface DateAdapter<T> {
+export interface DateAdapter<T, D=any> {
 
   /** The `Rule` which generated this `DateAdapter` */
   rule: any | undefined
@@ -10,6 +10,20 @@ export interface DateAdapter<T> {
   calendar: any | undefined
   /** Returns a duplicate of original DateAdapter */
   clone(): T
+
+  /** Returns the date object this DateAdapter is wrapping */
+  date: D
+
+  /**
+   * Returns the date's timezone
+   * 
+   * - if "UTC" then `"UTC"`
+   * - if local then `undefined`
+   */
+  timezone: string | undefined
+
+  // in minutes
+  utcOffset: number
 
   /** mutates original object */
   add(amount: number, unit: DateAdapter.Unit): T
@@ -26,16 +40,9 @@ export interface DateAdapter<T> {
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
-  get(unit: 'ordinal'): number // in milliseconds (equivalent to new Date().valueOf())
-  get(unit: 'tzoffset'): number // in seconds
-  // if "UTC" then `"UTC"`
-  // if local then `undefined`
-  // else if a specific timezone, formatted per the ICal spec (e.g. `"America/New_York"`)
-  get(unit: 'timezone'): string | undefined
 
   /** mutates original object */
   set(unit: DateAdapter.Unit, value: number): T
-  set(unit: 'timezone', value: string | undefined): T
 
   /** same format as new Date().toISOString() */
   toISOString(): string
@@ -44,16 +51,18 @@ export interface DateAdapter<T> {
   // if `utc` is true, must be formatted as UTC string
   toICal(utc?: boolean): string
 
+  // returns the underlying date ordinal. The value in milliseconds.
+  valueOf(): number
+
   isSameClass(object: any): object is T
 
-  // Compares to `DateAdapter` objects using `toISOString()`
+  // Compares to `DateAdapter` objects using `valueOf()`
   // to see if they are occuring at the same time.
-  isEqual<T extends DateAdapter<T>>(object?: T): boolean
-
-  isBefore(date: T): boolean
-  isBeforeOrEqual(date: T): boolean
-  isAfter(date: T): boolean
-  isAfterOrEqual(date: T): boolean
+  isEqual<O extends DateAdapter<O>>(object?: O): boolean  
+  isBefore<O extends DateAdapter<O>>(date: O): boolean
+  isBeforeOrEqual<O extends DateAdapter<O>>(date: O): boolean
+  isAfter<O extends DateAdapter<O>>(date: O): boolean
+  isAfterOrEqual<O extends DateAdapter<O>>(date: O): boolean
 
   /**
    * If the DateAdapter object is valid, returns `true`.
@@ -71,7 +80,7 @@ export type DateAdapterConstructor<T extends Constructor> = new (
 ) => DateAdapter<InstanceType<T>>
 
 export interface IDateAdapterConstructor<T extends Constructor> {
-  new (n: any): InstanceType<T>
+  new (date?: any, options?: any): InstanceType<T>
   isInstance(object: any): object is InstanceType<T>
   fromTimeObject(args: {
     datetimes: ParsedDatetime[]

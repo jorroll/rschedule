@@ -2,7 +2,7 @@ import { DateAdapter } from './date-adapter'
 import { Options } from './rule'
 
 export namespace Utils {
-  export const weekdays: DateAdapter.Weekday[] = [
+  export const WEEKDAYS: DateAdapter.Weekday[] = [
     'SU',
     'MO',
     'TU',
@@ -29,7 +29,7 @@ export namespace Utils {
   export function orderedWeekdays<T extends DateAdapter<T>>(
     wkst: DateAdapter.Weekday = 'SU'
   ) {
-    const wkdays = weekdays.slice()
+    const wkdays = WEEKDAYS.slice()
     let index = wkdays.indexOf(wkst)
 
     while (index !== 0) {
@@ -101,6 +101,29 @@ export namespace Utils {
 
   export function getDaysInYear(year: number) {
     return isLeapYear(year) ? 366 : 365
+  }
+
+  /**
+   * Given year, month, and day, returns the day of the year.
+   * Month is base 1.
+   */
+  export function getYearDay(year: number, month: number, day: number) {
+    // let days = day
+
+    // let i = 1
+    // while (i <= month - 1) {
+    //   days += getDaysInMonth(i, year)
+
+    //   i++
+    // }
+
+    const start = new Date(year,0,1).valueOf()
+
+    const end = new Date(year,month-1,day).valueOf()
+
+    const days = Math.ceil((end - start) / MILLISECONDS_IN_DAY) + 1
+
+    return days
   }
 
   export function setDateToStartOfYear<T extends DateAdapter<T>>(date: T) {

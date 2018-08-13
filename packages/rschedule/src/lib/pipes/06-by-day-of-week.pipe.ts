@@ -216,7 +216,9 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
   }
 
   public simpleFilter(args: IPipeRunFn<T>) {
-    const validWeekdays = Utils.orderedWeekdays(this.options.weekStart).filter(
+    const weekdays = Utils.orderedWeekdays(this.options.weekStart)
+
+    const validWeekdays = weekdays.filter(
       day => (this.options.byDayOfWeek as DateAdapter.Weekday[]).includes(day)
     )
 
@@ -229,8 +231,8 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     //
     // - We know the current `options.frequency` is not yearly or monthly or weekly
 
-    const upcomingWeekdays = Utils.weekdays.slice(
-      Utils.weekdays.indexOf(args.date.get('weekday'))
+    const upcomingWeekdays = weekdays.slice(
+      weekdays.indexOf(args.date.get('weekday'))
     )
     const validUpcomingWeekday = validWeekdays.filter(day =>
       upcomingWeekdays.includes(day)
@@ -260,7 +262,7 @@ function differenceInDaysBetweenTwoWeekdays(
   a: DateAdapter.Weekday,
   b: DateAdapter.Weekday
 ) {
-  const result = Utils.weekdays.indexOf(a) - Utils.weekdays.indexOf(b)
+  const result = Utils.WEEKDAYS.indexOf(a) - Utils.WEEKDAYS.indexOf(b)
 
   return result > 0 ? 7 - result : Math.abs(result)
 }

@@ -1,7 +1,5 @@
-// @ts-ignore
 import { Schedule, OccurrencesArgs } from '@rschedule/rschedule'
 import { dateAdapter, isoString } from './utilities'
-// @ts-ignore
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
 function toISOStrings(
@@ -10,7 +8,7 @@ function toISOStrings(
 ) {
   return schedule
     .occurrences(args)
-    .toArray()
+    .toArray()!
     .map(occ => occ.toISOString())
 }
 

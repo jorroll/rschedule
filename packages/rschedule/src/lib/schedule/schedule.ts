@@ -213,7 +213,7 @@ function getNextIteratorCacheObj<T extends DateAdapter<T>>(
     // select the next upcoming cache object from the cache
     next = cache.reduce((prev, curr) => {
       if (!getNextDateThatIsNotInExdates(curr, exdates)) { return prev }
-      else if (curr.date!.isBefore(prev.date!)) { return curr }
+      else if (curr.date!.isBefore(prev.date as T)) { return curr }
       else if (curr.date!.isEqual(prev.date)) {
         curr.date = curr.iterator.next().value
         // ^ curr.date could be undefined, so need to remember

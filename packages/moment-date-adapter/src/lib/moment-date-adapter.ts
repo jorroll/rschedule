@@ -1,6 +1,5 @@
-import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime } from '@rschedule/rschedule';
+import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
 import moment from 'moment';
-import { WEEKDAYS } from './utilities';
 
 /**
  * The `MomentDateAdapter` is for using with momentjs *without* the
@@ -12,9 +11,22 @@ import { WEEKDAYS } from './utilities';
  * `MomentTZDateAdapter`.
  */
 export class MomentDateAdapter
-implements DateAdapter<MomentDateAdapter> {
+implements DateAdapter<MomentDateAdapter, moment.Moment> {
   public date: moment.Moment
-  public timezone: 'UTC' | 'DATE' | undefined
+  
+  public get timezone(): 'UTC' | undefined {
+    return this.utcOffset === 0 ? 'UTC' : undefined
+  }
+  public set timezone(value: 'UTC' | undefined) {
+    if (['UTC', undefined].includes(value))
+      value === 'UTC' ? this.date.utc() : this.date.local()
+    else
+      throw new DateAdapter.InvalidDateError(
+        `MomentDateAdapter does not support "${value}" timezone.`
+      )
+  }
+
+  public get utcOffset() { return this.date.utcOffset() }
 
   /** The `Rule` which generated this `DateAdapter` */
   public rule: Rule<MomentDateAdapter> | undefined
@@ -24,7 +36,16 @@ implements DateAdapter<MomentDateAdapter> {
   public calendar: Calendar<MomentDateAdapter> | undefined
   
   constructor(date?: moment.Moment, args: {} = {}) {
-    this.date = date ? date.clone() : moment()
+    if (moment.isMoment(date)) {
+      this.date = date.clone()
+    }
+    else if (date) {
+      throw new DateAdapter.InvalidDateError(
+        'The `MomentDateAdapter` constructor only accepts `moment()` dates.'
+      )
+    }
+    else this.date = moment();
+    
     this.assertIsValid()
   }
 
@@ -68,20 +89,20 @@ implements DateAdapter<MomentDateAdapter> {
     return MomentDateAdapter.isInstance(object)
   }
 
-  isEqual<T extends DateAdapter<T>>(object?: T): boolean {
-    return !!object && object.toISOString() === this.toISOString()
+  isEqual<O extends DateAdapter<O>>(object?: O): boolean {
+    return !!object && typeof object.toISOString === 'function' && object.toISOString() === this.toISOString()
   }
-  isBefore(object: MomentDateAdapter): boolean {
-    return this.date.valueOf() < object.date.valueOf()
+  isBefore<O extends DateAdapter<O>>(object: O): boolean {
+    return this.valueOf() < object.valueOf()
   }
-  isBeforeOrEqual(object: MomentDateAdapter): boolean {
-    return this.date.valueOf() <= object.date.valueOf()
+  isBeforeOrEqual<O extends DateAdapter<O>>(object: O): boolean {
+    return this.valueOf() <= object.valueOf()
   }
-  isAfter(object: MomentDateAdapter): boolean {
-    return this.date.valueOf() > object.date.valueOf()
+  isAfter<O extends DateAdapter<O>>(object: O): boolean {
+    return this.valueOf() > object.valueOf()
   }
-  isAfterOrEqual(object: MomentDateAdapter): boolean {
-    return this.date.valueOf() >= object.date.valueOf()
+  isAfterOrEqual<O extends DateAdapter<O>>(object: O): boolean {
+    return this.valueOf() >= object.valueOf()
   }
 
   add(amount: number, unit: DateAdapter.Unit): MomentDateAdapter {
@@ -164,9 +185,6 @@ implements DateAdapter<MomentDateAdapter> {
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
-  get(unit: 'ordinal'): number
-  get(unit: 'tzoffset'): number
-  get(unit: 'timezone'): 'UTC' | undefined
   get(
     unit:
       | 'year'
@@ -178,9 +196,6 @@ implements DateAdapter<MomentDateAdapter> {
       | 'minute'
       | 'second'
       | 'millisecond'
-      | 'ordinal'
-      | 'tzoffset'
-      | 'timezone'
   ) {
     switch (unit) {
       case 'year':
@@ -190,7 +205,7 @@ implements DateAdapter<MomentDateAdapter> {
       case 'yearday':
         return this.date.get('dayOfYear')
       case 'weekday':
-        return WEEKDAYS[this.date.get('weekday')]
+        return Utils.WEEKDAYS[this.date.get('weekday')]
       case 'day':
         return this.date.get('date')
       case 'hour':
@@ -201,20 +216,12 @@ implements DateAdapter<MomentDateAdapter> {
         return this.date.get('second')
       case 'millisecond':
         return this.date.get('millisecond')
-      case 'ordinal':
-        return this.date.valueOf()
-      case 'tzoffset':
-        return this.date.utcOffset() * 60
-      case 'timezone':
-        return this.timezone
       default:
         throw new Error('Invalid unit provided to `MomentDateAdapter#set`')
     }
   }
 
-  set(unit: DateAdapter.Unit, value: number): MomentDateAdapter
-  set(unit: 'timezone', value: 'UTC' | undefined): MomentDateAdapter
-  set(unit: DateAdapter.Unit | 'timezone', value: number | 'UTC' | undefined): MomentDateAdapter {
+  set(unit: DateAdapter.Unit, value: number): MomentDateAdapter {
     switch (unit) {
       case 'year':
         this.date.set('year', value as number)
@@ -223,7 +230,7 @@ implements DateAdapter<MomentDateAdapter> {
         this.date.set('month', (value as number) - 1)
         break
       case 'day':
-        this.date.set('day', value as number)
+        this.date.set('date', value as number)
         break
       case 'hour':
         this.date.set('hour', value as number)
@@ -236,10 +243,6 @@ implements DateAdapter<MomentDateAdapter> {
         break
       case 'millisecond':
         this.date.set('millisecond', value as number)
-        break
-      case 'timezone':
-        this.date = value === 'UTC' ? moment.utc(this.date) : moment(this.date)
-        this.timezone = value as 'UTC' | 'DATE' | undefined
         break
       default:
         throw new Error('Invalid unit provided to `MomentDateAdapter#set`')
@@ -256,9 +259,13 @@ implements DateAdapter<MomentDateAdapter> {
 
   toICal(utc?: boolean): string {
     if (utc || this.timezone === 'UTC')
-      return moment.utc(this.date).format('YYYYMMDDTHHMMSSZ')
-    else return this.date.format('YYYYMMDDTHHMMSSZ')
+      return moment.utc(this.date).format('YYYYMMDDTHHMMSS[Z]')
+    else if (this.timezone === undefined)
+      return this.date.format('YYYYMMDDTHHMMSS')
+    else return this.date.format(`[TZID=${this.date.tz()}]:YYYYMMDDTHHMMSS`)
   }
+
+  valueOf() { return this.date.valueOf() }
 
   assertIsValid() {
     if (!this.date.isValid()) {

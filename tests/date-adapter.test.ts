@@ -1,0 +1,712 @@
+import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
+import { MomentDateAdapter, MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
+import { DateAdapter as IDateAdapter, IDateAdapterConstructor, RRule, Schedule, Calendar } from '@rschedule/rschedule';
+import { Moment as MomentST } from 'moment';
+var momentST = require('moment');
+import { Moment as MomentTZ } from 'moment-timezone';
+var momentTZ = require('moment-timezone');
+
+import { context } from './utilities';
+
+type DatetimeFn<R> = {
+  (): R;
+  (a: number): R;
+  (a: number, b: number): R;
+  (a: number, b: number, c: number): R;
+  (a: number, b: number, c: number, d: number): R;
+  (a: number, b: number, c: number, d: number, e: number): R;
+  (a: number, b: number, c: number, d: number, e: number, f: number): R;
+  (a: number, b: number, c: number, d: number, e: number, f: number, g: number): R;
+  (a: number, b: number, c: number, d: number, e: number, f: number, g: number, timezone: string): R;
+}
+
+// This function allows me to test different `DateAdapter` classes with the 
+// same test suite
+function environment<T extends new (args?: any) => InstanceType<T>>(
+  object: T,
+  datetime: DatetimeFn<any>,
+  supportsTimezones: boolean,
+  fn: (object: T, datetime: DatetimeFn<any>, supportsTimezones: boolean) => any
+) {
+  describe(object.name, () => fn(object, datetime, supportsTimezones))
+}
+
+function standardDatetimeFn(...args: (number|string)[]) {
+  if (args.length === 0) return new Date();
+  else if (args.length > 1) args[1] = (args[1] as number) - 1;
+
+  if (args.length === 8){
+    return args.pop() === 'UTC'
+      // @ts-ignore
+      ? new Date(Date.UTC(...args))
+      // @ts-ignore
+      : new Date(...args);
+  }
+  else {
+    // @ts-ignore
+    return new Date(...args)
+  }
+}
+
+function momentDatetimeFn(...args: (number|string)[]) {
+  if (args.length === 0) return momentST();
+  else if (args.length > 1) args[1] = (args[1] as number) - 1;
+
+  if (args.length === 8) {
+    return args.pop() === 'UTC'
+      ? momentST.utc(args)
+      : momentST(args);
+  }
+  else {
+    return momentST(args)
+  }
+}
+
+function momentTZDatetimeFn(...args: (number|string)[]) {
+  if (args.length === 0) return momentTZ();
+  else if (args.length > 1) args[1] = (args[1] as number) - 1;
+
+  if (args.length === 8){
+    const timezone = args.pop() as string
+
+    return momentTZ.tz(args, timezone)
+  }
+  else {
+    return momentTZ(args)
+  }
+}
+
+/**
+ * ### DateAdapter tests
+ * 
+ * Run the generic `DateAdapter` test suite for each date adapter class.
+ * The specific xxxx-date-adapter tests are for testing functionality
+ * specific to that date adapter.
+ */
+
+const DATE_ADAPTERS = [
+  [StandardDateAdapter, standardDatetimeFn, false],
+  [MomentDateAdapter, momentDatetimeFn, false],
+  [MomentTZDateAdapter, momentTZDatetimeFn, true],
+] as [
+  [typeof StandardDateAdapter, DatetimeFn<Date>, false],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>, false],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
+]
+
+DATE_ADAPTERS.forEach(dateAdapterSet => {
+
+const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet
+
+environment(
+  DateAdapter, 
+  datetime, 
+  supportsTimezones, 
+  (DateAdapter: IDateAdapterConstructor<any>, datetime, supportsTimezones: boolean) => {
+
+  // function to create new dateAdapter instances
+  const dateAdapter: DatetimeFn<IDateAdapter<any>> = 
+    (...args: (number|string)[]) => {
+      if (args.length === 8) {
+        const timezone = args[7]
+        // @ts-ignore
+        return new DateAdapter(datetime(...args), {timezone});
+      }
+      else {
+        // @ts-ignore
+        return new DateAdapter(datetime(...args));
+      }
+    }
+
+  // function to get the given time array as an ISO string
+  const isoString: DatetimeFn<string> = (...args: (number|string)[]) => 
+    // @ts-ignore
+    dateAdapter(...args).toISOString()
+
+  describe(`${DateAdapter.name}Class`, () => {
+    it('is instantiable', () => {
+      expect(new DateAdapter()).toBeInstanceOf(DateAdapter)
+  
+      const date = datetime(1970, 1, 1)
+  
+      expect(new DateAdapter(date).date === date).toBeFalsy()
+    })
+  
+    it('#isInstance()', () => {
+      expect(DateAdapter.isInstance(1)).toBeFalsy()
+      expect(DateAdapter.isInstance('1')).toBeFalsy()
+      expect(DateAdapter.isInstance({})).toBeFalsy()
+      expect(DateAdapter.isInstance(DateAdapter)).toBeFalsy()
+      expect(DateAdapter.isInstance(new Date())).toBeFalsy()
+      expect(DateAdapter.isInstance(new DateAdapter())).toBeTruthy()
+    })
+  })
+
+  describe('local', () => {
+    let adapter: IDateAdapter<any>
+
+    beforeEach(() => {
+      adapter = dateAdapter(1970, 1, 1, 1, 1, 1)
+    })
+
+    it('#isSameClass()', () => {
+      expect(adapter.isSameClass(new DateAdapter())).toBeTruthy()
+      expect(adapter.isSameClass(new Date())).toBeFalsy()
+      expect(adapter.isSameClass(1)).toBeFalsy()
+      expect(adapter.isSameClass({})).toBeFalsy()
+    })
+
+    it('#isEqual()', () => {
+      expect(adapter.isEqual(adapter)).toBeTruthy()
+      expect(adapter.isEqual(new DateAdapter(adapter.date))).toBeTruthy()
+      expect(adapter.isEqual(new DateAdapter())).toBeFalsy()
+      expect(adapter.isEqual(1 as any)).toBeFalsy()
+      expect(adapter.isEqual(new Date() as any)).toBeFalsy()
+    })
+
+    it('#isBefore()', () => {
+      expect(adapter.isBefore(adapter)).toBeFalsy()
+      expect(adapter.isBefore(dateAdapter(1969, 1, 1))).toBeFalsy()
+      expect(adapter.isBefore(dateAdapter(1971, 1, 1))).toBeTruthy()
+      expect(adapter.isBefore(new DateAdapter())).toBeTruthy()
+    })
+
+    it('#isBeforeOrEqual()', () => {
+      expect(adapter.isBeforeOrEqual(adapter)).toBeTruthy()
+      expect(adapter.isBeforeOrEqual(dateAdapter(1969, 1, 1))).toBeFalsy()
+      expect(adapter.isBeforeOrEqual(dateAdapter(1971, 1, 1))).toBeTruthy()
+      expect(adapter.isBeforeOrEqual(new DateAdapter())).toBeTruthy()
+    })
+
+    it('#isAfter()', () => {
+      expect(adapter.isAfter(adapter)).toBeFalsy()
+      expect(adapter.isAfter(dateAdapter(1969, 1, 1))).toBeTruthy()
+      expect(adapter.isAfter(dateAdapter(1971, 1, 1))).toBeFalsy()
+      expect(adapter.isAfter(new DateAdapter())).toBeFalsy()
+    })
+
+    it('#isAfterOrEqual()', () => {
+      expect(adapter.isAfterOrEqual(adapter)).toBeTruthy()
+      expect(adapter.isAfterOrEqual(dateAdapter(1969, 1, 1))).toBeTruthy()
+      expect(adapter.isAfterOrEqual(dateAdapter(1971, 1, 1))).toBeFalsy()
+      expect(adapter.isAfterOrEqual(new DateAdapter())).toBeFalsy()
+    })
+
+    it('#toISOString()', () => {
+      expect(adapter.toISOString()).toMatch(
+        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z/
+      )
+    })
+
+    it('#toICal()', () => {
+      expect(adapter.toICal()).toMatch(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)
+      expect(adapter.toICal(true)).toMatch(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/)
+    })
+
+    it('#clone()', () => {
+      expect(adapter.clone()).toBeInstanceOf(DateAdapter)
+      expect(adapter.clone() === adapter).toBeFalsy()
+      expect(adapter.clone() == adapter).toBeFalsy()
+      expect(adapter.clone().date === adapter.date).toBeFalsy()
+      expect(adapter.clone().date == adapter.date).toBeFalsy()
+      expect(adapter.clone().toISOString() === adapter.toISOString()).toBeTruthy()
+      const date = datetime(1984, 5, 5, 2, 1, 4)
+      expect(
+        new DateAdapter(date).clone().isEqual(new DateAdapter(date))
+      ).toBeTruthy()
+    })
+
+    it('#assertIsValid()', () => {
+      expect(() => dateAdapter('apple' as any)).toThrowError('DateAdapter has invalid date')
+
+      expect(() => {
+        adapter.date = datetime('apple' as any)
+        adapter.assertIsValid()
+      }).toThrowError('DateAdapter has invalid date')
+    })
+
+    it('#rule', () => {
+      const rule = new RRule({
+        start: adapter,
+        frequency: 'DAILY'
+      })
+
+      adapter.rule = rule
+      
+      expect(adapter.rule).toBeInstanceOf(RRule)
+      expect(adapter.rule).toBe(rule)
+    })
+
+    it('#schedule', () => {
+      const schedule = new Schedule()
+
+      adapter.schedule = schedule
+      
+      expect(adapter.schedule).toBeInstanceOf(Schedule)
+      expect(adapter.schedule).toBe(schedule)
+    })
+
+    it('#calendar', () => {
+      const calendar = new Calendar()
+
+      adapter.calendar = calendar
+      
+      expect(adapter.calendar).toBeInstanceOf(Calendar)
+      expect(adapter.calendar).toBe(calendar)
+    })
+
+    describe('#add()', () => {
+      let newAdapter: IDateAdapter<any>
+
+      beforeEach(() => {
+        newAdapter = adapter.clone()
+      })
+
+      afterEach(() => {
+        expect(newAdapter.toISOString()).not.toBe(adapter.toISOString())
+      })
+
+      describe('year', () => {
+        it('1', () =>
+          expect(newAdapter.add(1, 'year').toISOString()).toBe(isoString(1971, 1, 1, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.add(13, 'year').toISOString()).toBe(isoString(1983, 1, 1, 1, 1, 1)))
+      })
+
+      describe('month', () => {
+        it('1', () =>
+          expect(newAdapter.add(1, 'month').toISOString()).toBe(isoString(1970, 2, 1, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.add(13, 'month').toISOString()).toBe(isoString(1971, 2, 1, 1, 1, 1)))
+      })
+
+      describe('week', () => {
+        it('1', () =>
+          expect(newAdapter.add(1, 'week').toISOString()).toBe(isoString(1970, 1, 8, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.add(13, 'week').toISOString()).toBe(isoString(1970, 4, 2, 1, 1, 1)))
+      })
+
+      describe('day', () => {
+        it('1', () =>
+          expect(newAdapter.add(1, 'day').toISOString()).toBe(isoString(1970, 1, 2, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.add(13, 'day').toISOString()).toBe(isoString(1970, 1, 14, 1, 1, 1)))
+      })
+
+      describe('hour', () => {
+        it('1', () =>
+          expect(newAdapter.add(1, 'hour').toISOString()).toBe(isoString(1970, 1, 1, 2, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.add(13, 'hour').toISOString()).toBe(isoString(1970, 1, 1, 14, 1, 1)))
+      })
+
+      describe('minute', () => {
+        it('1', () =>
+          expect(newAdapter.add(1, 'minute').toISOString()).toBe(isoString(1970, 1, 1, 1, 2, 1)))
+        it('13', () =>
+          expect(newAdapter.add(13, 'minute').toISOString()).toBe(isoString(1970, 1, 1, 1, 14, 1)))
+      })
+
+      describe('second', () => {
+        it('1', () =>
+          expect(newAdapter.add(1, 'second').toISOString()).toBe(isoString(1970, 1, 1, 1, 1, 2)))
+        it('13', () =>
+          expect(newAdapter.add(13, 'second').toISOString()).toBe(isoString(1970, 1, 1, 1, 1, 14)))
+      })
+    })
+
+    describe('#subtract()', () => {
+      let newAdapter: IDateAdapter<any>
+
+      beforeEach(() => {
+        newAdapter = adapter.clone()
+      })
+
+      afterEach(() => {
+        expect(newAdapter.toISOString()).not.toBe(adapter.toISOString())
+      })
+
+      describe('year', () => {
+        it('1', () =>
+          expect(newAdapter.subtract(1, 'year').toISOString()).toBe(isoString(1969, 1, 1, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.subtract(13, 'year').toISOString()).toBe(isoString(1957, 1, 1, 1, 1, 1)))
+      })
+
+      describe('month', () => {
+        it('1', () =>
+          expect(newAdapter.subtract(1, 'month').toISOString()).toBe(isoString(1969, 12, 1, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.subtract(13, 'month').toISOString()).toBe(
+            isoString(1968, 12, 1, 1, 1, 1)
+          ))
+      })
+
+      describe('week', () => {
+        it('1', () =>
+          expect(newAdapter.subtract(1, 'week').toISOString()).toBe(isoString(1969, 12, 25, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.subtract(13, 'week').toISOString()).toBe(isoString(1969, 10, 2, 1, 1, 1)))
+      })
+
+      describe('day', () => {
+        it('1', () =>
+          expect(newAdapter.subtract(1, 'day').toISOString()).toBe(isoString(1969, 12, 31, 1, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.subtract(13, 'day').toISOString()).toBe(isoString(1969, 12, 19, 1, 1, 1)))
+      })
+
+      describe('hour', () => {
+        it('1', () =>
+          expect(newAdapter.subtract(1, 'hour').toISOString()).toBe(isoString(1970, 1, 1, 0, 1, 1)))
+        it('13', () =>
+          expect(newAdapter.subtract(13, 'hour').toISOString()).toBe(
+            isoString(1969, 12, 31, 12, 1, 1)
+          ))
+      })
+
+      describe('minute', () => {
+        it('1', () =>
+          expect(newAdapter.subtract(1, 'minute').toISOString()).toBe(isoString(1970, 1, 1, 1, 0, 1)))
+        it('13', () =>
+          expect(newAdapter.subtract(13, 'minute').toISOString()).toBe(
+            isoString(1970, 1, 1, 0, 48, 1)
+          ))
+      })
+
+      describe('second', () => {
+        it('1', () =>
+          expect(newAdapter.subtract(1, 'second').toISOString()).toBe(isoString(1970, 1, 1, 1, 1, 0)))
+        it('13', () =>
+          expect(newAdapter.subtract(13, 'second').toISOString()).toBe(
+            isoString(1970, 1, 1, 1, 0, 48)
+          ))
+      })
+    })
+
+    describe('#get()', () => {
+      it('year', () => expect(adapter.get('year')).toBe(1970))
+
+      it('month', () => expect(adapter.get('month')).toBe(1))
+
+      it('yearday', () => expect(adapter.get('yearday')).toBe(1))
+
+      it('weekday', () => expect(adapter.get('weekday')).toBe('TH'))
+
+      it('day', () => expect(adapter.get('day')).toBe(1))
+
+      it('hour', () => expect(adapter.get('hour')).toBe(1))
+
+      it('minute', () => expect(adapter.get('minute')).toBe(1))
+
+      it('second', () => expect(adapter.get('second')).toBe(1))
+
+      it('ordinal', () => expect(adapter.valueOf()).toBe(32461000))
+
+      // I can't think of a generic way to test TZ offset for all DateAdapters
+      it.skip('tzoffset', () => {
+        const offset = adapter.date.getTimezoneOffset()
+
+        expect(adapter.utcOffset).toBe(offset)
+      })
+
+      it('timezone', () => expect(adapter.timezone).toBe(undefined))
+    })
+
+    describe('#set()', () => {
+      it('year', () =>
+        expect(adapter.set('year', 2000).toISOString()).toBe(isoString(2000, 1, 1, 1, 1, 1)))
+
+      it('month', () =>
+        expect(adapter.set('month', 5).toISOString()).toBe(isoString(1970, 5, 1, 1, 1, 1)))
+
+      it('day', () =>
+        expect(adapter.set('day', 20).toISOString()).toBe(isoString(1970, 1, 20, 1, 1, 1)))
+
+      it('hour', () =>
+        expect(adapter.set('hour', 3).toISOString()).toBe(isoString(1970, 1, 1, 3, 1, 1)))
+
+      it('minute', () =>
+        expect(adapter.set('minute', 4).toISOString()).toBe(isoString(1970, 1, 1, 1, 4, 1)))
+
+      it('second', () =>
+        expect(adapter.set('second', 5).toISOString()).toBe(isoString(1970, 1, 1, 1, 1, 5)))
+
+      it('timezone', () => {
+        adapter.timezone = 'UTC'
+        expect(adapter.toISOString()).toBe(isoString(1970, 1, 1, 1, 1, 1))
+        expect(adapter.timezone).toBe('UTC')
+      })
+    })
+  })
+
+  describe('UTC', () => {
+    let localAdapter: IDateAdapter<any>
+    let utcAdapter: IDateAdapter<any>
+
+    beforeEach(() => {
+      localAdapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0)
+      utcAdapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0, 'UTC')
+    })
+
+    afterEach(() => {
+      expect(localAdapter.timezone === undefined)
+      expect(utcAdapter.timezone === 'UTC')
+    })
+
+    describe('#get()', () => {
+      it('year', () => expect(utcAdapter.get('year')).toBe(2000))
+
+      it('month', () => expect(utcAdapter.get('month')).toBe(1))
+
+      it('yearday', () => expect(utcAdapter.get('yearday')).toBe(2))
+
+      it('weekday', () => expect(utcAdapter.get('weekday')).toBe('SU'))
+
+      it('day', () => expect(utcAdapter.get('day')).toBe(2))
+
+      it('hour', () => expect(utcAdapter.get('hour')).toBe(3))
+
+      it('minute', () => expect(utcAdapter.get('minute')).toBe(4))
+
+      it('second', () => expect(utcAdapter.get('second')).toBe(5))
+
+      it('ordinal', () => expect(utcAdapter.valueOf()).toBe(946782245000))
+
+      it('tzoffset', () => expect(utcAdapter.utcOffset).toBe(0))
+
+      it('timezone', () => expect(utcAdapter.timezone).toBe('UTC'))
+    })
+
+    describe('#set()', () => {
+      it('year', () => {
+        expect(utcAdapter.set('year', 2001).toISOString()).toBe(isoString(2001, 1, 2, 3, 4, 5, 0, 'UTC'))
+        expect(utcAdapter.set('year', 2001).toISOString()).not.toBe(isoString(2001, 1, 2, 3, 4, 5, 0))
+        expect(utcAdapter.set('year', 2001).toISOString()).not.toBe(localAdapter.set('year', 2001).toISOString())
+      })
+
+      it('month', () => {
+        expect(utcAdapter.set('month', 3).toISOString()).toBe(isoString(2000, 3, 2, 3, 4, 5, 0, 'UTC'))
+        expect(utcAdapter.set('month', 3).toISOString()).not.toBe(isoString(2000, 3, 2, 3, 4, 5, 0))
+        expect(utcAdapter.set('month', 3).toISOString()).not.toBe(localAdapter.set('month', 3).toISOString())
+      })
+
+      it('day', () => {
+        expect(utcAdapter.set('day', 3).toISOString()).toBe(isoString(2000, 1, 3, 3, 4, 5, 0, 'UTC'))
+        expect(utcAdapter.set('day', 3).toISOString()).not.toBe(isoString(2000, 1, 3, 3, 4, 5, 0))
+        expect(utcAdapter.set('day', 3).toISOString()).not.toBe(localAdapter.set('day', 3).toISOString())
+      })
+
+      it('hour', () => {
+        expect(utcAdapter.set('hour', 4).toISOString()).toBe(isoString(2000, 1, 2, 4, 4, 5, 0, 'UTC'))
+        expect(utcAdapter.set('hour', 4).toISOString()).not.toBe(isoString(2000, 1, 2, 4, 4, 5, 0))
+        expect(utcAdapter.set('hour', 4).toISOString()).not.toBe(localAdapter.set('hour', 4).toISOString())
+      })
+
+      it('minute', () => {
+        expect(utcAdapter.set('minute', 5).toISOString()).toBe(isoString(2000, 1, 2, 3, 5, 5, 0, 'UTC'))
+        expect(utcAdapter.set('minute', 5).toISOString()).not.toBe(isoString(2000, 1, 2, 3, 5, 5, 0))
+        expect(utcAdapter.set('minute', 5).toISOString()).not.toBe(localAdapter.set('minute', 5).toISOString())
+      })
+
+      it('second', () => {
+        expect(utcAdapter.set('second', 6).toISOString()).toBe(isoString(2000, 1, 2, 3, 4, 6, 0, 'UTC'))
+        expect(utcAdapter.set('second', 6).toISOString()).not.toBe(isoString(2000, 1, 2, 3, 4, 6, 0))
+        expect(utcAdapter.set('second', 6).toISOString()).not.toBe(localAdapter.set('second', 6).toISOString())
+      })
+
+      it('millisecond', () => {
+        expect(utcAdapter.set('millisecond', 10).toISOString()).toBe(isoString(2000, 1, 2, 3, 4, 5, 10, 'UTC'))
+        expect(utcAdapter.set('millisecond', 10).toISOString()).not.toBe(isoString(2000, 1, 2, 3, 4, 5, 10))
+        expect(utcAdapter.set('millisecond', 10).toISOString()).not.toBe(localAdapter.set('millisecond', 10).toISOString())
+      })
+
+      it('timezone', () => {
+        utcAdapter.timezone = undefined
+        expect(utcAdapter.toISOString()).toBe(
+          isoString(2000,1,2,3,4,5,0, 'UTC')
+        )
+        expect(utcAdapter.timezone).toBe(undefined)
+
+        // reset to pass `afterAll()` tests
+        utcAdapter.timezone = 'UTC'
+      })
+    })
+  })
+
+  if (supportsTimezones) {
+    /** 
+     * Test handling of valid timezones
+     */
+    [
+      "Africa/Johannesburg",
+      "America/Los_Angeles",
+      "America/Chicago",
+      "America/New_York",
+      "America/Santiago",
+      "Europe/Athens",
+      "Europe/London",
+      "Asia/Shanghai",
+      "Asia/Singapore",
+      "Australia/Melbourne",
+    ].forEach(zone => {
+      context(zone, (zone) => {
+        let localAdapter: IDateAdapter<any>
+        let zoneAdapter: IDateAdapter<any>
+    
+        beforeEach(() => {
+          localAdapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0)
+          zoneAdapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0, zone)
+        })
+  
+        describe('#get()', () => {
+          it('year', () => expect(zoneAdapter.get('year')).toBe(2000))
+    
+          it('month', () => expect(zoneAdapter.get('month')).toBe(1))
+    
+          it('yearday', () => expect(zoneAdapter.get('yearday')).toBe(2))
+    
+          it('weekday', () => expect(zoneAdapter.get('weekday')).toBe('SU'))
+    
+          it('day', () => expect(zoneAdapter.get('day')).toBe(2))
+    
+          it('hour', () => expect(zoneAdapter.get('hour')).toBe(3))
+    
+          it('minute', () => expect(zoneAdapter.get('minute')).toBe(4))
+    
+          it('second', () => expect(zoneAdapter.get('second')).toBe(5))
+    
+          // don't have a good way of getting the real ordinal value to test against
+          it.skip('ordinal', () => expect(zoneAdapter.valueOf()).toBe(946782245000))
+    
+          // don't have a good way of testing the offset as it will change by DST
+          it.skip('tzoffset', () => expect(zoneAdapter.utcOffset).toBe(0))
+    
+          it('timezone', () => expect(zoneAdapter.timezone).toBe(zone))
+        })
+  
+        describe('#set()', () => {
+          it('year', () => {
+            expect(zoneAdapter.set('year', 2001).toISOString()).toBe(isoString(2001, 1, 2, 3, 4, 5, 0, zone))
+
+            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+              expect(zoneAdapter.toISOString()).not.toBe(isoString(2001, 1, 2, 3, 4, 5, 0))
+              expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('year', 2001).toISOString())
+            }
+          })
+    
+          it('month', () => {
+            expect(zoneAdapter.set('month', 3).toISOString()).toBe(isoString(2000, 3, 2, 3, 4, 5, 0, zone))
+
+            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+              expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 3, 2, 3, 4, 5, 0))
+              expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('month', 3).toISOString())
+            }
+          })
+    
+          it('day', () => {
+            expect(zoneAdapter.set('day', 3).toISOString()).toBe(isoString(2000, 1, 3, 3, 4, 5, 0, zone))
+
+            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+              expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 3, 3, 4, 5, 0))
+              expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('day', 3).toISOString())
+            }
+          })
+    
+          it('hour', () => {
+            expect(zoneAdapter.set('hour', 4).toISOString()).toBe(isoString(2000, 1, 2, 4, 4, 5, 0, zone))
+
+            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+              expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 4, 4, 5, 0))
+              expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('hour', 4).toISOString())
+            }
+          })
+    
+          it('minute', () => {
+            expect(zoneAdapter.set('minute', 5).toISOString()).toBe(isoString(2000, 1, 2, 3, 5, 5, 0, zone))
+
+            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+              expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 3, 5, 5, 0))
+              expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('minute', 5).toISOString())
+            }
+          })
+    
+          it('second', () => {
+            expect(zoneAdapter.set('second', 6).toISOString()).toBe(isoString(2000, 1, 2, 3, 4, 6, 0, zone))
+
+            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+              expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 3, 4, 6, 0))
+              expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('second', 6).toISOString())
+            }
+          })
+    
+          it('millisecond', () => {
+            expect(zoneAdapter.set('millisecond', 10).toISOString()).toBe(isoString(2000, 1, 2, 3, 4, 5, 10, zone))
+
+            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+              expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 3, 4, 5, 10))
+              expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('millisecond', 10).toISOString())
+              }
+          })
+    
+          it('timezone', () => {
+            zoneAdapter.timezone = undefined
+            expect(zoneAdapter.toISOString()).toBe(
+              isoString(2000,1,2,3,4,5,0, zone)
+            )
+            expect(zoneAdapter.timezone).toBe(undefined)
+
+            zoneAdapter.timezone = 'UTC'
+            expect(zoneAdapter.toISOString()).toBe(
+              isoString(2000,1,2,3,4,5,0, zone)
+            )
+            expect(zoneAdapter.timezone).toBe('UTC')
+    
+            // reset to pass `afterAll()` tests
+            zoneAdapter.timezone = zone
+          })
+        })
+      })
+    });
+
+    /** Test handling of invalid timezones */
+    
+    describe('invalid timezone', () => {
+      [
+        "America/Fadfe",
+        "Fake/Melbourne",
+        "FJlkeal",
+      ].forEach(zone => {
+        context(zone, (zone) => {      
+          it('throws error', () => {
+            expect(() => {
+              dateAdapter(2000, 1, 2, 3, 4, 5, 0).timezone = zone
+            }).toThrowError(
+              `${DateAdapter.name} provided invalid timezone "${zone}".`
+            )
+          })
+        })
+      })        
+    })
+  }
+  else {
+    describe("no timezone support", () => {
+      let adapter: IDateAdapter<any>
+  
+      beforeEach(() => {
+        adapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0)
+      })
+
+      describe('#set()', () => {  
+        it('timezone', () => {
+          expect(() => {adapter.timezone = 'America/New_York'}).toThrowError(
+            `${DateAdapter.name} does not support "America/New_York" timezone.`
+          )
+        })
+      })
+    })
+  }
+})
+
+})
