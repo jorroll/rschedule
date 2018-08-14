@@ -60,15 +60,22 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
   private incrementInterval() {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
-    const oldTZOffset = this.intervalStartDate.utcOffset * 60
+    const oldTZOffset = this.intervalStartDate.utcOffset
 
     this.intervalStartDate.add(this.options.interval, unit)
 
-    const newTZOffset = this.intervalStartDate.utcOffset * 60
+    const newTZOffset = this.intervalStartDate.utcOffset
 
-    const tzOffset = newTZOffset - oldTZOffset
+    // DST goes in the opposite direction in northern vs southern hemispheres.
+    // This function might actually be returning `true` when client is in
+    // southern hemisphere...but regardless, the arithmatic is "relatively" correct.
+    // Still seem to be running into DST issue with large hourly interval in southern
+    // hemisphere.
+    const tzOffset = Utils.isInNorthernHemisphere(this.intervalStartDate)
+      ? oldTZOffset - newTZOffset
+      : newTZOffset - oldTZOffset
 
-    const newDate = this.intervalStartDate.clone().add(tzOffset, 'second')
+    const newDate = this.intervalStartDate.clone().add(tzOffset, 'minute')
 
     if (newDate.utcOffset !== this.intervalStartDate.utcOffset) {
       throw new DateAdapter.InvalidDateError(

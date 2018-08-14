@@ -26,7 +26,10 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
       )
   }
 
-  public get utcOffset() { return this.date.utcOffset() }
+  // moment() seems to output utcOffset with the opposite sign (-/+) from 
+  // the native Date object. I'm going to side with Date and flip moment's
+  // output sign to solve the issue.
+  public get utcOffset() { return this.date.utcOffset() === 0 ? 0 : -this.date.utcOffset() }
 
   /** The `Rule` which generated this `DateAdapter` */
   public rule: Rule<MomentDateAdapter> | undefined

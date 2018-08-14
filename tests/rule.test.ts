@@ -124,12 +124,12 @@ function testNextOccurrence(
 
 const DATE_ADAPTERS = [
   [StandardDateAdapter, standardDatetimeFn, false],
-  // [MomentDateAdapter, momentDatetimeFn, false],
-  // [MomentTZDateAdapter, momentTZDatetimeFn, true],
+  [MomentDateAdapter, momentDatetimeFn, false],
+  [MomentTZDateAdapter, momentTZDatetimeFn, true],
 ] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>, false]
-  // [typeof MomentDateAdapter, DatetimeFn<MomentST>, false]
-  // [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
+  [typeof StandardDateAdapter, DatetimeFn<Date>, false],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>, false],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
 ]
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {
@@ -138,9 +138,22 @@ environment(dateAdapterSet, (dateAdapterSet) => {
 
 const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>, boolean]
 
-const zones = supportsTimezones
+const zones = !supportsTimezones
   ? [undefined, 'UTC']
-  : [undefined, 'UTC'];
+  : [
+      undefined,
+      "UTC",
+      "Africa/Johannesburg",
+      "America/Los_Angeles",
+      "America/Chicago",
+      "America/New_York",
+      "America/Santiago",
+      "Europe/Athens",
+      "Europe/London",
+      "Asia/Shanghai",
+      "Asia/Singapore",
+      "Australia/Melbourne",
+    ];
 
 zones.forEach(zone => {
   

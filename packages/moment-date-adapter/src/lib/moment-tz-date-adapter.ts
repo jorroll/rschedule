@@ -26,7 +26,14 @@ export class MomentTZDateAdapter
     }
   }
 
-  public get utcOffset() { return this.date.utcOffset() }
+  // moment() seems to output utcOffset with the opposite sign (-/+) from 
+  // the native Date object. I'm going to side with Date and flip moment's
+  // output sign to solve the issue.
+
+  // update: so the UTC offset in the southern hemisphere currently needs to be
+  // the opposite from the northern hemisphere for my code to work. But then it seems
+  // to work.
+  public get utcOffset() { return this.date.utcOffset() === 0 ? 0 : -this.date.utcOffset() }
 
   /** The `Rule` which generated this `DateAdapter` */
   public rule: Rule<MomentTZDateAdapter> | undefined

@@ -234,4 +234,25 @@ export namespace Utils {
     if (int < 10) { return `0${int}` }
     else { return `${int}` }
   }
+
+  /**
+   * This function tries to detect if the client is in the northern
+   * hemisphere. It returns `true` if yes, `false` if the client is in the 
+   * southern hemisphere, and `null` if unknown. It will only work if the 
+   * client observes DST.
+   * 
+   * This is fine, because it is used to correct for DST changes, which 
+   * happen in opposite directions based on the hemisphere. If a timezone 
+   * doesn't observe DST, then we don't need to correct for it anyway.
+   */
+  export function isInNorthernHemisphere<T extends DateAdapter<T>>(date: T) {
+    date = date.clone();
+
+    const jan = -date.set('month', 1).set('day', 1).utcOffset
+    const jul = -date.set('month', 6).set('day', 1).utcOffset
+    const diff= jan-jul;
+    if(diff> 0) return true;
+    else if(diff< 0) return false
+    else return null;
+  }
 }
