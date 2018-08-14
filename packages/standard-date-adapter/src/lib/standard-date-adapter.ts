@@ -52,7 +52,7 @@ export class StandardDateAdapter
   constructor(date?: Date, args: {timezone?: 'UTC' | undefined} = {}) {
     this.date = date ? new Date(date) : new Date()
     this.timezone = args.timezone
-    this.assertIsValid()
+    this.assertIsValid([date, 'constructing'])
   }
 
   static isInstance(object: any): object is StandardDateAdapter {
@@ -90,7 +90,7 @@ export class StandardDateAdapter
   }
 
   clone(): StandardDateAdapter {
-    return new StandardDateAdapter(this.date)
+    return new StandardDateAdapter(this.date, {timezone: this.timezone})
   }
 
   isSameClass(object: any): object is StandardDateAdapter {
@@ -116,71 +116,143 @@ export class StandardDateAdapter
   }
 
   add(amount: number, unit: DateAdapter.Unit): StandardDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date = addYears(this.date, amount)
-        break
-      case 'month':
-        this.date = addMonths(this.date, amount)
-        break
-      case 'week':
-        this.date = addWeeks(this.date, amount)
-        break
-      case 'day':
-        this.date = addDays(this.date, amount)
-        break
-      case 'hour':
-        this.date = addHours(this.date, amount)
-        break
-      case 'minute':
-        this.date = addMinutes(this.date, amount)
-        break
-      case 'second':
-        this.date = addSeconds(this.date, amount)
-        break
-      case 'millisecond':
-        this.date = addMilliseconds(this.date, amount)
-        break
-      default:
-        throw new Error('Invalid unit provided to `StandardDateAdapter#add`')
+    const context = [this.date.toISOString(), 'add', amount, unit]
+
+    if (this.timezone === undefined) {
+      switch (unit) {
+        case 'year':
+          this.date = addYears(this.date, amount)
+          break
+        case 'month':
+          this.date = addMonths(this.date, amount)
+          break
+        case 'week':
+          this.date = addWeeks(this.date, amount)
+          break
+        case 'day':
+          this.date = addDays(this.date, amount)
+          break
+        case 'hour':
+          this.date = addHours(this.date, amount)
+          break
+        case 'minute':
+          this.date = addMinutes(this.date, amount)
+          break
+        case 'second':
+          this.date = addSeconds(this.date, amount)
+          break
+        case 'millisecond':
+          this.date = addMilliseconds(this.date, amount)
+          break
+        default:
+          throw new Error('Invalid unit provided to `StandardDateAdapter#add`')
+      }  
+    }
+    else {
+      switch (unit) {
+        case 'year':
+          this.date = addUTCYears(this.date, amount)
+          break
+        case 'month':
+          this.date = addUTCMonths(this.date, amount)
+          break
+        case 'week':
+          this.date = addUTCWeeks(this.date, amount)
+          break
+        case 'day':
+          // by adding milliseconds rather than days, we supress the native Date object's automatic
+          // daylight savings time conversions which we don't want in UTC mode
+          this.date = addUTCMilliseconds(this.date, amount * Utils.MILLISECONDS_IN_DAY)
+          break
+        case 'hour':
+          this.date = addUTCHours(this.date, amount)
+          break
+        case 'minute':
+          this.date = addUTCMinutes(this.date, amount)
+          break
+        case 'second':
+          this.date = addUTCSeconds(this.date, amount)
+          break
+        case 'millisecond':
+          this.date = addUTCMilliseconds(this.date, amount)
+          break
+        default:
+          throw new Error('Invalid unit provided to `StandardDateAdapter#add`')
+      }  
     }
 
-    this.assertIsValid()
+    this.assertIsValid(context)
 
     return this
   }
 
   subtract(amount: number, unit: DateAdapter.Unit): StandardDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date = subYears(this.date, amount)
-        break
-      case 'month':
-        this.date = subMonths(this.date, amount)
-        break
-      case 'week':
-        this.date = subWeeks(this.date, amount)
-        break
-      case 'day':
-        this.date = subDays(this.date, amount)
-        break
-      case 'hour':
-        this.date = subHours(this.date, amount)
-        break
-      case 'minute':
-        this.date = subMinutes(this.date, amount)
-        break
-      case 'second':
-        this.date = subSeconds(this.date, amount)
-        break
-      case 'millisecond':
-        this.date = subMilliseconds(this.date, amount)
-        break
-      default:
-        throw new Error('Invalid unit provided to `StandardDateAdapter#subtract`')
+    const context = [this.date.toISOString(), 'subtract', amount, unit]
+
+    if (this.timezone === undefined) {
+      switch (unit) {
+        case 'year':
+          this.date = subYears(this.date, amount)
+          break
+        case 'month':
+          this.date = subMonths(this.date, amount)
+          break
+        case 'week':
+          this.date = subWeeks(this.date, amount)
+          break
+        case 'day':
+          this.date = subDays(this.date, amount)
+          break
+        case 'hour':
+          this.date = subHours(this.date, amount)
+          break
+        case 'minute':
+          this.date = subMinutes(this.date, amount)
+          break
+        case 'second':
+          this.date = subSeconds(this.date, amount)
+          break
+        case 'millisecond':
+          this.date = subMilliseconds(this.date, amount)
+          break
+        default:
+          throw new Error('Invalid unit provided to `StandardDateAdapter#subtract`')
+      }
+    }
+    else {
+      switch (unit) {
+        case 'year':
+          this.date = subUTCYears(this.date, amount)
+          break
+        case 'month':
+          this.date = subUTCMonths(this.date, amount)
+          break
+        case 'week':
+          this.date = subUTCWeeks(this.date, amount)
+          break
+        case 'day':
+          // by adding milliseconds rather than days, we supress the native Date object's automatic
+          // daylight savings time conversions which we don't want in UTC mode
+          this.date = subUTCMilliseconds(this.date, amount * Utils.MILLISECONDS_IN_DAY)
+          break
+        case 'hour':
+          this.date = subUTCHours(this.date, amount)
+          break
+        case 'minute':
+          this.date = subUTCMinutes(this.date, amount)
+          break
+        case 'second':
+          this.date = subUTCSeconds(this.date, amount)
+          break
+        case 'millisecond':
+          this.date = subUTCMilliseconds(this.date, amount)
+          break
+        default:
+          throw new Error('Invalid unit provided to `StandardDateAdapter#add`')
+      }  
     }
 
-    this.assertIsValid()
+    this.assertIsValid(context)
 
     return this
   }
@@ -256,6 +328,8 @@ export class StandardDateAdapter
   }
 
   set(unit: DateAdapter.Unit, value: number): StandardDateAdapter {
+    const context = [this.date.toISOString(), 'set', value, unit]
+
     if (this.timezone === undefined) {
       switch (unit) {
         case 'year':
@@ -310,7 +384,7 @@ export class StandardDateAdapter
       }
     }
 
-    this.assertIsValid()
+    this.assertIsValid(context)
 
     return this
   }
@@ -327,11 +401,122 @@ export class StandardDateAdapter
 
   valueOf() { return this.date.valueOf() }
 
-  assertIsValid() {
+  assertIsValid(context?: any) {
+
     if (isNaN(this.valueOf()) || !['UTC', undefined].includes(this.timezone)) {
-      throw new DateAdapter.InvalidDateError()
+      const was = context.shift()
+      const change = context.map((val: any) => `"${val}"`).join(' ')
+      
+      throw new DateAdapter.InvalidDateError(
+        'DateAdapter has invalid date. ' +
+        `Was "${was}". ` + (change ? `Change ${change}.` : '')
+      )
     }
 
     return true
   }
+}
+
+/**
+ * These functions are basically lifted from `date-fns`, but changed
+ * to use the UTC date methods, which `date-fns` doesn't support.
+ */
+
+export function toInteger (input: any) {
+  if (input === null || input === true || input === false) {
+    return NaN
+  }
+
+  var number = Number(input)
+
+  if (isNaN(number)) {
+    return number
+  }
+
+  return number < 0 ? Math.ceil(number) : Math.floor(number)
+}
+
+export function addUTCYears (date: Date, input: number) {
+  const amount = toInteger(input)
+  return addUTCMonths(date, amount * 12)
+}
+
+export function addUTCMonths (date: Date, input: number) {
+  const amount = toInteger(input)
+  date = new Date(date)
+  const desiredMonth = date.getUTCMonth() + amount
+  const dateWithDesiredMonth = new Date(0)
+  dateWithDesiredMonth.setUTCFullYear(date.getUTCFullYear(), desiredMonth, 1)
+  dateWithDesiredMonth.setUTCHours(0, 0, 0, 0)
+  const daysInMonth = Utils.getDaysInMonth(dateWithDesiredMonth.getUTCMonth() + 1, dateWithDesiredMonth.getUTCFullYear())
+  // Set the last day of the new month
+  // if the original date was the last day of the longer month
+  date.setUTCMonth(desiredMonth, Math.min(daysInMonth, date.getUTCDate()))
+  return date
+}
+
+export function addUTCWeeks (date: Date, input: number) {
+  const amount = toInteger(input)
+  const days = amount * 7
+  return addUTCDays(date, days)
+}
+
+export function addUTCDays (date: Date, input: number) {
+  const amount = toInteger(input)
+  date = new Date(date)
+  date.setDate(date.getDate() + amount)
+  return date
+}
+
+export function addUTCHours (date: Date, input: number) {
+  const amount = toInteger(input)
+  return addMilliseconds(date, amount * Utils.MILLISECONDS_IN_HOUR)
+}
+
+export function addUTCMinutes (date: Date, input: number) {
+  const amount = toInteger(input)
+  return addMilliseconds(date, amount * Utils.MILLISECONDS_IN_MINUTE)
+}
+
+export function addUTCSeconds (date: Date, input: number) {
+  const amount = toInteger(input)
+  return addMilliseconds(date, amount * Utils.MILLISECONDS_IN_SECOND)
+}
+
+export function addUTCMilliseconds (date: Date, input: number) {
+  const amount = toInteger(input)
+  var timestamp = date.getTime()
+  return new Date(timestamp + amount)
+}
+
+export function subUTCYears (date: Date, amount: number) {
+  return addUTCYears(date, -amount)
+}
+
+export function subUTCMonths (date: Date, amount: number) {
+  return addUTCMonths(date, -amount)
+}
+
+export function subUTCWeeks (date: Date, amount: number) {
+  return addUTCWeeks(date, -amount)
+}
+
+export function subUTCDays (date: Date, amount: number) {
+  return addUTCDays(date, -amount)
+}
+
+export function subUTCHours (date: Date, amount: number) {
+  return addUTCHours(date, -amount)
+}
+
+export function subUTCMinutes (date: Date, amount: number) {
+  return addUTCMinutes(date, -amount)
+}
+
+export function subUTCSeconds (date: Date, amount: number) {
+  return addUTCSeconds(date, -amount)
+}
+
+export function subUTCMilliseconds (date: Date, amount: number) {
+  return addUTCMilliseconds(date, -amount)
 }

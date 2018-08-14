@@ -71,6 +71,12 @@ export namespace Utils {
     })
   }
 
+  /**
+   * Returns the days in the given month.
+   * 
+   * @param month base-1
+   * @param year 
+   */
   export function getDaysInMonth(month: number, year: number) {
     const block = {
       1: 31,

@@ -2,79 +2,10 @@ import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { MomentDateAdapter, MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
 import { DateAdapter as IDateAdapter, IDateAdapterConstructor, RRule, Schedule, Calendar } from '@rschedule/rschedule';
 import { Moment as MomentST } from 'moment';
-var momentST = require('moment');
 import { Moment as MomentTZ } from 'moment-timezone';
-var momentTZ = require('moment-timezone');
 
-import { context } from './utilities';
+import { context, environment, DatetimeFn, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn } from './utilities';
 
-type DatetimeFn<R> = {
-  (): R;
-  (a: number): R;
-  (a: number, b: number): R;
-  (a: number, b: number, c: number): R;
-  (a: number, b: number, c: number, d: number): R;
-  (a: number, b: number, c: number, d: number, e: number): R;
-  (a: number, b: number, c: number, d: number, e: number, f: number): R;
-  (a: number, b: number, c: number, d: number, e: number, f: number, g: number): R;
-  (a: number, b: number, c: number, d: number, e: number, f: number, g: number, timezone: string): R;
-}
-
-// This function allows me to test different `DateAdapter` classes with the 
-// same test suite
-function environment<T extends new (args?: any) => InstanceType<T>>(
-  object: T,
-  datetime: DatetimeFn<any>,
-  supportsTimezones: boolean,
-  fn: (object: T, datetime: DatetimeFn<any>, supportsTimezones: boolean) => any
-) {
-  describe(object.name, () => fn(object, datetime, supportsTimezones))
-}
-
-function standardDatetimeFn(...args: (number|string)[]) {
-  if (args.length === 0) return new Date();
-  else if (args.length > 1) args[1] = (args[1] as number) - 1;
-
-  if (args.length === 8){
-    return args.pop() === 'UTC'
-      // @ts-ignore
-      ? new Date(Date.UTC(...args))
-      // @ts-ignore
-      : new Date(...args);
-  }
-  else {
-    // @ts-ignore
-    return new Date(...args)
-  }
-}
-
-function momentDatetimeFn(...args: (number|string)[]) {
-  if (args.length === 0) return momentST();
-  else if (args.length > 1) args[1] = (args[1] as number) - 1;
-
-  if (args.length === 8) {
-    return args.pop() === 'UTC'
-      ? momentST.utc(args)
-      : momentST(args);
-  }
-  else {
-    return momentST(args)
-  }
-}
-
-function momentTZDatetimeFn(...args: (number|string)[]) {
-  if (args.length === 0) return momentTZ();
-  else if (args.length > 1) args[1] = (args[1] as number) - 1;
-
-  if (args.length === 8){
-    const timezone = args.pop() as string
-
-    return momentTZ.tz(args, timezone)
-  }
-  else {
-    return momentTZ(args)
-  }
-}
 
 /**
  * ### DateAdapter tests
@@ -96,17 +27,12 @@ const DATE_ADAPTERS = [
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {
 
-const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet
-
-environment(
-  DateAdapter, 
-  datetime, 
-  supportsTimezones, 
-  (DateAdapter: IDateAdapterConstructor<any>, datetime, supportsTimezones: boolean) => {
+environment(dateAdapterSet, (dateAdapterSet) => {
+  const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>, boolean]
 
   // function to create new dateAdapter instances
   const dateAdapter: DatetimeFn<IDateAdapter<any>> = 
-    (...args: (number|string)[]) => {
+    (...args: (number|string|undefined)[]) => {
       if (args.length === 8) {
         const timezone = args[7]
         // @ts-ignore
@@ -119,7 +45,7 @@ environment(
     }
 
   // function to get the given time array as an ISO string
-  const isoString: DatetimeFn<string> = (...args: (number|string)[]) => 
+  const isoString: DatetimeFn<string> = (...args: (number|string|undefined)[]) => 
     // @ts-ignore
     dateAdapter(...args).toISOString()
 
@@ -207,8 +133,10 @@ environment(
       expect(adapter.clone()).toBeInstanceOf(DateAdapter)
       expect(adapter.clone() === adapter).toBeFalsy()
       expect(adapter.clone() == adapter).toBeFalsy()
-      expect(adapter.clone().date === adapter.date).toBeFalsy()
+      expect(adapter.clone().date).toEqual(adapter.date)
       expect(adapter.clone().date == adapter.date).toBeFalsy()
+      expect(adapter.clone().utcOffset).toEqual(adapter.utcOffset)
+      expect(adapter.clone().timezone).toEqual(adapter.timezone)
       expect(adapter.clone().toISOString() === adapter.toISOString()).toBeTruthy()
       const date = datetime(1984, 5, 5, 2, 1, 4)
       expect(
@@ -217,12 +145,12 @@ environment(
     })
 
     it('#assertIsValid()', () => {
-      expect(() => dateAdapter('apple' as any)).toThrowError('DateAdapter has invalid date')
+      expect(() => dateAdapter('apple' as any)).toThrowError()
 
       expect(() => {
         adapter.date = datetime('apple' as any)
         adapter.assertIsValid()
-      }).toThrowError('DateAdapter has invalid date')
+      }).toThrowError()
     })
 
     it('#rule', () => {
@@ -455,6 +383,21 @@ environment(
       expect(utcAdapter.timezone === 'UTC')
     })
 
+    it('#clone()', () => {
+      expect(utcAdapter.clone()).toBeInstanceOf(DateAdapter)
+      expect(utcAdapter.clone() === utcAdapter).toBeFalsy()
+      expect(utcAdapter.clone() == utcAdapter).toBeFalsy()
+      expect(utcAdapter.clone().date).toEqual(utcAdapter.date)
+      expect(utcAdapter.clone().date == utcAdapter.date).toBeFalsy()
+      expect(utcAdapter.clone().utcOffset).toEqual(utcAdapter.utcOffset)
+      expect(utcAdapter.clone().timezone).toEqual(utcAdapter.timezone)
+      expect(utcAdapter.clone().toISOString() === utcAdapter.toISOString()).toBeTruthy()
+      const date = datetime(1984, 5, 5, 2, 1, 4)
+      expect(
+        new DateAdapter(date).clone().isEqual(new DateAdapter(date))
+      ).toBeTruthy()
+    })
+
     describe('#get()', () => {
       it('year', () => expect(utcAdapter.get('year')).toBe(2000))
 
@@ -558,6 +501,21 @@ environment(
         beforeEach(() => {
           localAdapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0)
           zoneAdapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0, zone)
+        })
+
+        it('#clone()', () => {
+          expect(zoneAdapter.clone()).toBeInstanceOf(DateAdapter)
+          expect(zoneAdapter.clone() === zoneAdapter).toBeFalsy()
+          expect(zoneAdapter.clone() == zoneAdapter).toBeFalsy()
+          expect(zoneAdapter.clone().date).toEqual(zoneAdapter.date)
+          expect(zoneAdapter.clone().date == zoneAdapter.date).toBeFalsy()
+          expect(zoneAdapter.clone().utcOffset).toEqual(zoneAdapter.utcOffset)
+          expect(zoneAdapter.clone().timezone).toEqual(zoneAdapter.timezone)
+          expect(zoneAdapter.clone().toISOString() === zoneAdapter.toISOString()).toBeTruthy()
+          const date = datetime(1984, 5, 5, 2, 1, 4)
+          expect(
+            new DateAdapter(date).clone().isEqual(new DateAdapter(date))
+          ).toBeTruthy()
         })
   
         describe('#get()', () => {
