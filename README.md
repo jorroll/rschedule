@@ -29,7 +29,7 @@ rule.occurrences({
 #### Installation
 
 ```bash
-# To install both the main package and the `DateAdapter` for standrd javascript dates */
+# To install both the main package and the `DateAdapter` for standard javascript dates */
 
 yarn add @rschedule/rschedule @rschedule/standard-date-adapter
 
@@ -40,7 +40,11 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 
 rSchedule makes use of a fairly simple `DateAdapter` wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
 
-A `StandardDateAdapter` currently exists which provides a `DateAdapter` complient wrapper for the standard javascript `Date` object. It should be pretty easy for you to create your own `DateAdapter` for your preferred library (allowing you to, for example, support timezones using [momentjs](https://momentjs.com/)). See the DateAdapter section below for more info. If you choose to do so, `DateAdapter` related pull requests will be welcomed.
+`StandardDateAdapter`, `MomentDateAdapter`, and `MomentTZDateAdapter` packages currently exists which provide a `DateAdapter` complient wrapper for the standard javascript `Date` object, as well as [`moment` and `moment-timezone`](https://momentjs.com) objects. Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the DateAdapter section below for more info. If you choose to do so, `DateAdapter` related pull requests will be welcomed. The `MomentTZDateAdapter` supports different timezones. All `DateAdapter` packages support `local` and `UTC` timezones. As noted above, installing a specific `DateAdapter` package is a seperate step, so, if you wanted to use rSchedule with `moment-timezone`, you might install with
+
+```
+yarn add @rschedule/rschedule @rschedule/moment-date-adapter
+```
 
 While `RRule` objects contain the main recurrence logic, you probably won't use them directly. Instead, the friendly `Schedule` object exists which builds an occurrence schedule based off of an arbirary number of RRules, RDates, and EXDates.
 
