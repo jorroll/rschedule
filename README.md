@@ -94,7 +94,7 @@ for (const occurrence of calendar.occurrences({start: new StandardDateAdapter()}
 }
 ```
 
-This library can serialize `RRule` and `Schedule` objects to / from `ICAL` format, but you should know that it does so in a manner that, while *technically* adheres to the speck, is probably unexpected for many other date libraries. What I mean: is that rSchedule allows RRule objects to have their own start / end times, but the spec doesn't allow this. To conform to the spec, RRULE objects are each serialized as their own event. When you serialize a `Schedule` object, it is turned into an array of ICAL events. This is fine when you're sending the data to another application you control, because you know what to expect. This might cause issues if you're trying to send the data to someone else's service (such as google calendar). In general, rSchedule has been created as a robust method of creating and manipulating events *within an ecosystem you control*.
+This library can serialize `RRule` and `Schedule` objects to / from `ICAL` format, but you should know that it does so in a manner that, while *technically* adheres to the speck, is probably unexpected for many other date libraries. What I mean: is that rSchedule allows RRule objects to have their own start / end times, but the spec doesn't allow this. To conform to the spec, RRULE objects are each serialized as their own event. When you serialize a `Schedule` object, it is turned into an array of ICAL events. This is fine when you're sending the data to another application you control, because you know what to expect. This might cause issues if you're trying to send the data to someone else's service (such as google calendar). In general, rSchedule has been created as a robust method of creating and manipulating events *within an ecosystem you control*. I expect that you can still use it to communicate between API's though, and a few, relatively minor, pull requests can probably greatly improve its ability to communicate with 3rd parties.
 
 ## Usage
 
@@ -129,7 +129,7 @@ interface ProvidedOptions<T extends DateAdapter<T>> {
   weekStart?: DateAdapter.Weekday
 }
 
-const options = {
+const options: ProvidedOptions = {
   // choose your options
 }
 
