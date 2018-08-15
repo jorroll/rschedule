@@ -42,8 +42,13 @@ rSchedule makes use of a fairly simple `DateAdapter` wrapper object which abstra
 
 `StandardDateAdapter`, `MomentDateAdapter`, and `MomentTZDateAdapter` packages currently exists which provide a `DateAdapter` complient wrapper for the standard javascript `Date` object, as well as [`moment` and `moment-timezone`](https://momentjs.com) objects. Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the DateAdapter section below for more info. If you choose to do so, `DateAdapter` related pull requests will be welcomed. The `MomentTZDateAdapter` supports different timezones. All `DateAdapter` packages support `local` and `UTC` timezones. As noted above, installing a specific `DateAdapter` package is a seperate step, so, if you wanted to use rSchedule with `moment-timezone`, you might install with
 
-```
+```bash
 yarn add @rschedule/rschedule @rschedule/moment-date-adapter
+
+# Current DateAdapter packages
+
+@rschedule/standard-date-adapter
+@rschedule/moment-date-adapter
 ```
 
 While `RRule` objects contain the main recurrence logic, you probably won't use them directly. Instead, the friendly `Schedule` object exists which builds an occurrence schedule based off of an arbirary number of RRules, RDates, and EXDates.
@@ -88,6 +93,8 @@ for (const occurrence of calendar.occurrences({start: new StandardDateAdapter()}
   // do stuff
 }
 ```
+
+This library can serialize `RRule` and `Schedule` objects to / from `ICAL` format, but you should know that it does so in a manner that, while *technically* adheres to the speck, is probably unexpected for many other date libraries. What I mean: is that rSchedule allows RRule objects to have their own start / end times, but the spec doesn't allow this. To conform to the spec, RRULE objects are each serialized as their own event. When you serialize a `Schedule` object, it is turned into an array of ICAL events. This is fine when you're sending the data to another application you control, because you know what to expect. This might cause issues if you're trying to send the data to someone else's service (such as google calendar). In general, rSchedule has been created as a robust method of creating and manipulating events *within an ecosystem you control*.
 
 ## Usage
 
@@ -254,16 +261,29 @@ As a convenience, Calendar objects have a `data` property which can hold arbitra
 The DateAdapter object that this library consumes has the following interface:
 
 ```typescript
-interface DateAdapter<T> {
+interface DateAdapter<T, D=any> {
+  /** The `Rule` which generated this `DateAdapter` */
+  rule: any | undefined
+  /** The `Schedule` which generated this `DateAdapter` */
+  schedule: any | undefined
+  /** The `Calendar` which generated this `DateAdapter` */
+  calendar: any | undefined
   /** Returns a duplicate of original DateAdapter */
   clone(): T
 
-  /** The `Rule` which generated this `DateAdapter` */
-  rule: Rule | undefined;
-  /** The `Schedule` which generated this `DateAdapter` */
-  schedule: Schedule | undefined;
-  /** The `Calendar` which generated this `DateAdapter` */
-  calendar: Calendar | undefined;
+  /** Returns the date object this DateAdapter is wrapping */
+  date: D
+
+  /**
+   * Returns the date's timezone
+   * 
+   * - if "UTC" then `"UTC"`
+   * - if local then `undefined`
+   */
+  timezone: string | undefined
+
+  // in minutes
+  utcOffset: number
 
   /** mutates original object */
   add(amount: number, unit: DateAdapter.Unit): T
@@ -271,8 +291,6 @@ interface DateAdapter<T> {
   /** mutates original object */
   subtract(amount: number, unit: DateAdapter.Unit): T
 
-  // If you're unformiliar, this is a series of typescript overloads
-  // for the get() method.
   get(unit: 'year'): number
   get(unit: 'month'): number
   get(unit: 'yearday'): number
@@ -281,16 +299,10 @@ interface DateAdapter<T> {
   get(unit: 'hour'): number
   get(unit: 'minute'): number
   get(unit: 'second'): number
-  get(unit: 'ordinal'): number // in milliseconds (equivalent to new Date().valueOf())
-  get(unit: 'tzoffset'): number // in seconds
-  // if "UTC" then `"UTC"`
-  // if local then `undefined`
-  // else if a specific timezone, formatted per the ICal spec (e.g. `"America/New_York"`)
-  get(unit: 'timezone'): string | undefined
+  get(unit: 'millisecond'): number
 
   /** mutates original object */
   set(unit: DateAdapter.Unit, value: number): T
-  set(unit: 'timezone', value: string | undefined): T
 
   /** same format as new Date().toISOString() */
   toISOString(): string
@@ -299,14 +311,18 @@ interface DateAdapter<T> {
   // if `utc` is true, must be formatted as UTC string
   toICal(utc?: boolean): string
 
+  // returns the underlying date ordinal. The value in milliseconds.
+  valueOf(): number
+
   isSameClass(object: any): object is T
 
-  isEqual(object: any): object is T
-
-  isBefore(date: T): boolean
-  isBeforeOrEqual(date: T): boolean
-  isAfter(date: T): boolean
-  isAfterOrEqual(date: T): boolean
+  // Compares to `DateAdapter` objects using `valueOf()`
+  // to see if they are occuring at the same time.
+  isEqual<O extends DateAdapter<O>>(object?: O): boolean  
+  isBefore<O extends DateAdapter<O>>(date: O): boolean
+  isBeforeOrEqual<O extends DateAdapter<O>>(date: O): boolean
+  isAfter<O extends DateAdapter<O>>(date: O): boolean
+  isAfterOrEqual<O extends DateAdapter<O>>(date: O): boolean
 
   /**
    * If the DateAdapter object is valid, returns `true`.
@@ -345,27 +361,23 @@ namespace DateAdapter {
 
 ## Contributing
 
-This library is definitely usable in its current form, and the features it does have are backed up by a few hundred tests. Everything described in this readme should be working. This being said, when I get around to implementing a `MomentDateAdapter` and timezone support, I imagine that might involve some breaking changes. So you should consider this library to be still in beta.
-
 This library's rule logic is implemented as a chain of pipes applying validations and transformations to dates. From my perspective, this has several benefits:
 
 1. The rule logic is cleanly seperated for each rule, and it's easier to figure out what's going on. This is important, because recurrence rules can become very complex and susceptible to bugs.
 2. If you query a rule for dates starting as some arbitrary point after the rule's start date, the rule actually starts iterating at the given date (which should make rSchedule pretty fast, though I haven't done any comparison testing). Some of the other recurrence libraries I've seen are forced to iterate starting at the rule's start date.
 3. Similar to #2, rSchedule doesn't need to iterate through every interval of a rule, but can instead "skip" invalid dates, landing on just the valid ones. For example, say you have a `DAILY` recurrence rule that only happens in January. If you begin on January first, this library will iterate through all the days in january, and then immediately skip to January 1st on the next year. I think some other libraries need to silently iterate through feb-dec, without skipping any intervals.
-4. Because every rule is cleanly seperated into it's own pipe class, it shouldn't be too difficult to either fork the library and add custom rule pipes (i.e. custom rules) if needed, or create a PR to upgrade this library to support custom rules.
+4. Because every rule is seperated into it's own pipe class, it shouldn't be too difficult to either fork the library and add custom rule pipes (i.e. custom rules) if needed, or create a PR to upgrade this library to support custom rules.
 
-If you're interested in peeking at this library's source, I'd suggest starting in the `src/pipes` folder. The `PipeController` holds the rule pipes for a rule and organizes the process of iterating through the pipes--so I'd start by looking there.
+If you're interested in peeking at this library's source, I'd suggest starting by reading the `README` in the `src/pipes` folder.
 
 Feel free to open an issue if you have questions.
 
 ## Known Issues / Todo
 
-- Cannot iterate in reverse. Implementing this should be pretty straight forward.
-- No provided timezone friendly `DateAdapter`. Personally, I want a `MomentDateAdapter`.
 - This library does not support `EXRULE`. I'm, personally, not particularly interested in adding support (it's also deprecated in the spec). This being said, it should be pretty easy to add if you're interested in doing so, and I think I've designed all the interfaces specifically so `EXRULE` can be added in the future (an en `EXRule` object already exists, though it's not exported, in `src/rule/rule.ts`). So all someone would need to do is write the logic to add `EXRule`'s to `Schedule` objects and have them delete occurrences, as appropriate. You'd also need to make sure that the ICAL parsing functions added EXRULE's. But I think `EXRULE` have the same API as `RRULE`, so again, it should be *really easy* for someone else to do this.
 - No `BYWEEKNO`, `BYYEARDAY`, or `BYSETPOS` rule support. "By day of year" and "by position in set" should both be pretty straightforward, they're just not something I need so not on my todo list.
   - "By week of year" is different though. I spent a fair bit trying to get it to work and its just SUPER annoying (because it can create a valid date for year A in year B. e.g. the Saturday of the last week of 1998 *is in the year 1999*). Anyway, obviously doable, I have no plans to implement it though.
-- Currently, the `count` option of a rule simply counts the number of occurrences you're received and then cuts you off as appropriate. If you pass in a different start date when requesting occurrences though, you'll still receive the same total count of occurrences, they'll just be pushed back in time. This is *probably* not what people want.
+- Currently, the `count` option of a rule simply counts the number of occurrences you're received and then cuts you off as appropriate. If you pass in a different start date when requesting occurrences though, you'll still receive the same total count of occurrences, they'll just be pushed back in time. This is *probably* not what people expect.
   - E.g. If someone creates a daily rule starting on Monday with a count of 3, and iterates over it the occurrence stream will cut off after Wednesday. If you pass a new start date in as an argument though, say show me occurrences for this rule starting on Tuesday, then you'll receive Tuesday, Wednesday, and Thursday. The probem is that the `count` didn't begin on the rule's start date. I don't think there's anything fancy to be done about this. You'd need to start at the beginning and just skip forward to the section you're interested in. For example
 
 ```typescript
@@ -388,10 +400,10 @@ array // [tomorrow, the next day]
 
 ### About
 
-The library, itself, has been created from scratch by me, John Carroll. Most all of the RRULE tests were taken from the excellent [rrule.js](https://github.com/jakubroztocil/rrule) library (which were, themselves, taken from a python library, I believe).
+The library, itself, has been created from scratch by me, John Carroll. Most of the RRULE tests were taken from the excellent [rrule.js](https://github.com/jakubroztocil/rrule) library (which were, themselves, taken from a python library, I believe).
 
-This library was built using the [typescript library starter repo](https://github.com/alexjoverm/typescript-library-starter). My implementation strategy has drawn inspiration from the [Angular Material2](https://github.com/angular/material2) Date Picker component (which makes use of date adapters to support different javascript date libraries), as well as [rrulejs](https://github.com/jakubroztocil/rrule) and [ice_cube](https://github.com/seejohnrun/ice_cube).
+This library was built using the [typescript starter repo](https://github.com/bitjson/typescript-starter). My implementation strategy has drawn inspiration from the [Angular Material2](https://github.com/angular/material2) Date Picker component (which makes use of date adapters to support different javascript date libraries), as well as [rrulejs](https://github.com/jakubroztocil/rrule) and [ice_cube](https://github.com/seejohnrun/ice_cube).
 
-I'd like to give a special shout of thanks for both [rrule.js](https://github.com/jakubroztocil/rrule) and [ice_cube](https://github.com/seejohnrun/ice_cube) (a ruby gem) for their excellent RRULE implementations.
+I'd like to give a special shout of thanks for both [rrule.js](https://github.com/jakubroztocil/rrule) and [ice_cube](https://github.com/seejohnrun/ice_cube) (a ruby gem) for their RRULE implementations.
 
 *Note: this project is not affiliated with any other projects.*

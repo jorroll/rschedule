@@ -1,7 +1,6 @@
 import { ParsedDatetime } from "../ical/parser";
 
 export interface DateAdapter<T, D=any> {
-
   /** The `Rule` which generated this `DateAdapter` */
   rule: any | undefined
   /** The `Schedule` which generated this `DateAdapter` */
