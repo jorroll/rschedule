@@ -181,6 +181,15 @@ export namespace Options {
     | 'MONTHLY'
     | 'YEARLY'
 
+  /**
+   * The ByDayOfWeek type corresponds to either a two letter string for the weekday
+   * (i.e. 'SU', 'MO', etc) or an array of length two containing a weekday string
+   * and a number, in that order. The number describes the position of the weekday
+   * in the month / year (depending on other rules). It's explained pretty well
+   * in the [ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10).
+   * If the number is negative, it is calculated from the end of
+   * the month / year.
+   */
   export type ByDayOfWeek = DateAdapter.Weekday | [DateAdapter.Weekday, number]
 
   export interface ProvidedOptions<T extends DateAdapter<T>> {
