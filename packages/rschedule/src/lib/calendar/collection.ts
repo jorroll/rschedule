@@ -1,5 +1,5 @@
 import { DateAdapter } from '../date-adapter'
-import { RunnableIterator } from '../interfaces'
+import { RunnableIterator, OccurrencesArgs } from '../interfaces'
 import { Options } from '../rule'
 import { Utils } from '../utilities'
 
@@ -14,10 +14,7 @@ export class Collection<T extends DateAdapter<T>> {
 
 export type CollectionsGranularity = 'INSTANTANIOUSLY' | Options.Frequency
 
-export interface CollectionsArgs<T extends DateAdapter<T>> {
-  start?: T
-  end?: T
-  take?: number
+export interface CollectionsArgs<T extends DateAdapter<T>> extends OccurrencesArgs<T> {
   granularity?: CollectionsGranularity
   weekStart?: DateAdapter.Weekday
 }
@@ -36,6 +33,12 @@ export class CollectionIterator<
 
     if (args.granularity) { this.granularity = args.granularity }
     if (args.weekStart) { this.weekStart = args.weekStart }
+    if (args.reverse) {
+      throw new Error(
+        'Calendar does not currently support iterating collections in reverse. ' +
+        "Though you can iterate a calendar's occurrences in reverse."
+      )
+    }
   }
 
   public [Symbol.iterator] = () => this.iterateCollection(this.iterator);

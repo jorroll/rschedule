@@ -96,29 +96,29 @@ export class Calendar<
 
     if (cache.length === 0) { return }
     else {
-      next = selectNextUpcomingCacheObj(cache[0], cache)
+      next = selectNextUpcomingCacheObj(cache[0], cache, args.reverse)
     }
-
+  
     const count = args.take
     let index = 0
-
+  
     while (next.date && (count === undefined || count > index)) {
       // add the current calendar to the metadata
       next.date.calendar = this
-
+  
       yield next.date.clone()
-
+  
       next.date = next.iterator.next().value
-
+  
       if (!next.date) {
         cache = cache.filter(item => item !== next)
         next = cache[0]
-
+  
         if (cache.length === 0) { break }
       }
-
-      next = selectNextUpcomingCacheObj(next, cache)
-
+  
+      next = selectNextUpcomingCacheObj(next, cache, args.reverse)
+  
       index++
     }
   }
@@ -126,13 +126,14 @@ export class Calendar<
 
 function selectNextUpcomingCacheObj<T extends DateAdapter<T>>(
   current: { iterator: OccurrenceIterator<T, any>; date?: T },
-  cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>
+  cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>,
+  reverse?: boolean,
 ) {
   if (cache.length === 1) { return cache[0] }
 
   return cache.reduce((prev, curr) => {
     if (!curr.date) { return prev }
-    else if (curr.date.isBefore(prev.date as T)) { return curr }
+    else if (reverse ? curr.date.isAfter(prev.date as T) : curr.date.isBefore(prev.date as T)) { return curr }
     else { return prev }
   }, current)
 }

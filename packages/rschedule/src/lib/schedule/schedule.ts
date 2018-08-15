@@ -95,7 +95,9 @@ export class Schedule<
     positiveIterators.push(this.rdates)
 
     // extract exdates into array
-    const exdates = this.exdates.dates.slice()
+    const exdates = Utils.sortDates(this.exdates.dates.slice())
+
+    if (!args.reverse) exdates.reverse();
 
     // Create a cache we can iterate over.
     // The cache contains an array of objects. Each object contains an RRule
@@ -123,12 +125,12 @@ export class Schedule<
       // The only imporant thing is that our initial select
       //   1. has a date
       //   2. that date is not also an EXDATE
-      next = getFirstIteratorCacheObj(cache, exdates)!
+      next = getFirstIteratorCacheObj(cache, exdates, args.reverse)!
 
       if (!next) {
         return // here we make sure our select is actually the next upcoming occurrence
       ;
-      }[next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates)
+      }[next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
     }
 
     const count = args.take
@@ -156,7 +158,7 @@ export class Schedule<
       }
 
       // select the next upcoming cache object from the cache
-      ;[next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates)
+      ;[next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
 
       index++
     }
@@ -171,22 +173,23 @@ export class Schedule<
  */
 function getFirstIteratorCacheObj<T extends DateAdapter<T>>(
   cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>,
-  exdates: T[]
+  exdates: T[],
+  reverse?: boolean,
 ) {
   let first = cache[0]
 
-  getNextDateThatIsNotInExdates(first, exdates)
+  getNextDateThatIsNotInExdates(first, exdates, reverse)
 
   while (!first.date && cache.length > 1) {
     cache.shift()
     first = cache[0]
-    getNextDateThatIsNotInExdates(first, exdates)
+    getNextDateThatIsNotInExdates(first, exdates, reverse)
   }
 
   if (!first.date) { return null }
 
   // remove past (i.e. no longer applicable exdates from our exdates array)
-  removePastExDates(first.date, exdates)
+  removePastExDates(first.date, exdates, reverse)
 
   return first
 }
@@ -199,21 +202,22 @@ function getFirstIteratorCacheObj<T extends DateAdapter<T>>(
 function getNextIteratorCacheObj<T extends DateAdapter<T>>(
   next: { iterator: OccurrenceIterator<T, any>; date?: T },
   cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>,
-  exdates: T[]
+  exdates: T[],
+  reverse?: boolean,
 ): [{ iterator: OccurrenceIterator<T, any>; date?: T }, boolean] {
   let mustFilter = false
 
   if (cache.length === 1) {
     next = cache[0]
-    getNextDateThatIsNotInExdates(next, exdates)
+    getNextDateThatIsNotInExdates(next, exdates, reverse)
   } else {
     // don't include the `next` iterator in the cache, since it is injected into the
     // reducer as the first item
     cache = cache.filter(item => item !== next)
     // select the next upcoming cache object from the cache
     next = cache.reduce((prev, curr) => {
-      if (!getNextDateThatIsNotInExdates(curr, exdates)) { return prev }
-      else if (curr.date!.isBefore(prev.date as T)) { return curr }
+      if (!getNextDateThatIsNotInExdates(curr, exdates, reverse)) { return prev }
+      else if (reverse ? curr.date!.isAfter(prev.date as T) : curr.date!.isBefore(prev.date as T)) { return curr }
       else if (curr.date!.isEqual(prev.date)) {
         curr.date = curr.iterator.next().value
         // ^ curr.date could be undefined, so need to remember
@@ -225,7 +229,7 @@ function getNextIteratorCacheObj<T extends DateAdapter<T>>(
   }
 
   // remove past (i.e. no longer applicable exdates from our exdates array)
-  removePastExDates(next.date, exdates)
+  removePastExDates(next.date, exdates, reverse)
 
   return [next, mustFilter]
 }
@@ -235,21 +239,23 @@ function getNextDateThatIsNotInExdates<T extends DateAdapter<T>>(
     iterator: OccurrenceIterator<T, any>
     date?: T
   },
-  exdates: T[]
+  exdates: T[],
+  reverse?: boolean,
 ): T | undefined {
-  if (cacheObj.date && dateIsInExDates(cacheObj.date, exdates)) {
+  if (cacheObj.date && dateIsInExDates(cacheObj.date, exdates, reverse)) {
     cacheObj.date = cacheObj.iterator.next().value
-    return getNextDateThatIsNotInExdates(cacheObj, exdates)
+    return getNextDateThatIsNotInExdates(cacheObj, exdates, reverse)
   } else { return cacheObj.date }
 }
 
 function dateIsInExDates<T extends DateAdapter<T>>(
   date: T,
-  exdates: T[]
+  exdates: T[],
+  reverse?: boolean,
 ): boolean {
   for (const exdate of exdates) {
     if (date.isEqual(exdate)) { return true }
-    else if (date.isAfter(exdate)) { break }
+    else if (reverse ? date.isBefore(exdate) : date.isAfter(exdate)) { break }
   }
 
   return false
@@ -257,15 +263,16 @@ function dateIsInExDates<T extends DateAdapter<T>>(
 
 function removePastExDates<T extends DateAdapter<T>>(
   date: T | undefined,
-  exdates: T[]
+  exdates: T[],
+  reverse?: boolean,
 ) {
   if (!date) { return }
 
   const exdatesToBeRemoved: T[] = []
 
   for (const exdate of exdates) {
-    if (date.isBeforeOrEqual(exdate)) { break }
-    else if (date.isAfter(exdate)) { exdatesToBeRemoved.push(exdate) }
+    if (reverse ? date.isAfterOrEqual(exdate) : date.isBeforeOrEqual(exdate)) { break }
+    else if (reverse ? date.isBefore(exdate) : date.isAfter(exdate)) { exdatesToBeRemoved.push(exdate) }
   }
 
   exdatesToBeRemoved.forEach(exdate => {

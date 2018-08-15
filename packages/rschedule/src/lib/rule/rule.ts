@@ -116,11 +116,23 @@ export class RDatesBase<T extends DateAdapter<T>> extends HasOccurrences<T>
   public *_run(args: OccurrencesArgs<T> = {}) {
     let dates = Utils.sortDates(uniqWith(this.dates, (a, b) => a.isEqual(b)))
 
-    if (args.start) {
-      dates = dates.filter(date => date.isAfterOrEqual(args.start as T))
+    if (args.reverse) {
+      if (args.start) {
+        dates = dates.filter(date => date.isBeforeOrEqual(args.start as T))
+      }
+      if (args.end) { dates = dates.filter(date => date.isAfterOrEqual(args.end as T)) }
+
+      dates.reverse()
+
+      if (args.take) { dates = dates.slice(0, args.take) }  
     }
-    if (args.end) { dates = dates.filter(date => date.isBeforeOrEqual(args.end as T)) }
-    if (args.take) { dates = dates.slice(0, args.take) }
+    else {
+      if (args.start) {
+        dates = dates.filter(date => date.isAfterOrEqual(args.start as T))
+      }
+      if (args.end) { dates = dates.filter(date => date.isBeforeOrEqual(args.end as T)) }
+      if (args.take) { dates = dates.slice(0, args.take) }  
+    }
 
     let date = dates.shift()
 
