@@ -1,10 +1,119 @@
-import { Schedule, OccurrencesArgs } from '@rschedule/rschedule'
-import { dateAdapter, isoString } from './utilities'
+import { Schedule, OccurrencesArgs, Options, DateAdapter as IDateAdapter, DateAdapterConstructor as IDateAdapterConstructor } from '@rschedule/rschedule'
+import { dateAdapter, DatetimeFn, environment, context, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, TIMEZONES } from './utilities'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
+import { Moment as MomentTZ } from 'moment-timezone';
+import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
+import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
+import { Moment as MomentST } from 'moment';
 
-function toISOStrings(
-  schedule: Schedule<StandardDateAdapter, any>,
-  args?: OccurrencesArgs<StandardDateAdapter>
+function testOccursMethods<T extends IDateAdapter<T>>(
+  name: string,
+  options: {
+    rrules?: Array<Options.ProvidedOptions<T>>
+    rdates?: T[]
+    exdates?: T[]
+  } | undefined,
+  tests: any[],
+  // Array<
+  //   { occursBefore: IDateAdapter<T>, excludeStart?: boolean, expect: boolean } |
+  //   { occursAfter: IDateAdapter<T>, excludeStart?: boolean, expect: boolean } |
+  //   { occursBetween: [IDateAdapter<T>, IDateAdapter<T>], excludeEnds?: boolean, expect: boolean } |
+  //   { occursOn: IDateAdapter<T>, expect: boolean }
+  // >
+) {
+  describe(name, () => {
+    let schedule: Schedule<IDateAdapter<T>, any>
+
+    beforeEach(() => {
+      schedule = new Schedule(options)
+    })
+
+    tests.forEach(obj => {
+      if (obj.occursBefore) {
+        describe('#occursBefore()', () => {
+          it(`"${obj.occursBefore.toISOString()}" excludeStart: ${!!obj.excludeStart}`, () => {
+            expect(schedule.occursBefore(obj.occursBefore, { excludeStart: obj.excludeStart })).toBe(obj.expect)
+          })
+        })
+      }
+      else if (obj.occursAfter) {
+        describe('#occursAfter()', () => {
+          it(`"${obj.occursAfter.toISOString()}" excludeStart: ${!!obj.excludeStart}`, () => {
+            expect(schedule.occursAfter(obj.occursAfter, { excludeStart: obj.excludeStart })).toBe(obj.expect)
+          })          
+        })
+      }
+      else if (obj.occursBetween) {
+        describe('#occursBetween()', () => {
+          it(`"${obj.occursBetween[0].toISOString()}" & "${obj.occursBetween[1].toISOString()}" excludeEnds: ${!!obj.excludeEnds}`, () => {
+            expect(schedule.occursBetween(obj.occursBetween[0], obj.occursBetween[1], { excludeEnds: obj.excludeEnds })).toBe(obj.expect)
+          })
+        })
+      }
+      else if (obj.occursOn) {
+        describe('#occursOn()', () => {
+          it(`"${obj.occursOn.toISOString()}"`, () => {
+            expect(schedule.occursOn(obj.occursOn)).toBe(obj.expect)
+          })
+        })
+      }
+      else
+        throw new Error('Unexpected test object!')
+    })
+  })
+}
+
+describe('ScheduleClass', () => {
+  it('is instantiable', () => expect(new Schedule()).toBeInstanceOf(Schedule))
+})
+
+const DATE_ADAPTERS = [
+  [StandardDateAdapter, standardDatetimeFn, false],
+  [MomentDateAdapter, momentDatetimeFn, false],
+  [MomentTZDateAdapter, momentTZDatetimeFn, true],
+] as [
+  [typeof StandardDateAdapter, DatetimeFn<Date>, false],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>, false],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
+]
+
+DATE_ADAPTERS.forEach(dateAdapterSet => {
+
+environment(dateAdapterSet, (dateAdapterSet) => {
+
+const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>, boolean]
+
+const zones = !supportsTimezones
+  ? [undefined, 'UTC']
+  : TIMEZONES;
+
+zones.forEach(zone => {
+  
+// function to create new dateAdapter instances
+const dateAdapter: DatetimeFn<IDateAdapter<any>> = 
+(...args: (number|string|undefined)[]) => {
+  const timezone = args[7] ? args[7] : zone
+
+  let time = new Array(8)
+  time.fill(0)
+
+  args.forEach((val, index) => time[index] = val)
+
+  time[7] = timezone
+
+  // @ts-ignore
+  return new DateAdapter(datetime(...time), {timezone});
+}
+
+// function to get the given time array as an ISO string
+const isoString: DatetimeFn<string> = (...args: (number|string|undefined)[]) => 
+  // @ts-ignore
+  dateAdapter(...args).toISOString()
+
+// function to get a schedule's occurrences as ISO strings
+function toISOStrings<T extends IDateAdapter<T>>(
+  schedule: Schedule<T>,
+  args?: OccurrencesArgs<T>
 ) {
   return schedule
     .occurrences(args)
@@ -12,11 +121,7 @@ function toISOStrings(
     .map(occ => occ.toISOString())
 }
 
-describe('ScheduleClass', () => {
-  it('is instantiable', () => expect(new Schedule()).toBeInstanceOf(Schedule))
-})
-
-describe('Schedule', () => {
+describe(`${zone}`, () => {
   describe('#occurrences()', () => {
     describe('NO args', () => {
       it('with a single rule', () => {
@@ -480,34 +585,207 @@ describe('Schedule', () => {
         ])
       })
     })
+
+    describe('args: REVERSE', () => {
+      it('with a single rule', () => {
+        // YearlyByMonthAndMonthDay
+        const schedule = new Schedule({
+          rrules: [
+            {
+              frequency: 'YEARLY',
+              count: 3,
+              byMonthOfYear: [1, 3],
+              byDayOfMonth: [5, 7],
+              start: dateAdapter(1997, 9, 2, 9),
+            },
+          ],
+        })
+  
+        expect(toISOStrings(schedule, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
+          isoString(1998, 1, 5, 9, 0),
+          isoString(1998, 1, 7, 9, 0),
+          isoString(1998, 3, 5, 9, 0),
+        ].reverse())
+      })
+  
+      // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
+      // what the test should expect to be sure
+      it.skip('with multiple rules', () => {
+        const schedule = new Schedule({
+          rrules: [
+            // YearlyByMonthAndMonthDay
+            {
+              frequency: 'YEARLY',
+              count: 3,
+              byMonthOfYear: [1, 3],
+              byDayOfMonth: [5, 7],
+              start: dateAdapter(1997, 9, 2, 9),
+            },
+            // WeeklyIntervalLarge
+            {
+              frequency: 'WEEKLY',
+              count: 2,
+              interval: 20,
+              start: dateAdapter(1997, 9, 2, 9),
+            },
+            // DailyByMonthDayAndWeekDay
+            {
+              frequency: 'DAILY',
+              count: 3,
+              byDayOfMonth: [1, 3],
+              byDayOfWeek: ['TU', 'TH'],
+              start: dateAdapter(1997, 9, 2, 9),
+            },
+          ],
+        })
+  
+        expect(toISOStrings(schedule, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
+          isoString(1997, 9, 2, 9, 0),
+          isoString(1998, 1, 1, 9, 0),
+          isoString(1998, 1, 5, 9, 0),
+          isoString(1998, 1, 7, 9, 0),
+          isoString(1998, 1, 20, 9, 0),
+          isoString(1998, 2, 3, 9, 0),
+          isoString(1998, 3, 3, 9, 0),
+          isoString(1998, 3, 5, 9, 0),
+        ].reverse())
+      })
+  
+      it('with RDates & duplicate', () => {
+        const schedule = new Schedule({
+          rdates: [
+            dateAdapter(1998, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0),
+            dateAdapter(2000, 1, 1, 9, 0),
+            dateAdapter(2017, 1, 1, 9, 0),
+          ],
+        })
+  
+        expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
+          isoString(1998, 1, 1, 9, 0),
+          isoString(2000, 1, 1, 9, 0),
+          isoString(2017, 1, 1, 9, 0),
+        ].reverse())
+      })
+  
+      it('with EXDates', () => {
+        const schedule = new Schedule({
+          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        })
+  
+        expect(toISOStrings(schedule, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
+      })
+  
+      it('with RDates & EXDates', () => {
+        const schedule = new Schedule({
+          rdates: [
+            dateAdapter(1998, 1, 1, 9, 0),
+            dateAdapter(2000, 1, 1, 9, 0),
+            dateAdapter(2017, 1, 1, 9, 0),
+          ],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        })
+  
+        expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
+          isoString(2000, 1, 1, 9, 0),
+          isoString(2017, 1, 1, 9, 0),
+        ].reverse())
+      })
+  
+      it('with RDates & EXDates cancelling out', () => {
+        const schedule = new Schedule({
+          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        })
+  
+        expect(toISOStrings(schedule, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
+      })
+  
+      // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
+      // what the test should expect to be sure
+      it.skip('with multiple rules & RDates & EXDates', () => {
+        const schedule = new Schedule({
+          rrules: [
+            // YearlyByMonthAndMonthDay
+            {
+              frequency: 'YEARLY',
+              count: 3,
+              byMonthOfYear: [1, 3],
+              byDayOfMonth: [5, 7],
+              start: dateAdapter(1997, 9, 2, 9),
+            },
+            // WeeklyIntervalLarge
+            {
+              frequency: 'WEEKLY',
+              count: 2,
+              interval: 20,
+              start: dateAdapter(1997, 9, 2, 9),
+            },
+            // DailyByMonthDayAndWeekDay
+            {
+              frequency: 'DAILY',
+              count: 3,
+              byDayOfMonth: [1, 3],
+              byDayOfWeek: ['TU', 'TH'],
+              start: dateAdapter(1997, 9, 2, 9),
+            },
+          ],
+          rdates: [
+            dateAdapter(1998, 1, 1, 9, 0),
+            dateAdapter(2000, 1, 1, 9, 0),
+            dateAdapter(2017, 1, 1, 9, 0),
+          ],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        })
+  
+        expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
+          isoString(1997, 9, 2, 9, 0),
+          isoString(1998, 1, 5, 9, 0),
+          isoString(1998, 1, 7, 9, 0),
+          isoString(1998, 2, 3, 9, 0),
+          isoString(1998, 3, 3, 9, 0),
+          isoString(1998, 3, 5, 9, 0),
+          isoString(2000, 1, 1, 9, 0),
+          isoString(2017, 1, 1, 9, 0),
+        ].reverse())
+      })
+    })
   })
 
-  describe('args: REVERSE', () => {
-    it('with a single rule', () => {
-      // YearlyByMonthAndMonthDay
-      const schedule = new Schedule({
+  describe('occurs? methods', () => {
+    testOccursMethods(
+      'with a single rule',
+      {
         rrules: [
           {
             frequency: 'YEARLY',
-            count: 3,
+            until: dateAdapter(1998, 3, 5, 9, 0),
             byMonthOfYear: [1, 3],
             byDayOfMonth: [5, 7],
             start: dateAdapter(1997, 9, 2, 9),
           },
         ],
-      })
-
-      expect(toISOStrings(schedule, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
-        isoString(1998, 1, 5, 9, 0),
-        isoString(1998, 1, 7, 9, 0),
-        isoString(1998, 3, 5, 9, 0),
-      ].reverse())
-    })
-
-    // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
-    // what the test should expect to be sure
-    it.skip('with multiple rules', () => {
-      const schedule = new Schedule({
+      },
+      [
+        { occursBefore: dateAdapter(1998, 1, 7, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1998, 1, 5, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1998, 1, 5, 9, 0), excludeStart: true, expect: false },
+        { occursAfter: dateAdapter(1998, 1, 7, 9, 0), expect: true },
+        { occursAfter: dateAdapter(1998, 3, 5, 9, 0), expect: true },
+        { occursAfter: dateAdapter(1998, 3, 5, 9, 0), excludeStart: true, expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1998, 1, 6, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1997, 12, 2, 9)], expect: false },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], excludeEnds: true, expect: false },
+        { occursBetween: [dateAdapter(1998, 1, 8, 9, 0), dateAdapter(1998, 3, 4, 9, 0)], expect: false },
+        { occursOn: dateAdapter(1998, 3, 5, 9, 0), expect: true },
+        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+      ]
+    )
+  
+    testOccursMethods(
+      'with multiple rules',
+      {
         rrules: [
           // YearlyByMonthAndMonthDay
           {
@@ -533,79 +811,128 @@ describe('Schedule', () => {
             start: dateAdapter(1997, 9, 2, 9),
           },
         ],
-      })
-
-      expect(toISOStrings(schedule, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
-        isoString(1997, 9, 2, 9, 0),
-        isoString(1998, 1, 1, 9, 0),
-        isoString(1998, 1, 5, 9, 0),
-        isoString(1998, 1, 7, 9, 0),
-        isoString(1998, 1, 20, 9, 0),
-        isoString(1998, 2, 3, 9, 0),
-        isoString(1998, 3, 3, 9, 0),
-        isoString(1998, 3, 5, 9, 0),
-      ].reverse())
-    })
-
-    it('with RDates & duplicate', () => {
-      const schedule = new Schedule({
+      },
+      [
+        { occursBefore: dateAdapter(1998, 1, 1, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1997, 9, 2, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1997, 9, 2, 9, 0), excludeStart: true, expect: false },
+        { occursAfter: dateAdapter(1998, 1, 7, 9, 0), expect: true },
+        { occursAfter: dateAdapter(1998, 3, 5, 9, 0), expect: true },
+        { occursAfter: dateAdapter(1998, 3, 5, 9, 0), excludeStart: true, expect: true },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1998, 1, 6, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1997, 9, 3, 9), dateAdapter(1997, 12, 2, 9)], expect: false },
+        { occursBetween: [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], excludeEnds: true, expect: false },
+        { occursBetween: [dateAdapter(1998, 3, 6, 9, 0), dateAdapter(1999, 3, 6, 9, 0)], expect: true },
+        { occursOn: dateAdapter(1998, 3, 5, 9, 0), expect: true },
+        { occursOn: dateAdapter(1998, 3, 4, 9, 0), expect: false },
+      ]
+    )
+  
+    testOccursMethods(
+      'with RDates & duplicate',
+      {
         rdates: [
           dateAdapter(1998, 1, 1, 9, 0),
           dateAdapter(1998, 1, 1, 9, 0),
           dateAdapter(2000, 1, 1, 9, 0),
           dateAdapter(2017, 1, 1, 9, 0),
         ],
-      })
+      },
+      [
+        { occursBefore: dateAdapter(1999, 12, 1, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1998, 1, 1, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1998, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursAfter: dateAdapter(2000, 1, 2, 9, 0), expect: true },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), expect: true },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1998, 1, 6, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1997, 12, 2, 9)], expect: false },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: false },
+        { occursBetween: [dateAdapter(2000, 1, 2, 9, 0), dateAdapter(2010, 1, 1, 9, 0)], expect: false },
+        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: true },
+        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+      ]
+    )
 
-      expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
-        isoString(1998, 1, 1, 9, 0),
-        isoString(2000, 1, 1, 9, 0),
-        isoString(2017, 1, 1, 9, 0),
-      ].reverse())
-    })
-
-    it('with EXDates', () => {
-      const schedule = new Schedule({
+    testOccursMethods(
+      'with EXDates',
+      {
         exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
-      })
+      },
+      [
+        { occursBefore: dateAdapter(1999, 12, 1, 9, 0), expect: false },
+        { occursBefore: dateAdapter(1998, 1, 1, 9, 0), expect: false },
+        { occursBefore: dateAdapter(1998, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursAfter: dateAdapter(2000, 1, 2, 9, 0), expect: false },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), expect: false },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1998, 1, 6, 9, 0)], expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1997, 12, 2, 9)], expect: false },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: false },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: false },
+        { occursBetween: [dateAdapter(2000, 1, 2, 9, 0), dateAdapter(2010, 1, 1, 9, 0)], expect: false },
+        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: false },
+        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+      ]
+    )
 
-      expect(toISOStrings(schedule, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
-    })
-
-    it('with RDates & EXDates', () => {
-      const schedule = new Schedule({
+    testOccursMethods(
+      'with RDates & EXDates',
+      {
         rdates: [
           dateAdapter(1998, 1, 1, 9, 0),
           dateAdapter(2000, 1, 1, 9, 0),
           dateAdapter(2017, 1, 1, 9, 0),
         ],
         exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
-      })
+      },
+      [
+        { occursBefore: dateAdapter(2015, 12, 1, 9, 0), expect: true },
+        { occursBefore: dateAdapter(2000, 1, 1, 9, 0), expect: true },
+        { occursBefore: dateAdapter(2000, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursAfter: dateAdapter(2005, 1, 2, 9, 0), expect: true },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), expect: true },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(2005, 1, 6, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(2000, 9, 2, 9), dateAdapter(2015, 12, 2, 9)], expect: false },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: false },
+        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: true },
+        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+      ]
+    )
 
-      expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
-        isoString(2000, 1, 1, 9, 0),
-        isoString(2017, 1, 1, 9, 0),
-      ].reverse())
-    })
-
-    it('with RDates & EXDates cancelling out', () => {
-      const schedule = new Schedule({
+    testOccursMethods(
+      'with RDates & EXDates cancelling out',
+      {
         rdates: [dateAdapter(1998, 1, 1, 9, 0)],
         exdates: [dateAdapter(1998, 1, 1, 9, 0)],
-      })
+      },
+      [
+        { occursBefore: dateAdapter(1999, 12, 1, 9, 0), expect: false },
+        { occursBefore: dateAdapter(1998, 1, 1, 9, 0), expect: false },
+        { occursBefore: dateAdapter(1998, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursAfter: dateAdapter(2000, 1, 2, 9, 0), expect: false },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), expect: false },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1998, 1, 6, 9, 0)], expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1997, 12, 2, 9)], expect: false },
+        { occursBetween: [dateAdapter(1997, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: false },
+        { occursOn: dateAdapter(1998, 1, 1, 9, 0), expect: false },
+        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+      ]
+    )
 
-      expect(toISOStrings(schedule, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
-    })
-
-    // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
-    // what the test should expect to be sure
-    it.skip('with multiple rules & RDates & EXDates', () => {
-      const schedule = new Schedule({
+    testOccursMethods(
+      'with multiple rules & RDates & EXDates',
+      {
         rrules: [
           // YearlyByMonthAndMonthDay
           {
             frequency: 'YEARLY',
-            count: 3,
+            until: dateAdapter(2001, 9, 2, 9),
             byMonthOfYear: [1, 3],
             byDayOfMonth: [5, 7],
             start: dateAdapter(1997, 9, 2, 9),
@@ -613,14 +940,14 @@ describe('Schedule', () => {
           // WeeklyIntervalLarge
           {
             frequency: 'WEEKLY',
-            count: 2,
+            until: dateAdapter(2001, 9, 2, 9),
             interval: 20,
             start: dateAdapter(1997, 9, 2, 9),
           },
           // DailyByMonthDayAndWeekDay
           {
             frequency: 'DAILY',
-            count: 3,
+            until: dateAdapter(1999, 9, 2, 9),
             byDayOfMonth: [1, 3],
             byDayOfWeek: ['TU', 'TH'],
             start: dateAdapter(1997, 9, 2, 9),
@@ -632,18 +959,27 @@ describe('Schedule', () => {
           dateAdapter(2017, 1, 1, 9, 0),
         ],
         exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
-      })
-
-      expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
-        isoString(1997, 9, 2, 9, 0),
-        isoString(1998, 1, 5, 9, 0),
-        isoString(1998, 1, 7, 9, 0),
-        isoString(1998, 2, 3, 9, 0),
-        isoString(1998, 3, 3, 9, 0),
-        isoString(1998, 3, 5, 9, 0),
-        isoString(2000, 1, 1, 9, 0),
-        isoString(2017, 1, 1, 9, 0),
-      ].reverse())
-    })
+      },
+      [
+        { occursBefore: dateAdapter(1998, 1, 5, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1997, 9, 2, 9, 0), expect: true },
+        { occursBefore: dateAdapter(1997, 9, 2, 9, 0), excludeStart: true, expect: false },
+        { occursAfter: dateAdapter(2005, 1, 2, 9, 0), expect: true },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), expect: true },
+        { occursAfter: dateAdapter(2017, 1, 1, 9, 0), excludeStart: true, expect: false },
+        { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(2005, 1, 6, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(2001, 9, 2, 9), dateAdapter(2015, 12, 2, 9)], expect: false },
+        { occursBetween: [dateAdapter(1998, 5, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1998, 5, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: true },
+        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: true },
+        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+      ]
+    )
   })
+})
+
+})
+
+})
+
 })

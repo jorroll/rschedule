@@ -22,7 +22,7 @@ export interface IHasOccurrences<
   K extends RunnableIterator<T>
 > {
   occurrences(args: OccurrencesArgs<T>): OccurrenceIterator<T, K>
-  occursBetween(start: T, end: T, options: { excludingEnds?: boolean }): boolean
+  occursBetween(start: T, end: T, options: { excludeEnds?: boolean }): boolean
   occursOn(date: T): boolean
   occursAfter(date: T, options: { excludeStart?: boolean }): boolean
   occursBefore(date: T, options: { excludeStart?: boolean }): boolean
@@ -34,9 +34,9 @@ export abstract class HasOccurrences<T extends DateAdapter<T>> {
     return args
   }
 
-  public occursBetween(start: T, end: T, options: { excludingEnds?: boolean } = {}) {
+  public occursBetween(start: T, end: T, options: { excludeEnds?: boolean } = {}) {
     for (const day of this.occurrences({ start, end })) {
-      if (options.excludingEnds) {
+      if (options.excludeEnds) {
         if (day.isEqual(start)) { continue }
         if (day.isEqual(end)) { break }
       }

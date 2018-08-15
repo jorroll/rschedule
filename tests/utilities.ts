@@ -30,6 +30,20 @@ export function environment<T>(object: T, fn: (object: T) => any) {
     throw new Error('"environment()" utility function received unexpected value')
 }
 
+export const TIMEZONES = [
+  undefined,
+  "UTC",
+  "Africa/Johannesburg",
+  "America/Los_Angeles",
+  "America/Chicago",
+  "America/New_York",
+  "America/Santiago",
+  "Europe/Athens",
+  "Europe/London",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Australia/Melbourne",
+];
 
 export type DatetimeFn<R> = {
   (): R;

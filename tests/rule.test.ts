@@ -6,13 +6,11 @@
 
 import { RRule, Utils, IDateAdapterConstructor, DateAdapter as IDateAdapter } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
-import { dateAdapter, DatetimeFn, environment, context, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn } from './utilities'
+import { dateAdapter, DatetimeFn, environment, context, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, TIMEZONES } from './utilities'
 import { Moment as MomentST } from 'moment';
-var momentST = require('moment');
 import { Moment as MomentTZ } from 'moment-timezone';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
-var momentTZ = require('moment-timezone');
 
 
 function testRecurring(
@@ -154,12 +152,12 @@ function testNextOccurrence(
 }
 
 const DATE_ADAPTERS = [
-  // [StandardDateAdapter, standardDatetimeFn, false],
-  // [MomentDateAdapter, momentDatetimeFn, false],
+  [StandardDateAdapter, standardDatetimeFn, false],
+  [MomentDateAdapter, momentDatetimeFn, false],
   [MomentTZDateAdapter, momentTZDatetimeFn, true],
 ] as [
-  // [typeof StandardDateAdapter, DatetimeFn<Date>, false]
-  // [typeof MomentDateAdapter, DatetimeFn<MomentST>, false]
+  [typeof StandardDateAdapter, DatetimeFn<Date>, false],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>, false],
   [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
 ]
 
@@ -171,20 +169,7 @@ const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet as [IDateAdapt
 
 const zones = !supportsTimezones
   ? [undefined, 'UTC']
-  : [
-      undefined,
-      "UTC",
-      "Africa/Johannesburg",
-      "America/Los_Angeles",
-      "America/Chicago",
-      "America/New_York",
-      "America/Santiago",
-      "Europe/Athens",
-      "Europe/London",
-      "Asia/Shanghai",
-      "Asia/Singapore",
-      "Australia/Melbourne",
-    ];
+  : TIMEZONES;
 
 zones.forEach(zone => {
   
