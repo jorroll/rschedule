@@ -1004,6 +1004,42 @@ zones.forEach(zone => {
           dateAdapter(1997, 9, 2, 18, 18, 6),
         ]
       )
+
+
+      // testRecurring(
+      //   'calculates weekly recurrences correctly across DST boundaries',
+      //   new RRule({
+      //     frequency: 'WEEKLY',
+      //     start: parse('20181031T180000'),
+      //     until: parse('20181115T050000'),
+      //   }),
+      //   [
+      //     dateAdapter(2018, 10, 31, 18),
+      //     dateAdapter(2018, 11, 7, 18),
+      //     dateAdapter(2018, 11, 14, 18),
+      //   ]
+      // )
+
+      // Grabbed these tests from a recent patch to rrulejs, but, at second glance,
+      // this one doesn't look valid. It is expecting a date before the start time...
+      // which, unless I'm too sleep deprived at the moment, shouldn't be possible.
+      // Don't have time to investigate to just commenting them out for later.
+      
+      // testRecurring(
+      //   'calculates byweekday recurrences correctly across DST boundaries',
+      //   new RRule({
+      //     frequency: 'WEEKLY',
+      //     start: parse('20181000T000000'),
+      //     until: parse('20181009T000000'),
+      //     byDayOfWeek: ['SU', 'WE'],
+      //   }),
+      //   [
+      //     dateAdapter(2018, 9, 30),
+      //     dateAdapter(2018, 10, 3),
+      //     dateAdapter(2018, 10, 7),
+      //   ]
+      // )
+
     })
     
     describe('DAILY', () => {
@@ -1206,6 +1242,23 @@ zones.forEach(zone => {
           dateAdapter(1997, 9, 2, 18, 18, 6),
         ]
       )
+
+      // testRecurring(
+      //   'calculates daily recurrences correctly across DST boundaries',
+      //   new RRule({
+      //     frequency: 'DAILY',
+      //     start: parse('20181101T110000'),
+      //     until: parse('20181106T110000'),
+      //   }),
+      //   [
+      //     dateAdapter(2018, 11, 1, 11),
+      //     dateAdapter(2018, 11, 2, 11),
+      //     dateAdapter(2018, 11, 3, 11),
+      //     dateAdapter(2018, 11, 4, 11),
+      //     dateAdapter(2018, 11, 5, 11),
+      //     dateAdapter(2018, 11, 6, 11),
+      //   ]
+      // )
     })
     
     describe('HOURLY', () => {
