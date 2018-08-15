@@ -1,7 +1,7 @@
 {
   "name": "@rschedule/luxon-date-adapter",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An rSchedule DateAdapter for \"luxon\" DateTime objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
@@ -72,7 +72,7 @@
     "registry": "https://registry.yarnpkg.com"
   },
   "dependencies": {
-    "@rschedule/rschedule": "^0.1.0",
+    "@rschedule/rschedule": "^0.2.0",
     "core-js": "^2.5.7"
   },
   "peerDependencies": {
