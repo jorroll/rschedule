@@ -69,12 +69,14 @@
     "core-js": "^2.5.7",
     "lodash.sorteduniq": "^4.2.0",
     "lodash.uniq": "^4.5.0",
-    "lodash.uniqwith": "^4.5.0"
+    "lodash.uniqwith": "^4.5.0",
+    "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
     "@types/lodash.sorteduniq": "^4.2.4",
     "@types/lodash.uniq": "^4.5.4",
     "@types/lodash.uniqwith": "^4.5.4",
+    "@types/lodash.clonedeep": "^4.5.4",
     "codecov": "^3.0.2",
     "cz-conventional-changelog": "^2.1.0",
     "gh-pages": "^1.2.0",

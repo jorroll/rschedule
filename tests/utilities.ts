@@ -33,14 +33,14 @@ export function environment<T>(object: T, fn: (object: T) => any) {
 
 export type DatetimeFn<R> = {
   (): R;
-  (a: number): R;
-  (a: number, b: number): R;
-  (a: number, b: number, c: number): R;
-  (a: number, b: number, c: number, d: number): R;
-  (a: number, b: number, c: number, d: number, e: number): R;
-  (a: number, b: number, c: number, d: number, e: number, f: number): R;
-  (a: number, b: number, c: number, d: number, e: number, f: number, g: number): R;
-  (a: number, b: number, c: number, d: number, e: number, f: number, g: number, timezone?: string): R;
+  (year: number): R;
+  (year: number, month: number): R;
+  (year: number, month: number, day: number): R;
+  (year: number, month: number, day: number, hour: number): R;
+  (year: number, month: number, day: number, hour: number, minute: number): R;
+  (year: number, month: number, day: number, hour: number, minute: number, second: number): R;
+  (year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number): R;
+  (year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number, timezone?: string): R;
 }
 
 export function standardDatetimeFn(...args: (number|string)[]) {

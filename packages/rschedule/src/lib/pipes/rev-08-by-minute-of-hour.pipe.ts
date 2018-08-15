@@ -1,11 +1,12 @@
 import { DateAdapter } from '../date-adapter'
 import { Options } from '../rule/rule-options'
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
+import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 
-export class ByMinuteOfHourPipe<T extends DateAdapter<T>> extends PipeRule<T>
+export class ByMinuteOfHourReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
   implements IPipeRule<T> {
 
   private upcomingMinutes: Options.ByMinuteOfHour[] = []
+  
   public run(args: IPipeRunFn<T>) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
@@ -13,12 +14,13 @@ export class ByMinuteOfHourPipe<T extends DateAdapter<T>> extends PipeRule<T>
       return this.filter(args)
     } else { return this.expand(args) }
   }
+
   public expand(args: IPipeRunFn<T>) {
     const date = args.date
 
     if (this.upcomingMinutes.length === 0) {
       this.upcomingMinutes = this.options.byMinuteOfHour!.filter(
-        minute => date.get('minute') <= minute
+        minute => date.get('minute') >= minute
       )
 
       if (this.upcomingMinutes.length === 0) {
@@ -27,7 +29,7 @@ export class ByMinuteOfHourPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
       this.expandingPipes.push(this)
     } else {
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.bySecondOfMinute) { date.set('second', 59) }
     }
 
     const nextMinute = this.upcomingMinutes.shift()!
@@ -48,7 +50,7 @@ export class ByMinuteOfHourPipe<T extends DateAdapter<T>> extends PipeRule<T>
       if (args.date.get('minute') === minute) {
         validMinute = true
         break
-      } else if (args.date.get('minute') < minute) {
+      } else if (args.date.get('minute') > minute) {
         nextValidMinuteThisHour = minute
         break
       }
@@ -70,7 +72,7 @@ export class ByMinuteOfHourPipe<T extends DateAdapter<T>> extends PipeRule<T>
       // if no, advance the current date forward one hour &
       // and set the date to whatever minute would pass this filter
       next = this.cloneDateWithGranularity(args.date, 'hour')
-      next.add(1, 'hour')
+      next.subtract(1, 'hour')
       next.set('minute', this.options.byMinuteOfHour![0])
     }
 

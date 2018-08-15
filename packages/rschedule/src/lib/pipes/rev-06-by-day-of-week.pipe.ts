@@ -2,24 +2,24 @@ import sortedUniq from 'lodash.sorteduniq'
 import { DateAdapter } from '../date-adapter'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
+import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 
-export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
+export class ByDayOfWeekReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
   implements IPipeRule<T> {
 
   // used to speed up some operations below;
   private cachedValidMonthDays: [string, number[]] = ['', []]
   private cachedValidYearDays: [number, number[]] = [0, []]
 
-  // for `monthlyExpand()` and `weeklyExpand()`, upcomingDays
+  // for `monthlyExpand()` and `weeklyExpand()`, preceedingDays
   // holds an array of dates within the current month that are valid
   //
-  // for `yearlyExpand()`, upcomingDays holds an array of numbers,
+  // for `yearlyExpand()`, preceedingDays holds an array of numbers,
   // each number is equal to the number of days from the start of
   // the year that a valid date exists on. i.e. set a
   // date to January 1st and then add days to the date equal to
   // one of the numbers in the array and you'll be on a valid date.
-  private upcomingDays: number[] = []
+  private preceedingDays: number[] = []
   public run(args: IPipeRunFn<T>) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
@@ -50,7 +50,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
   public yearlyExpand(args: IPipeRunFn<T>) {
     const date = args.date
 
-    if (this.upcomingDays.length === 0) {
+    if (this.preceedingDays.length === 0) {
       if (this.cachedValidYearDays[0] !== date.get('year')) {
         this.cachedValidYearDays = [
           date.get('year'),
@@ -58,24 +58,24 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
         ]
       }
 
-      this.upcomingDays = this.cachedValidYearDays[1]
+      this.preceedingDays = this.cachedValidYearDays[1]
 
-      if (this.upcomingDays.length === 0) {
+      if (this.preceedingDays.length === 0) {
         return this.nextPipe.run({ date, invalidDate: true })
       }
 
       this.expandingPipes.push(this)
     } else {
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) { date.set('hour', 23) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 59) }
+      if (this.options.bySecondOfMinute) { date.set('second', 59) }
     }
 
-    const nextDay = this.upcomingDays.shift()!
+    const nextDay = this.preceedingDays.shift()!;
 
     Utils.setDateToStartOfYear(date).add(nextDay - 1, 'day')
 
-    if (this.upcomingDays.length === 0) { this.expandingPipes.pop() }
+    if (this.preceedingDays.length === 0) { this.expandingPipes.pop() }
 
     return this.nextPipe.run({ date })
   }
@@ -83,7 +83,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
   public monthlyExpand(args: IPipeRunFn<T>) {
     const date = args.date
 
-    if (this.upcomingDays.length === 0) {
+    if (this.preceedingDays.length === 0) {
       if (
         this.cachedValidMonthDays[0] !==
         `${date.get('year')}-${date.get('month')}`
@@ -94,24 +94,24 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
         ]
       }
 
-      this.upcomingDays = this.cachedValidMonthDays[1]
+      this.preceedingDays = this.cachedValidMonthDays[1]
 
-      if (this.upcomingDays.length === 0) {
+      if (this.preceedingDays.length === 0) {
         return this.nextPipe.run({ date, invalidDate: true })
       }
 
       this.expandingPipes.push(this)
     } else {
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) { date.set('hour', 23) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 59) }
+      if (this.options.bySecondOfMinute) { date.set('second', 59) }
     }
 
-    const nextDay = this.upcomingDays.shift()!
+    const nextDay = this.preceedingDays.shift()!;
 
     date.set('day', nextDay)
 
-    if (this.upcomingDays.length === 0) { this.expandingPipes.pop() }
+    if (this.preceedingDays.length === 0) { this.expandingPipes.pop() }
 
     return this.nextPipe.run({ date })
   }
@@ -119,13 +119,14 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
   public weeklyExpand(args: IPipeRunFn<T>) {
     const date = args.date
 
-    if (this.upcomingDays.length === 0) {
-      const orderedWeekdays = Utils.orderedWeekdays(this.options.weekStart)
+    // console.warn('expanding', date.toISOString())
+
+    if (this.preceedingDays.length === 0) {
+      const orderedWeekdays = Utils.orderedWeekdays(this.options.weekStart).reverse()
       const currentDateIndex = orderedWeekdays.indexOf(date.get('weekday'))
 
-      this.upcomingDays = this.options
-        .byDayOfWeek! // calculate the number of days that need to be added to the current date to
-        // get to a valid date
+      this.preceedingDays = this.options
+        .byDayOfWeek!
         .map(day => orderedWeekdays.indexOf(day as DateAdapter.Weekday))
         .filter(day => day >= currentDateIndex)
         .sort((a, b) => {
@@ -134,78 +135,85 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
           return 0
         })
 
-      if (this.upcomingDays.length === 0) {
+      if (this.preceedingDays.length === 0) {
         return this.nextPipe.run({ date, invalidDate: true })
       }
 
       this.expandingPipes.push(this)
     } else {
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) { date.set('hour', 23) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 59) }
+      if (this.options.bySecondOfMinute) { date.set('second', 59) }
     }
 
-    const nextDay = this.upcomingDays.shift()!
+    const nextDay = this.preceedingDays.shift()!;
 
-    Utils.setDateToStartOfWeek(date, this.options.weekStart).add(nextDay, 'day')
+    Utils.setDateToEndOfWeek(date, this.options.weekStart).subtract(nextDay, 'day')
 
-    if (this.upcomingDays.length === 0) { this.expandingPipes.pop() }
+    // console.warn('2', [
+    //   date.toISOString(),
+    //   nextDay,
+    //   this.preceedingDays,
+    //   date.get('weekday'),
+    // ])
+
+    if (this.preceedingDays.length === 0) { this.expandingPipes.pop() }
 
     return this.nextPipe.run({ date })
   }
 
   public yearlyFilter(args: IPipeRunFn<T>) {
-    const nextValidDateThisYear = getNextValidDateThisYear(
+    const previousValidDateThisYear = getPreviousValidDateThisYear(
       args.date,
       this.options,
-      this.cachedValidYearDays
+      this.cachedValidYearDays,
     )
 
-    const validDay = nextValidDateThisYear
-      ? args.date.get('day') === nextValidDateThisYear.get('day')
+    const validDay = previousValidDateThisYear
+      ? args.date.get('day') === previousValidDateThisYear.get('day')
       : false
 
     if (validDay) { return this.nextPipe.run({ date: args.date }) }
 
-    const newDate = this.cloneDateWithGranularity(args.date, 'year').add(
+    const newDate = this.cloneDateWithGranularity(args.date, 'year').subtract(
       1,
       'year'
     )
 
-    const next = nextValidDateThisYear
-      ? nextValidDateThisYear
-      : getNextValidDateThisYear(
+    const previous = previousValidDateThisYear
+      ? previousValidDateThisYear
+      : getPreviousValidDateThisYear(
           newDate,
           this.options,
-          this.cachedValidYearDays
+          this.cachedValidYearDays,
         )!
 
     return this.nextPipe.run({
       invalidDate: true,
       date: args.date,
-      skipToDate: next,
+      skipToDate: previous,
     })
   }
 
   public monthlyFilter(args: IPipeRunFn<T>) {
-    const nextValidDateThisMonth = getNextValidDateThisMonth(
+    const previousValidDateThisMonth = getPreviousValidDateThisMonth(
       this.cloneDateWithGranularity(args.date, 'day'),
       this.options,
-      this.cachedValidMonthDays
+      this.cachedValidMonthDays,
     )
 
-    const validDay = nextValidDateThisMonth
-      ? args.date.get('day') === nextValidDateThisMonth.get('day')
+    const validDay = previousValidDateThisMonth
+      ? args.date.get('day') === previousValidDateThisMonth.get('day')
       : false
 
     if (validDay) { return this.nextPipe.run({ date: args.date }) }
 
-    const next = nextValidDateThisMonth
-      ? nextValidDateThisMonth
-      : getNextValidDateThisMonth(
-          this.cloneDateWithGranularity(args.date, 'month').add(1, 'month'),
+    const next = previousValidDateThisMonth
+      ? previousValidDateThisMonth
+      : getPreviousValidDateThisMonth(
+          this.cloneDateWithGranularity(args.date, 'month').set('day', 1).subtract(1, 'day'),
           this.options,
-          this.cachedValidMonthDays
+          this.cachedValidMonthDays,
         )!
 
     return this.nextPipe.run({
@@ -216,7 +224,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
   }
 
   public simpleFilter(args: IPipeRunFn<T>) {
-    const weekdays = Utils.orderedWeekdays(this.options.weekStart)
+    const weekdays = Utils.orderedWeekdays(this.options.weekStart).reverse()
 
     const validWeekdays = weekdays.filter(
       day => (this.options.byDayOfWeek as DateAdapter.Weekday[]).includes(day)
@@ -231,15 +239,15 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     //
     // - We know the current `options.frequency` is not yearly or monthly or weekly
 
-    const upcomingWeekdays = weekdays.slice(
+    const preceedingWeekdays = weekdays.slice(
       weekdays.indexOf(args.date.get('weekday'))
     )
-    const validUpcomingWeekday = validWeekdays.filter(day =>
-      upcomingWeekdays.includes(day)
+    const validPreceedingWeekday = validWeekdays.filter(day =>
+      preceedingWeekdays.includes(day)
     )[0]
 
-    const weekday = validUpcomingWeekday
-      ? validUpcomingWeekday
+    const weekday = validPreceedingWeekday
+      ? validPreceedingWeekday
       : validWeekdays[0]
 
     const next = this.cloneDateWithGranularity(args.date, 'day')
@@ -248,7 +256,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
       weekday
     )
 
-    next.add(days, 'day')
+    next.subtract(days, 'day')
 
     return this.nextPipe.run({
       invalidDate: true,
@@ -260,17 +268,17 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
 function differenceInDaysBetweenTwoWeekdays(
   a: DateAdapter.Weekday,
-  b: DateAdapter.Weekday
+  b: DateAdapter.Weekday,
 ) {
   const result = Utils.WEEKDAYS.indexOf(a) - Utils.WEEKDAYS.indexOf(b)
 
-  return result > 0 ? 7 - result : Math.abs(result)
+  return result > 0 ? result : 7 + result
 }
 
-function getNextValidDateThisYear<T extends DateAdapter<T>>(
+function getPreviousValidDateThisYear<T extends DateAdapter<T>>(
   date: T,
   options: Options.ProcessedOptions<T>,
-  validYearDaysCache: [number, number[]]
+  validYearDaysCache: [number, number[]],
 ) {
   if (validYearDaysCache[0] !== date.get('year')) {
     validYearDaysCache = [date.get('year'), getValidYearDays(date, options)]
@@ -278,15 +286,13 @@ function getNextValidDateThisYear<T extends DateAdapter<T>>(
 
   date = date
     .clone()
-    .set('hour', 0)
-    .set('minute', 0)
-    .set('second', 0)
+    .set('hour', 23)
+    .set('minute', 59)
+    .set('second', 59)
 
   const currentYearDay = date.get('yearday')
 
-  const dayNumber = validYearDaysCache[1].find(
-    dayNumber => dayNumber >= currentYearDay
-  )
+  const dayNumber = validYearDaysCache[1].find(dayNumber => dayNumber <= currentYearDay)
 
   if (dayNumber) {
     return Utils.setDateToStartOfYear(date).add(dayNumber - 1, 'day')
@@ -296,7 +302,7 @@ function getNextValidDateThisYear<T extends DateAdapter<T>>(
 
 function getValidYearDays<T extends DateAdapter<T>>(
   date: T,
-  options: Options.ProcessedOptions<T>
+  options: Options.ProcessedOptions<T>,
 ) {
   const weekdays: DateAdapter.Weekday[] = []
   const specificWeekdays: Array<[DateAdapter.Weekday, number]> = []
@@ -374,18 +380,18 @@ function getValidYearDays<T extends DateAdapter<T>>(
   return sortedUniq(
     validDates
       .sort((a, b) => {
-        if (a > b) { return 1 }
-        else if (b > a) { return -1 }
+        if (a > b) { return -1 }
+        else if (b > a) { return 1 }
         else { return 0 }
       })
-      .filter(yearday => date.get('yearday') <= yearday)
+      .filter(yearday => date.get('yearday') >= yearday)
   )
 }
 
-function getNextValidDateThisMonth<T extends DateAdapter<T>>(
+function getPreviousValidDateThisMonth<T extends DateAdapter<T>>(
   date: T,
   options: Options.ProcessedOptions<T>,
-  validMonthDaysCache: [string, number[]]
+  validMonthDaysCache: [string, number[]],
 ) {
   if (validMonthDaysCache[0] !== `${date.get('year')}-${date.get('month')}`) {
     validMonthDaysCache = [
@@ -396,13 +402,13 @@ function getNextValidDateThisMonth<T extends DateAdapter<T>>(
 
   date = date
     .clone()
-    .set('hour', 0)
-    .set('minute', 0)
-    .set('second', 0)
+    .set('hour', 23)
+    .set('minute', 59)
+    .set('second', 59)
 
   const currentDay = date.get('day')
 
-  const day = validMonthDaysCache[1].find(day => day >= currentDay)
+  const day = validMonthDaysCache[1].find(day => day <= currentDay)
 
   if (day) { return date.set('day', day) }
   else { return null }
@@ -410,7 +416,7 @@ function getNextValidDateThisMonth<T extends DateAdapter<T>>(
 
 function getValidMonthDays<T extends DateAdapter<T>>(
   date: T,
-  options: Options.ProcessedOptions<T>
+  options: Options.ProcessedOptions<T>,
 ) {
   const weekdays: DateAdapter.Weekday[] = []
   const specificWeekdays: Array<[DateAdapter.Weekday, number]> = []
@@ -482,10 +488,10 @@ function getValidMonthDays<T extends DateAdapter<T>>(
   return sortedUniq(
     validDates
       .sort((a, b) => {
-        if (a > b) { return 1 }
-        else if (b > a) { return -1 }
+        if (a > b) { return -1 }
+        else if (b > a) { return 1 }
         else { return 0 }
       })
-      .filter(monthday => date.get('day') <= monthday)
-  )
+      .filter(monthday => date.get('day') >= monthday)
+  )  
 }

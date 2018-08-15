@@ -19,6 +19,7 @@
     "@types/lodash.sorteduniq": "^4.2.4",
     "@types/lodash.uniq": "^4.5.4",
     "@types/lodash.uniqwith": "^4.5.4",
+    "@types/lodash.clonedeep": "^4.5.4",
     "@types/luxon": "^1.2.2",
     "@types/moment": "^2.13.0",
     "@types/moment-timezone": "^0.5.7",

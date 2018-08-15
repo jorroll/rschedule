@@ -140,6 +140,10 @@ export namespace Utils {
     return date.set('month', 12).set('day', 31)
   }
 
+  export function setDateToEndOfMonth<T extends DateAdapter<T>>(date: T) {
+    return date.add(1, 'month').set('day', 1).subtract(1, 'day')
+  }
+
   export function setDateToStartOfWeek<T extends DateAdapter<T>>(
     date: T,
     wkst: DateAdapter.Weekday
@@ -147,6 +151,12 @@ export namespace Utils {
     const index = orderedWeekdays(wkst).indexOf(date.get('weekday'))
     return date.subtract(index, 'day')
   }
+
+  export function setDateToEndOfWeek<T extends DateAdapter<T>>(date: T, wkst: DateAdapter.Weekday) {
+    const index = orderedWeekdays(wkst).indexOf(date.get('weekday'))
+    return date.add(6 - index, 'day')
+  }
+
 
   /**
    *

@@ -1,11 +1,13 @@
 import { DateAdapter } from '../date-adapter'
 import { Options } from '../rule/rule-options'
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
+import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
+import { Utils } from '../utilities'
 
-export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
+export class ByMonthOfYearReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
   implements IPipeRule<T> {
 
   private upcomingMonths: DateAdapter.IMonth[] = []
+
   public run(args: IPipeRunFn<T>) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
@@ -13,12 +15,13 @@ export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
       return this.expand(args)
     } else { return this.filter(args) }
   }
+
   public expand(args: IPipeRunFn<T>) {
     const date = args.date
 
     if (this.upcomingMonths.length === 0) {
       this.upcomingMonths = this.options.byMonthOfYear!.filter(
-        month => date.get('month') <= month
+        month => date.get('month') >= month
       )
 
       if (this.upcomingMonths.length === 0) {
@@ -28,11 +31,11 @@ export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
       this.expandingPipes.push(this)
     } else {
       if (this.options.byDayOfMonth || this.options.byDayOfWeek) {
-        date.set('day', 1)
+        Utils.setDateToEndOfMonth(date)
       }
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) { date.set('hour', 23) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 59) }
+      if (this.options.bySecondOfMinute) { date.set('second', 59) }
     }
 
     const nextMonth = this.upcomingMonths.shift()!
@@ -53,7 +56,7 @@ export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
       if (args.date.get('month') === month) {
         validMonth = true
         break
-      } else if (args.date.get('month') < month) {
+      } else if (args.date.get('month') > month) {
         nextValidMonthThisYear = month
         break
       }
@@ -74,21 +77,20 @@ export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
       next = this.cloneDateWithGranularity(args.date, 'month')
       next.set('month', nextValidMonthThisYear)
     } else {
-      // if no, advance the current date one year &
+      // if no, reduce the current date one year &
       // and set the date to whatever month would pass this filter
       next = this.cloneDateWithGranularity(args.date, 'year')
-      next.add(1, 'year');
+      next.subtract(1, 'year')
       next.set('month', this.options.byMonthOfYear![0])
     }
 
-    // make sure we don't move the date to far fowards
+    // make sure we don't move the date to far backwards
     if (this.options.byDayOfMonth || this.options.byDayOfWeek) {
-      next.set('day', 1)
+      Utils.setDateToEndOfMonth(next)
     }
-    if (this.options.byHourOfDay) { next.set('hour', 0) }
-    if (this.options.byMinuteOfHour) { next.set('minute', 0) }
-    if (this.options.bySecondOfMinute) { next.set('second', 0) }
-
+    if (this.options.byHourOfDay) { next.set('hour', 23) }
+    if (this.options.byMinuteOfHour) { next.set('minute', 59) }
+    if (this.options.bySecondOfMinute) { next.set('second', 59) }
 
     return this.nextPipe.run({
       invalidDate: true,

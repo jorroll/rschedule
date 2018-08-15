@@ -14,6 +14,7 @@ export interface OccurrencesArgs<T extends DateAdapter<T>> {
   start?: T
   end?: T
   take?: number
+  reverse?: boolean
 }
 
 export interface IHasOccurrences<
@@ -24,6 +25,7 @@ export interface IHasOccurrences<
   occursBetween(start: T, end: T, options: { excludingEnds?: boolean }): boolean
   occursOn(date: T): boolean
   occursAfter(date: T, options: { excludeStart?: boolean }): boolean
+  occursBefore(date: T, options: { excludeStart?: boolean }): boolean
 }
 
 export abstract class HasOccurrences<T extends DateAdapter<T>> {
@@ -53,6 +55,14 @@ export abstract class HasOccurrences<T extends DateAdapter<T>> {
 
   public occursAfter(date: T, options: { excludeStart?: boolean } = {}) {
     for (const day of this.occurrences({ start: date })) {
+      if (options.excludeStart && day.isEqual(date)) { continue }
+      return true
+    }
+    return false
+  }
+
+  public occursBefore(date: T, options: { excludeStart?: boolean } = {}) {
+    for (const day of this.occurrences({ start: date, reverse: true })) {
       if (options.excludeStart && day.isEqual(date)) { continue }
       return true
     }

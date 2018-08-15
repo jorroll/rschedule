@@ -2,25 +2,29 @@ import { DateAdapter } from '../date-adapter'
 import { Utils } from '../utilities'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
-// the frequency pipe accepts an array of dates only to adhere to the PipeFn interface
-// in reality, will always only accept a single starting date wrapped in an array
+/**
+ * The `FrequencyPipe` is the first pipe in the chain of rule pipes. It is
+ * responsible for incrementing the date, as appropriate, while taking into
+ * account the `RRULE` frequency and interval.
+ */
 export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
-  implements IPipeRule<T> {
-  private intervalStartDate: T = this.normalizeDate(this.options.start.clone())
+  implements IPipeRule<T>
+{
+  private intervalStartDate: T = this.normalizeDate(this.options.start.clone());
 
   public run(args: IPipeRunFn<T>) {
     let date: T
 
-    if (args.skipToIntervalOnOrAfter) {
-      this.skipToIntervalOnOrAfter(args.skipToIntervalOnOrAfter)
+    if (args.skipToDate) {
+        this.skipToIntervalOnOrAfter(args.skipToDate)
 
-      date = args.skipToIntervalOnOrAfter.isAfterOrEqual(this.intervalStartDate)
-        ? args.skipToIntervalOnOrAfter
-        : this.intervalStartDate.clone()
+        date = args.skipToDate.isAfterOrEqual(this.intervalStartDate)
+          ? args.skipToDate
+          : this.intervalStartDate.clone()
     } else {
       this.incrementInterval()
       date = this.intervalStartDate.clone()
-    }
+    }  
 
     return this.nextPipe.run({ date })
   }
@@ -34,10 +38,7 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
         date.set('day', 1)
         break
       case 'WEEKLY':
-        const dayIndex = Utils.orderedWeekdays(this.options.weekStart).indexOf(
-          date.get('weekday')
-        )
-        date.subtract(dayIndex, 'day')
+        Utils.setDateToStartOfWeek(date, this.options.weekStart)
         break
     }
 
@@ -62,7 +63,7 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
     const oldTZOffset = this.intervalStartDate.utcOffset
 
-    this.intervalStartDate.add(this.options.interval, unit)
+    this.intervalStartDate.add(this.options.interval, unit);
 
     const newTZOffset = this.intervalStartDate.utcOffset
 
@@ -79,7 +80,8 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
     if (newDate.utcOffset !== this.intervalStartDate.utcOffset) {
       throw new DateAdapter.InvalidDateError(
-        `A date was created on the border of daylight savings time: "${newDate.toISOString()}"`
+        `A date was created on the border of daylight savings time "${newDate.toISOString()}". ` +
+        'Not sure how to handle it.'
       )
     } else {
       this.intervalStartDate = newDate

@@ -63,6 +63,23 @@ function testRecurring(
 
         expect(actual).toEqual(expected)
       })
+
+      it('REVERSE', () => {
+        if (expectedDates.length === 0) {
+          // can't generate a start date in this scenerio so simply return
+          return
+        }
+
+        const newExpectedDates = expectedDates.slice().reverse()
+
+        const expected = newExpectedDates.map(date => date.toISOString())
+        const actual = rule
+          .occurrences({ start: newExpectedDates[0], reverse: true })
+          .toArray()!
+          .map(date => date.toISOString())
+
+        expect(actual).toEqual(expected)
+      })
     })
   })
 }
@@ -95,7 +112,21 @@ function testPreviousOccurrence(
   inclusive: boolean,
   expectedDate: IDateAdapter<any>
 ) {
-  // not implemented
+  describe(testName, () => {
+    it('matches expected dates', () => {
+      let occurrence: IDateAdapter<any>
+
+      for (const day of rule.occurrences({ start, reverse: true })) {
+        if (!inclusive && day.isEqual(start)) {
+          continue
+        }
+        occurrence = day
+        break
+      }
+
+      expect(occurrence!.toISOString()).toEqual(expectedDate.toISOString())
+    })
+  })
 }
 
 function testNextOccurrence(
@@ -123,12 +154,12 @@ function testNextOccurrence(
 }
 
 const DATE_ADAPTERS = [
-  [StandardDateAdapter, standardDatetimeFn, false],
-  [MomentDateAdapter, momentDatetimeFn, false],
+  // [StandardDateAdapter, standardDatetimeFn, false],
+  // [MomentDateAdapter, momentDatetimeFn, false],
   [MomentTZDateAdapter, momentTZDatetimeFn, true],
 ] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>, false],
-  [typeof MomentDateAdapter, DatetimeFn<MomentST>, false],
+  // [typeof StandardDateAdapter, DatetimeFn<Date>, false]
+  // [typeof MomentDateAdapter, DatetimeFn<MomentST>, false]
   [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
 ]
 
@@ -1932,25 +1963,10 @@ zones.forEach(zone => {
       new RRule({
         frequency: 'YEARLY',
         count: 1,
-        start: new StandardDateAdapter(new Date(1420063200001)),
+        start: dateAdapter(2014,12,31,22,0,0,1),
       }),
-      [new StandardDateAdapter(new Date(1420063200001))]
+      [dateAdapter(2014,12,31,22,0,0,1)]
     )
-    
-    // describe('arguments', () => {
-    //   describe('START', () => {
-    //     testRecurring(
-    //       'testSecondlyBySecond',
-    //       new RRule({
-    //         frequency: 'SECONDLY',
-    //         count: 3,
-    //         bySecondOfMinute: [6, 18],
-    //         start: parse('19970902T090000'),
-    //       }),
-    //       [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 9, 1, 6)]
-    //     )
-    //   })
-    // })
   })
   
 

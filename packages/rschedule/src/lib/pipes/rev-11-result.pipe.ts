@@ -1,7 +1,7 @@
 import { DateAdapter } from '../date-adapter'
-import { IPipeRule, IPipeRunFn, PipeRule, PipeError } from './interfaces'
+import { IPipeRule, IPipeRunFn, ReversePipeRule, PipeError } from './interfaces'
 
-export class ResultPipe<T extends DateAdapter<T>> extends PipeRule<T>
+export class ResultReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
   implements IPipeRule<T> {
   private invalidIterationCount = 0
   private previousIterationDate?: T
@@ -15,7 +15,7 @@ export class ResultPipe<T extends DateAdapter<T>> extends PipeRule<T>
         'See the PipeController#invalid source code for more info.')
     }
 
-    if (this.end && args.date.isAfter(this.end)) { return null }
+    if (this.end && args.date.isBefore(this.end)) { return null }
 
     if (args.invalidDate) {
       // To prevent getting into an infinite loop.
@@ -31,7 +31,7 @@ export class ResultPipe<T extends DateAdapter<T>> extends PipeRule<T>
     } else {
       if (
         this.previousIterationDate &&
-        this.previousIterationDate.isAfterOrEqual(args.date)
+        this.previousIterationDate.isBeforeOrEqual(args.date)
       ) {
         console.error(
           `Previous run's date is after or equal current run's date of "${args.date.toISOString()}". ` +
@@ -48,4 +48,6 @@ export class ResultPipe<T extends DateAdapter<T>> extends PipeRule<T>
       ? this.focusedPipe.run({ ...args, invalidDate: false })
       : args.date
   }
+
+
 }

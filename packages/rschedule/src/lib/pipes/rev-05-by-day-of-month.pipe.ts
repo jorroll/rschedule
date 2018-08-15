@@ -2,14 +2,14 @@ import uniq from 'lodash.uniq'
 import { DateAdapter } from '../date-adapter'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
+import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 
-export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
+export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
   implements IPipeRule<T> {
 
-  private upcomingMonthDays: Array<[number, number]> = []
+  private preceedingMonthDays: Array<[number, number]> = []
+  private preceedingDays: number[] = []
 
-  private upcomingDays: number[] = []
   public run(args: IPipeRunFn<T>) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
@@ -22,14 +22,17 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
       return this.expand(args)
     } else { return this.filter(args) }
   }
+
   public yearlyExpand(args: IPipeRunFn<T>) {
     const date = args.date
 
-    if (this.upcomingMonthDays.length === 0) {
-      this.upcomingMonthDays = getUpcomingMonthDays(date, this.options)
+    if (this.preceedingMonthDays.length === 0) {
+      this.preceedingMonthDays = getPreceedingMonthDays(date, this.options)
 
-      if (this.upcomingMonthDays.length === 0) {
-        const next = Utils.setDateToStartOfYear(date.clone().add(1, 'year'))
+      if (this.preceedingMonthDays.length === 0) {
+        const next = Utils.setDateToEndOfYear(
+          date.clone().subtract(1, 'year')
+        )
 
         return this.nextPipe.run({
           invalidDate: true,
@@ -40,29 +43,28 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
       this.expandingPipes.push(this)
     } else {
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) { date.set('hour', 23) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 59) }
+      if (this.options.bySecondOfMinute) { date.set('second', 59) }
     }
 
-    const nextDay = this.upcomingMonthDays.shift()!
+    const nextDay = this.preceedingMonthDays.shift()!;
+
     date.set('month', nextDay[0]).set('day', nextDay[1])
 
-    if (this.upcomingMonthDays.length === 0) { this.expandingPipes.pop() }
+    if (this.preceedingMonthDays.length === 0) { this.expandingPipes.pop() }
 
     return this.nextPipe.run({ date })
   }
+
   public expand(args: IPipeRunFn<T>) {
     const date = args.date
 
-    if (this.upcomingDays.length === 0) {
-      this.upcomingDays = getUpcomingDays(date, this.options)
+    if (this.preceedingDays.length === 0) {
+      this.preceedingDays = getPreceedingDays(date, this.options)
 
-      if (this.upcomingDays.length === 0) {
-        const next = date
-          .clone()
-          .add(1, 'month')
-          .set('day', 1)
+      if (this.preceedingDays.length === 0) {
+        const next = date.clone().set('day', 1).subtract(1, 'day');
 
         return this.nextPipe.run({
           invalidDate: true,
@@ -73,30 +75,31 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
       this.expandingPipes.push(this)
     } else {
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) { date.set('hour', 23) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 59) }
+      if (this.options.bySecondOfMinute) { date.set('second', 59) }
     }
 
-    const nextDay = this.upcomingDays.shift()!
+    const nextDay = this.preceedingDays.shift()!;
+
     date.set('day', nextDay)
 
-    if (this.upcomingDays.length === 0) { this.expandingPipes.pop() }
+    if (this.preceedingDays.length === 0) { this.expandingPipes.pop() }
 
     return this.nextPipe.run({ date })
   }
 
   public filter(args: IPipeRunFn<T>) {
-    const upcomingDays = getUpcomingDays(args.date, this.options)
+    const preceedingDays = getPreceedingDays(args.date, this.options)
 
     let validDay = false
     let nextValidDayThisMonth: number | null = null
 
-    for (const day of upcomingDays) {
+    for (const day of preceedingDays) {
       if (args.date.get('day') === day) {
         validDay = true
         break
-      } else if (args.date.get('day') < day) {
+      } else if (args.date.get('day') > day) {
         nextValidDayThisMonth = day
         break
       }
@@ -115,13 +118,17 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
       // if yes, advance the current date forward to the next month which would pass
       // this filter
       next = this.cloneDateWithGranularity(args.date, 'day')
-      next.add(nextValidDayThisMonth - args.date.get('day'), 'day')
+
+      next.subtract(args.date.get('day') - nextValidDayThisMonth, 'day')
     } else {
       // if no, advance the current date forward one year &
       // and set the date to whatever month would pass this filter
       next = this.cloneDateWithGranularity(args.date, 'month')
-      next.add(1, 'month')
-      const nextDay = getUpcomingDays(next, this.options)[0]
+
+      next.set('day', 1).subtract(1, 'day')
+
+      const nextDay = getPreceedingDays(next, this.options)[0]
+
       next.set('day', nextDay)
     }
 
@@ -133,31 +140,31 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
   }
 }
 
-function getUpcomingMonthDays<T extends DateAdapter<T>>(
+function getPreceedingMonthDays<T extends DateAdapter<T>>(
   date: T,
-  options: Options.ProcessedOptions<T>
+  options: Options.ProcessedOptions<T>,
 ): Array<[number, number]> {
   const next = date.clone()
   const monthDays: Array<[number, number]> = []
 
-  for (let i = next.get('month'); i <= 12; i++) {
-    const days = getUpcomingDays(next, options)
+  for (let i = next.get('month'); i >= 1; i--) {
+    // get days in descending order
+    const days = getPreceedingDays(next, options)
 
     monthDays.push(
       ...days.map(day => [next.get('month'), day] as [number, number])
     )
 
-    next.add(1, 'month').set('day', 1)
-
-    i++
+    // need to set `next` to the last day of the month
+    next.set('day', 1).subtract(1, 'day')
   }
 
   return monthDays
 }
 
-function getUpcomingDays<T extends DateAdapter<T>>(
+function getPreceedingDays<T extends DateAdapter<T>>(
   date: T,
-  options: Options.ProcessedOptions<T>
+  options: Options.ProcessedOptions<T>,
 ) {
   const daysInMonth = Utils.getDaysInMonth(date.get('month'), date.get('year'))
 
@@ -168,9 +175,9 @@ function getUpcomingDays<T extends DateAdapter<T>>(
       })
       .map(day => (day > 0 ? day : daysInMonth + day + 1))
       .sort((a, b) => {
-        if (a > b) { return 1 }
-        if (a < b) { return -1 }
+        if (a > b) { return -1 }
+        if (a < b) { return 1 }
         else { return 0 }
       })
-  ).filter(day => date.get('day') <= day)
+  ).filter(day => date.get('day') >= day)
 }

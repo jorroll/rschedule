@@ -160,9 +160,7 @@ export class StandardDateAdapter
           this.date = addUTCWeeks(this.date, amount)
           break
         case 'day':
-          // by adding milliseconds rather than days, we supress the native Date object's automatic
-          // daylight savings time conversions which we don't want in UTC mode
-          this.date = addUTCMilliseconds(this.date, amount * Utils.MILLISECONDS_IN_DAY)
+          this.date = addUTCDays(this.date, amount)
           break
         case 'hour':
           this.date = addUTCHours(this.date, amount)
@@ -231,9 +229,7 @@ export class StandardDateAdapter
           this.date = subUTCWeeks(this.date, amount)
           break
         case 'day':
-          // by adding milliseconds rather than days, we supress the native Date object's automatic
-          // daylight savings time conversions which we don't want in UTC mode
-          this.date = subUTCMilliseconds(this.date, amount * Utils.MILLISECONDS_IN_DAY)
+          this.date = subUTCDays(this.date, amount)
           break
         case 'hour':
           this.date = subUTCHours(this.date, amount)
@@ -333,25 +329,25 @@ export class StandardDateAdapter
     if (this.timezone === undefined) {
       switch (unit) {
         case 'year':
-          this.date.setFullYear(value as number)
+          this.date.setFullYear(value)
           break
         case 'month':
-          this.date.setMonth((value as number) - 1)
+          this.date.setMonth((value) - 1)
           break
         case 'day':
-          this.date.setDate(value as number)
+          this.date.setDate(value)
           break
         case 'hour':
-          this.date.setHours(value as number)
+          this.date.setHours(value)
           break
         case 'minute':
-          this.date.setMinutes(value as number)
+          this.date.setMinutes(value)
           break
         case 'second':
-          this.date.setSeconds(value as number)
+          this.date.setSeconds(value)
           break
         case 'millisecond':
-          this.date.setMilliseconds(value as number)
+          this.date.setMilliseconds(value)
           break
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
@@ -359,25 +355,25 @@ export class StandardDateAdapter
     } else {
       switch (unit) {
         case 'year':
-          this.date.setUTCFullYear(value as number)
+          this.date.setUTCFullYear(value)
           break
         case 'month':
-          this.date.setUTCMonth((value as number) - 1)
+          this.date.setUTCMonth(value - 1)
           break
         case 'day':
-          this.date.setUTCDate(value as number)
+          this.date.setUTCDate(value)
           break
         case 'hour':
-          this.date.setUTCHours(value as number)
+          this.date.setUTCHours(value)
           break
         case 'minute':
-          this.date.setUTCMinutes(value as number)
+          this.date.setUTCMinutes(value)
           break
         case 'second':
-          this.date.setUTCSeconds(value as number)
+          this.date.setUTCSeconds(value)
           break
         case 'millisecond':
-          this.date.setUTCMilliseconds(value as number)
+          this.date.setUTCMilliseconds(value)
           break
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
@@ -462,10 +458,9 @@ export function addUTCWeeks (date: Date, input: number) {
 }
 
 export function addUTCDays (date: Date, input: number) {
-  const amount = toInteger(input)
-  date = new Date(date)
-  date.setDate(date.getDate() + amount)
-  return date
+  // by adding milliseconds rather than days, we supress the native Date object's automatic
+  // daylight savings time conversions which we don't want in UTC mode
+  return addUTCMilliseconds(date, toInteger(input) * Utils.MILLISECONDS_IN_DAY)
 }
 
 export function addUTCHours (date: Date, input: number) {
