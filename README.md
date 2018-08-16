@@ -40,7 +40,7 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 
 rSchedule makes use of a fairly simple `DateAdapter` wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
 
-`StandardDateAdapter`, `MomentDateAdapter`, and `MomentTZDateAdapter` packages currently exists which provide a `DateAdapter` complient wrapper for the standard javascript `Date` object, as well as [`moment` and `moment-timezone`](https://momentjs.com) objects. Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the DateAdapter section below for more info. If you choose to do so, `DateAdapter` related pull requests will be welcomed. The `MomentTZDateAdapter` supports different timezones. All `DateAdapter` packages support `local` and `UTC` timezones. As noted above, installing a specific `DateAdapter` package is a seperate step, so, if you wanted to use rSchedule with `moment-timezone`, you might install with
+`StandardDateAdapter`, `LuxonDateAdapter`, `MomentDateAdapter`, and `MomentTZDateAdapter` packages currently exists which provide a `DateAdapter` complient wrapper for the standard javascript `Date` object, as well as [`moment`, `moment-timezone`](https://momentjs.com), and [luxon `DateTime`](https://moment.github.io/luxon/) objects. Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the DateAdapter section below for more info. If you choose to do so, `DateAdapter` related pull requests will be welcomed. The `MomentTZDateAdapter` and `LuxonDateAdapter` supports different timezones. All `DateAdapter` packages support `local` and `UTC` timezones. As noted above, installing a specific `DateAdapter` package is a seperate step, so, if you wanted to use rSchedule with `moment-timezone`, you might install with
 
 ```bash
 yarn add @rschedule/rschedule @rschedule/moment-date-adapter
@@ -49,6 +49,7 @@ yarn add @rschedule/rschedule @rschedule/moment-date-adapter
 
 @rschedule/standard-date-adapter
 @rschedule/moment-date-adapter
+@rschedule/luxon-date-adapter
 ```
 
 While `RRule` objects contain the main recurrence logic, you probably won't use them directly. Instead, the friendly `Schedule` object exists which builds an occurrence schedule based off of an arbirary number of RRules, RDates, and EXDates.
@@ -308,8 +309,12 @@ interface DateAdapter<T, D=any> {
   toISOString(): string
 
   // date formatted for ical string
-  // if `utc` is true, must be formatted as UTC string
-  toICal(utc?: boolean): string
+  // if `format` option is present
+  // - if `"UTC"`: format as utc time
+  // - if `"local"`: format as local time
+  // - else the value will contain a timezone. Convert the time to that timezone
+  //   and format time in that timezone (don't mutate the DateAdapter though).
+  toICal(options?: {format?: 'UTC' | 'local' | string}): string
 
   // returns the underlying date ordinal. The value in milliseconds.
   valueOf(): number
@@ -349,6 +354,8 @@ interface IDateAdapterConstructor<T extends Constructor> {
     // the raw ICAL formatted datetime string
     raw: string
   }): InstanceType<T>[]
+
+  hasTimezoneSupport: boolean
 }
 
 
