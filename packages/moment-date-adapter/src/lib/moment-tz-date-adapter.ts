@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 
 /**
  * The `MomentTZDateAdapter` is for using with momentjs and it's optional
- * `moment-timezone` package. It support robust timezone handling.
+ * `moment-timezone` package. It supports robust timezone handling.
  * 
  * If you are not using the optional `moment-timezone` package, you should
  * use the `MomentDateAdapter`.
@@ -60,6 +60,8 @@ export class MomentTZDateAdapter
   static isInstance(object: any): object is MomentTZDateAdapter {
     return object instanceof MomentTZDateAdapter
   }
+
+  static readonly hasTimezoneSupport = true;
 
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
@@ -265,13 +267,17 @@ export class MomentTZDateAdapter
     return this.date.toISOString()
   }
 
-  toICal(utc?: boolean): string {
-    if (utc || this.timezone === 'UTC')
+  toICal(options: {format?: string} = {}): string {
+    const format = options.format || this.timezone;
+
+    if (format === 'UTC')
       return this.date.clone().tz('UTC').format('YYYYMMDDTHHmmss[Z]')
-    else if (!this.timezone)
-      return this.date.format('YYYYMMDDTHHmmss')
+    else if (format === 'local')
+      return this.date.clone().local().format('YYYYMMDDTHHmmss')
+    else if (format)
+      return `TZID=${format}:${this.date.clone().tz(format).format('YYYYMMDDTHHmmss')}`
     else
-      return `TZID=${this.timezone}:${this.date.format('YYYYMMDDTHHmmss')}`
+      return this.date.clone().local().format('YYYYMMDDTHHmmss')
   }
 
   valueOf() { return this.date.valueOf() }

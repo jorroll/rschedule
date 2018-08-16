@@ -3,11 +3,15 @@
   "private": true,
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "test": "jest --config './jest.config.json'",
     "test:watch": "jest --config './jest.config.json' --watch",
     "test:prod": "yarn lint && yarn test --coverage --no-cache",
-    "report-coverage": "cat ./coverage/lcov.info | coveralls"
+    "report-coverage": "cat ./coverage/lcov.info | coveralls",
+    "bootstrap": "lerna bootstrap --use-workspaces"
   },
   "prettier": {
     "semi": false,
@@ -30,13 +34,13 @@
     "coveralls": "^3.0.0",
     "cross-env": "^5.0.1",
     "cz-conventional-changelog": "^2.0.0",
-    "@types/date-fns": "^1.29.0",
     "date-fns": "^1.29.0",
     "husky": "^0.14.0",
     "jest": "^22.0.2",
     "lerna": "^3.0.1",
     "lint-staged": "^7.1.3",
     "luxon": "^1.3.3",
+    "npm-run-all": "^4.1.3",
     "moment": "^2.0.0",
     "moment-timezone": "^0.5.21",
     "nyc": "^12.0.2",

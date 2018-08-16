@@ -56,6 +56,8 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
     return object instanceof MomentDateAdapter
   }
 
+  static readonly hasTimezoneSupport = false;
+
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
     timezone: string | undefined
@@ -260,12 +262,13 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
     return this.date.toISOString()
   }
 
-  toICal(utc?: boolean): string {
-    if (utc || this.timezone === 'UTC')
-      return moment.utc(this.date).format('YYYYMMDDTHHMMSS[Z]')
-    else if (this.timezone === undefined)
-      return this.date.format('YYYYMMDDTHHMMSS')
-    else return this.date.format(`[TZID=${this.date.tz()}]:YYYYMMDDTHHMMSS`)
+  toICal(options: {format?: string} = {}): string {
+    const format = options.format || this.timezone;
+
+    if (format === 'UTC')
+      return this.date.clone().utc().format('YYYYMMDDTHHmmss[Z]')
+    else
+      return this.date.local().format('YYYYMMDDTHHmmss')
   }
 
   valueOf() { return this.date.valueOf() }

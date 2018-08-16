@@ -6,11 +6,13 @@
 
 import { RRule, Utils, IDateAdapterConstructor, DateAdapter as IDateAdapter } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
-import { dateAdapter, DatetimeFn, environment, context, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, TIMEZONES } from './utilities'
+import { dateAdapter, DatetimeFn, environment, context, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, TIMEZONES, luxonDatetimeFn } from './utilities'
 import { Moment as MomentST } from 'moment';
 import { Moment as MomentTZ } from 'moment-timezone';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
+import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
+import { DateTime } from 'luxon';
 
 
 function testRecurring(
@@ -152,22 +154,24 @@ function testNextOccurrence(
 }
 
 const DATE_ADAPTERS = [
-  [StandardDateAdapter, standardDatetimeFn, false],
-  [MomentDateAdapter, momentDatetimeFn, false],
-  [MomentTZDateAdapter, momentTZDatetimeFn, true],
+  [StandardDateAdapter, standardDatetimeFn],
+  [MomentDateAdapter, momentDatetimeFn],
+  [MomentTZDateAdapter, momentTZDatetimeFn],
+  [LuxonDateAdapter, luxonDatetimeFn],
 ] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>, false],
-  [typeof MomentDateAdapter, DatetimeFn<MomentST>, false],
-  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
+  [typeof StandardDateAdapter, DatetimeFn<Date>],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
+  [typeof LuxonDateAdapter, DatetimeFn<DateTime>]
 ]
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {
 
 environment(dateAdapterSet, (dateAdapterSet) => {
 
-const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>, boolean]
+const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>]
 
-const zones = !supportsTimezones
+const zones = !DateAdapter.hasTimezoneSupport
   ? [undefined, 'UTC']
   : TIMEZONES;
 
@@ -175,30 +179,32 @@ zones.forEach(zone => {
   
   // function to create new dateAdapter instances
   const dateAdapter: DatetimeFn<IDateAdapter<any>> = 
-  (...args: (number|string|undefined)[]) => {
-    const timezone = args[7] ? args[7] : zone
+    (...args: (number|string|undefined)[]) => {
+      let timezone: string | undefined = undefined
 
-    let time = new Array(8)
-    time.fill(0)
+      if (typeof args[args.length - 1] === 'string') {
+        timezone = args[args.length - 1] as string
+      }
+      else if (zone !== undefined) {
+        args.push(zone)
+        timezone = zone
+      }
 
-    args.forEach((val, index) => time[index] = val)
-
-    time[7] = timezone
-
-    // @ts-ignore
-    return new DateAdapter(datetime(...time), {timezone});
-  }
+      // @ts-ignore
+      return new DateAdapter(datetime(...args), {timezone});
+    }
 
   const parse = (str: string) => {
-    const parts = str.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)!
+    const parts: (number|string)[] = str.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)!.map(part => Number(part))
 
     parts.shift()
 
     // @ts-ignore
-    return dateAdapter(...parts, 0, zone)
+    return dateAdapter(...parts)
   }
 
   context(zone, (zone) => {
+
     testPreviousOccurrence(
       'testBefore',
       new RRule({

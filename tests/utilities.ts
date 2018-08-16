@@ -3,6 +3,7 @@ import { Moment as MomentST } from 'moment';
 var momentST = require('moment');
 import { Moment as MomentTZ } from 'moment-timezone';
 var momentTZ = require('moment-timezone');
+import { DateTime } from 'luxon';
 
 // This function allows me to use the test's name as a
 // variable inside the test
@@ -59,46 +60,99 @@ export type DatetimeFn<R> = {
 
 export function standardDatetimeFn(...args: (number|string)[]) {
   if (args.length === 0) return new Date();
-  else if (args.length > 1) args[1] = (args[1] as number) - 1;
 
-  if (args.length === 8){
-    return args.pop() === 'UTC'
-      // @ts-ignore
-      ? new Date(Date.UTC(...args))
-      // @ts-ignore
-      : new Date(...args);
+  const numbers: number[] = [];
+  let timezone: string | undefined = undefined;
+
+  args.forEach(arg => {
+    if (typeof arg === 'string')
+      timezone = arg
+    else
+      numbers.push(arg)
+  })
+
+  if (numbers.length > 1) numbers[1] = numbers[1] - 1;
+
+  if (timezone === 'UTC') {
+    // @ts-ignore
+    return new Date(Date.UTC(...numbers))
   }
   else {
     // @ts-ignore
-    return new Date(...args)
+    return new Date(...numbers)
   }
 }
 
 export function momentDatetimeFn(...args: (number|string)[]): MomentST {
   if (args.length === 0) return momentST();
-  else if (args.length > 1) args[1] = (args[1] as number) - 1;
 
-  if (args.length === 8) {
-    return args.pop() === 'UTC'
-      ? momentST.utc(args)
-      : momentST(args);
+  const numbers: number[] = [];
+  let timezone: string | undefined = undefined;
+
+  args.forEach(arg => {
+    if (typeof arg === 'string')
+      timezone = arg
+    else
+      numbers.push(arg)
+  })
+
+  if (numbers.length > 1) numbers[1] = numbers[1] - 1;
+
+  if (timezone === 'UTC') {
+    // @ts-ignore
+    return momentST.utc(numbers)
   }
   else {
-    return momentST(args)
+    // @ts-ignore
+    return momentST(numbers)
   }
 }
 
 export function momentTZDatetimeFn(...args: (number|string)[]): MomentTZ {
   if (args.length === 0) return momentTZ();
-  else if (args.length > 1) args[1] = (args[1] as number) - 1;
 
-  if (args.length === 8){
-    const timezone = args.pop() as string
+  const numbers: number[] = [];
+  let timezone: string | undefined = undefined;
 
-    return momentTZ.tz(args, timezone)
+  args.forEach(arg => {
+    if (typeof arg === 'string')
+      timezone = arg
+    else
+      numbers.push(arg)
+  })
+
+  if (numbers.length > 1) numbers[1] = numbers[1] - 1;
+
+  if (timezone) {
+    // @ts-ignore
+    return momentTZ.tz(numbers, timezone)
   }
   else {
-    return momentTZ(args)
+    // @ts-ignore
+    return momentTZ(numbers)
+  }
+}
+
+export function luxonDatetimeFn(...args: (number|string)[]): DateTime {
+  if (args.length === 0) return DateTime.local();
+
+  const numbers: number[] = [];
+  let timezone: string | undefined = undefined;
+
+  args.forEach(arg => {
+    if (typeof arg === 'string')
+      timezone = arg
+    else
+      numbers.push(arg)
+  })
+
+  if (timezone) {
+    // @ts-ignore
+    return DateTime.local(...numbers).setZone(timezone, {keepLocalTime: true})
+  }
+  else {
+    // @ts-ignore
+    return DateTime.local(...numbers)
   }
 }
 

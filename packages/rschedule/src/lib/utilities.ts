@@ -2,6 +2,8 @@ import { DateAdapter } from './date-adapter'
 import { Options } from './rule'
 
 export namespace Utils {
+
+  /** ['SU','MO','TU','WE','TH','FR','SA'] */
   export const WEEKDAYS: DateAdapter.Weekday[] = [
     'SU',
     'MO',

@@ -1,53 +1,62 @@
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { MomentDateAdapter, MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
-import { DateAdapter as IDateAdapter, IDateAdapterConstructor, RRule, Schedule, Calendar } from '@rschedule/rschedule';
+import { DateAdapter as IDateAdapter, IDateAdapterConstructor, RRule, Schedule, Calendar, Utils } from '@rschedule/rschedule';
 import { Moment as MomentST } from 'moment';
 import { Moment as MomentTZ } from 'moment-timezone';
 
-import { context, environment, DatetimeFn, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn } from './utilities';
-
+import { context, environment, DatetimeFn, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, luxonDatetimeFn } from './utilities';
+import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
+import { DateTime } from 'luxon';
 
 /**
  * ### DateAdapter tests
  * 
  * Run the generic `DateAdapter` test suite for each date adapter class.
- * The specific xxxx-date-adapter tests are for testing functionality
- * specific to that date adapter.
  */
 
 const DATE_ADAPTERS = [
-  [StandardDateAdapter, standardDatetimeFn, false],
-  [MomentDateAdapter, momentDatetimeFn, false],
-  [MomentTZDateAdapter, momentTZDatetimeFn, true],
+  [StandardDateAdapter, standardDatetimeFn],
+  [MomentDateAdapter, momentDatetimeFn],
+  [MomentTZDateAdapter, momentTZDatetimeFn],
+  [LuxonDateAdapter, luxonDatetimeFn],
 ] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>, false],
-  [typeof MomentDateAdapter, DatetimeFn<MomentST>, false],
-  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>, true]
+  [typeof StandardDateAdapter, DatetimeFn<Date>],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
+  [typeof LuxonDateAdapter, DatetimeFn<DateTime>]
 ]
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {
 
 environment(dateAdapterSet, (dateAdapterSet) => {
-  const [DateAdapter, datetime, supportsTimezones] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>, boolean]
+  const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>]
 
   // function to create new dateAdapter instances
   const dateAdapter: DatetimeFn<IDateAdapter<any>> = 
     (...args: (number|string|undefined)[]) => {
       if (args.length === 8) {
         const timezone = args[7]
-        // @ts-ignore
+        // @ts-ignore doesn't like use of spread operator
         return new DateAdapter(datetime(...args), {timezone});
       }
       else {
-        // @ts-ignore
+        // @ts-ignore doesn't like use of spread operator
         return new DateAdapter(datetime(...args));
       }
     }
 
   // function to get the given time array as an ISO string
   const isoString: DatetimeFn<string> = (...args: (number|string|undefined)[]) => 
-    // @ts-ignore
-    dateAdapter(...args).toISOString()
+    // @ts-ignore doesn't like use of spread operator
+    dateAdapter(...args).toISOString();
+
+  // Ordinarily, I'd just say that an DateAdapter in local time should always have 
+  // `timezone === undefined`. The `luxon` DateTime object may always have a timezone
+  // though, if it can figure out what the local timezone is. In this case, setting 
+  // the timezone to the local time using `.timezone = undefined` will not produce a 
+  // DateAdapter with `timezone === undefined` and we need to know what the local
+  // timezone equals in order to compare against.
+  const localTimezone = dateAdapter().timezone
 
   describe(`${DateAdapter.name}Class`, () => {
     it('is instantiable', () => {
@@ -65,6 +74,10 @@ environment(dateAdapterSet, (dateAdapterSet) => {
       expect(DateAdapter.isInstance(DateAdapter)).toBeFalsy()
       expect(DateAdapter.isInstance(new Date())).toBeFalsy()
       expect(DateAdapter.isInstance(new DateAdapter())).toBeTruthy()
+    })
+
+    it('#hasTimezoneSupport', () => {
+      expect(typeof DateAdapter.hasTimezoneSupport).toBe('boolean')
     })
   })
 
@@ -125,8 +138,8 @@ environment(dateAdapterSet, (dateAdapterSet) => {
     })
 
     it('#toICal()', () => {
-      expect(adapter.toICal()).toMatch(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)
-      expect(adapter.toICal(true)).toMatch(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/)
+      expect(adapter.toICal({format: 'local'})).toMatch(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)
+      expect(adapter.toICal({format: 'UTC'})).toMatch(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/)
     })
 
     it('#clone()', () => {
@@ -145,7 +158,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
     })
 
     it('#assertIsValid()', () => {
-      expect(() => dateAdapter('apple' as any)).toThrowError()
+      expect(() => new DateAdapter(datetime('apple' as any))).toThrowError()
 
       expect(() => {
         adapter.date = datetime('apple' as any)
@@ -339,7 +352,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
         expect(adapter.utcOffset).toBe(offset)
       })
 
-      it('timezone', () => expect(adapter.timezone).toBe(undefined))
+      it('timezone', () => expect(adapter.timezone).toBe(localTimezone))
     })
 
     describe('#set()', () => {
@@ -379,7 +392,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
     })
 
     afterEach(() => {
-      expect(localAdapter.timezone === undefined)
+      expect(localAdapter.timezone === localTimezone)
       expect(utcAdapter.timezone === 'UTC')
     })
 
@@ -470,7 +483,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
         expect(utcAdapter.toISOString()).toBe(
           isoString(2000,1,2,3,4,5,0, 'UTC')
         )
-        expect(utcAdapter.timezone).toBe(undefined)
+        expect(utcAdapter.timezone).toBe(localTimezone)
 
         // reset to pass `afterAll()` tests
         utcAdapter.timezone = 'UTC'
@@ -478,7 +491,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
     })
   })
 
-  if (supportsTimezones) {
+  if (DateAdapter.hasTimezoneSupport) {
     /** 
      * Test handling of valid timezones
      */
@@ -613,7 +626,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
             expect(zoneAdapter.toISOString()).toBe(
               isoString(2000,1,2,3,4,5,0, zone)
             )
-            expect(zoneAdapter.timezone).toBe(undefined)
+            expect(zoneAdapter.timezone).toBe(localTimezone)
 
             zoneAdapter.timezone = 'UTC'
             expect(zoneAdapter.toISOString()).toBe(

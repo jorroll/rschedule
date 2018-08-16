@@ -59,6 +59,8 @@ export class StandardDateAdapter
     return object instanceof StandardDateAdapter
   }
 
+  static readonly hasTimezoneSupport = false;
+
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
     timezone: string | undefined
@@ -389,10 +391,13 @@ export class StandardDateAdapter
     return this.date.toISOString()
   }
 
-  toICal(utc?: boolean): string {
-    if (utc || this.timezone === 'UTC')
+  toICal(options: {format?: string} = {}): string {
+    const format = options.format || this.timezone;
+
+    if (format === 'UTC')
       return `${Utils.dateToStandardizedString(this as StandardDateAdapter)}Z`
-    else return `${Utils.dateToStandardizedString(this as StandardDateAdapter)}`
+    else
+      return `${Utils.dateToStandardizedString(this as StandardDateAdapter)}`
   }
 
   valueOf() { return this.date.valueOf() }

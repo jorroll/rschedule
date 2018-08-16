@@ -47,8 +47,12 @@ export interface DateAdapter<T, D=any> {
   toISOString(): string
 
   // date formatted for ical string
-  // if `utc` is true, must be formatted as UTC string
-  toICal(utc?: boolean): string
+  // if `format` option is present
+  // - if `"UTC"`: format as utc time
+  // - if `"local"`: format as local time
+  // - else the value will contain a timezone. Convert the time to that timezone
+  //   and format time in that timezone (don't mutate the DateAdapter though).
+  toICal(options?: {format?: 'UTC' | 'local' | string}): string
 
   // returns the underlying date ordinal. The value in milliseconds.
   valueOf(): number
@@ -86,6 +90,7 @@ export interface IDateAdapterConstructor<T extends Constructor> {
     timezone?: string
     raw: string
   }): Array<InstanceType<T>>
+  hasTimezoneSupport: boolean
 }
 
 export namespace DateAdapter {

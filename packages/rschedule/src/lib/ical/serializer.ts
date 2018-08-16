@@ -41,7 +41,7 @@ export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
           break
         case 'until':
           stringOptions.push(
-            `UNTIL=${options.until!.toICal(!!start.timezone)}`
+            `UNTIL=${options.until!.toICal({format: !!start.timezone ? 'UTC' : undefined})}`
           )
           break
         case 'count':

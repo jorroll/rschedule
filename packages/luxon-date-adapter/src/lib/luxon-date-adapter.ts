@@ -1,14 +1,18 @@
-import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
+import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime } from '@rschedule/rschedule';
 import { DateTime } from 'luxon';
 
 /**
- * The `LuxonDateAdapter` is for using with momentjs *without* the
- * `moment-timezone` package. It only supports `"UTC"` and local
- * timezones.
+ * The `LuxonDateAdapter` is a DateAdapter for `luxon` DateTime
+ * objects.
  * 
- * If you want timezone support, you'll need to install the
- * `moment-timezone` package, and use it with the
- * `MomentTZDateAdapter`.
+ * It supports timezone handling in so far as luxon supports
+ * timezone handling. Note: that, if able, luxon always adds
+ * a timezone to a DateTime (i.e. timezone may never be undefined).
+ * 
+ * At the moment, that means that serializing to/from iCal will
+ * always apply a specific timezone (which may or may not be what
+ * you want). If this is a problem for you, you can try opening
+ * an issue in the rSchedule monorepo.
  */
 export class LuxonDateAdapter
 implements DateAdapter<LuxonDateAdapter, DateTime> {
@@ -17,14 +21,16 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
     return this.date.zoneName
   }
   public set timezone(value: string | undefined) {
-    if (value === undefined) {
-      this.date = DateTime.fromFormat(
-        this.date.toFormat('YYYY-MM-DD-HH-mm-SS-mmm'),
-        'YYYY-MM-DD-HH-mm-SS-mmm'
-      )
-    }
-    else {
+    if (value)
       this.date = this.date.setZone(value)
+    else {
+      this.date = this.date.toLocal()
+    }
+
+    if (value !== undefined && this.date.zoneName !== value) {
+      throw new DateAdapter.InvalidDateError(
+        `LuxonDateAdapter provided invalid timezone "${value}".`
+      )
     }
   }
   public get utcOffset() { return this.date.offset }
@@ -37,22 +43,26 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
   public calendar: Calendar<LuxonDateAdapter> | undefined
   
   constructor(date?: DateTime, args: {} = {}) {
-    if (date instanceof DateTime) {
-      this.date = DateTime.fromISO(date.toISO())
+    if (date) {
+      this.assertIsValid(date)
+
+      const obj = {
+        ...date.toObject(),
+        zone: date.zoneName
+      }
+
+      // I realize that luxon is immutable, but the tests assume that a date is mutable
+      // and check object identity
+      this.date = DateTime.fromObject(obj)
     }
-    else if (date) {
-      throw new DateAdapter.InvalidDateError(
-        'The `LuxonDateAdapter` constructor only accepts luxon `DateTime` dates.'
-      )
-    }
-    else this.date = DateTime.local();
-    
-    this.assertIsValid()
+    else this.date = DateTime.local();    
   }
 
   static isInstance(object: any): object is LuxonDateAdapter {
     return object instanceof LuxonDateAdapter
   }
+
+  static readonly hasTimezoneSupport = true;
 
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
@@ -68,7 +78,15 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
           return new LuxonDateAdapter(DateTime.local(...datetime))
         default:
           return new LuxonDateAdapter(
-            DateTime.local(...datetime).setZone(args.timezone, {keepLocalTime: true})
+            DateTime.fromObject({
+              year: datetime[0],
+              month: datetime[1],
+              day: datetime[2],
+              hour: datetime[3],
+              minute: datetime[4],
+              second: datetime[5],
+              zone: args.timezone,
+            })
           )
       }
     })
@@ -196,11 +214,11 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
       case 'year':
         return this.date.get('year')
       case 'month':
-        return this.date.get('month') + 1
+        return this.date.get('month')
       case 'yearday':
-        return this.date.diff(this.date.startOf('year'), 'days')
+        return Math.floor(this.date.diff(this.date.startOf('year'), 'days').days) + 1
       case 'weekday':
-        return Utils.WEEKDAYS[this.date.get('weekday')]
+        return WEEKDAYS[this.date.get('weekday') - 1]
       case 'day':
         return this.date.get('day')
       case 'hour':
@@ -249,24 +267,33 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
   }
 
   toISOString() {
-    return this.date.toISO()
+    return this.date.toUTC().toISO()
   }
 
-  toICal(utc?: boolean): string {
-    if (utc || this.timezone === 'UTC')
-      return this.date.toUTC().toFormat('YYYYMMDDTHHMMSS[Z]')
-    else if (this.timezone === undefined)
-      return this.date.toFormat('YYYYMMDDTHHMMSS')
-    else return this.date.toFormat(`[TZID=${this.date.zoneName}]:YYYYMMDDTHHMMSS`)
+  toICal(options: {format?: string} = {}): string {
+    const format = options.format || this.timezone;
+
+    if (format === 'UTC')
+      return this.date.toUTC().toFormat("yyyyMMdd'T'HHmmss'Z'")
+    else if (format === 'local')
+      return this.date.toFormat("yyyyMMdd'T'HHmmss")
+    else if (format)
+      return `TZID=${format}:${this.date.setZone(format).toFormat("yyyyMMdd'T'HHmmss")}`
+    else
+      return `TZID=${this.date.zoneName}:${this.date.toFormat("yyyyMMdd'T'HHmmss")}`
   }
 
   valueOf() { return this.date.valueOf() }
 
-  assertIsValid() {
-    if (!this.date.isValid) {
+  assertIsValid(date?: DateTime) {
+    date = date || this.date;
+
+    if (!date.isValid) {
       throw new DateAdapter.InvalidDateError()
     }
 
     return true
   }
 }
+
+const WEEKDAYS = ['MO','TU','WE','TH','FR','SA','SU'];
