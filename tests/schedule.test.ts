@@ -53,11 +53,23 @@ function testOccursMethods<T extends IDateAdapter<T>>(
         })
       }
       else if (obj.occursOn) {
-        describe('#occursOn()', () => {
-          it(`"${obj.occursOn.toISOString()}"`, () => {
-            expect(schedule.occursOn(obj.occursOn)).toBe(obj.expect)
+        if (obj.occursOn.date) {
+          describe('#occursOn()', () => {
+            it(`"${obj.occursOn.date.toISOString()}"`, () => {
+              expect(schedule.occursOn(obj.occursOn)).toBe(obj.expect)
+            })
           })
-        })
+        }
+        else if (obj.occursOn.weekday) {
+          describe('#occursOn()', () => {
+            it(`"${obj.occursOn.weekday}"`, () => {
+              expect(schedule.occursOn(obj.occursOn)).toBe(obj.expect)
+            })
+          })
+        }
+        else {
+          throw new Error('Unexpected test object!')
+        }
       }
       else
         throw new Error('Unexpected test object!')
@@ -613,9 +625,7 @@ describe(`${zone}`, () => {
         ].reverse())
       })
   
-      // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
-      // what the test should expect to be sure
-      it.skip('with multiple rules', () => {
+      it('with multiple rules', () => {
         const schedule = new Schedule({
           rrules: [
             // YearlyByMonthAndMonthDay
@@ -706,9 +716,7 @@ describe(`${zone}`, () => {
         expect(toISOStrings(schedule, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
       })
   
-      // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
-      // what the test should expect to be sure
-      it.skip('with multiple rules & RDates & EXDates', () => {
+      it('with multiple rules & RDates & EXDates', () => {
         const schedule = new Schedule({
           rrules: [
             // YearlyByMonthAndMonthDay
@@ -785,6 +793,13 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(1998, 1, 8, 9, 0), dateAdapter(1998, 3, 4, 9, 0)], expect: false },
         { occursOn: {date: dateAdapter(1998, 3, 5, 9, 0)}, expect: true },
         { occursOn: {date: dateAdapter(1998, 3, 6, 9, 0)}, expect: false },
+        { occursOn: {weekday: 'SU'}, expect: false },
+        { occursOn: {weekday: 'MO'}, expect: true },
+        { occursOn: {weekday: 'TU'}, expect: false },
+        { occursOn: {weekday: 'WE'}, expect: true },
+        { occursOn: {weekday: 'TH'}, expect: true },
+        { occursOn: {weekday: 'FR'}, expect: false },
+        { occursOn: {weekday: 'SA'}, expect: false },
       ]
     )
   
@@ -823,12 +838,12 @@ describe(`${zone}`, () => {
         { occursBefore: dateAdapter(1997, 9, 2, 9, 0), excludeStart: true, expect: false },
         { occursAfter: dateAdapter(1998, 1, 7, 9, 0), expect: true },
         { occursAfter: dateAdapter(1998, 3, 5, 9, 0), expect: true },
-        { occursAfter: dateAdapter(1998, 3, 5, 9, 0), excludeStart: true, expect: true },
+        { occursAfter: dateAdapter(1998, 3, 5, 9, 0), excludeStart: true, expect: false },
         { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1998, 1, 6, 9, 0)], expect: true },
         { occursBetween: [dateAdapter(1997, 9, 3, 9), dateAdapter(1997, 12, 2, 9)], expect: false },
         { occursBetween: [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], expect: true },
         { occursBetween: [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], excludeEnds: true, expect: false },
-        { occursBetween: [dateAdapter(1998, 3, 6, 9, 0), dateAdapter(1999, 3, 6, 9, 0)], expect: true },
+        { occursBetween: [dateAdapter(1998, 3, 6, 9, 0), dateAdapter(1999, 3, 6, 9, 0)], expect: false },
         { occursOn: {date: dateAdapter(1998, 3, 5, 9, 0)}, expect: true },
         { occursOn: {date: dateAdapter(1998, 3, 4, 9, 0)}, expect: false },
       ]
@@ -878,8 +893,8 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: false },
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: false },
         { occursBetween: [dateAdapter(2000, 1, 2, 9, 0), dateAdapter(2010, 1, 1, 9, 0)], expect: false },
-        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: false },
-        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+        { occursOn: {date: dateAdapter(2017, 1, 1, 9, 0)}, expect: false },
+        { occursOn: {date: dateAdapter(1998, 3, 6, 9, 0)}, expect: false },
       ]
     )
 

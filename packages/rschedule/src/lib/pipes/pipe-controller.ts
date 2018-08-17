@@ -28,7 +28,6 @@ export class PipeController<T extends DateAdapter<T>>
   implements IPipeController<T>, RunnableIterator<T> {
   public start!: T
   public end?: T
-  public count?: number
   public reverse = false
 
   public expandingPipes: Array<IPipeRule<T>> = []
@@ -50,7 +49,7 @@ export class PipeController<T extends DateAdapter<T>>
   public invalid = false
 
   get isInfinite() {
-    return !this.end && this.count === undefined
+    return !this.end && this.options.count === undefined
   }
 
   public options: Options.ProcessedOptions<T>
@@ -59,13 +58,16 @@ export class PipeController<T extends DateAdapter<T>>
 
   constructor(
     options: Options.ProcessedOptions<T>,
-    args: { start?: T; end?: T; reverse?: boolean; take?: number }
+    private args: { start?: T; end?: T; reverse?: boolean },
   ) {
     this.options = cloneDeep(options)
 
+    // see `_run()` below for explaination of why `this.reverse` might !== `args.reverse`
+    this.reverse = this.options.count === undefined ? !!args.reverse : false;
+
     // Pipe ordering is defined in the ICAL spec 
     // https://tools.ietf.org/html/rfc5545#section-3.3.10
-    if (args.reverse) {
+    if (this.reverse) {
       const frequencyPipe = new FrequencyReversePipe(this)
 
       this.expandingPipes.push(frequencyPipe)
@@ -130,29 +132,106 @@ export class PipeController<T extends DateAdapter<T>>
       this.addPipe(new ResultPipe(this))  
     }
 
-    this.reverse = !!args.reverse
-
     this.setStartDate(args.start)
     this.setEndDate(args.end)
-    this.setCount(args.take)
   }
 
-  public *_run() {    
-    let date = this.focusedPipe.run({
-      date: this.start, // <- just present to satisfy interface
-      skipToDate: this.start,
-    })
+  /**
+   * In the pipe controller, we have an extra level of indirection with
+   * the `run()` and `iterate()` methods. The `iterate()` method is the
+   * method which actually runs the logic in the pipes. If we didn't
+   * need to account for the `count` property of a rule, we would *only*
+   * need the iterate method... so much simpler. But we do need to account
+   * for rules with a `count` property.
+   * 
+   * Rules with a `count` property need to begin iteration at the beginning
+   * because the `count` is always from the rule's start time. So if someone
+   * passes in a new start time as an argument to a rule with `count`, we
+   * need to secretly iterate from the beginning, tracking the number of
+   * iterations, and then only start yielding dates when we reach the section
+   * the user cares about (or, if we hit our `count` quota, cancel iterating).
+   * 
+   * Additionally, we need to handle iterating in reverse. In this case, we build
+   * up a cache of dates between the rule's start time and the reverse iteration
+   * start date. Once we hit the reverse iteration start date, we start
+   * yielding dates in the cache, in reverse order.
+   * 
+   * In general, I imagine the count number, if used, will be small. But a large
+   * count will definitely have a negative performance affect. I don't think
+   * there's anything to be done about this.
+   */
+  public *_run() {
+    if (this.options.count === undefined) {
+      for (const date of this.iterate()) {  
+        yield date.clone()
+      }
+
+      return;
+    }
+
+    if (this.options.count === 0) return;
 
     let index = 0
 
-    while (date && (this.count === undefined || index < this.count)) {
+    if (this.args.reverse) {
+      const dates: T[] = [];
+
+      for (const date of this.iterate()) {
+        if (index >= this.options.count) break;
+        index++
+
+        if (this.args.start && date.isAfter(this.args.start)) break;
+        if (this.args.end && date.isBefore(this.args.end)) continue;
+        
+        dates.push(date)
+      }
+
+      for (const date of dates.reverse()) {
+        yield date
+      }
+
+      return;
+    }
+
+    for (const date of this.iterate()) {
+      if (index >= this.options.count) break;
       index++
 
+      if (date.isBefore(this.start)) continue;
+
+      yield date.clone()          
+    }
+  }
+
+  public *iterate() {
+    let date = this.focusedPipe.run({
+      date: this.start, // <- just present to satisfy interface
+      skipToDate: this.options.count === undefined ? this.start : this.options.start.clone(),
+    })
+
+    while (date) {
       yield date.clone()
 
       date = this.focusedPipe.run({ date })
     }
   }
+
+  // public *_run() {    
+  //   let date = this.focusedPipe.run({
+  //     date: this.start, // <- just present to satisfy interface
+  //     skipToDate: this.start,
+  //   })
+
+  //   let index = 0
+
+  //   while (date && (this.count === undefined || index < this.count)) {
+  //     index++
+
+  //     yield date.clone()
+
+  //     date = this.focusedPipe.run({ date })
+  //   }
+  // }
 
   private addPipe(pipe: any) {
     const lastPipe = this.pipes[this.pipes.length - 1]
@@ -207,13 +286,5 @@ export class PipeController<T extends DateAdapter<T>>
     }
     else if (this.options.until) { return this.end = this.options.until!.clone() }
     else if (date) { return this.end = date.clone() }
-  }
-
-  private setCount(take?: number) {
-    if (take !== undefined && this.options.count !== undefined) {
-      this.count = take > this.options.count ? this.options.count : take
-    }
-    else if (take !== undefined) { this.count = take }
-    else if (this.options.count !== undefined) { this.count = this.options.count }
   }
 }

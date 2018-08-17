@@ -14,10 +14,11 @@ export namespace Utils {
     'SA',
   ]
 
-  export const MILLISECONDS_IN_DAY = 86400000
-  export const MILLISECONDS_IN_HOUR = 3600000
-  export const MILLISECONDS_IN_MINUTE = 60000
   export const MILLISECONDS_IN_SECOND = 1000
+  export const MILLISECONDS_IN_MINUTE = MILLISECONDS_IN_SECOND * 60
+  export const MILLISECONDS_IN_HOUR = MILLISECONDS_IN_MINUTE * 60
+  export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24
+  export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7
 
   export function weekdayToInt<T extends DateAdapter<T>>(
     weekday: DateAdapter.Weekday,
@@ -168,6 +169,14 @@ export namespace Utils {
     return date.add(6 - index, 'day')
   }
 
+  export function setDateToStartOfDay<T extends DateAdapter<T>>(date: T) {
+    return date.set('hour', 0).set('minute', 0).set('second', 0)
+  }
+
+  export function setDateToEndOfDay<T extends DateAdapter<T>>(date: T) {
+    return date.set('hour', 23).set('minute', 59).set('second', 59)
+  }
+
 
   /**
    *
@@ -254,6 +263,50 @@ export namespace Utils {
   function toTwoCharString(int: number) {
     if (int < 10) { return `0${int}` }
     else { return `${int}` }
+  }
+
+  /** 
+   * Calculates the difference between two dates of a given unit.
+   * The first date argument is subtracted from the second. I.e.
+   * when going forward in time, the second date is larger than the first.
+   */
+  export function unitDifferenceBetweenDates<T extends DateAdapter<T>>(
+    first: T,
+    second: T,
+    unit: DateAdapter.Unit,
+  ) {
+    let intervalDuration: number;
+
+    switch (unit) {
+      case 'year':
+        return second.get('year') - first.get('year')
+      case 'month':
+        return (second.get('year') - first.get('year')) * 12 + (second.get('month') - first.get('month'))
+      case 'week':
+        intervalDuration = MILLISECONDS_IN_WEEK
+        break
+      case 'day':
+        intervalDuration = MILLISECONDS_IN_DAY
+        break
+      case 'hour':
+        intervalDuration = MILLISECONDS_IN_HOUR
+        break
+      case 'minute':
+        intervalDuration = MILLISECONDS_IN_MINUTE
+        break
+      case 'second':
+        intervalDuration = MILLISECONDS_IN_SECOND
+        break
+      case 'millisecond':
+        intervalDuration = 1  
+        break
+      default:
+        throw new Error ('Unexpected `unit` value')
+    }
+
+    const sign = Math.sign(second.valueOf() - first.valueOf())
+    
+    return Math.floor(Math.abs(second.valueOf() - first.valueOf()) / intervalDuration) * sign
   }
 
   /**

@@ -108,8 +108,7 @@ export namespace DateAdapter {
     | 'hour'
     | 'minute'
     | 'second'
-    | 'millisecond'
-    | 'ordinal'
+    | 'millisecond';
 
   export type Weekday = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'
 

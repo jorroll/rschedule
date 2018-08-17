@@ -88,6 +88,45 @@ export class Schedule<
     return new OccurrenceIterator(this, args)
   }
 
+
+  /**
+   * Checks to see if an occurrence exists which equals the given date.
+   */
+  public occursOn(args: {date: T}): boolean
+  /**
+   * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
+   * 
+   * Optional arguments:
+   * 
+   * - `after` and `before` arguments can be provided which limit the
+   *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
+   *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
+   *       than inclusive.
+   */
+  public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
+  public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean {
+    if (args.weekday) {
+      let before = args.before && (args.excludeEnds ? args.before.clone().subtract(1, 'day') : args.before)
+      let after = args.after && (args.excludeEnds ? args.after.clone().add(1, 'day') : args.after)
+
+      // Filter to get relevant exdates
+      const excludeDates = this.exdates.dates.filter(date => 
+        date.get('weekday') === args.weekday && (
+          !after || date.isAfterOrEqual(after)
+        ) && (
+          !before || date.isBeforeOrEqual(before)
+        )
+      )
+
+      const rules: (Rule<T> | RDates<T>)[] = this.rrules.slice()
+      rules.push(this.rdates)
+
+      return rules.some(rule => rule.occursOn({...args as {weekday: DateAdapter.Weekday}, excludeDates}))
+    }
+    else
+      return super.occursOn(args as {date: T})
+  }
+
   /**  @private use occurrences() instead */
   public *_run(args: OccurrencesArgs<T> = {}) {
     // bundle RRule iterators & RDates iterator

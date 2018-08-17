@@ -384,25 +384,6 @@ Feel free to open an issue if you have questions.
 - This library does not support `EXRULE`. I'm, personally, not particularly interested in adding support (it's also deprecated in the spec). This being said, it should be pretty easy to add if you're interested in doing so, and I think I've designed all the interfaces specifically so `EXRULE` can be added in the future (an en `EXRule` object already exists, though it's not exported, in `src/rule/rule.ts`). So all someone would need to do is write the logic to add `EXRule`'s to `Schedule` objects and have them delete occurrences, as appropriate. You'd also need to make sure that the ICAL parsing functions added EXRULE's. But I think `EXRULE` have the same API as `RRULE`, so again, it should be *really easy* for someone else to do this.
 - No `BYWEEKNO`, `BYYEARDAY`, or `BYSETPOS` rule support. "By day of year" and "by position in set" should both be pretty straightforward, they're just not something I need so not on my todo list.
   - "By week of year" is different though. I spent a fair bit trying to get it to work and its just SUPER annoying (because it can create a valid date for year A in year B. e.g. the Saturday of the last week of 1998 *is in the year 1999*). Anyway, obviously doable, I have no plans to implement it though.
-- Currently, the `count` option of a rule simply counts the number of occurrences you're received and then cuts you off as appropriate. If you pass in a different start date when requesting occurrences though, you'll still receive the same total count of occurrences, they'll just be pushed back in time. This is *probably* not what people expect.
-  - E.g. If someone creates a daily rule starting on Monday with a count of 3, and iterates over it the occurrence stream will cut off after Wednesday. If you pass a new start date in as an argument though, say show me occurrences for this rule starting on Tuesday, then you'll receive Tuesday, Wednesday, and Thursday. The probem is that the `count` didn't begin on the rule's start date. I don't think there's anything fancy to be done about this. You'd need to start at the beginning and just skip forward to the section you're interested in. For example
-
-```typescript
-const rule = new Rule({frequency: 'DAILY', start: new StandardDateAdapter(), count: 3})
-
-rule.occurrences().toArray() // [today, tomorrow, the next day]
-
-rule.occurrences({start: tomorrow}).toArray() // [tomorrow, the next day, the day after that]
-
-const array = []
-
-for (const day of rule.occurrences()) {
-  if (day.isBefore(tomorrow)) continue;
-  array.push(day)
-}
-
-array // [tomorrow, the next day]
-```
     
 
 ### About

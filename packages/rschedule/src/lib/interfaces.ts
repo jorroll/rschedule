@@ -23,7 +23,8 @@ export interface IHasOccurrences<
 > {
   occurrences(args: OccurrencesArgs<T>): OccurrenceIterator<T, K>
   occursBetween(start: T, end: T, options: { excludeEnds?: boolean }): boolean
-  occursOn(args: {date?: T}): boolean
+  occursOn(args: {date: T}): boolean
+  occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
   occursAfter(date: T, options: { excludeStart?: boolean }): boolean
   occursBefore(date: T, options: { excludeStart?: boolean }): boolean
 }
@@ -47,13 +48,21 @@ export abstract class HasOccurrences<T extends DateAdapter<T>> {
   }
 
   /**
-   * Checks to see if an occurrence coincides with a specific date.
-   * 
-   * **Important:** at the moment, a date argument is required. It is optional
-   * to support customization uses (such as extending the class). Hopefully it
-   * will evenutally accept other arguments as well.
+   * Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(args: {date?: T}) {
+  public occursOn(args: {date: T}): boolean
+  /**
+   * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
+   * 
+   * Optional arguments:
+   * 
+   * - `after` and `before` arguments can be provided which limit the
+   *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
+   *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
+   *       than inclusive.
+   */
+  public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
+  public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}) {
     if (!args.date) throw new Error('Was expecting an argument in the form `{date: DateAdapter}`');
 
     for (const day of this.occurrences({ start: args.date, end: args.date })) {

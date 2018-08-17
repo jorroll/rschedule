@@ -81,6 +81,46 @@ function testRecurring(
         expect(actual).toEqual(expected)
       })
     })
+
+    describe('#occursOn()', () => {
+      expectedDates.forEach(date => {
+        describe(date.toISOString(), () => {
+          it('date', () => expect(rule.occursOn({date})).toBeTruthy())
+
+          describe('weekday', () => {
+            it('no options', () => expect(rule.occursOn({weekday: date.get('weekday')})).toBeTruthy())
+            it('excludeDates', () => expect(rule.occursOn({weekday: date.get('weekday'), excludeDates: expectedDates})).toBeFalsy())
+          })
+        })
+      })
+
+      if (expectedDates.length > 0) {
+        const first = expectedDates[0]
+        const last = expectedDates[expectedDates.length - 1]
+
+        describe(first.toISOString(), () => {
+          describe('weekday', () => {
+            it('before first including', () => expect(rule.occursOn({weekday: first.get('weekday'), before: first})).toBeTruthy())
+            it('before first excluding', () => expect(rule.occursOn({weekday: first.get('weekday'), before: first, excludeEnds: true})).toBeFalsy())
+            it('after first including', () => expect(rule.occursOn({weekday: first.get('weekday'), after: first})).toBeTruthy())
+            // don't think there's a generic way to know what the answer should be (e.g. take a `MINUTELY` rule of count 3 which only takes place
+            // on one day, if you exclude that day it doesn't happen).
+            // it('after first excluding', () => expect(rule.occursOn({weekday: first.get('weekday'), after: first, excludeEnds: true})).toBeTruthy())
+          })  
+        })
+
+        describe(last.toISOString(), () => {
+          describe('weekday', () => {
+            it('before last including', () => expect(rule.occursOn({weekday: last.get('weekday'), before: last})).toBeTruthy())
+            // don't think there's a generic way to know what the answer should be (e.g. take a `MINUTELY` rule of count 3 which only takes place
+            // on one day, if you exclude that day it doesn't happen).
+            // it('before last excluding', () => expect(rule.occursOn({weekday: last.get('weekday'), before: last, excludeEnds: true})).toBeTruthy())
+            it('after last including', () => expect(rule.occursOn({weekday: last.get('weekday'), after: last})).toBeTruthy())
+            it('after last excluding', () => expect(rule.occursOn({weekday: last.get('weekday'), after: last, excludeEnds: true})).toBeFalsy())
+          })
+        })
+      }
+    })
   })
 }
 

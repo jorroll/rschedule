@@ -36,13 +36,11 @@ export const TIMEZONES = [
   "UTC",
   "Africa/Johannesburg",
   "America/Los_Angeles",
-  "America/Chicago",
   "America/New_York",
   "America/Santiago",
-  "Europe/Athens",
   "Europe/London",
   "Asia/Shanghai",
-  "Asia/Singapore",
+  "Asia/Jakarta",
   "Australia/Melbourne",
 ];
 

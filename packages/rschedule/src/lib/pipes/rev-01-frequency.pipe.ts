@@ -107,19 +107,12 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
 
   private skipToIntervalOnOrBefore(date: T) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
-    const intervalStart = this.intervalStartDate.valueOf()
-    const intervalEnd = this.intervalStartDate
-      .clone()
-      .subtract(1, unit)
-      .valueOf()
-    const valueOfDate = date.valueOf()
 
-    const intervalDuration = intervalStart - intervalEnd
-
-    const sign = Math.sign(valueOfDate - intervalStart)
-
-    const difference =
-      Math.floor(Math.abs(valueOfDate - intervalStart) / intervalDuration) * sign
+    const difference = Utils.unitDifferenceBetweenDates(
+      this.intervalStartDate,
+      date,
+      unit
+    )
 
     // if we're jumping to a new interval, then we should normalize the date.
     if (Math.abs(difference) !== 0) {
@@ -148,19 +141,11 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
   public skipToStartInterval(date: T) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
-    const intervalStart = this.intervalStartDate.valueOf()
-    const intervalEnd = this.intervalStartDate
-      .clone()
-      .add(1, unit)
-      .valueOf()
-    const valueOfDate = date.valueOf()
-
-    const intervalDuration = intervalEnd - intervalStart
-
-    const sign = Math.sign(valueOfDate - intervalStart)
-
-    const difference =
-      Math.floor(Math.abs(valueOfDate - intervalStart) / intervalDuration) * sign
+    const difference = Utils.unitDifferenceBetweenDates(
+      this.intervalStartDate,
+      date,
+      unit
+    )
 
     // not sure why the `+1` is needed, but it is
     this.normalizeDate(this.intervalStartDate.add(difference + 1, unit))

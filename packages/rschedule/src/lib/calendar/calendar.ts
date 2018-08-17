@@ -77,6 +77,28 @@ export class Calendar<
     return new OccurrenceIterator(this, args)
   }
 
+  /**
+   * Checks to see if an occurrence exists which equals the given date.
+   */
+  public occursOn(args: {date: T}): boolean
+  /**
+   * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
+   * 
+   * Optional arguments:
+   * 
+   * - `after` and `before` arguments can be provided which limit the
+   *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
+   *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
+   *       than inclusive.
+   */
+  public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
+  public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean {
+    if (args.weekday)
+      return this.schedules.some(schedule => schedule.occursOn(args as {weekday: DateAdapter.Weekday}))
+    else
+      return super.occursOn(args as {date: T})
+  }
+
   // `_run()` follows in the footsteps of `Schedule#_run()`,
   // which is fully commented.
 

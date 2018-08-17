@@ -95,21 +95,14 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
    *
    * Tests are passing
    */
-  private skipToIntervalOnOrAfter(newDate: T) {
+  private skipToIntervalOnOrAfter(date: T) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
-    const intervalStart = this.intervalStartDate.valueOf()
-    const intervalEnd = this.intervalStartDate
-      .clone()
-      .add(1, unit)
-      .valueOf()
-    const date = newDate.valueOf()
 
-    const intervalDuration = intervalEnd - intervalStart
-
-    const sign = Math.sign(date - intervalStart)
-
-    const difference =
-      Math.floor(Math.abs(date - intervalStart) / intervalDuration) * sign
+    const difference = Utils.unitDifferenceBetweenDates(
+      this.intervalStartDate,
+      date,
+      unit
+    )
 
     this.intervalStartDate.add(difference, unit)
 
@@ -118,7 +111,7 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
     // Not sure why `difference` isn't resolved to whole number in that test,
     // but the first call to this method turns up an iteration exactly 1 year
     // before the iteration it should return.
-    while (!newDate.isBefore(this.intervalStartDate.clone().add(1, unit))) {
+    while (!date.isBefore(this.intervalStartDate.clone().add(1, unit))) {
       this.intervalStartDate.add(this.options.interval, unit)
     }
   }
