@@ -61,6 +61,41 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
     return new OccurrenceIterator(this, args)
   }
 
+  // Attempt to update occursOn to check for a day of the week
+  // public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday}) {
+  //   if (args.weekday) {
+  //     if (this.processedOptions.count) {
+  //       for (const date of this.occurrences()) {
+  //         if (date.get('weekday') === args.weekday) return true;
+  //       }
+  //       return false;
+  //     }
+
+  //     switch (this.processedOptions.frequency) {
+  //       case 'WEEKLY':
+  //         if (this.processedOptions.byDayOfWeek)
+  //           return this.processedOptions.byDayOfWeek.some(day => typeof day === 'string' ? day === args.weekday : day[0] === args.weekday);
+  //         else if (this.processedOptions.start.get('weekday') === args.weekday)
+  //           return true;
+  //         else
+  //           return false;
+  //       case 'YEARLY':
+  //       case 'MONTHLY':
+  //       case 'DAILY':
+  //       case 'HOURLY':
+  //       case 'MINUTELY':
+  //       case 'SECONDLY':
+  //       default:
+  //         if (this.processedOptions.byDayOfWeek)
+  //           return this.processedOptions.byDayOfWeek.some(day => typeof day === 'string' ? day === args.weekday : day[0] === args.weekday);
+  //         else
+  //           return true;
+  //     }
+  //   }
+  //   else
+  //     return super.occursOn(args)
+  // }
+
   /**  @private use occurrences() instead */
   public *_run(args: OccurrencesArgs<T> = {}) {
     const controller = new PipeController(this.processedOptions, args)

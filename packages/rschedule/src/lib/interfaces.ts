@@ -23,7 +23,7 @@ export interface IHasOccurrences<
 > {
   occurrences(args: OccurrencesArgs<T>): OccurrenceIterator<T, K>
   occursBetween(start: T, end: T, options: { excludeEnds?: boolean }): boolean
-  occursOn(date: T): boolean
+  occursOn(args: {date?: T}): boolean
   occursAfter(date: T, options: { excludeStart?: boolean }): boolean
   occursBefore(date: T, options: { excludeStart?: boolean }): boolean
 }
@@ -46,8 +46,17 @@ export abstract class HasOccurrences<T extends DateAdapter<T>> {
     return false
   }
 
-  public occursOn(date: T) {
-    for (const day of this.occurrences({ start: date, end: date })) {
+  /**
+   * Checks to see if an occurrence coincides with a specific date.
+   * 
+   * **Important:** at the moment, a date argument is required. It is optional
+   * to support customization uses (such as extending the class). Hopefully it
+   * will evenutally accept other arguments as well.
+   */
+  public occursOn(args: {date?: T}) {
+    if (!args.date) throw new Error('Was expecting an argument in the form `{date: DateAdapter}`');
+
+    for (const day of this.occurrences({ start: args.date, end: args.date })) {
       return !!day
     }
     return false

@@ -783,8 +783,8 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], expect: true },
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], excludeEnds: true, expect: false },
         { occursBetween: [dateAdapter(1998, 1, 8, 9, 0), dateAdapter(1998, 3, 4, 9, 0)], expect: false },
-        { occursOn: dateAdapter(1998, 3, 5, 9, 0), expect: true },
-        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+        { occursOn: {date: dateAdapter(1998, 3, 5, 9, 0)}, expect: true },
+        { occursOn: {date: dateAdapter(1998, 3, 6, 9, 0)}, expect: false },
       ]
     )
   
@@ -829,8 +829,8 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], expect: true },
         { occursBetween: [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)], excludeEnds: true, expect: false },
         { occursBetween: [dateAdapter(1998, 3, 6, 9, 0), dateAdapter(1999, 3, 6, 9, 0)], expect: true },
-        { occursOn: dateAdapter(1998, 3, 5, 9, 0), expect: true },
-        { occursOn: dateAdapter(1998, 3, 4, 9, 0), expect: false },
+        { occursOn: {date: dateAdapter(1998, 3, 5, 9, 0)}, expect: true },
+        { occursOn: {date: dateAdapter(1998, 3, 4, 9, 0)}, expect: false },
       ]
     )
   
@@ -856,8 +856,8 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: true },
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: false },
         { occursBetween: [dateAdapter(2000, 1, 2, 9, 0), dateAdapter(2010, 1, 1, 9, 0)], expect: false },
-        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: true },
-        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+        { occursOn: {date: dateAdapter(2017, 1, 1, 9, 0)}, expect: true },
+        { occursOn: {date: dateAdapter(1998, 3, 6, 9, 0)}, expect: false },
       ]
     )
 
@@ -904,8 +904,8 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(2000, 9, 2, 9), dateAdapter(2015, 12, 2, 9)], expect: false },
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: true },
         { occursBetween: [dateAdapter(1998, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: false },
-        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: true },
-        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+        { occursOn: {date: dateAdapter(2017, 1, 1, 9, 0)}, expect: true },
+        { occursOn: {date: dateAdapter(1998, 3, 6, 9, 0)}, expect: false },
       ]
     )
 
@@ -925,8 +925,8 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1998, 1, 6, 9, 0)], expect: false },
         { occursBetween: [dateAdapter(1997, 9, 2, 9), dateAdapter(1997, 12, 2, 9)], expect: false },
         { occursBetween: [dateAdapter(1997, 1, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: false },
-        { occursOn: dateAdapter(1998, 1, 1, 9, 0), expect: false },
-        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+        { occursOn: {date: dateAdapter(1998, 1, 1, 9, 0)}, expect: false },
+        { occursOn: {date: dateAdapter(1998, 3, 6, 9, 0)}, expect: false },
       ]
     )
 
@@ -976,8 +976,8 @@ describe(`${zone}`, () => {
         { occursBetween: [dateAdapter(2001, 9, 2, 9), dateAdapter(2015, 12, 2, 9)], expect: false },
         { occursBetween: [dateAdapter(1998, 5, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], expect: true },
         { occursBetween: [dateAdapter(1998, 5, 7, 9, 0), dateAdapter(2000, 1, 1, 9, 0)], excludeEnds: true, expect: true },
-        { occursOn: dateAdapter(2017, 1, 1, 9, 0), expect: true },
-        { occursOn: dateAdapter(1998, 3, 6, 9, 0), expect: false },
+        { occursOn: {date: dateAdapter(2017, 1, 1, 9, 0)}, expect: true },
+        { occursOn: {date: dateAdapter(1998, 3, 6, 9, 0)}, expect: false },
       ]
     )
   })

@@ -243,7 +243,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
       : validWeekdays[0]
 
     const next = this.cloneDateWithGranularity(args.date, 'day')
-    const days = differenceInDaysBetweenTwoWeekdays(
+    const days = Utils.differenceInDaysBetweenTwoWeekdays(
       args.date.get('weekday'),
       weekday
     )
@@ -256,15 +256,6 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
       skipToDate: next,
     })
   }
-}
-
-function differenceInDaysBetweenTwoWeekdays(
-  a: DateAdapter.Weekday,
-  b: DateAdapter.Weekday
-) {
-  const result = Utils.WEEKDAYS.indexOf(a) - Utils.WEEKDAYS.indexOf(b)
-
-  return result > 0 ? 7 - result : Math.abs(result)
 }
 
 function getNextValidDateThisYear<T extends DateAdapter<T>>(

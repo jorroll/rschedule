@@ -58,6 +58,15 @@ export namespace Utils {
     })
   }
 
+  export function differenceInDaysBetweenTwoWeekdays(
+    a: DateAdapter.Weekday,
+    b: DateAdapter.Weekday
+  ) {
+    const result = Utils.WEEKDAYS.indexOf(a) - Utils.WEEKDAYS.indexOf(b)
+  
+    return result > 0 ? 7 - result : Math.abs(result)
+  }  
+
   /**
    * Returns the earliest date in an array of dates. If the array is empty,
    * return `null`.
