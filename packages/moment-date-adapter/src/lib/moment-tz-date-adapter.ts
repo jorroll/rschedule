@@ -1,4 +1,4 @@
-import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
+import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, Utils, RDates } from '@rschedule/rschedule';
 import moment from 'moment-timezone';
 
 /**
@@ -36,7 +36,7 @@ export class MomentTZDateAdapter
   public get utcOffset() { return this.date.utcOffset() === 0 ? 0 : -this.date.utcOffset() }
 
   /** The `Rule` which generated this `DateAdapter` */
-  public rule: Rule<MomentTZDateAdapter> | undefined
+  public rule: RRule<MomentTZDateAdapter> | RDates<MomentTZDateAdapter> | undefined
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<MomentTZDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */

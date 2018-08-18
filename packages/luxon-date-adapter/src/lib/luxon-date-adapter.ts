@@ -1,4 +1,4 @@
-import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime } from '@rschedule/rschedule';
+import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, RDates } from '@rschedule/rschedule';
 import { DateTime } from 'luxon';
 
 /**
@@ -36,7 +36,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
   public get utcOffset() { return this.date.offset }
 
   /** The `Rule` which generated this `DateAdapter` */
-  public rule: Rule<LuxonDateAdapter> | undefined
+  public rule: Rule<LuxonDateAdapter> | RDates<LuxonDateAdapter> | undefined
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<LuxonDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */

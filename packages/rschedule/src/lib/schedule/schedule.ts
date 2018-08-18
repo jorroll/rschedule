@@ -1,6 +1,5 @@
 import {
   DateAdapter,
-  DateAdapterConstructor,
   IDateAdapterConstructor,
 } from '../date-adapter'
 import { parseICalStrings } from '../ical/parser'
@@ -40,9 +39,9 @@ export class Schedule<
     return this.rrules.some(rule => rule.isInfinite)
   }
 
-  public static fromICal<T extends DateAdapterConstructor<T>>(
+  public static fromICal<T extends IDateAdapterConstructor<T>>(
     icals: string | string[],
-    dateAdapterConstructor: IDateAdapterConstructor<T>
+    dateAdapterConstructor: T
   ) {
     if (!Array.isArray(icals)) { icals = [icals] }
 
@@ -57,19 +56,20 @@ export class Schedule<
   /** Convenience property for holding arbitrary data */
   public data?: D
 
-  constructor(args?: {
+  constructor(args: {
+    data?: D
     rrules?: Array<Options.ProvidedOptions<T>>
     rdates?: T[]
     exdates?: T[]
-  }) {
+  } = {}) {
     super()
-    if (args) {
-      if (args.rrules) {
-        this.rrules = args.rrules.map(options => new RRule(options))
-      }
-      if (args.rdates) { this.rdates = new RDates(args.rdates) }
-      if (args.exdates) { this.exdates = new EXDates(args.exdates) }
+    this.data = args.data;
+    
+    if (args.rrules) {
+      this.rrules = args.rrules.map(options => new RRule(options))
     }
+    if (args.rdates) { this.rdates = new RDates(args.rdates) }
+    if (args.exdates) { this.exdates = new EXDates(args.exdates) }
   }
 
   public toICal() {

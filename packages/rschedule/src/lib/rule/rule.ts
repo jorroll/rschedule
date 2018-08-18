@@ -50,9 +50,10 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
   private usedPipeControllers: Array<PipeController<T>> = [] // only so that we can invalidate them, if necessary
   private processedOptions!: Options.ProcessedOptions<T>
 
-  constructor(options: Options.ProvidedOptions<T>) {
+  constructor(options: Options.ProvidedOptions<T>, args: {data?: D} = {}) {
     super()
     this.options = options
+    this.data = args.data 
   }
 
   public occurrences(
@@ -249,8 +250,11 @@ export class RDatesBase<T extends DateAdapter<T>> extends HasOccurrences<T>
     return Utils.getEarliestDate(this.dates)
   }
 
-  constructor(public dates: T[]) {
+  public dates: T[]
+
+  constructor(dates?: T[]) {
     super()
+    this.dates = dates || []
   }
 
   public occurrences(args: OccurrencesArgs<T> = {}) {
@@ -302,6 +306,8 @@ export class RDatesBase<T extends DateAdapter<T>> extends HasOccurrences<T>
     let date = dates.shift()
 
     while (date) {
+      date.rule = this
+      
       yield date
 
       date = dates.shift()

@@ -1,4 +1,4 @@
-import { DateAdapter, Schedule, Rule, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
+import { DateAdapter, Schedule, RRule, RDates, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
 
 import {
   addDays,
@@ -43,7 +43,7 @@ export class StandardDateAdapter
   }
 
   /** The `Rule` which generated this `DateAdapter` */
-  public rule: Rule<StandardDateAdapter> | undefined
+  public rule: RRule<StandardDateAdapter> | RDates<StandardDateAdapter> | undefined
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<StandardDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */

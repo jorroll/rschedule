@@ -82,14 +82,16 @@ export type DateAdapterConstructor<T extends Constructor> = new (
   ...args: any[]
 ) => DateAdapter<InstanceType<T>>
 
-export interface IDateAdapterConstructor<T extends Constructor> {
-  new (date?: any, options?: any): InstanceType<T>
-  isInstance(object: any): object is InstanceType<T>
+export type InstanceOfDateAdapterConstructor<C extends DateAdapterConstructor<C>> = InstanceType<C> & DateAdapter<InstanceType<C>>
+
+export interface IDateAdapterConstructor<T extends DateAdapterConstructor<T>> {
+  new (date?: any, options?: any): InstanceOfDateAdapterConstructor<T>
+  isInstance(object: any): object is InstanceOfDateAdapterConstructor<T>
   fromTimeObject(args: {
     datetimes: ParsedDatetime[]
     timezone?: string
     raw: string
-  }): Array<InstanceType<T>>
+  }): Array<InstanceOfDateAdapterConstructor<T>>
   hasTimezoneSupport: boolean
 }
 

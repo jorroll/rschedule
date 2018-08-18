@@ -1,4 +1,4 @@
-import { DateAdapter, Rule, Schedule, Calendar, ParsedDatetime, Utils } from '@rschedule/rschedule';
+import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, Utils, RDates } from '@rschedule/rschedule';
 import moment from 'moment';
 
 /**
@@ -32,7 +32,7 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
   public get utcOffset() { return this.date.utcOffset() === 0 ? 0 : -this.date.utcOffset() }
 
   /** The `Rule` which generated this `DateAdapter` */
-  public rule: Rule<MomentDateAdapter> | undefined
+  public rule: RRule<MomentDateAdapter> | RDates<MomentDateAdapter> | undefined
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<MomentDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */

@@ -30,8 +30,9 @@ export class Calendar<
     return this.schedules.some(schedule => schedule.isInfinite)
   }
 
-  constructor(args: { schedules?: Array<Schedule<T>> | Schedule<T> } = {}) {
+  constructor(args: { schedules?: Array<Schedule<T>> | Schedule<T>, data?: D } = {}) {
     super()
+    this.data = args.data
     if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }
     else if (args.schedules) { this.schedules.push(args.schedules) }
   }

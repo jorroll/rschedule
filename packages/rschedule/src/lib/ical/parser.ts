@@ -1,6 +1,5 @@
 import {
   DateAdapter,
-  DateAdapterConstructor,
   IDateAdapterConstructor,
 } from '../date-adapter'
 import { Options } from '../rule/rule-options'
@@ -25,11 +24,11 @@ const UNIMPLEMENTED_RULE_OPTION =
  */
 
 export function parseICalStrings<
-  T extends DateAdapterConstructor<T>,
+  T extends IDateAdapterConstructor<T>,
   K extends DateAdapter<InstanceType<T>> = InstanceType<T>
 >(
   icalStrings: string[],
-  dateAdapterConstructor: IDateAdapterConstructor<T>
+  dateAdapterConstructor: T
 ): {
   rrules: Array<Options.ProvidedOptions<K>>
   rdates: K[]
@@ -245,10 +244,10 @@ export function parseFrequency(text: string) {
 
 // Here we say that the type `T` must be a constructor that returns a DateAdapter
 // complient type
-export function parseUntil<T extends DateAdapterConstructor<T>>(
+export function parseUntil<T extends IDateAdapterConstructor<T>>(
   text: string,
-  dateAdapterConstructor: IDateAdapterConstructor<T>,
-  start: InstanceType<T>
+  dateAdapterConstructor: T,
+  start: InstanceType<T> & DateAdapter<T>
 ) {
   const parsedDatetime = parseDatetime(text)
 
