@@ -46,7 +46,8 @@ export abstract class Rule<T extends DateAdapter<T>, D = undefined>
   }
 
   /** Convenience property for holding arbitrary data */
-  public data?: D
+  public data!: D
+  
   private _options!: Options.ProvidedOptions<T>
 
   private usedPipeControllers: Array<PipeController<T>> = [] // only so that we can invalidate them, if necessary
@@ -54,8 +55,9 @@ export abstract class Rule<T extends DateAdapter<T>, D = undefined>
 
   constructor(options: Options.ProvidedOptions<T>, args: {data?: D} = {}) {
     super()
-    this.options = options
-    this.data = args.data 
+    
+    this.options = options;
+    if (args.data) this.data = args.data;
   }
 
   public occurrences(

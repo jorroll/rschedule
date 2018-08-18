@@ -19,7 +19,7 @@ export class Calendar<
   public schedules: S[] = []
 
   /** Convenience property for holding arbitrary data */
-  public data?: D
+  public data!: D
 
   get startDate() {
     return Utils.getEarliestDate(this.schedules
@@ -33,7 +33,8 @@ export class Calendar<
 
   constructor(args: { schedules?: Array<S> | S, data?: D } = {}) {
     super()
-    this.data = args.data
+
+    if (args.data) this.data = args.data;
     if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }
     else if (args.schedules) { this.schedules.push(args.schedules) }
   }

@@ -62,7 +62,7 @@ export class Schedule<
   public exdates = new EXDates<T>()
 
   /** Convenience property for holding arbitrary data */
-  public data?: D
+  public data!: D
 
   constructor(args: {
     data?: D
@@ -71,8 +71,8 @@ export class Schedule<
     exdates?: T[]
   } = {}) {
     super()
-    this.data = args.data;
-    
+
+    if (args.data) this.data = args.data;
     if (args.rrules) {
       this.rrules = args.rrules.map(args => 
         // @ts-ignore ignoring typescript's dislike for spread operator
