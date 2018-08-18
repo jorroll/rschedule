@@ -75,6 +75,7 @@ export class Schedule<
     
     if (args.rrules) {
       this.rrules = args.rrules.map(args => 
+        // @ts-ignore ignoring typescript's dislike for spread operator
         Array.isArray(args) ? new RRule(...args) : new RRule(args)
       )
     }
