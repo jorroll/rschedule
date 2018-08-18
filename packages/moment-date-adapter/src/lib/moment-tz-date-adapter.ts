@@ -102,16 +102,16 @@ export class MomentTZDateAdapter
   isEqual<T extends DateAdapter<T>>(object?: T): boolean {
     return !!object && typeof object.toISOString === 'function' && object.toISOString() === this.toISOString()
   }
-  isBefore(object: MomentTZDateAdapter): boolean {
+  isBefore<T extends DateAdapter<T>>(object: T): boolean {
     return this.date.valueOf() < object.date.valueOf()
   }
-  isBeforeOrEqual(object: MomentTZDateAdapter): boolean {
+  isBeforeOrEqual<T extends DateAdapter<T>>(object: T): boolean {
     return this.date.valueOf() <= object.date.valueOf()
   }
-  isAfter(object: MomentTZDateAdapter): boolean {
+  isAfter<T extends DateAdapter<T>>(object: T): boolean {
     return this.date.valueOf() > object.date.valueOf()
   }
-  isAfterOrEqual(object: MomentTZDateAdapter): boolean {
+  isAfterOrEqual<T extends DateAdapter<T>>(object: T): boolean {
     return this.date.valueOf() >= object.date.valueOf()
   }
 

@@ -1,6 +1,7 @@
 import {
   DateAdapter,
   IDateAdapterConstructor,
+  InstanceOfDateAdapterConstructor,
 } from '../date-adapter'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
@@ -25,7 +26,7 @@ const UNIMPLEMENTED_RULE_OPTION =
 
 export function parseICalStrings<
   T extends IDateAdapterConstructor<T>,
-  K extends DateAdapter<InstanceType<T>> = InstanceType<T>
+  K extends InstanceOfDateAdapterConstructor<T> = InstanceOfDateAdapterConstructor<T>
 >(
   icalStrings: string[],
   dateAdapterConstructor: T
@@ -247,7 +248,7 @@ export function parseFrequency(text: string) {
 export function parseUntil<T extends IDateAdapterConstructor<T>>(
   text: string,
   dateAdapterConstructor: T,
-  start: InstanceType<T> & DateAdapter<T>
+  start: InstanceOfDateAdapterConstructor<T>
 ) {
   const parsedDatetime = parseDatetime(text)
 
