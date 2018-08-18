@@ -12,8 +12,8 @@ import { CollectionIterator, CollectionsArgs } from './collection'
 
 export class Calendar<
   T extends DateAdapter<T>,
-  S extends Schedule<T> = Schedule<T>,
-  D = undefined
+  S extends Schedule<T>,
+  D = any
 > extends HasOccurrences<T>
   implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, S, D>> {
   public schedules: S[] = []

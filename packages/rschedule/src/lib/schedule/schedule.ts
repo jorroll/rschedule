@@ -18,7 +18,7 @@ import { Utils } from '../utilities'
 
 export class Schedule<
   T extends DateAdapter<T>,
-  D = undefined
+  D = any
 > extends HasOccurrences<T>
   implements
     Serializable,

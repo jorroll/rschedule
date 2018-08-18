@@ -4,13 +4,13 @@ export type ParsedDatetime =
   | [number,number,number,number]
   | [number,number,number]
 
-export interface DateAdapter<T, D={}> {
+export interface DateAdapter<T, D=any> {
   /** The `Rule` which generated this `DateAdapter` */
-  rule: any | undefined
+  rule: any
   /** The `Schedule` which generated this `DateAdapter` */
-  schedule: any | undefined
+  schedule: any
   /** The `Calendar` which generated this `DateAdapter` */
-  calendar: any | undefined
+  calendar: any
   /** Returns a duplicate of original DateAdapter */
   clone(): T
 
