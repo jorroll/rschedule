@@ -1,6 +1,7 @@
 import {
   DateAdapter,
   IDateAdapterConstructor,
+  InstanceOfDateAdapterConstructor,
 } from '../date-adapter'
 import { parseICalStrings } from '../ical/parser'
 import {
@@ -42,7 +43,7 @@ export class Schedule<
   public static fromICal<T extends IDateAdapterConstructor<T>>(
     icals: string | string[],
     dateAdapterConstructor: T
-  ) {
+  ): Schedule<InstanceOfDateAdapterConstructor<T>> { // specifying the return fixes a build bug
     if (!Array.isArray(icals)) { icals = [icals] }
 
     const options = parseICalStrings(icals, dateAdapterConstructor)

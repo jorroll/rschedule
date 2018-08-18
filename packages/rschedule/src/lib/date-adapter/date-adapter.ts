@@ -1,4 +1,8 @@
-import { ParsedDatetime } from "../ical/parser";
+export type ParsedDatetime =
+  | [number,number,number,number,number,number]
+  | [number,number,number,number,number]
+  | [number,number,number,number]
+  | [number,number,number]
 
 export interface DateAdapter<T, D={}> {
   /** The `Rule` which generated this `DateAdapter` */

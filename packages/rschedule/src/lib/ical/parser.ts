@@ -2,6 +2,7 @@ import {
   DateAdapter,
   IDateAdapterConstructor,
   InstanceOfDateAdapterConstructor,
+  ParsedDatetime,
 } from '../date-adapter'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
@@ -26,18 +27,17 @@ const UNIMPLEMENTED_RULE_OPTION =
 
 export function parseICalStrings<
   T extends IDateAdapterConstructor<T>,
-  K extends InstanceOfDateAdapterConstructor<T> = InstanceOfDateAdapterConstructor<T>
 >(
   icalStrings: string[],
   dateAdapterConstructor: T
 ): {
-  rrules: Array<Options.ProvidedOptions<K>>
-  rdates: K[]
-  exdates: K[]
+  rrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>>
+  rdates: InstanceOfDateAdapterConstructor<T>[]
+  exdates: InstanceOfDateAdapterConstructor<T>[]
 } {
-  const rrules: Array<Options.ProvidedOptions<K>> = []
-  const rdates: K[] = []
-  const exdates: K[] = []
+  const rrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>> = []
+  const rdates: InstanceOfDateAdapterConstructor<T>[] = []
+  const exdates: InstanceOfDateAdapterConstructor<T>[] = []
 
   icalStrings.forEach(ical => {
     const parts = ical.split('\n')
@@ -161,11 +161,6 @@ export function parseDTStart(text?: string) {
   }
 }
 
-export type ParsedDatetime =
-  | [number,number,number,number,number,number]
-  | [number,number,number,number,number]
-  | [number,number,number,number]
-  | [number,number,number]
 
 /**
  * This function parses an ICAL time string, throwing a `ICalStringParseError`
