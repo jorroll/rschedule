@@ -12,10 +12,11 @@ import { CollectionIterator, CollectionsArgs } from './collection'
 
 export class Calendar<
   T extends DateAdapter<T>,
-  D = any
+  S extends Schedule<T> = Schedule<T>,
+  D = undefined
 > extends HasOccurrences<T>
-  implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, D>> {
-  public schedules: Array<Schedule<T>> = []
+  implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, S, D>> {
+  public schedules: S[] = []
 
   /** Convenience property for holding arbitrary data */
   public data?: D
@@ -30,7 +31,7 @@ export class Calendar<
     return this.schedules.some(schedule => schedule.isInfinite)
   }
 
-  constructor(args: { schedules?: Array<Schedule<T>> | Schedule<T>, data?: D } = {}) {
+  constructor(args: { schedules?: Array<S> | S, data?: D } = {}) {
     super()
     this.data = args.data
     if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }

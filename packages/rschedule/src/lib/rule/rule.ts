@@ -13,7 +13,9 @@ import { PipeController } from '../pipes'
 import { Utils } from '../utilities'
 import { buildValidatedRuleOptions, Options } from './rule-options'
 
-export abstract class Rule<T extends DateAdapter<T>, D = any>
+export type RuleArgs<T extends DateAdapter<T>, D = undefined> = [Options.ProvidedOptions<T>, {data?: D} | undefined]
+
+export abstract class Rule<T extends DateAdapter<T>, D = undefined>
   extends HasOccurrences<T>
   implements Serializable, RunnableIterator<T>, IHasOccurrences<T, Rule<T, D>> {
   /**
@@ -226,7 +228,7 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
   }
 }
 
-export class RRule<T extends DateAdapter<T>> extends Rule<T> {
+export class RRule<T extends DateAdapter<T>, D = undefined> extends Rule<T, D> {
   public toICal() {
     return ruleOptionsToIcalString(this.options, 'RRULE')
   }

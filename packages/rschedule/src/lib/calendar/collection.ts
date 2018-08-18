@@ -6,7 +6,7 @@ import { Utils } from '../utilities'
 export class Collection<T extends DateAdapter<T>> {
   constructor(
     public readonly dates: T[] = [],
-    public readonly period: 'INSTANTANIOUSLY' | Options.Frequency,
+    public readonly granularity: 'INSTANTANIOUSLY' | Options.Frequency,
     public readonly periodStart: T,
     public readonly periodEnd: T
   ) {}

@@ -12,13 +12,13 @@ import {
   RunnableIterator,
   Serializable,
 } from '../interfaces'
-import { EXDates, RDates, RRule, Rule } from '../rule'
+import { EXDates, RDates, RRule, Rule, RuleArgs } from '../rule'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
 export class Schedule<
   T extends DateAdapter<T>,
-  D = any
+  D = undefined
 > extends HasOccurrences<T>
   implements
     Serializable,
@@ -40,26 +40,33 @@ export class Schedule<
     return this.rrules.some(rule => rule.isInfinite)
   }
 
-  public static fromICal<T extends IDateAdapterConstructor<T>>(
+  public static fromICal<T extends IDateAdapterConstructor<T>, D = undefined>(
     icals: string | string[],
-    dateAdapterConstructor: T
-  ): Schedule<InstanceOfDateAdapterConstructor<T>> { // specifying the return fixes a build bug
+    dateAdapterConstructor: T,
+    args: {
+      data?: D
+    } = {}
+  ): Schedule<InstanceOfDateAdapterConstructor<T>, D> { // specifying the return fixes a build bug
     if (!Array.isArray(icals)) { icals = [icals] }
 
     const options = parseICalStrings(icals, dateAdapterConstructor)
 
-    return new Schedule(options)
+    return new Schedule({
+      ...options,
+      data: args.data
+    })
   }
-  public rrules: Array<RRule<T>> = []
-  public rdates: RDates<T> = new RDates([])
-  public exdates: EXDates<T> = new EXDates([])
+  
+  public rrules: RRule<T>[] = []
+  public rdates = new RDates<T>()
+  public exdates = new EXDates<T>()
 
   /** Convenience property for holding arbitrary data */
   public data?: D
 
   constructor(args: {
     data?: D
-    rrules?: Array<Options.ProvidedOptions<T>>
+    rrules?: Array<RuleArgs<T> | Options.ProvidedOptions<T>>
     rdates?: T[]
     exdates?: T[]
   } = {}) {
@@ -67,7 +74,9 @@ export class Schedule<
     this.data = args.data;
     
     if (args.rrules) {
-      this.rrules = args.rrules.map(options => new RRule(options))
+      this.rrules = args.rrules.map(args => 
+        Array.isArray(args) ? new RRule(...args) : new RRule(args)
+      )
     }
     if (args.rdates) { this.rdates = new RDates(args.rdates) }
     if (args.exdates) { this.exdates = new EXDates(args.exdates) }
