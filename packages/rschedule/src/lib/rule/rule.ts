@@ -233,7 +233,7 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
 
 const RRULE_ID = Symbol.for('d0f27de8-adee-49d4-8d56-3eb3a8d631f4')
 
-export class RRule<T extends DateAdapter<T>, D = undefined> extends Rule<T, D> {
+export class RRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
   public readonly [RRULE_ID] = true
 
   /**
@@ -251,7 +251,7 @@ export class RRule<T extends DateAdapter<T>, D = undefined> extends Rule<T, D> {
    * new RRule).
    */
   public clone() {
-    return new RRule(cloneDeep(this.options), {data: this.data})
+    return new RRule<T, D>(cloneDeep(this.options), {data: this.data})
   }
 
   public toICal() {
@@ -364,7 +364,7 @@ export class RDates<T extends DateAdapter<T>> extends RDatesBase<T> {
    * Returns a clone of the RDates object.
    */
   public clone() {
-    return new RDates(this.dates.map(date => date.clone()))
+    return new RDates<T>(this.dates.map(date => date.clone()))
   }
 
   public toICal() {
@@ -390,7 +390,7 @@ export class EXDates<T extends DateAdapter<T>> extends RDatesBase<T> {
    * Returns a clone of the EXDates object.
    */
   public clone() {
-    return new EXDates(this.dates.map(date => date.clone()))
+    return new EXDates<T>(this.dates.map(date => date.clone()))
   }
 
   public toICal() {

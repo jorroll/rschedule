@@ -89,6 +89,7 @@ export class Schedule<
     if (args.rrules) {
       this.rrules = args.rrules.map(args => {
         if (Array.isArray(args))
+          // @ts-ignore typescript doesn't like spread operator
           return  new RRule(...args)
         else if (RRule.isRRule(args))
           return args.clone()
@@ -116,7 +117,7 @@ export class Schedule<
    * new Schedule).
    */
   public clone() {
-    return new Schedule({
+    return new Schedule<T, D>({
       data: this.data,
       rrules: this.rrules,
       rdates: this.rdates,

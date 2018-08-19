@@ -58,9 +58,9 @@ export class Calendar<
    * new Calendar).
    */
   public clone() {
-    return new Calendar({
+    return new Calendar<T, S, D>({
       data: this.data,
-      schedules: this.schedules.map(schedule => schedule.clone()),
+      schedules: this.schedules.map(schedule => schedule.clone()) as S[],
     })
   }
 
