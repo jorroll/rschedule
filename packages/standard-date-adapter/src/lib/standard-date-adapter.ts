@@ -19,6 +19,8 @@ import {
   subMilliseconds,
 } from 'date-fns'
 
+const STANDARD_DATE_ADAPTER_ID = Symbol.for('9d2c0b75-7a72-4f24-b57f-c27e131e37b2')
+
 export class StandardDateAdapter
   implements DateAdapter<StandardDateAdapter, Date> {
   public date: Date
@@ -47,7 +49,7 @@ export class StandardDateAdapter
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<StandardDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<StandardDateAdapter> | undefined
+  public calendar: Calendar<StandardDateAdapter, Schedule<StandardDateAdapter>> | undefined
 
   constructor(date?: Date, args: {timezone?: 'UTC' | undefined} = {}) {
     this.date = date ? new Date(date) : new Date()
@@ -55,8 +57,15 @@ export class StandardDateAdapter
     this.assertIsValid([date, 'constructing'])
   }
 
+  public readonly [STANDARD_DATE_ADAPTER_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
+   * of determining if an object is a `StandardDateAdapter` by checking against the
+   * global symbol registry.
+   */
   static isInstance(object: any): object is StandardDateAdapter {
-    return object instanceof StandardDateAdapter
+    return !!(object && object[Symbol.for('9d2c0b75-7a72-4f24-b57f-c27e131e37b2')])
   }
 
   static readonly hasTimezoneSupport = false;
@@ -91,8 +100,18 @@ export class StandardDateAdapter
     return dates
   }
 
+  /**
+   * Returns a clone of the date adapter including a cloned
+   * date property. Does not clone the `rule`, `schedule`,
+   * or `calendar` properties, but does copy them over to the
+   * new object.
+   */
   clone(): StandardDateAdapter {
-    return new StandardDateAdapter(this.date, {timezone: this.timezone})
+    const adapter = new StandardDateAdapter(this.date, {timezone: this.timezone})
+    adapter.rule = this.rule
+    adapter.schedule = this.schedule
+    adapter.calendar = this.calendar
+    return adapter
   }
 
   isSameClass(object: any): object is StandardDateAdapter {

@@ -16,6 +16,8 @@ import { EXDates, RDates, RRule, Rule, RuleArgs } from '../rule'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
+const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')
+
 export class Schedule<
   T extends DateAdapter<T>,
   D = any
@@ -38,6 +40,17 @@ export class Schedule<
 
   get isInfinite() {
     return this.rrules.some(rule => rule.isInfinite)
+  }
+
+  public readonly [SCHEDULE_ID] = true
+
+  /**
+   * Similar to `Array.isArray`, `isSchedule` provides a surefire method
+   * of determining if an object is a `Schedule` by checking against the
+   * global symbol registry.
+   */
+  public static isSchedule(object: any): object is Schedule<any> {
+    return !!(object && object[Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')])
   }
 
   public static fromICal<T extends IDateAdapterConstructor<T>, D = undefined>(
@@ -66,21 +79,25 @@ export class Schedule<
 
   constructor(args: {
     data?: D
-    rrules?: Array<RuleArgs<T> | Options.ProvidedOptions<T>>
-    rdates?: T[]
-    exdates?: T[]
+    rrules?: (RuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>)[]
+    rdates?: T[] | RDates<T>
+    exdates?: T[] | EXDates<T>
   } = {}) {
     super()
 
     if (args.data) this.data = args.data;
     if (args.rrules) {
-      this.rrules = args.rrules.map(args => 
-        // @ts-ignore ignoring typescript's dislike for spread operator
-        Array.isArray(args) ? new RRule(...args) : new RRule(args)
-      )
+      this.rrules = args.rrules.map(args => {
+        if (Array.isArray(args))
+          return  new RRule(...args)
+        else if (RRule.isRRule(args))
+          return args.clone()
+        else
+          return new RRule(args)
+      })
     }
-    if (args.rdates) { this.rdates = new RDates(args.rdates) }
-    if (args.exdates) { this.exdates = new EXDates(args.exdates) }
+    if (args.rdates) { this.rdates = RDates.isRDates(args.rdates) ? args.rdates.clone() : new RDates(args.rdates) }
+    if (args.exdates) { this.exdates = EXDates.isEXDates(args.exdates) ? args.exdates.clone() : new EXDates(args.exdates) }
   }
 
   public toICal() {
@@ -91,6 +108,20 @@ export class Schedule<
     if (this.exdates.length > 0) { icals.push(this.exdates.toICal()) }
 
     return icals
+  }
+
+  /**
+   * Returns a clone of the Schedule object and all properties except the data property
+   * (instead, the original data property is included as the data property of the
+   * new Schedule).
+   */
+  public clone() {
+    return new Schedule({
+      data: this.data,
+      rrules: this.rrules,
+      rdates: this.rdates,
+      exdates: this.exdates,
+    })
   }
 
   public occurrences(

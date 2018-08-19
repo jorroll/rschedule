@@ -1,6 +1,8 @@
 import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, Utils, RDates } from '@rschedule/rschedule';
 import moment from 'moment-timezone';
 
+const MOMENT_TZ_DATE_ADAPTER_ID = Symbol.for('471f1a4e-133b-448a-add2-16d7208a04ed')
+
 /**
  * The `MomentTZDateAdapter` is for using with momentjs and it's optional
  * `moment-timezone` package. It supports robust timezone handling.
@@ -40,7 +42,7 @@ export class MomentTZDateAdapter
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<MomentTZDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<MomentTZDateAdapter> | undefined
+  public calendar: Calendar<MomentTZDateAdapter, Schedule<MomentTZDateAdapter>> | undefined
 
   constructor(date?: moment.Moment, args: {} = {}) {
     if (moment.isMoment(date) && typeof date.tz === 'function') {
@@ -57,8 +59,15 @@ export class MomentTZDateAdapter
     this.assertIsValid()
   }
 
+  public readonly [MOMENT_TZ_DATE_ADAPTER_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
+   * of determining if an object is a `MomentTZDateAdapter` by checking against the
+   * global symbol registry.
+   */
   static isInstance(object: any): object is MomentTZDateAdapter {
-    return object instanceof MomentTZDateAdapter
+    return !!(object && object[Symbol.for('471f1a4e-133b-448a-add2-16d7208a04ed')])
   }
 
   static readonly hasTimezoneSupport = true;
@@ -91,8 +100,18 @@ export class MomentTZDateAdapter
     return dates
   }
 
+  /**
+   * Returns a clone of the date adapter including a cloned
+   * date property. Does not clone the `rule`, `schedule`,
+   * or `calendar` properties, but does copy them over to the
+   * new object.
+   */
   clone(): MomentTZDateAdapter {
-    return new MomentTZDateAdapter(this.date)
+    const adapter = new MomentTZDateAdapter(this.date)
+    adapter.rule = this.rule
+    adapter.schedule = this.schedule
+    adapter.calendar = this.calendar
+    return adapter
   }
 
   isSameClass(object: any): object is MomentTZDateAdapter {

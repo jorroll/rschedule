@@ -1,6 +1,8 @@
 import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, Utils, RDates } from '@rschedule/rschedule';
 import moment from 'moment';
 
+const MOMENT_DATE_ADAPTER_ID = Symbol.for('44069a20-dc6f-4479-8737-d86a93e9b357')
+
 /**
  * The `MomentDateAdapter` is for using with momentjs *without* the
  * `moment-timezone` package. It only supports `"UTC"` and local
@@ -36,7 +38,7 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<MomentDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<MomentDateAdapter> | undefined
+  public calendar: Calendar<MomentDateAdapter, Schedule<MomentDateAdapter>> | undefined
   
   constructor(date?: moment.Moment, args: {} = {}) {
     if (moment.isMoment(date)) {
@@ -52,8 +54,15 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
     this.assertIsValid()
   }
 
+  public readonly [MOMENT_DATE_ADAPTER_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
+   * of determining if an object is a `MomentDateAdapter` by checking against the
+   * global symbol registry.
+   */
   static isInstance(object: any): object is MomentDateAdapter {
-    return object instanceof MomentDateAdapter
+    return !!(object && object[Symbol.for('44069a20-dc6f-4479-8737-d86a93e9b357')])
   }
 
   static readonly hasTimezoneSupport = false;
@@ -86,8 +95,18 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
     return dates
   }
 
+  /**
+   * Returns a clone of the date adapter including a cloned
+   * date property. Does not clone the `rule`, `schedule`,
+   * or `calendar` properties, but does copy them over to the
+   * new object.
+   */
   clone(): MomentDateAdapter {
-    return new MomentDateAdapter(this.date)
+    const adapter = new MomentDateAdapter(this.date)
+    adapter.rule = this.rule
+    adapter.schedule = this.schedule
+    adapter.calendar = this.calendar
+    return adapter
   }
 
   isSameClass(object: any): object is MomentDateAdapter {

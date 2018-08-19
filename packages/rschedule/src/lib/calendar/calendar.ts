@@ -10,6 +10,8 @@ import { Schedule } from '../schedule/schedule'
 import { Utils } from '../utilities'
 import { CollectionIterator, CollectionsArgs } from './collection'
 
+const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')
+
 export class Calendar<
   T extends DateAdapter<T>,
   S extends Schedule<T>,
@@ -31,12 +33,35 @@ export class Calendar<
     return this.schedules.some(schedule => schedule.isInfinite)
   }
 
+  public readonly [CALENDAR_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isCalendar()` provides a surefire method
+   * of determining if an object is a `Calendar` by checking against the
+   * global symbol registry.
+   */
+  public static isCalendar(object: any): object is Calendar<any, any> {
+    return !!(object && object[Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')])
+  }
+
   constructor(args: { schedules?: Array<S> | S, data?: D } = {}) {
     super()
 
     if (args.data) this.data = args.data;
     if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }
     else if (args.schedules) { this.schedules.push(args.schedules) }
+  }
+
+  /**
+   * Returns a clone of the Calendar object and all properties except the data property
+   * (instead, the original data property is included as the data property of the
+   * new Calendar).
+   */
+  public clone() {
+    return new Calendar({
+      data: this.data,
+      schedules: this.schedules.map(schedule => schedule.clone()),
+    })
   }
 
   /**

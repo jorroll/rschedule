@@ -1,6 +1,8 @@
 import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, RDates } from '@rschedule/rschedule';
 import { DateTime } from 'luxon';
 
+const LUXON_DATE_ADAPTER_ID = Symbol.for('6e11cae3-344a-4c49-a5b1-5bcb84fe1f26')
+
 /**
  * The `LuxonDateAdapter` is a DateAdapter for `luxon` DateTime
  * objects.
@@ -40,7 +42,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
   /** The `Schedule` which generated this `DateAdapter` */
   public schedule: Schedule<LuxonDateAdapter> | undefined
   /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<LuxonDateAdapter> | undefined
+  public calendar: Calendar<LuxonDateAdapter, Schedule<LuxonDateAdapter>> | undefined
   
   constructor(date?: DateTime, args: {} = {}) {
     if (date) {
@@ -58,8 +60,15 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
     else this.date = DateTime.local();    
   }
 
+  public readonly [LUXON_DATE_ADAPTER_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
+   * of determining if an object is a `LuxonDateAdapter` by checking against the
+   * global symbol registry.
+   */
   static isInstance(object: any): object is LuxonDateAdapter {
-    return object instanceof LuxonDateAdapter
+    return !!(object && object[Symbol.for('6e11cae3-344a-4c49-a5b1-5bcb84fe1f26')])
   }
 
   static readonly hasTimezoneSupport = true;
@@ -94,8 +103,18 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
     return dates
   }
 
+  /**
+   * Returns a clone of the date adapter including a cloned
+   * date property. Does not clone the `rule`, `schedule`,
+   * or `calendar` properties, but does copy them over to the
+   * new object.
+   */
   clone(): LuxonDateAdapter {
-    return new LuxonDateAdapter(this.date)
+    const adapter = new LuxonDateAdapter(this.date)
+    adapter.rule = this.rule
+    adapter.schedule = this.schedule
+    adapter.calendar = this.calendar
+    return adapter
   }
 
   isSameClass(object: any): object is LuxonDateAdapter {
