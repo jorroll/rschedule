@@ -29,7 +29,15 @@ export class CollectionIterator<
   private iterator: IterableIterator<T>
 
   constructor(private iterable: K, private args: CollectionsArgs<T>) {
-    ;[this.iterator, this.startDate] = this.getIterator(iterable, args)
+    this.args = args.start
+      ? { ...args, start: this.getPeriodStart(args.start) }
+      : args;
+
+    this.args = args.end
+      ? { ...args, end: this.processEndArg(args.end) }
+      : args;
+
+    ;[this.iterator, this.startDate] = this.getIterator(iterable, this.args)
 
     if (args.granularity) { this.granularity = args.granularity }
     if (args.weekStart) { this.weekStart = args.weekStart }
@@ -111,33 +119,34 @@ export class CollectionIterator<
 
     switch (this.granularity) {
       case 'YEARLY':
-        return date.set('month', 1).set('day', 1)
+        date.set('month', 1).set('day', 1)
+        break
       case 'MONTHLY':
-        return date.set('day', 1)
+        if (this.weekStart)
+          Utils.setDateToStartOfWeek(date.set('day', 1), this.weekStart);
+        else
+          date.set('day', 1);
+        break
       case 'WEEKLY':
         if (!this.weekStart) {
           throw new Error('"WEEKLY" granularity requires `weekStart` arg')
         }
-        const differenceFromWeekStart = Utils.weekdayToInt(
-          date.get('weekday'),
-          this.weekStart
-        )
-        date.subtract(differenceFromWeekStart, 'day')
+        Utils.setDateToStartOfWeek(date, this.weekStart)
+        break
+    }
+
+    switch (this.granularity) {
+      case 'YEARLY':
+      case 'MONTHLY':
+      case 'WEEKLY':
       case 'DAILY':
-        return date
-          .set('hour', 0)
-          .set('minute', 0)
-          .set('second', 0)
-          .set('millisecond', 0)
+        date.set('hour', 0)
       case 'HOURLY':
-        return date
-          .set('minute', 0)
-          .set('second', 0)
-          .set('millisecond', 0)
+        date.set('minute', 0)
       case 'MINUTELY':
-        return date.set('second', 0).set('millisecond', 0)
+        date.set('second', 0)
       case 'SECONDLY':
-        return date.set('millisecond', 0)
+        date.set('millisecond', 0)
       case 'INSTANTANIOUSLY':
       default:
         return date
@@ -151,7 +160,11 @@ export class CollectionIterator<
       case 'YEARLY':
         return periodEnd.add(1, 'year').subtract(1, 'millisecond')
       case 'MONTHLY':
-        return periodEnd.add(1, 'month').subtract(1, 'millisecond')
+        periodEnd.add(1, 'month').subtract(1, 'millisecond')
+        
+        if (this.weekStart) Utils.setDateToEndOfWeek(periodEnd, this.weekStart);
+  
+        return periodEnd
       case 'WEEKLY':
         return periodEnd.add(7, 'day').subtract(1, 'millisecond')
       case 'DAILY':
@@ -165,6 +178,46 @@ export class CollectionIterator<
       case 'INSTANTANIOUSLY':
       default:
         return periodEnd
+    }
+  }
+
+  private processEndArg(arg: T) {
+    const end = arg.clone()
+
+    switch (this.granularity) {
+      case 'YEARLY':
+        Utils.setDateToEndOfYear(end)
+        break
+      case 'MONTHLY':
+        Utils.setDateToEndOfMonth(end)
+        
+        if (this.weekStart) Utils.setDateToEndOfWeek(end, this.weekStart);
+
+        break
+      case 'WEEKLY':
+        if (!this.weekStart) {
+          throw new Error('"WEEKLY" granularity requires `weekStart` arg')
+        }
+
+        Utils.setDateToEndOfWeek(end, this.weekStart)
+        break
+    }
+
+    switch (this.granularity) {
+      case 'YEARLY':
+      case 'MONTHLY':
+      case 'WEEKLY':
+      case 'DAILY':
+        end.set('hour', 23)
+      case 'HOURLY':
+        end.set('minute', 59)
+      case 'MINUTELY':
+        end.set('second', 59)
+      case 'SECONDLY':
+        end.set('millisecond', 999)
+      case 'INSTANTANIOUSLY':
+      default:
+        return end
     }
   }
 

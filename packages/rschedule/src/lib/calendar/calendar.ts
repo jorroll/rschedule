@@ -65,29 +65,69 @@ export class Calendar<
   }
 
   /**
+   * ### collections()
+   * 
    * Iterates over the calendar's occurrences and bundles them into collections
-   * with a specified granularity (default is `"INSTANTANIOUS"`). Each `Collection`
-   * object has:
+   * with a specified granularity (default is `"INSTANTANIOUS"`). Make sure to
+   * read about each option & combination of options in the `details` section
+   * below.
+   * 
+   * Options object argument:
+   *   - start?: DateAdapter
+   *   - end?: DateAdapter
+   *   - take?: number
+   *   - reverse?: NOT SUPPORTED
+   *   - granularity?: CollectionsGranularity
+   *   - weekStart?: DateAdapter.Weekday
+   * 
+   * Returned `Collection` object:
    *
-   *   - a `dates` property containing an array of DateAdapter objects.
-   *   - a `period` property containing the granularity.
-   *   - a `periodStart` property containing a DateAdapter equal to the period's
+   *   - `dates` property containing an array of DateAdapter objects.
+   *   - `granularity` property containing the granularity.
+   *     - `CollectionsGranularity` type extends rule options `Frequency` type by adding
+   *       `"INSTANTANIOUS"`.
+   *   - `periodStart` property containing a DateAdapter equal to the period's
    *     start time.
-   *   - a `periodEnd` property containing a DateAdapter equal to the period's
+   *   - `periodEnd` property containing a DateAdapter equal to the period's
    *     end time.
    *
+   * #### Details:
+   * 
+   * `collections()` always returns full periods. This means that the `start` argument is 
+   * transformed to be the start of whatever period the `start` argument is in, and the
+   * `end` argument is transformed to be the end of whatever period the `end` argument is
+   * in.
+   * 
+   * - Example: with granularity `"YEARLY"`, the `start` argument will be transformed to be the
+   *   start of the year passed in the `start` argument, and the `end` argument will be transformed
+   *   to be the end of the year passed in the `end` argument.
+   * 
    * The `periodStart` value of `Collection` objects produced by this method does not
    * necessarily increment linearly. A collection *always* contains at least one date,
    * so the `periodStart` from one collection to the next can "jump".
    *
-   * Example: If your granularity is `"DAILY"` and you start in January, but the earliest
-   * a schedule outputs a date is in February, the first Collection produced will have a
-   * `periodStart` in February.
+   * - Example: If your granularity is `"DAILY"` and you start in January, but the earliest
+   *   a schedule outputs a date is in February, the first Collection produced will have a
+   *   `periodStart` in February.
    *
-   * Another thing: when giving a `take` argument to `collections()`, you are specifying
+   * When giving a `take` argument to `collections()`, you are specifying
    * the number of `Collection` objects to return (rather than occurrences).
+   * 
+   * When choosing a granularity of `"WEEKLY"`, the `weekStart` option is required.
+   * 
+   * When choosing a granularity of `"MONTHLY"`:
+   * 
+   * - If the `weekStart` option *is not* present, will generate collections with
+   *   the `periodStart` and `periodEnd` at the beginning and end of each month. 
+   * 
+   * - If the `weekStart` option *is* present, will generate collections with the 
+   *   `periodStart` equal to the start of the first week of the month, and the 
+   *   `periodEnd` equal to the end of the last week of the month. This behavior could be 
+   *   desired when rendering opportunities in a calendar view, where the calendar renders 
+   *   full weeks (which may result in the calendar displaying dates in the
+   *   previous or next months).
    *
-   * @param args
+   * @param args CollectionsArgs
    */
   public collections(args: CollectionsArgs<T> = {}) {
     return new CollectionIterator(this, args)
