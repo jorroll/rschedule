@@ -5,19 +5,16 @@ import { Utils } from '../utilities'
 export class ICalStringSerialzeError extends Error {}
 
 /**
- * Parses an array of ICAL strings and returns an object containing
- * `rrules`, `exrules`, `rdates`, and `exdates`. The `rrules` and `exrules`
- * properties contain `ProvidedOptions` objects and the `rdates` and `exdates`
- * properties contain `DateAdapter` objects built with a `DateAdapter`
- * constructor you provide. `parseICalStrings` will use the date adapter constructor's
- * `fromTimeObject` static method to instantiate new instances.
+ * Converts an options object to an [ICAL](https://tools.ietf.org/html/rfc5545)
+ * complient string.
  *
- * @param icalStrings
- * @param dateAdapterConstructor
+ * @param options ProvidedOptions
+ * @param type Determins if the serialized options object is labeled as an
+ * "RRULE" or an "EXRULE".
  */
 export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
   options: Options.ProvidedOptions<T>,
-  type: 'RRULE' | 'EXRULE' = 'RRULE'
+  type: 'RRULE' | 'EXRULE'
 ): string {
   // First validate options object, but don't use the result
   buildValidatedRuleOptions(options)
