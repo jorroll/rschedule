@@ -9,7 +9,7 @@ import {
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
 function toISOStringsOCC(
-  calendar: Calendar<StandardDateAdapter, any>,
+  calendar: Calendar<any, any>,
   args?: OccurrencesArgs<StandardDateAdapter>
 ) {
   return calendar
@@ -19,7 +19,7 @@ function toISOStringsOCC(
 }
 
 function toISOStringsCOL(
-  calendar: Calendar<StandardDateAdapter, any>,
+  calendar: Calendar<any, any>,
   args?: CollectionsArgs<StandardDateAdapter>
 ) {
   return calendar
@@ -255,9 +255,7 @@ describe('Calendar', () => {
         ].reverse())
       })
 
-      // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
-      // what the test should expect to be sure
-      it.skip('with multiple schedules', () => {
+      it('with multiple schedules', () => {
         const scheduleOne = new Schedule({
           rrules: [
             // YearlyByMonthAndMonthDay
@@ -372,9 +370,7 @@ describe('Calendar', () => {
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
       })
 
-      // just skipping this out of laziness at the moment. Pretty sure everything's working, need to work through
-      // what the test should expect to be sure
-      it.skip('with multiple rules & RDates & EXDates', () => {
+      it('with multiple rules & RDates & EXDates', () => {
         const scheduleOne = new Schedule({
           rrules: [
             // YearlyByMonthAndMonthDay
