@@ -9,6 +9,7 @@ export * from './calendar'
 export { OccurrencesArgs, OccurrenceIterator } from './interfaces'
 
 export * from './rule/public_api'
+export * from './dates/public_api'
 
 /**
  * These lower level functions may be useful to someone making
