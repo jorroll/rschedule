@@ -12,7 +12,8 @@ import {
   RunnableIterator,
   Serializable,
 } from '../interfaces'
-import { EXDates, RDates, RRule, Rule, RuleArgs } from '../rule'
+import { RRule, Rule, RuleArgs } from '../rule'
+import { EXDates, RDates } from '../dates'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
