@@ -1,6 +1,6 @@
 # rSchedule
 
-***Note: While everything described here has been implemented, this library is still a WIP. I have some plans to overhaul the DateAdapter API, greatly simplifying it, as well as update the internal logic to always iterate over UTC values and convert them to a specific timezone at the last moment. This should (hopefully) eliminate a few outstanding DST bugs in the southern hemisphere, as well as simplify the internal code.***
+***Note: While everything described here has been implemented, this library is still a WIP. I have some plans to overhaul the DateAdapter API, greatly simplifying it, as well as update the internal logic to always iterate over UTC values and convert them to a specific timezone at the last moment. This should (hopefully) eliminate a few outstanding DST bugs in the southern hemisphere, as well as simplify the internal code. Check out the [1.0 roadmap](https://gitlab.com/john.carroll.p/rschedule/issues/5) for more info.***
 
 A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol.
 
