@@ -99,7 +99,7 @@ export class CollectionIterator<
     let [
       periodStart,
       periodEnd,
-      period,
+      period
     ] = this.getPeriod(
       (this.args.start || this.iterable.startDate)!
     )
@@ -110,7 +110,7 @@ export class CollectionIterator<
       [
         periodStart,
         periodEnd,
-        period,
+        period
       ] = this.getPeriod(date);
     }
 
