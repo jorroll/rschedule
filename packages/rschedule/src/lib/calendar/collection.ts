@@ -29,16 +29,6 @@ export class CollectionIterator<
   private iterator: IterableIterator<T>
 
   constructor(private iterable: K, private args: CollectionsArgs<T>) {
-    this.args = args.start
-      ? { ...args, start: this.getPeriodStart(args.start) }
-      : args;
-
-    this.args = args.end
-      ? { ...args, end: this.processEndArg(args.end) }
-      : args;
-
-    ;[this.iterator, this.startDate] = this.getIterator(iterable, this.args)
-
     if (args.granularity) { this.granularity = args.granularity }
     if (args.weekStart) { this.weekStart = args.weekStart }
     if (args.reverse) {
@@ -47,6 +37,16 @@ export class CollectionIterator<
         "Though you can iterate a calendar's occurrences in reverse."
       )
     }
+
+    this.args = args.start
+      ? { ...args, start: this.getPeriodStart(args.start) }
+      : args;
+
+    this.args = args.end
+      ? { ...args, end: this.processEndArg(args.end) }
+      : args;
+
+    [this.iterator, this.startDate] = this.getIterator(iterable, this.args)
   }
 
   public [Symbol.iterator] = () => this.iterateCollection(this.iterator);
