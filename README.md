@@ -163,13 +163,15 @@ const dailyRule = new Rule({
   start: new StandardDateAdapter(new Date(2011, 9, 2))
 })
 
-const schedule = new Schedule(weeklyRule, dailyRule)
+const schedule = new Schedule({
+  rrules: [weeklyRule, dailyRule]
+})
 
-schedule.occurrences().toArray().map(date => date.toISOString())
+schedule.occurrences({take: 10}).toArray().map(date => date.toISOString())
 
 const scheduleIterator = schedule.occurrences({end: new StandardDateAdapter()})
 
-scheduleIterator.next().toISOString() // 
+scheduleIterator.next().value // date
 
 const occurrences = [];
 
@@ -179,8 +181,11 @@ for (const occurrence of scheduleIterator) {
   }
 }
 
-if (schedule.occursOn(new StandardDateAdapter(new Date(2013,5,17)))) {
+if (schedule.occursOn({date: new StandardDateAdapter(new Date(2013,5,17))})) {
   // do stuff
+}
+else if (schedule.occursOn({weekday: 'MO'})) {
+  // do other stuff
 }
 else if (schedule.occursBefore(new StandardDateAdapter(new Date(2012,2,12))))) {
   // do different stuff
@@ -193,10 +198,12 @@ As a convenience, Schedule objects have a `data` property which can hold arbitra
 
 ```typescript
 interface HasOccurrences<T extends DateAdapter<T>> {
-  occurrences(args: {start?: T; end?: T; take?: number): OccurrenceIterator<T>
-  occursBetween(start: T, end: T, options: { excludingEnds?: boolean }): boolean
-  occursOn(date: T): boolean
+  occurrences(args: OccurrencesArgs<T>): OccurrenceIterator<T, K>
+  occursBetween(start: T, end: T, options: { excludeEnds?: boolean }): boolean
+  occursOn(args: {date: T}): boolean
+  occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
   occursAfter(date: T, options: { excludeStart?: boolean }): boolean
+  occursBefore(date: T, options: { excludeStart?: boolean }): boolean
   isInfinite: boolean
 }
 ```
@@ -205,7 +212,7 @@ interface HasOccurrences<T extends DateAdapter<T>> {
 
 `Calendar` objects support iterating through groups of `Schedule` objects (and `Schedule` objects support iterating through groups of `RRule` objects). Unlike Schedule or RRule objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different Schedule). As such, Calendar objects have `Calendar#collections()` which groups occurrences into a `Collection` by a specified `granularity` before yielding the `Collection`.
 
-Options are:
+`collections()` granularity options are:
 - `"INSTANTANIOUSLY"` -- default
 - `"SECONDLY"`
   - sets the millisecond value of the `start` time to `0` and then starts iterating
@@ -223,7 +230,7 @@ Options are:
 - `"YEARLY"`
   - sets the month to January and the day to 1 and the hour, minute, second, and millisecond values of the `start` time to `0` and then starts iterating
 
-As you iterate through a Calendar using `collections()`, the object will return `Collection` objects which contain all of the dates in that timespan. The collection object also has `periodStart` and `periodEnd` time properties to let you know the period over which the collection took place.
+As you iterate through a Calendar using `collections()`, the object will return `Collection` objects which contain all of the dates in the timespan for your chosen granularity. The collection object also has `periodStart` and `periodEnd` time properties to let you know the period over which the collection took place.
 
 ```typescript
 collections(args: {start?: T; end?: T; take?: number; granularity?: Granularity; weekStart?: Options.Weekstart}): CollectionIterator<T>
@@ -244,8 +251,8 @@ const args = {
 let pageTitle: string
 
 for (const collection of calendar.collections(args)) {
-  for (const occurrence of collection.occurrences) {
-    const date = occurrence.schedule.date // arbitrary data property for you to use
+  for (const date of collection.dates) {
+    const data = date.schedule.data // arbitrary data property for you to use
 
     data.name // 'My great event'
 
@@ -385,7 +392,7 @@ Feel free to open an issue if you have questions.
 
 ## Known Issues / Todo
 
-- This library does not support `EXRULE`. I'm, personally, not particularly interested in adding support (it's also deprecated in the spec). This being said, it should be pretty easy to add if you're interested in doing so, and I think I've designed all the interfaces specifically so `EXRULE` can be added in the future (an en `EXRule` object already exists, though it's not exported, in `src/rule/rule.ts`). So all someone would need to do is write the logic to add `EXRule`'s to `Schedule` objects and have them delete occurrences, as appropriate. You'd also need to make sure that the ICAL parsing functions added EXRULE's. But I think `EXRULE` have the same API as `RRULE`, so again, it should be *really easy* for someone else to do this.
+- This library does not support `EXRULE`. I'm, personally, not particularly interested in adding support (it's also deprecated in the spec). This being said, it should be pretty easy to add if you're interested in doing so, and I think I've designed all the interfaces specifically so `EXRULE` can be added in the future. All someone would need to do is write the logic to add `EXRule`'s to `Schedule` objects and have them delete occurrences, as appropriate. You'd also need to make sure that the ICAL parsing functions added EXRULE's. But I think `EXRULE` has the same API as `RRULE`, so again, it should be *really easy* for someone else to do this.
 - No `BYWEEKNO`, `BYYEARDAY`, or `BYSETPOS` rule support. "By day of year" and "by position in set" should both be pretty straightforward, they're just not something I need so not on my todo list.
   - "By week of year" is different though. I spent a fair bit trying to get it to work and its just SUPER annoying (because it can create a valid date for year A in year B. e.g. the Saturday of the last week of 1998 *is in the year 1999*). Anyway, obviously doable, I have no plans to implement it though.
     
