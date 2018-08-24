@@ -212,8 +212,9 @@ export class Schedule<
 
       if (!next) {
         return // here we make sure our select is actually the next upcoming occurrence
-      ;
-      }[next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
+      }
+      
+      [next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
     }
 
     const count = args.take
@@ -229,6 +230,7 @@ export class Schedule<
 
       // iterate the date on the selected cache object
       next.date = next.iterator.next().value
+      next.date = getNextDateThatIsNotInExdates(next, exdates, args.reverse)
 
       if (!next.date || mustFilter) {
         // if the selected cache object now doesn't have a date,
@@ -241,7 +243,7 @@ export class Schedule<
       }
 
       // select the next upcoming cache object from the cache
-      ;[next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
+      [next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
 
       index++
     }

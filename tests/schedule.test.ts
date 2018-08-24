@@ -299,6 +299,33 @@ describe(`${zone}`, () => {
           isoString(2017, 1, 1, 9, 0),
         ])
       })
+
+      it('with multiple rules & EXDates', () => {
+        const schedule = new Schedule({
+          rrules: [
+            {
+              frequency: 'WEEKLY',
+              start: dateAdapter(2018, 8, 28),
+              until: dateAdapter(2018, 9, 25),
+              byDayOfWeek: ['TU'],
+            },
+          ],
+          exdates: [
+            dateAdapter(2018, 9, 11),
+          ],
+          rdates: [
+            dateAdapter(2018, 9, 22),
+          ],
+        })
+
+        expect(toISOStrings(schedule)).toEqual([
+          isoString(2018, 8, 28),
+          isoString(2018, 9, 4),
+          isoString(2018, 9, 18),
+          isoString(2018, 9, 22),
+          isoString(2018, 9, 25),
+        ])
+      })
     })
 
     describe('args: END', () => {
