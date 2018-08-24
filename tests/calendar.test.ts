@@ -5,6 +5,7 @@ import {
   CollectionsArgs,
   Schedule,
   CollectionsGranularity,
+  RRule,
 } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
@@ -37,6 +38,36 @@ describe('CalendarClass', () => {
 
 describe('Calendar', () => {
   describe('#occurrences()', () => {
+    it('next month', () => { // This tests a specific bug encountered
+      const date = new Date(2018,7,14)
+  
+      const rule = new RRule({
+        start: new StandardDateAdapter(date),
+        frequency: 'WEEKLY',
+        byDayOfWeek: ['TU'],
+      })
+    
+      const calendar = new Calendar({
+        schedules: new Schedule({
+          rrules: [rule]
+        })
+      })
+    
+      const collection = calendar.collections({
+        start: new StandardDateAdapter(new Date(2018,8,1)),
+        end: new StandardDateAdapter(new Date(2018,8,30)),
+        granularity: 'MONTHLY',
+        weekStart: 'MO',
+      }).next().value
+  
+      expect(collection.dates.map(date => date.toISOString())).toEqual([
+        new Date(2018,8,4).toISOString(),
+        new Date(2018,8,11).toISOString(),
+        new Date(2018,8,18).toISOString(),
+        new Date(2018,8,25).toISOString(),
+      ])
+    })
+
     describe('NO args', () => {
       it('with a single schedule', () => {
         // YearlyByMonthAndMonthDay
@@ -1006,190 +1037,6 @@ describe('Calendar', () => {
           [isoString(1998, 3, 3, 9, 0), isoString(1998, 3, 5, 9, 0)],
           [isoString(2000, 1, 1, 9, 0)],
         ])
-      })
-
-      describe('and `weekStart`, `start`, `end`', () => {
-        const weekStart = 'MO'
-
-        it('with a single schedule', () => {
-          // YearlyByMonthAndMonthDay
-          const schedule = new Schedule({
-            rrules: [
-              {
-                frequency: 'YEARLY',
-                count: 3,
-                byMonthOfYear: [1, 3],
-                byDayOfMonth: [5, 7],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          })
-  
-          const calendar = new Calendar({ schedules: schedule })
-  
-          expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([
-            [isoString(1998, 1, 5, 9, 0), isoString(1998, 1, 7, 9, 0)],
-          ])
-        })
-  
-        it('with multiple schedules', () => {
-          const scheduleOne = new Schedule({
-            rrules: [
-              // YearlyByMonthAndMonthDay
-              {
-                frequency: 'YEARLY',
-                count: 3,
-                byMonthOfYear: [1, 3],
-                byDayOfMonth: [5, 7],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-              // WeeklyIntervalLarge
-              {
-                frequency: 'WEEKLY',
-                count: 2,
-                interval: 20,
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          })
-  
-          const scheduleTwo = new Schedule({
-            rrules: [
-              // DailyByMonthDayAndWeekDay
-              {
-                frequency: 'DAILY',
-                count: 3,
-                byDayOfMonth: [1, 3],
-                byDayOfWeek: ['TU', 'TH'],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          })
-  
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
-  
-          expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([
-            [
-              isoString(1998, 1, 1, 9, 0),
-              isoString(1998, 1, 5, 9, 0),
-              isoString(1998, 1, 7, 9, 0),
-              isoString(1998, 1, 20, 9, 0),
-            ],
-          ])
-        })
-  
-        it('with RDates', () => {
-          const scheduleOne = new Schedule({
-            rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          })
-  
-          const scheduleTwo = new Schedule({
-            rdates: [
-              dateAdapter(1998, 1, 1, 9, 0),
-              dateAdapter(2000, 1, 1, 9, 0),
-              dateAdapter(2017, 1, 1, 9, 0),
-            ],
-          })
-  
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
-  
-          expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([
-            [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
-          ])
-        })
-  
-        it('with EXDates', () => {
-          const scheduleOne = new Schedule({
-            exdates: [dateAdapter(1998, 1, 20, 9, 0)],
-          })
-  
-          const scheduleTwo = new Schedule({
-            exdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          })
-  
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
-  
-          expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([])
-        })
-  
-        it('with RDates & EXDates', () => {
-          const scheduleOne = new Schedule({
-            rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
-            exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
-          })
-  
-          const scheduleTwo = new Schedule({
-            rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
-            exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
-          })
-  
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
-  
-          expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([])
-        })
-  
-        it('with RDates & EXDates cancelling out', () => {
-          const schedule = new Schedule({
-            rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-            exdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          })
-  
-          const calendar = new Calendar({ schedules: schedule })
-  
-          expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([])
-        })
-  
-        it('with multiple rules & RDates & EXDates', () => {
-          const scheduleOne = new Schedule({
-            rrules: [
-              // YearlyByMonthAndMonthDay
-              {
-                frequency: 'YEARLY',
-                count: 3,
-                byMonthOfYear: [1, 3],
-                byDayOfMonth: [5, 7],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-              // WeeklyIntervalLarge
-              {
-                frequency: 'WEEKLY',
-                count: 2,
-                interval: 20,
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          })
-  
-          const scheduleTwo = new Schedule({
-            rrules: [
-              // DailyByMonthDayAndWeekDay
-              {
-                frequency: 'DAILY',
-                count: 3,
-                byDayOfMonth: [1, 3],
-                byDayOfWeek: ['TU', 'TH'],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          })
-  
-          const scheduleThree = new Schedule<StandardDateAdapter>({
-            rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
-            exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
-          })
-  
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
-  
-          expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 2, 5, 9, 0) })).toEqual([
-            [
-              isoString(1998, 1, 1, 9, 0),
-              isoString(1998, 1, 5, 9, 0),
-              isoString(1998, 1, 7, 9, 0),
-              isoString(1998, 1, 20, 9, 0),
-            ],
-            [isoString(1998, 2, 3, 9, 0)],
-          ])
-        })
       })
     })
   })

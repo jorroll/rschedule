@@ -33,18 +33,10 @@ export class CollectionIterator<
     if (args.weekStart) { this.weekStart = args.weekStart }
     if (args.reverse) {
       throw new Error(
-        'Calendar does not currently support iterating collections in reverse. ' +
-        "Though you can iterate a calendar's occurrences in reverse."
+        '`Calendar#collections()` does not currently support iterating in reverse. ' +
+        "Though `Calendar#occurrences()` does support iterating in reverse."
       )
     }
-
-    this.args = args.start
-      ? { ...args, start: this.getPeriodStart(args.start) }
-      : args;
-
-    this.args = args.end
-      ? { ...args, end: this.processEndArg(args.end) }
-      : args;
 
     [this.iterator, this.startDate] = this.getIterator(iterable, this.args)
   }
@@ -122,10 +114,7 @@ export class CollectionIterator<
         date.set('month', 1).set('day', 1)
         break
       case 'MONTHLY':
-        if (this.weekStart)
-          Utils.setDateToStartOfWeek(date.set('day', 1), this.weekStart);
-        else
-          date.set('day', 1);
+        date.set('day', 1);      
         break
       case 'WEEKLY':
         if (!this.weekStart) {
@@ -160,11 +149,7 @@ export class CollectionIterator<
       case 'YEARLY':
         return periodEnd.add(1, 'year').subtract(1, 'millisecond')
       case 'MONTHLY':
-        periodEnd.add(1, 'month').subtract(1, 'millisecond')
-        
-        if (this.weekStart) Utils.setDateToEndOfWeek(periodEnd, this.weekStart);
-  
-        return periodEnd
+        return periodEnd.add(1, 'month').subtract(1, 'millisecond')  
       case 'WEEKLY':
         return periodEnd.add(7, 'day').subtract(1, 'millisecond')
       case 'DAILY':
@@ -178,46 +163,6 @@ export class CollectionIterator<
       case 'INSTANTANIOUSLY':
       default:
         return periodEnd
-    }
-  }
-
-  private processEndArg(arg: T) {
-    const end = arg.clone()
-
-    switch (this.granularity) {
-      case 'YEARLY':
-        Utils.setDateToEndOfYear(end)
-        break
-      case 'MONTHLY':
-        Utils.setDateToEndOfMonth(end)
-        
-        if (this.weekStart) Utils.setDateToEndOfWeek(end, this.weekStart);
-
-        break
-      case 'WEEKLY':
-        if (!this.weekStart) {
-          throw new Error('"WEEKLY" granularity requires `weekStart` arg')
-        }
-
-        Utils.setDateToEndOfWeek(end, this.weekStart)
-        break
-    }
-
-    switch (this.granularity) {
-      case 'YEARLY':
-      case 'MONTHLY':
-      case 'WEEKLY':
-      case 'DAILY':
-        end.set('hour', 23)
-      case 'HOURLY':
-        end.set('minute', 59)
-      case 'MINUTELY':
-        end.set('second', 59)
-      case 'SECONDLY':
-        end.set('millisecond', 999)
-      case 'INSTANTANIOUSLY':
-      default:
-        return end
     }
   }
 
