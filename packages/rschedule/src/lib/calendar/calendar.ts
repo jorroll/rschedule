@@ -119,8 +119,8 @@ export class Calendar<
    *   collection produced will have a `Collection#periodStart` of January 1st and have
    *   `Collection#dates === []`. Similarly, the next 30 collections produced (Jan 2nd - 31st)
    *   will all contain an empty array for the `dates` property. The February 1st Collection will
-   *   return dates though (i.e. `Collection#dates.length > 0).
-   *
+   *   return dates though (i.e. `Collection#dates.length > 0)`.
+   * 
    * When giving a `take` argument to `collections()`, you are specifying
    * the number of `Collection` objects to return (rather than occurrences).
    * 

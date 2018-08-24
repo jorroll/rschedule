@@ -24,7 +24,7 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
     } else {
       this.incrementInterval()
       date = this.intervalStartDate.clone()
-    }  
+    }
 
     return this.nextPipe.run({ date })
   }
@@ -67,24 +67,37 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
     const newTZOffset = this.intervalStartDate.utcOffset
 
-    // DST goes in the opposite direction in northern vs southern hemispheres.
-    // This function might actually be returning `true` when client is in
-    // southern hemisphere...but regardless, the arithmatic is "relatively" correct.
-    // Still seem to be running into DST issue with large hourly interval in southern
-    // hemisphere.
-    const tzOffset = Utils.isInNorthernHemisphere(this.intervalStartDate)
-      ? oldTZOffset - newTZOffset
-      : newTZOffset - oldTZOffset
+    // DST is handled for us by `Date` when adding units of DAY or larger. But for hours or
+    // smaller units, we must manually adjust for DST, if appropriate.
+    if (
+      [
+        'hour',
+        'minute',
+        'second',
+        'millisecond',
+      ].includes(unit)
+    ) {
+      // DST goes in the opposite direction in northern vs southern hemispheres.
+      // This function might actually be returning `true` when client is in
+      // southern hemisphere...but regardless, the arithmatic is "relatively" correct.
+      //
+      // Still seem to be running into DST issue with large hourly interval in southern
+      // hemisphere.
+      const tzOffset = Utils.isInNorthernHemisphere(this.intervalStartDate)
+        ? oldTZOffset - newTZOffset
+        : newTZOffset - oldTZOffset;
 
-    const newDate = this.intervalStartDate.clone().add(tzOffset, 'minute')
+      // might need to subtract offset when going in reverse, not sure.
+      const newDate = this.intervalStartDate.clone().add(tzOffset, 'minute')
 
-    if (newDate.utcOffset !== this.intervalStartDate.utcOffset) {
-      throw new DateAdapter.InvalidDateError(
-        `A date was created on the border of daylight savings time "${newDate.toISOString()}". ` +
-        'Not sure how to handle it.'
-      )
-    } else {
-      this.intervalStartDate = newDate
+      if (newDate.utcOffset !== this.intervalStartDate.utcOffset) {
+        throw new DateAdapter.InvalidDateError(
+          `A date was created on the border of daylight savings time "${newDate.toISOString()}". ` +
+          'Not sure how to handle it.'
+        )
+      } else {
+        this.intervalStartDate = newDate
+      }
     }
   }
 

@@ -162,7 +162,7 @@ export class PipeController<T extends DateAdapter<T>>
    */
   public *_run() {
     if (this.options.count === undefined) {
-      for (const date of this.iterate()) {  
+      for (const date of this.iterate()) {
         yield date.clone()
       }
 

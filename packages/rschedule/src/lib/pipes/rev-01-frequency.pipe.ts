@@ -82,8 +82,8 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
       // Still seem to be running into DST issue with large hourly interval in southern
       // hemisphere.
       const tzOffset = Utils.isInNorthernHemisphere(this.intervalStartDate)
-      ? oldTZOffset - newTZOffset
-      : newTZOffset - oldTZOffset
+        ? oldTZOffset - newTZOffset
+        : newTZOffset - oldTZOffset;
 
       // might need to subtract offset when going in reverse, not sure.
       const newDate = this.intervalStartDate.clone().add(tzOffset, 'minute')
@@ -103,7 +103,7 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
     // not be on the last day of January (which is what we would want). Normalizing
     // ensures we're on the last day of January, in that scenerio.
     this.normalizeDate(this.intervalStartDate)
-  }  
+  }
 
   private skipToIntervalOnOrBefore(date: T) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)

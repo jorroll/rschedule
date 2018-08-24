@@ -882,13 +882,51 @@ describe('Calendar', () => {
           new Date(2018,7,21).toISOString(),
           new Date(2018,7,28).toISOString(),
         ])
+      })
+
+      it('this month linearly 2', () => { // This tests a specific bug encountered
+        const date = new Date(2018,7,14)
+    
+        const rule = new RRule({
+          start: new StandardDateAdapter(date),
+          frequency: 'WEEKLY',
+          byDayOfWeek: ['TU'],
+          weekStart: 'MO',
+        })
+      
+        const calendar = new Calendar({
+          schedules: new Schedule({
+            rrules: [rule]
+          })
+        })
+    
+        const iterator = calendar.collections({
+          start: new StandardDateAdapter(new Date(2018,10,10)),
+          granularity,
+          weekStart: 'MO',
+          incrementLinearly: true,
+        })
+      
+        let collection = iterator.next().value
+    
+        expect(collection.dates.map(date => date.toISOString())).toEqual([
+          new Date(2018,9,30).toISOString(),
+          new Date(2018,10,6).toISOString(),
+          new Date(2018,10,13).toISOString(),
+          new Date(2018,10,20).toISOString(),
+          new Date(2018,10,27).toISOString(),
+        ])
     
         collection = iterator.next().value
-        collection = iterator.next().value
-        collection = iterator.next().value
-        collection = iterator.next().value
-        collection = iterator.next().value
     
+        expect(collection.dates.map(date => date.toISOString())).toEqual([
+          new Date(2018,10,27).toISOString(),
+          new Date(2018,11,4).toISOString(),
+          new Date(2018,11,11).toISOString(),
+          new Date(2018,11,18).toISOString(),
+          new Date(2018,11,25).toISOString(),
+          new Date(2019,0,1).toISOString(),
+        ])
       })
     
       it('next month linearly', () => { // This tests a specific bug encountered
