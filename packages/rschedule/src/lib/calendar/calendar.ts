@@ -72,6 +72,8 @@ export class Calendar<
     this.schedules.forEach(schedule => {
       schedule.setTimezone(timezone, options)
     })
+
+    return this
   }
 
   /**

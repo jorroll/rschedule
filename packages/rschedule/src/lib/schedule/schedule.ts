@@ -120,6 +120,8 @@ export class Schedule<
     this.rrules.forEach(rule => rule.setTimezone(timezone, options))
     this.rdates.setTimezone(timezone, options)
     this.exdates.setTimezone(timezone, options)
+
+    return this
   }
 
   /**

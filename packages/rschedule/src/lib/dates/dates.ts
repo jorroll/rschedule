@@ -66,6 +66,8 @@ export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
     this.dates.forEach(date => {
       date.set('timezone', timezone, options)
     })
+
+    return this
   }
 
   public *_run(args: OccurrencesArgs<T> = {}) {

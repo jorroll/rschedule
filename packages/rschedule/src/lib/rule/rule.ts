@@ -70,6 +70,8 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
       ...this.options,
       start
     }
+
+    return this
   }
 
 
