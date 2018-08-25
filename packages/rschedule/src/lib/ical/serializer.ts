@@ -23,7 +23,11 @@ export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
 
   const start = options.start
 
-  icalString = `DTSTART:${start.toICal()}\n${type}:`
+  const seperator = [undefined, 'UTC'].includes(start.timezone)
+    ? ':'
+    : ';';
+
+  icalString = `DTSTART${seperator}${start.toICal()}\n${type}:`;
 
   const stringOptions: string[] = []
 
@@ -107,9 +111,9 @@ export function datesToIcalString<T extends DateAdapter<T>>(
   const start = dates[0]
   const seperator = [undefined, 'UTC'].includes(start.timezone)
     ? ':'
-    : ';'
+    : ';';
 
-  icalString = `DTSTART:${start.toICal()}\n${type}${seperator}`
+  icalString = `DTSTART${seperator}${start.toICal()}\n${type}${seperator}`
 
   return icalString.concat(dates.map(date => date.toICal()).join(','))
 }
