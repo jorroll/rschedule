@@ -68,9 +68,9 @@ export class Calendar<
    * Update all `schedules` of this calendar to use a
    * new timezone. This mutates the calendar's schedules.
    */
-  public setTimezone(timezone?: string) {
+  public setTimezone(timezone: string | undefined, options: {keepLocalTime?: boolean} = {}) {
     this.schedules.forEach(schedule => {
-      schedule.setTimezone(timezone)
+      schedule.setTimezone(timezone, options)
     })
   }
 

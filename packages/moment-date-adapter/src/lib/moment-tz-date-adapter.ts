@@ -13,20 +13,6 @@ const MOMENT_TZ_DATE_ADAPTER_ID = Symbol.for('471f1a4e-133b-448a-add2-16d7208a04
 export class MomentTZDateAdapter
   implements DateAdapter<MomentTZDateAdapter, moment.Moment> {
   public date: moment.Moment
-  public get timezone() { return this.date.tz() }
-  public set timezone(value) {
-    if (value)
-      this.date.tz(value)
-    else {
-      this.date = moment(this.date.valueOf())
-    }
-
-    if (this.date.tz() !== value) {
-      throw new DateAdapter.InvalidDateError(
-        `MomentTZDateAdapter provided invalid timezone "${value}".`
-      )
-    }
-  }
 
   // moment() seems to output utcOffset with the opposite sign (-/+) from 
   // the native Date object. I'm going to side with Date and flip moment's
@@ -214,6 +200,7 @@ export class MomentTZDateAdapter
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
+  get(unit: 'timezone'): string | undefined
   get(
     unit:
       | 'year'
@@ -225,6 +212,7 @@ export class MomentTZDateAdapter
       | 'minute'
       | 'second'
       | 'millisecond'
+      | 'timezone'
   ) {
     switch (unit) {
       case 'year':
@@ -245,12 +233,16 @@ export class MomentTZDateAdapter
         return this.date.get('second')
       case 'millisecond':
         return this.date.get('millisecond')
+      case 'timezone':
+        return this.date.tz()
       default:
         throw new Error('Invalid unit provided to `MomentTZDateAdapter#set`')
     }
   }
 
-  set(unit: DateAdapter.Unit, value: number): MomentTZDateAdapter {
+  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): MomentTZDateAdapter
+  set(unit: DateAdapter.Unit, value: number): MomentTZDateAdapter
+  set(unit: DateAdapter.Unit | 'timezone', value: number | string | undefined, options: {keepLocalTime?: boolean} = {}): MomentTZDateAdapter {
     switch (unit) {
       case 'year':
         this.date.set('year', value as number)
@@ -273,6 +265,30 @@ export class MomentTZDateAdapter
       case 'millisecond':
         this.date.set('millisecond', value as number)
         break
+      case 'timezone':
+        if (value)
+          this.date.tz(value as string, options.keepLocalTime)
+        else if (options.keepLocalTime) {
+          this.date = moment([
+            this.get('year'),
+            this.get('month') - 1,
+            this.get('day'),
+            this.get('hour'),
+            this.get('minute'),
+            this.get('second'),
+            this.get('millisecond'),
+          ])
+        }
+        else {
+          this.date = moment(this.date.valueOf())
+        }
+
+        if (this.date.tz() !== value) {
+          throw new DateAdapter.InvalidDateError(
+            `MomentTZDateAdapter provided invalid timezone "${value}".`
+          )
+        }
+        break
       default:
         throw new Error('Invalid unit provided to `MomentTZDateAdapter#set`')
     }
@@ -286,8 +302,16 @@ export class MomentTZDateAdapter
     return this.date.toISOString()
   }
 
+  /**
+   * Serializes DateAdapter in ICAL format. Accepts options object with
+   * `format` property. Format accepts a timezone string and, if given, will
+   * format the DateAdapter in the given timezone. If `format === "local"`,
+   * will format the DateAdapter without a timezone.
+   * 
+   * @param options - {format?: string}
+   */
   toICal(options: {format?: string} = {}): string {
-    const format = options.format || this.timezone;
+    const format = options.format || this.get('timezone');
 
     if (format === 'UTC')
       return this.date.clone().tz('UTC').format('YYYYMMDDTHHmmss[Z]')

@@ -19,22 +19,7 @@ const LUXON_DATE_ADAPTER_ID = Symbol.for('6e11cae3-344a-4c49-a5b1-5bcb84fe1f26')
 export class LuxonDateAdapter
 implements DateAdapter<LuxonDateAdapter, DateTime> {
   public date: DateTime
-  public get timezone(): string | undefined {
-    return this.date.zoneName
-  }
-  public set timezone(value: string | undefined) {
-    if (value)
-      this.date = this.date.setZone(value)
-    else {
-      this.date = this.date.toLocal()
-    }
 
-    if (value !== undefined && this.date.zoneName !== value) {
-      throw new DateAdapter.InvalidDateError(
-        `LuxonDateAdapter provided invalid timezone "${value}".`
-      )
-    }
-  }
   public get utcOffset() { return this.date.offset }
 
   /** The `Rule` which generated this `DateAdapter` */
@@ -217,6 +202,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
+  get(unit: 'timezone'): string | undefined
   get(
     unit:
       | 'year'
@@ -228,6 +214,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
       | 'minute'
       | 'second'
       | 'millisecond'
+      | 'timezone'
   ) {
     switch (unit) {
       case 'year':
@@ -248,12 +235,16 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
         return this.date.get('second')
       case 'millisecond':
         return this.date.get('millisecond')
+      case 'timezone':
+        return this.date.zoneName as string | undefined
       default:
         throw new Error('Invalid unit provided to `LuxonDateAdapter#set`')
     }
   }
 
-  set(unit: DateAdapter.Unit, value: number): LuxonDateAdapter {
+  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): LuxonDateAdapter
+  set(unit: DateAdapter.Unit, value: number): LuxonDateAdapter
+  set(unit: DateAdapter.Unit | 'timezone', value: number | string | undefined, options: {keepLocalTime?: boolean} = {}): LuxonDateAdapter {
     switch (unit) {
       case 'year':
         this.date = this.date.set({year: value as number})
@@ -276,6 +267,30 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
       case 'millisecond':
         this.date = this.date.set({millisecond: value as number})
         break
+      case 'timezone':
+        if (value)
+          this.date = this.date.setZone(value as string, {keepLocalTime: options.keepLocalTime})
+        else if (options.keepLocalTime) {
+          this.date = DateTime.fromObject({
+            year: this.get('year'),
+            month: this.get('month'),
+            day: this.get('day'),
+            hour: this.get('hour'),
+            minute: this.get('minute'),
+            second: this.get('second'),
+            millisecond: this.get('millisecond'),
+          })
+        }
+        else {
+          this.date = this.date.toLocal()
+        }
+
+        if (value !== undefined && this.date.zoneName !== value) {
+          throw new DateAdapter.InvalidDateError(
+            `LuxonDateAdapter provided invalid timezone "${value}".`
+          )
+        }
+        break
       default:
         throw new Error('Invalid unit provided to `LuxonDateAdapter#set`')
     }
@@ -290,7 +305,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
   }
 
   toICal(options: {format?: string} = {}): string {
-    const format = options.format || this.timezone;
+    const format = options.format || this.get('timezone');
 
     if (format === 'UTC')
       return this.date.toUTC().toFormat("yyyyMMdd'T'HHmmss'Z'")

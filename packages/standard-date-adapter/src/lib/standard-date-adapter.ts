@@ -26,22 +26,9 @@ export class StandardDateAdapter
   public date: Date
   
   private _timezone: 'UTC' | undefined
-  public get timezone() { return this._timezone }
-  public set timezone(value) {
-    switch (value) {
-      case 'UTC':
-      case undefined:
-        this._timezone = value
-        break
-      default:
-        throw new DateAdapter.InvalidDateError(
-          `StandardDateAdapter does not support "${value}" timezone.`
-        )
-    }
-  }
 
   public get utcOffset() {
-    return this.timezone === 'UTC' ? 0 : this.date.getTimezoneOffset()
+    return this._timezone === 'UTC' ? 0 : this.date.getTimezoneOffset()
   }
 
   /** The `Rule` which generated this `DateAdapter` */
@@ -53,7 +40,7 @@ export class StandardDateAdapter
 
   constructor(date?: Date, args: {timezone?: 'UTC' | undefined} = {}) {
     this.date = date ? new Date(date) : new Date()
-    this.timezone = args.timezone
+    this.set('timezone', args.timezone)
     this.assertIsValid([date, 'constructing'])
   }
 
@@ -107,7 +94,7 @@ export class StandardDateAdapter
    * new object.
    */
   clone(): StandardDateAdapter {
-    const adapter = new StandardDateAdapter(this.date, {timezone: this.timezone})
+    const adapter = new StandardDateAdapter(this.date, {timezone: this._timezone})
     adapter.rule = this.rule
     adapter.schedule = this.schedule
     adapter.calendar = this.calendar
@@ -139,7 +126,7 @@ export class StandardDateAdapter
   add(amount: number, unit: DateAdapter.Unit): StandardDateAdapter {
     const context = [this.date.toISOString(), 'add', amount, unit]
 
-    if (this.timezone === undefined) {
+    if (this._timezone === undefined) {
       switch (unit) {
         case 'year':
           this.date = addYears(this.date, amount)
@@ -208,7 +195,7 @@ export class StandardDateAdapter
   subtract(amount: number, unit: DateAdapter.Unit): StandardDateAdapter {
     const context = [this.date.toISOString(), 'subtract', amount, unit]
 
-    if (this.timezone === undefined) {
+    if (this._timezone === undefined) {
       switch (unit) {
         case 'year':
           this.date = subYears(this.date, amount)
@@ -283,6 +270,7 @@ export class StandardDateAdapter
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
+  get(unit: 'timezone'): 'UTC' | undefined
   get(
     unit:
       | 'year'
@@ -294,8 +282,9 @@ export class StandardDateAdapter
       | 'minute'
       | 'second'
       | 'millisecond'
+      | 'timezone'
   ) {
-    if (this.timezone === undefined) {
+    if (this._timezone === undefined) {
       switch (unit) {
         case 'year':
           return this.date.getFullYear()
@@ -315,6 +304,8 @@ export class StandardDateAdapter
           return this.date.getSeconds()
         case 'millisecond':
           return this.date.getMilliseconds()
+        case 'timezone':
+          return this._timezone
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
       }
@@ -338,63 +329,113 @@ export class StandardDateAdapter
           return this.date.getUTCSeconds()
         case 'millisecond':
           return this.date.getUTCMilliseconds()
+        case 'timezone':
+          return this._timezone
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
       }
     }
   }
 
-  set(unit: DateAdapter.Unit, value: number): StandardDateAdapter {
+  set(unit: 'timezone', value: 'UTC' | undefined, options?: {keepLocalTime?: boolean}): StandardDateAdapter
+  set(unit: DateAdapter.Unit, value: number): StandardDateAdapter
+  set(unit: DateAdapter.Unit | 'timezone', value: number | 'UTC' | undefined, options: {keepLocalTime?: boolean} = {}): StandardDateAdapter {
     const context = [this.date.toISOString(), 'set', value, unit]
 
-    if (this.timezone === undefined) {
+    if (this._timezone === undefined) {
       switch (unit) {
         case 'year':
-          this.date.setFullYear(value)
+          this.date.setFullYear(value as number)
           break
         case 'month':
-          this.date.setMonth((value) - 1)
+          this.date.setMonth((value as number) - 1)
           break
         case 'day':
-          this.date.setDate(value)
+          this.date.setDate(value as number)
           break
         case 'hour':
-          this.date.setHours(value)
+          this.date.setHours(value as number)
           break
         case 'minute':
-          this.date.setMinutes(value)
+          this.date.setMinutes(value as number)
           break
         case 'second':
-          this.date.setSeconds(value)
+          this.date.setSeconds(value as number)
           break
         case 'millisecond':
-          this.date.setMilliseconds(value)
+          this.date.setMilliseconds(value as number)
           break
+        case 'timezone':
+          switch (value) {
+            case 'UTC':
+              if (options.keepLocalTime) {
+                this.date = new Date(Date.UTC(
+                  this.get('year'),
+                  this.get('month') - 1,
+                  this.get('day'),
+                  this.get('hour'),
+                  this.get('minute'),
+                  this.get('second'),
+                  this.get('millisecond'),
+                ))
+                this._timezone = value
+              }
+              else this._timezone = value;
+            case undefined: break
+            default:
+              throw new DateAdapter.InvalidDateError(
+                `StandardDateAdapter does not support "${value}" timezone.`
+              )
+          }
+          break    
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
       }
     } else {
       switch (unit) {
         case 'year':
-          this.date.setUTCFullYear(value)
+          this.date.setUTCFullYear(value as number)
           break
         case 'month':
-          this.date.setUTCMonth(value - 1)
+          this.date.setUTCMonth(value as number - 1)
           break
         case 'day':
-          this.date.setUTCDate(value)
+          this.date.setUTCDate(value as number)
           break
         case 'hour':
-          this.date.setUTCHours(value)
+          this.date.setUTCHours(value as number)
           break
         case 'minute':
-          this.date.setUTCMinutes(value)
+          this.date.setUTCMinutes(value as number)
           break
         case 'second':
-          this.date.setUTCSeconds(value)
+          this.date.setUTCSeconds(value as number)
           break
         case 'millisecond':
-          this.date.setUTCMilliseconds(value)
+          this.date.setUTCMilliseconds(value as number)
+          break
+        case 'timezone':
+          switch (value) {
+            case undefined:
+              if (options.keepLocalTime) {
+                this.date = new Date(
+                  this.get('year'),
+                  this.get('month') - 1,
+                  this.get('day'),
+                  this.get('hour'),
+                  this.get('minute'),
+                  this.get('second'),
+                  this.get('millisecond'),
+                )
+                this._timezone = value
+              }
+              else this._timezone = value;
+            case 'UTC': break
+            default:
+              throw new DateAdapter.InvalidDateError(
+                `StandardDateAdapter does not support "${value}" timezone.`
+              )
+          }
           break
         default:
           throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
@@ -411,7 +452,7 @@ export class StandardDateAdapter
   }
 
   toICal(options: {format?: string} = {}): string {
-    const format = options.format || this.timezone;
+    const format = options.format || this._timezone;
 
     if (format === 'UTC')
       return `${Utils.dateToStandardizedString(this as StandardDateAdapter)}Z`
@@ -423,7 +464,7 @@ export class StandardDateAdapter
 
   assertIsValid(context?: any) {
 
-    if (isNaN(this.valueOf()) || !['UTC', undefined].includes(this.timezone)) {
+    if (isNaN(this.valueOf()) || !['UTC', undefined].includes(this._timezone)) {
       const was = context.shift()
       const change = context.map((val: any) => `"${val}"`).join(' ')
       

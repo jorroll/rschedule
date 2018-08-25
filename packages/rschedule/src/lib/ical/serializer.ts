@@ -23,7 +23,7 @@ export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
 
   const start = options.start
 
-  const seperator = [undefined, 'UTC'].includes(start.timezone)
+  const seperator = [undefined, 'UTC'].includes(start.get('timezone'))
     ? ':'
     : ';';
 
@@ -42,7 +42,7 @@ export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
           break
         case 'until':
           stringOptions.push(
-            `UNTIL=${options.until!.toICal({format: !!start.timezone ? 'UTC' : undefined})}`
+            `UNTIL=${options.until!.toICal({format: !!start.get('timezone') ? 'UTC' : undefined})}`
           )
           break
         case 'count':
@@ -110,14 +110,14 @@ export function datesToIcalString<T extends DateAdapter<T>>(
   })
 
   const start = dates.pop()!
-  const seperator = [undefined, 'UTC'].includes(start.timezone)
+  const seperator = [undefined, 'UTC'].includes(start.get('timezone'))
     ? ':'
     : ';';
 
   icalString = `DTSTART${seperator}${start.toICal()}\n${type}${seperator}${start.toICal()}`
 
   dates.forEach(date => {
-    const seperator = [undefined, 'UTC'].includes(date.timezone)
+    const seperator = [undefined, 'UTC'].includes(date.get('timezone'))
       ? ':'
       : ';';
 
@@ -131,7 +131,7 @@ export function dateAdapterToICal<T extends DateAdapter<T>>(
   date: T,
   utc?: boolean
 ) {
-  const timezone = utc ? 'UTC' : date.timezone
+  const timezone = utc ? 'UTC' : date.get('timezone')
 
   switch (timezone) {
     case undefined:
@@ -139,7 +139,7 @@ export function dateAdapterToICal<T extends DateAdapter<T>>(
     case 'UTC':
       return `${Utils.dateToStandardizedString(date)}Z`
     default:
-      return `TZID=${date.timezone}:${Utils.dateToStandardizedString(
+      return `TZID=${date.get('timezone')}:${Utils.dateToStandardizedString(
         date
       )}`
   }

@@ -61,16 +61,17 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
   /**
    * Updates the timezone associated with this rule.
    */
-  public setTimezone(timezone?: string) {
+  public setTimezone(timezone: string | undefined, options: {keepLocalTime?: boolean} = {}) {
     const start = this.options.start.clone()
 
-    start.timezone = timezone
+    start.set('timezone', timezone, options)
 
     this.options = {
       ...this.options,
       start
     }
   }
+
 
   public occurrences(
     args: OccurrencesArgs<T> = {}

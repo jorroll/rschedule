@@ -62,9 +62,9 @@ export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
   /**
    * Updates all of this object's `dates` to use a new timezone.
    */
-  public setTimezone(timezone?: string) {
+  public setTimezone(timezone: string | undefined, options: {keepLocalTime?: boolean} = {}) {
     this.dates.forEach(date => {
-      date.timezone = timezone
+      date.set('timezone', timezone, options)
     })
   }
 

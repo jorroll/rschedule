@@ -17,14 +17,6 @@ export interface DateAdapter<T, D=any> {
   /** Returns the date object this DateAdapter is wrapping */
   date: D
 
-  /**
-   * Returns the date's timezone
-   * 
-   * - if "UTC" then `"UTC"`
-   * - if local then `undefined`
-   */
-  timezone: string | undefined
-
   // in minutes
   utcOffset: number
 
@@ -43,9 +35,18 @@ export interface DateAdapter<T, D=any> {
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
+  /**
+   * Returns the date's timezone
+   * 
+   * - if "UTC" then `"UTC"`
+   * - if local then `undefined`
+   * - otherwise then `string`
+   */
+  get(unit: 'timezone'): string | undefined
 
   /** mutates original object */
   set(unit: DateAdapter.Unit, value: number): T
+  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): T
 
   /** same format as new Date().toISOString() */
   toISOString(): string

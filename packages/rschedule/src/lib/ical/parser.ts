@@ -252,7 +252,7 @@ export function parseUntil<T extends IDateAdapterConstructor<T>>(
   }
 
   const date = dateAdapterConstructor.fromTimeObject(parsedDatetime)[0]
-  date.timezone = start.timezone
+  date.set('timezone', start.get('timezone'))
   return date
 }
 

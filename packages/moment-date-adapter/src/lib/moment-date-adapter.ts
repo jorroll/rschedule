@@ -16,18 +16,6 @@ export class MomentDateAdapter
 implements DateAdapter<MomentDateAdapter, moment.Moment> {
   public date: moment.Moment
   
-  public get timezone(): 'UTC' | undefined {
-    return this.utcOffset === 0 ? 'UTC' : undefined
-  }
-  public set timezone(value: 'UTC' | undefined) {
-    if (['UTC', undefined].includes(value))
-      value === 'UTC' ? this.date.utc() : this.date.local()
-    else
-      throw new DateAdapter.InvalidDateError(
-        `MomentDateAdapter does not support "${value}" timezone.`
-      )
-  }
-
   // moment() seems to output utcOffset with the opposite sign (-/+) from 
   // the native Date object. I'm going to side with Date and flip moment's
   // output sign to solve the issue.
@@ -209,6 +197,7 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
+  get(unit: 'timezone'): 'UTC' | undefined
   get(
     unit:
       | 'year'
@@ -220,6 +209,7 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
       | 'minute'
       | 'second'
       | 'millisecond'
+      | 'timezone'
   ) {
     switch (unit) {
       case 'year':
@@ -240,12 +230,16 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
         return this.date.get('second')
       case 'millisecond':
         return this.date.get('millisecond')
+      case 'timezone':
+        return this.utcOffset === 0 ? 'UTC' : undefined
       default:
         throw new Error('Invalid unit provided to `MomentDateAdapter#set`')
     }
   }
 
-  set(unit: DateAdapter.Unit, value: number): MomentDateAdapter {
+  set(unit: 'timezone', value: 'UTC' | undefined, options?: {keepLocalTime?: boolean}): MomentDateAdapter
+  set(unit: DateAdapter.Unit, value: number): MomentDateAdapter
+  set(unit: DateAdapter.Unit | 'timezone', value: number | 'UTC' | undefined, options: {keepLocalTime?: boolean} = {}): MomentDateAdapter {
     switch (unit) {
       case 'year':
         this.date.set('year', value as number)
@@ -268,6 +262,14 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
       case 'millisecond':
         this.date.set('millisecond', value as number)
         break
+      case 'timezone':
+        if (['UTC', undefined].includes(value as 'UTC' | undefined))
+          value === 'UTC' ? this.date.utc(options.keepLocalTime) : this.date.local(options.keepLocalTime)
+        else
+          throw new DateAdapter.InvalidDateError(
+            `MomentDateAdapter does not support "${value}" timezone.`
+          )
+        break
       default:
         throw new Error('Invalid unit provided to `MomentDateAdapter#set`')
     }
@@ -282,7 +284,7 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
   }
 
   toICal(options: {format?: string} = {}): string {
-    const format = options.format || this.timezone;
+    const format = options.format || this.get('timezone');
 
     if (format === 'UTC')
       return this.date.clone().utc().format('YYYYMMDDTHHmmss[Z]')
