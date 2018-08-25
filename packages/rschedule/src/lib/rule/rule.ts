@@ -58,6 +58,20 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
     if (args.data) this.data = args.data;
   }
 
+  /**
+   * Updates the timezone associated with this rule.
+   */
+  public setTimezone(timezone?: string) {
+    const start = this.options.start.clone()
+
+    start.timezone = timezone
+
+    this.options = {
+      ...this.options,
+      start
+    }
+  }
+
   public occurrences(
     args: OccurrencesArgs<T> = {}
   ): OccurrenceIterator<T, Rule<T, D>> {

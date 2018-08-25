@@ -59,6 +59,15 @@ export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
       return super.occursOn(args as {date: T})
   }
 
+  /**
+   * Updates all of this object's `dates` to use a new timezone.
+   */
+  public setTimezone(timezone?: string) {
+    this.dates.forEach(date => {
+      date.timezone = timezone
+    })
+  }
+
   public *_run(args: OccurrencesArgs<T> = {}) {
     let dates = Utils.sortDates(uniqWith(this.dates, (a, b) => a.isEqual(b)))
 

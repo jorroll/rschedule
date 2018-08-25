@@ -113,6 +113,16 @@ export class Schedule<
   }
 
   /**
+   * Update all `rrules`, `rdates`, and `exdates` of this schedule to use a
+   * new timezone. This mutates the schedule's `rrules`, `rdates`, and `exdates`.
+   */
+  public setTimezone(timezone?: string) {
+    this.rrules.forEach(rule => rule.setTimezone(timezone))
+    this.rdates.setTimezone(timezone)
+    this.exdates.setTimezone(timezone)
+  }
+
+  /**
    * Returns a clone of the Schedule object and all properties except the data property
    * (instead, the original data property is included as the data property of the
    * new Schedule).

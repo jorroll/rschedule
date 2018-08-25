@@ -65,6 +65,16 @@ export class Calendar<
   }
 
   /**
+   * Update all `schedules` of this calendar to use a
+   * new timezone. This mutates the calendar's schedules.
+   */
+  public setTimezone(timezone?: string) {
+    this.schedules.forEach(schedule => {
+      schedule.setTimezone(timezone)
+    })
+  }
+
+  /**
    * ### collections()
    * 
    * Iterates over the calendar's occurrences and bundles them into collections
