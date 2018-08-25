@@ -85,8 +85,7 @@ function serializeByDayOfWeek(args: Options.ByDayOfWeek[]) {
 }
 
 /**
- * Converts an array of dates into an ICAL string containing RDATEs.
- * All dates must be in the same timezone.
+ * Converts an array of dates into an ICAL string containing RDATEs/EXDATEs.
  *
  * @param dates array of DateAdapter dates
  * @param type whether these are RDATEs or EXDATEs
@@ -100,6 +99,8 @@ export function datesToIcalString<T extends DateAdapter<T>>(
       '`datesToIcalString()` must recieve at least one date'
     )
   }
+  dates = dates.slice()
+
   let icalString: string
 
   dates.sort((a, b) => {
@@ -108,14 +109,22 @@ export function datesToIcalString<T extends DateAdapter<T>>(
     else { return 0 }
   })
 
-  const start = dates[0]
+  const start = dates.pop()!
   const seperator = [undefined, 'UTC'].includes(start.timezone)
     ? ':'
     : ';';
 
-  icalString = `DTSTART${seperator}${start.toICal()}\n${type}${seperator}`
+  icalString = `DTSTART${seperator}${start.toICal()}\n${type}${seperator}${start.toICal()}`
 
-  return icalString.concat(dates.map(date => date.toICal()).join(','))
+  dates.forEach(date => {
+    const seperator = [undefined, 'UTC'].includes(date.timezone)
+      ? ':'
+      : ';';
+
+    icalString.concat(`\n${type}${seperator}${date.toICal()}`)
+  })
+
+  return icalString
 }
 
 export function dateAdapterToICal<T extends DateAdapter<T>>(
