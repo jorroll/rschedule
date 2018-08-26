@@ -245,6 +245,28 @@ zones.forEach(zone => {
 
   context(zone, (zone) => {
 
+    describe('specific bugs', () => {
+      if (DateAdapter.hasTimezoneSupport) {
+        it('occursOn() arg is in a different timezone from rule start', () => {
+          const start = dateAdapter(2018,8,16,0,0,0,0,zone)
+
+          const rule = new RRule({
+            frequency: 'WEEKLY',
+            start,
+            byDayOfWeek: ['TH'],
+          })
+
+          const date = start.clone().set('timezone', 'America/Los_Angeles')
+          const first = rule.occurrences({take: 1}).toArray()![0]
+
+          expect(start.valueOf()).toBe(date.valueOf())
+          expect(first.valueOf()).toBe(start.valueOf())
+
+          expect(rule.occursOn({date})).toBeTruthy()
+        })          
+      }
+    })
+
     testPreviousOccurrence(
       'testBefore',
       new RRule({
