@@ -1,5 +1,5 @@
-import { DateAdapter } from '../date-adapter'
-import { Options } from '../rule/rule-options'
+import { DateAdapter } from '../../date-adapter'
+import { Options } from '../rule-options'
 import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 
 export class ByMinuteOfHourReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>

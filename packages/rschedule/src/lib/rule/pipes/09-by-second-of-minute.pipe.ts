@@ -1,12 +1,11 @@
-import { DateAdapter } from '../date-adapter'
-import { Options } from '../rule/rule-options'
-import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
+import { DateAdapter } from '../../date-adapter'
+import { Options } from '../rule-options'
+import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
-export class BySecondOfMinuteReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
+export class BySecondOfMinutePipe<T extends DateAdapter<T>> extends PipeRule<T>
   implements IPipeRule<T> {
 
   private upcomingSeconds: Options.BySecondOfMinute[] = []
-
   public run(args: IPipeRunFn<T>) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
@@ -14,13 +13,12 @@ export class BySecondOfMinuteReversePipe<T extends DateAdapter<T>> extends Rever
       return this.filter(args)
     } else { return this.expand(args) }
   }
-
   public expand(args: IPipeRunFn<T>) {
     const date = args.date
 
     if (this.upcomingSeconds.length === 0) {
       this.upcomingSeconds = this.options.bySecondOfMinute!.filter(
-        second => date.get('second') >= second
+        second => date.get('second') <= second
       )
 
       if (this.upcomingSeconds.length === 0) {
@@ -48,7 +46,7 @@ export class BySecondOfMinuteReversePipe<T extends DateAdapter<T>> extends Rever
       if (args.date.get('second') === second) {
         validSecond = true
         break
-      } else if (args.date.get('second') > second) {
+      } else if (args.date.get('second') < second) {
         nextValidSecondThisMinute = second
         break
       }
@@ -70,7 +68,7 @@ export class BySecondOfMinuteReversePipe<T extends DateAdapter<T>> extends Rever
       // if no, advance the current date forward one minute &
       // and set the date to whatever second would pass this filter
       next = this.cloneDateWithGranularity(args.date, 'minute')
-      next.subtract(1, 'minute')
+      next.add(1, 'minute')
       next.set('second', this.options.bySecondOfMinute![0])
     }
 

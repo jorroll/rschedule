@@ -1,5 +1,5 @@
-import { DateAdapter } from '../date-adapter'
-import { Options } from '../rule/rule-options'
+import { DateAdapter } from '../../date-adapter'
+import { Options } from '../rule-options'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
 export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>

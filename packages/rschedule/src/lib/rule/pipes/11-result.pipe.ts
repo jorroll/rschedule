@@ -1,4 +1,4 @@
-import { DateAdapter } from '../date-adapter'
+import { DateAdapter } from '../../date-adapter'
 import { IPipeRule, IPipeRunFn, PipeRule, PipeError } from './interfaces'
 
 export class ResultPipe<T extends DateAdapter<T>> extends PipeRule<T>

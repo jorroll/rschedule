@@ -7,7 +7,7 @@ import {
   RunnableIterator,
   Serializable,
 } from '../interfaces'
-import { PipeController } from '../pipes'
+import { PipeController } from './pipes'
 import { Utils } from '../utilities'
 import { buildValidatedRuleOptions, Options } from './rule-options'
 

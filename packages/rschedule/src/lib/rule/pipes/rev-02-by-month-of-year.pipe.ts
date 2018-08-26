@@ -1,7 +1,7 @@
-import { DateAdapter } from '../date-adapter'
-import { Options } from '../rule/rule-options'
+import { DateAdapter } from '../../date-adapter'
+import { Options } from '../rule-options'
 import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
-import { Utils } from '../utilities'
+import { Utils } from '../../utilities'
 
 export class ByMonthOfYearReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
   implements IPipeRule<T> {

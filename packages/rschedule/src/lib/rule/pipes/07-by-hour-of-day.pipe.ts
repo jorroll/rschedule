@@ -1,12 +1,11 @@
-import { DateAdapter } from '../date-adapter'
-import { Options } from '../rule/rule-options'
-import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
+import { DateAdapter } from '../../date-adapter'
+import { Options } from '../rule-options'
+import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
-export class ByHourOfDayReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
+export class ByHourOfDayPipe<T extends DateAdapter<T>> extends PipeRule<T>
   implements IPipeRule<T> {
 
   private upcomingHours: Options.ByHourOfDay[] = []
-  
   public run(args: IPipeRunFn<T>) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
@@ -16,13 +15,12 @@ export class ByHourOfDayReversePipe<T extends DateAdapter<T>> extends ReversePip
       return this.expand(args)
     } else { return this.filter(args) }
   }
-
   public expand(args: IPipeRunFn<T>) {
     const date = args.date
 
     if (this.upcomingHours.length === 0) {
       this.upcomingHours = this.options.byHourOfDay!.filter(
-        hour => date.get('hour') >= hour
+        hour => date.get('hour') <= hour
       )
 
       if (this.upcomingHours.length === 0) {
@@ -31,8 +29,8 @@ export class ByHourOfDayReversePipe<T extends DateAdapter<T>> extends ReversePip
 
       this.expandingPipes.push(this)
     } else {
-      if (this.options.byMinuteOfHour) { date.set('minute', 59) }
-      if (this.options.bySecondOfMinute) { date.set('second', 59) }
+      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
+      if (this.options.bySecondOfMinute) { date.set('second', 0) }
     }
 
     const nextHour = this.upcomingHours.shift()!
@@ -53,7 +51,7 @@ export class ByHourOfDayReversePipe<T extends DateAdapter<T>> extends ReversePip
       if (args.date.get('hour') === hour) {
         validHour = true
         break
-      } else if (args.date.get('hour') > hour) {
+      } else if (args.date.get('hour') < hour) {
         nextValidHourThisDay = hour
         break
       }
@@ -77,8 +75,8 @@ export class ByHourOfDayReversePipe<T extends DateAdapter<T>> extends ReversePip
       // if no, advance the current date forward one day &
       // and set the date to whatever hour would pass this filter
       next = this.cloneDateWithGranularity(args.date, 'day')
-
-      next.subtract(1, 'day').set('hour', this.options.byHourOfDay![0])
+      next.add(1, 'day')
+      next.set('hour', this.options.byHourOfDay![0])
     }
 
     return this.nextPipe.run({

@@ -1,5 +1,5 @@
-import { DateAdapter } from '../date-adapter'
-import { Utils } from '../utilities'
+import { DateAdapter } from '../../date-adapter'
+import { Utils } from '../../utilities'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
 /**

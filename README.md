@@ -386,7 +386,7 @@ This library's rule logic is implemented as a chain of pipes applying validation
 3. Similar to #2, rSchedule doesn't need to iterate through every interval of a rule, but can instead "skip" invalid dates, landing on just the valid ones. For example, say you have a `DAILY` recurrence rule that only happens in January. If you begin on January first, this library will iterate through all the days in january, and then immediately skip to January 1st on the next year. I think some other libraries need to silently iterate through feb-dec, without skipping any intervals.
 4. Because every rule is seperated into it's own pipe class, it shouldn't be too difficult to either fork the library and add custom rule pipes (i.e. custom rules) if needed, or create a PR to upgrade this library to support custom rules.
 
-If you're interested in peeking at this library's source, I'd suggest starting by reading the `README` in the `src/pipes` folder.
+If you're interested in peeking at this library's source, I'd suggest starting by reading the `README` in the `src/rule/pipes` folder.
 
 Feel free to open an issue if you have questions.
 

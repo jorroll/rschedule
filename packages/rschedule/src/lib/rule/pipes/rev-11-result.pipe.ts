@@ -1,4 +1,4 @@
-import { DateAdapter } from '../date-adapter'
+import { DateAdapter } from '../../date-adapter'
 import { IPipeRule, IPipeRunFn, ReversePipeRule, PipeError } from './interfaces'
 
 export class ResultReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>

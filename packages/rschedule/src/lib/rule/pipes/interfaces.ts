@@ -1,6 +1,6 @@
-import { DateAdapter } from '../date-adapter'
-import { Options } from '../rule/rule-options'
-import { Utils } from '../utilities'
+import { DateAdapter } from '../../date-adapter'
+import { Options } from '../rule-options'
+import { Utils } from '../../utilities'
 
 export class PipeError extends Error {}
 

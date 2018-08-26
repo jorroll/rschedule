@@ -1,7 +1,7 @@
 import sortedUniq from 'lodash.sorteduniq'
-import { DateAdapter } from '../date-adapter'
-import { Options } from '../rule/rule-options'
-import { Utils } from '../utilities'
+import { DateAdapter } from '../../date-adapter'
+import { Options } from '../rule-options'
+import { Utils } from '../../utilities'
 import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 
 export class ByDayOfWeekReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
