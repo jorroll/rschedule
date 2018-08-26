@@ -61,6 +61,16 @@ export class PipeController<T extends DateAdapter<T>>
     private args: { start?: T; end?: T; reverse?: boolean },
   ) {
     this.options = cloneDeep(options)
+    
+    // args need to be in the same timezone
+    if (this.args.start) {
+      this.args.start = this.args.start.clone().set('timezone', this.options.start.get('timezone'))
+    }
+
+    // args need to be in the same timezone
+    if (this.args.end) {
+      this.args.end = this.args.end.clone().set('timezone', this.options.start.get('timezone'))
+    }
 
     // see `_run()` below for explaination of why `this.reverse` might !== `args.reverse`
     this.reverse = this.options.count === undefined ? !!args.reverse : false;
