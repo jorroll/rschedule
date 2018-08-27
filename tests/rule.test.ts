@@ -31,6 +31,34 @@ function testRecurring(
       expect(actual).toEqual(expected)
     })
 
+    it('allows skipping iterations', () => {
+      if (expectedDates.length < 3) return;
+
+      const iterable = rule.occurrences()
+
+      let date = iterable.next().value
+
+      expect(date.toISOString()).toBe(expectedDates[0].toISOString())
+
+      date = iterable.next({skipToDate: expectedDates[2]}).value
+
+      expect(date.toISOString()).toBe(expectedDates[2].toISOString())
+    })
+
+    it('allows skipping iterations in reverse', () => {
+      if (expectedDates.length !== 3) return;
+
+      const iterable = rule.occurrences({reverse: true})
+
+      let date = iterable.next().value
+
+      expect(date.toISOString()).toBe(expectedDates[2].toISOString())
+
+      date = iterable.next({skipToDate: expectedDates[0]}).value
+
+      expect(date.toISOString()).toBe(expectedDates[0].toISOString())
+    })
+
     /**
      * Problem with start & count: because occurrence
      * counting begins when start is, count also begins
@@ -424,7 +452,16 @@ zones.forEach(zone => {
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
         }),
-        [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
+        [
+          dateAdapter(1997, 9, 2, 9, 0),
+          dateAdapter(1997, 9, 4, 9, 0),
+          dateAdapter(1997, 9, 9, 9, 0),
+          // dateAdapter(1997, 9, 12, 9, 0),
+          // dateAdapter(1997, 9, 16, 9, 0),
+          // dateAdapter(1997, 9, 18, 9, 0),
+          // dateAdapter(1997, 9, 23, 9, 0),
+          // dateAdapter(1997, 9, 25, 9, 0),
+        ]
       )
     
       testRecurring(

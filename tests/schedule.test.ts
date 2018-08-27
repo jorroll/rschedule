@@ -160,6 +160,22 @@ describe(`${zone}`, () => {
           isoString(1998, 1, 7, 9, 0),
           isoString(1998, 3, 5, 9, 0),
         ])
+
+        let iterator = schedule.occurrences()
+
+        let date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0))
+
+        date = iterator.next({skipToDate: dateAdapter(1998, 3, 5, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
+
+        iterator = schedule.occurrences({reverse: true})
+
+        date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
+        
+        date = iterator.next({skipToDate: dateAdapter(1998, 1, 5, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0))
       })
 
       it('with multiple rules', () => {
@@ -201,6 +217,22 @@ describe(`${zone}`, () => {
           isoString(1998, 3, 3, 9, 0),
           isoString(1998, 3, 5, 9, 0),
         ])
+
+        let iterator = schedule.occurrences()
+
+        let date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1997, 9, 2, 9, 0))
+
+        date = iterator.next({skipToDate: dateAdapter(1998, 1, 20, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 20, 9, 0))
+
+        iterator = schedule.occurrences({reverse: true})
+
+        date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
+        
+        date = iterator.next({skipToDate: dateAdapter(1998, 1, 7, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 7, 9, 0))
       })
 
       it('with RDates & duplicate', () => {

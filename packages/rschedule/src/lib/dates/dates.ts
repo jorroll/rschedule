@@ -91,14 +91,36 @@ export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
       if (args.take) { dates = dates.slice(0, args.take) }  
     }
 
-    let date = dates.shift()
+    let dateCache = dates.slice()
+    let date = dateCache.shift()
+    let yieldArgs: {skipToDate?: T} | undefined
 
     while (date) {
-      date.generators.push(this)
-      
-      yield date
+      if (yieldArgs) {
+        if (
+          yieldArgs.skipToDate && (
+            args.reverse
+              ? yieldArgs.skipToDate.isBefore(date)
+              : yieldArgs.skipToDate.isAfter(date)
+          )
+        ) {
+          date = dateCache.shift()
+          continue
+        }
 
-      date = dates.shift()
+        yieldArgs = undefined;
+      }
+
+      yieldArgs = yield date
+
+      if (yieldArgs && yieldArgs.skipToDate) {
+        // need to reset the date cache to allow the same date to be picked again.
+        // Also, I suppose it's possible someone might want to go back in time,
+        // which this allows.
+        dateCache = dates.slice()
+      }
+
+      date = dateCache.shift()
     }
   }
 

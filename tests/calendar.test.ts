@@ -33,7 +33,7 @@ function toISOStringsCOL(
 }
 
 describe('CalendarClass', () => {
-  it('is instantiable', () => expect(new Calendar()).toBeInstanceOf(Calendar))
+  it('is instantiable', () => expect(new Calendar<StandardDateAdapter, any>()).toBeInstanceOf(Calendar))
 })
 
 describe('Calendar', () => {
@@ -53,13 +53,29 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 5, 9, 0),
           isoString(1998, 1, 7, 9, 0),
           isoString(1998, 3, 5, 9, 0),
         ])
+
+        let iterator = calendar.occurrences()
+
+        let date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0))
+
+        date = iterator.next({skipToDate: dateAdapter(1998, 3, 5, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
+
+        iterator = calendar.occurrences({reverse: true})
+
+        date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
+        
+        date = iterator.next({skipToDate: dateAdapter(1998, 1, 5, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0))
       })
 
       it('with multiple schedules', () => {
@@ -96,7 +112,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -108,6 +124,22 @@ describe('Calendar', () => {
           isoString(1998, 3, 3, 9, 0),
           isoString(1998, 3, 5, 9, 0),
         ])
+
+        let iterator = calendar.occurrences()
+
+        let date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1997, 9, 2, 9, 0))
+
+        date = iterator.next({skipToDate: dateAdapter(1998, 1, 20, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 20, 9, 0))
+
+        iterator = calendar.occurrences({reverse: true})
+
+        date = iterator.next().value
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
+        
+        date = iterator.next({skipToDate: dateAdapter(1998, 1, 7, 9, 0)}).value
+        expect(date.toISOString()).toBe(isoString(1998, 1, 7, 9, 0))
       })
 
       it('with RDates', () => {
@@ -123,7 +155,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 1, 9, 0),
@@ -142,7 +174,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar)).toEqual([])
       })
@@ -158,7 +190,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(2000, 1, 1, 9, 0),
@@ -172,7 +204,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsOCC(calendar)).toEqual([])
       })
@@ -216,7 +248,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -247,7 +279,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
           isoString(1998, 1, 5, 9, 0),
@@ -290,7 +322,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -317,7 +349,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
           isoString(1998, 1, 1, 9, 0),
@@ -336,7 +368,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 20, 9, 0), reverse: true })).toEqual([])
       })
@@ -352,7 +384,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
           isoString(2000, 1, 1, 9, 0),
@@ -366,7 +398,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
       })
@@ -410,7 +442,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(2000, 1, 1, 9, 0), reverse: true })).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -443,7 +475,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1998, 1, 5, 9, 0)],
@@ -486,7 +518,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1997, 9, 2, 9, 0)],
@@ -513,7 +545,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
@@ -531,7 +563,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([])
       })
@@ -547,7 +579,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(2000, 1, 1, 9, 0)],
@@ -561,7 +593,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([])
       })
@@ -605,7 +637,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1997, 9, 2, 9, 0)],
@@ -636,7 +668,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1998, 1, 5, 9, 0), isoString(1998, 1, 7, 9, 0), isoString(1998, 3, 5, 9, 0)],
@@ -677,7 +709,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1997, 9, 2, 9, 0)],
@@ -706,7 +738,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
@@ -724,7 +756,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([])
       })
@@ -740,7 +772,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(2000, 1, 1, 9, 0)],
@@ -754,7 +786,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([])
       })
@@ -798,7 +830,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1997, 9, 2, 9, 0)],
@@ -826,7 +858,7 @@ describe('Calendar', () => {
           byDayOfWeek: ['TU'],
         })
       
-        const calendar = new Calendar({
+        const calendar = new Calendar<StandardDateAdapter, any>({
           schedules: new Schedule({
             rrules: [rule]
           })
@@ -857,7 +889,7 @@ describe('Calendar', () => {
           byDayOfWeek: ['TU'],
         })
       
-        const calendar = new Calendar({
+        const calendar = new Calendar<StandardDateAdapter, any>({
           schedules: new Schedule({
             rrules: [rule]
           })
@@ -894,7 +926,7 @@ describe('Calendar', () => {
           weekStart: 'MO',
         })
       
-        const calendar = new Calendar({
+        const calendar = new Calendar<StandardDateAdapter, any>({
           schedules: new Schedule({
             rrules: [rule]
           })
@@ -938,7 +970,7 @@ describe('Calendar', () => {
           byDayOfWeek: ['TU'],
         })
       
-        const calendar = new Calendar({
+        const calendar = new Calendar<StandardDateAdapter, any>({
           schedules: new Schedule({
             rrules: [rule]
           })
@@ -972,7 +1004,7 @@ describe('Calendar', () => {
           byDayOfWeek: ['TU'],
         })
       
-        const calendar = new Calendar({
+        const calendar = new Calendar<StandardDateAdapter, any>({
           schedules: new Schedule({
             rrules: [rule]
           })
@@ -1019,7 +1051,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1998, 1, 5, 9, 0), isoString(1998, 1, 7, 9, 0)],
@@ -1061,7 +1093,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1997, 9, 2, 9, 0)],
@@ -1089,7 +1121,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
@@ -1107,7 +1139,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([])
       })
@@ -1123,7 +1155,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(2000, 1, 1, 9, 0)],
@@ -1137,7 +1169,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: schedule })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([])
       })
@@ -1181,7 +1213,7 @@ describe('Calendar', () => {
           exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
+        const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
 
         expect(toISOStringsCOL(calendar, { granularity })).toEqual([
           [isoString(1997, 9, 2, 9, 0)],
@@ -1214,7 +1246,7 @@ describe('Calendar', () => {
             ],
           })
   
-          const calendar = new Calendar({ schedules: schedule })
+          const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
   
           expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([
             [isoString(1998, 1, 5, 9, 0), isoString(1998, 1, 7, 9, 0)],
@@ -1255,7 +1287,7 @@ describe('Calendar', () => {
             ],
           })
   
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+          const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
   
           expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([
             [
@@ -1280,7 +1312,7 @@ describe('Calendar', () => {
             ],
           })
   
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+          const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
   
           expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([
             [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
@@ -1296,7 +1328,7 @@ describe('Calendar', () => {
             exdates: [dateAdapter(1998, 1, 1, 9, 0)],
           })
   
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+          const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
   
           expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([])
         })
@@ -1312,7 +1344,7 @@ describe('Calendar', () => {
             exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
           })
   
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
+          const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo] })
   
           expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([])
         })
@@ -1323,7 +1355,7 @@ describe('Calendar', () => {
             exdates: [dateAdapter(1998, 1, 1, 9, 0)],
           })
   
-          const calendar = new Calendar({ schedules: schedule })
+          const calendar = new Calendar<StandardDateAdapter, any>({ schedules: schedule })
   
           expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 1, 5, 9, 0) })).toEqual([])
         })
@@ -1367,7 +1399,7 @@ describe('Calendar', () => {
             exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
           })
   
-          const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
+          const calendar = new Calendar<StandardDateAdapter, any>({ schedules: [scheduleOne, scheduleTwo, scheduleThree] })
   
           expect(toISOStringsCOL(calendar, { granularity, weekStart, start: dateAdapter(1998, 1, 1, 9, 0), end: dateAdapter(1998, 2, 5, 9, 0) })).toEqual([
             [
