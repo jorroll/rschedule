@@ -1,32 +1,59 @@
 import { DateAdapter } from '../date-adapter'
 import {
-  HasOccurrences,
   IHasOccurrences,
   OccurrenceIterator,
-  OccurrencesArgs,
   RunnableIterator,
 } from '../interfaces'
-import { Utils } from '../utilities'
-import { CollectionIterator, CollectionsArgs } from './collection'
+import { CollectionsArgs } from './collection'
+import { Calendar } from './calendar';
 
 const INTERSECTION_CALENDAR_ID = Symbol.for('ce7a15f5-e96a-47fd-8e13-aaee6651ec13')
 
+/**
+ * ## IntersectionCalendar
+ * 
+ * The constructor takes an array of schedule objects implementing the `HasOccurrences` interface
+ * (e.g. `Schedule`, `Calendar`, `Rule`, `IntersectionCalendar`).
+ * 
+ * When iterating over `IterationCalendar#occurrences()`,
+ * the iteration calendar only returns occurrences
+ * which every schedule object contains. This contrasts with the regular `Calendar`
+ * object, which is really a union calendar object in that it's `Calendar#occurrences()`
+ * method returns any occurrance that any of it's schedule objects contain.
+ * 
+ * Because it's possible for an iteration calendar's internal schedules to never intersect,
+ * and because the intersection calendar's current ability to detect this lack of intersection
+ * is very poor, the IntersectionCalendar must be constructed with either a
+ * `{maxFailedIterations: number}` argument or a `{defaultEndDate: T}` argument.
+ * 
+ * The `maxFailedIterations` argument caps the number of iterations `IterationCalendar#occurrences()` will
+ * run through without finding a single valid occurrence. If this number is reached, the calendar will
+ * stop iterating (preventing a possible infinite loop).
+ * 
+ * - Note: I'm going to emphasize that `maxFailedIterations` caps the number of iterations which
+ *   *fail to turn up a single valid occurrence*. Every time a valid occurrence is returned,
+ *   the current iteration count is reset to 0.
+ * 
+ * Alternatively, you can construct the calendar with a `defaultEndDate` argument. This argument
+ * acts as the default `end` argument for `IterationCalendar#occurrences()` for when you call that method
+ * without supplying an `end` argument (again, preventing possible infinite loops).
+ * 
+ * @param schedules a single object or array of objects adhering to the HasOccurrences interface
+ * @param data optional data property for convenience
+ * @param maxFailedIterations see above
+ * @param defaultEndDate see above
+ */
 export class IntersectionCalendar<
   T extends DateAdapter<T>,
   S extends IHasOccurrences<T, any>,
   D = any
-> extends HasOccurrences<T>
+> extends Calendar<T, S, D>
   implements RunnableIterator<T>, IHasOccurrences<T, IntersectionCalendar<T, S, D>> {
-  public schedules: S[] = []
 
-  /** Convenience property for holding arbitrary data */
-  public data!: D
+  get startDate(): T | null {
+    const date = this.occurrences({take: 1}).toArray()![0]
 
-  get startDate() {
-\  }
-
-  get isInfinite() {
-    return this.schedules.some(schedule => schedule.isInfinite)
+    return date ? date : null
   }
 
   public readonly [INTERSECTION_CALENDAR_ID] = true
@@ -40,10 +67,39 @@ export class IntersectionCalendar<
     return !!(object && object[Symbol.for('ce7a15f5-e96a-47fd-8e13-aaee6651ec13')])
   }
 
-  constructor(args: { schedules?: Array<S> | S, data?: D } = {}) {
-    super()
+  private maxFailedIterations?: number
+  private defaultEndDate?: T
+
+  constructor(args: {
+    schedules?: Array<S> | S,
+    data?: D,
+    maxFailedIterations: number,
+    defaultEndDate?: T,
+  })
+  constructor(args: {
+    schedules?: Array<S> | S,
+    data?: D,
+    maxFailedIterations?: number,
+    defaultEndDate: T,
+  })
+  constructor(args: {
+    schedules?: Array<S> | S,
+    data?: D,
+    maxFailedIterations?: number,
+    defaultEndDate?: T,
+  }) {
+    super(args)
+
+    if (!args.maxFailedIterations && !args.defaultEndDate) {
+      throw new Error(
+        'IterationCalendar must be constructed with either a ' +
+        '`defaultEndDate` or `maxFailedIterations` argument.'
+      )
+    }
 
     if (args.data) this.data = args.data;
+    if (args.maxFailedIterations) this.maxFailedIterations = args.maxFailedIterations;
+    if (args.defaultEndDate) this.defaultEndDate = args.defaultEndDate.clone();
     if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }
     else if (args.schedules) { this.schedules.push(args.schedules) }
   }
@@ -57,133 +113,9 @@ export class IntersectionCalendar<
     return new IntersectionCalendar<T, S, D>({
       data: this.data,
       schedules: this.schedules.map(schedule => schedule.clone()) as S[],
+      maxFailedIterations: this.maxFailedIterations!,
+      defaultEndDate: this.defaultEndDate!,
     })
-  }
-
-  /**
-   * Update all `schedules` of this intersection calendar to use a
-   * new timezone. This mutates the intersection calendar's schedules.
-   */
-  public setTimezone(timezone: string | undefined, options: {keepLocalTime?: boolean} = {}) {
-    this.schedules.forEach(schedule => {
-      schedule.setTimezone(timezone, options)
-    })
-
-    return this
-  }
-
-  /**
-   * ### collections()
-   * 
-   * Iterates over the intersection calendar's occurrences and bundles them into collections
-   * with a specified granularity (default is `"INSTANTANIOUS"`). Make sure to
-   * read about each option & combination of options in the `details` section
-   * below.
-   * 
-   * Options object argument:
-   *   - start?: DateAdapter
-   *   - end?: DateAdapter
-   *   - take?: number
-   *   - reverse?: NOT SUPPORTED
-   *   - granularity?: CollectionsGranularity
-   *   - weekStart?: DateAdapter.Weekday
-   *   - incrementLinearly?: boolean
-   * 
-   * Returned `Collection` object:
-   *
-   *   - `dates` property containing an array of DateAdapter objects.
-   *   - `granularity` property containing the granularity.
-   *     - `CollectionsGranularity` type extends rule options `Frequency` type by adding
-   *       `"INSTANTANIOUS"`.
-   *   - `periodStart` property containing a DateAdapter equal to the period's
-   *     start time.
-   *   - `periodEnd` property containing a DateAdapter equal to the period's
-   *     end time.
-   *
-   * #### Details:
-   * 
-   * `collections()` always returns full periods. This means that the `start` argument is 
-   * transformed to be the start of whatever period the `start` argument is in, and the
-   * `end` argument is transformed to be the end of whatever period the `end` argument is
-   * in.
-   * 
-   * - Example: with granularity `"YEARLY"`, the `start` argument will be transformed to be the
-   *   start of the year passed in the `start` argument, and the `end` argument will be transformed
-   *   to be the end of the year passed in the `end` argument.
-   * 
-   * By default, the `periodStart` value of `Collection` objects produced by this method does not
-   * necessarily increment linearly. A collection will *always* contain at least one date,
-   * so the `periodStart` from one collection to the next can "jump". This can be changed by
-   * passing the `incrementLinearly: true` option. With this argument, `collections()` will
-   * return `Collection` objects for each period in linear succession, even if a collection object
-   * has no dates associated with it, so long as the `IntersectionCalendar` object still has upcoming occurrences.
-   *
-   * - Example 1: With `incrementLinearly: false` (the default), if your granularity is `"DAILY"` and
-   *   you start January 1st, but the earliest a schedule outputs a date is February 1st, the first 
-   *   Collection produced will have a `periodStart` in February.
-   * 
-   * - Example 2: With `incrementLinearly: true`, if your granularity is `"DAILY"` and
-   *   you start January 1st, but the earliest a schedule outputs a date is February 1st, the first 
-   *   collection produced will have a `Collection#periodStart` of January 1st and have
-   *   `Collection#dates === []`. Similarly, the next 30 collections produced (Jan 2nd - 31st)
-   *   will all contain an empty array for the `dates` property. The February 1st Collection will
-   *   return dates though (i.e. `Collection#dates.length > 0)`.
-   * 
-   * When giving a `take` argument to `collections()`, you are specifying
-   * the number of `Collection` objects to return (rather than occurrences).
-   * 
-   * When choosing a granularity of `"WEEKLY"`, the `weekStart` option is required.
-   * 
-   * When choosing a granularity of `"MONTHLY"`:
-   * 
-   * - If the `weekStart` option *is not* present, will generate collections with
-   *   the `periodStart` and `periodEnd` at the beginning and end of each month. 
-   * 
-   * - If the `weekStart` option *is* present, will generate collections with the 
-   *   `periodStart` equal to the start of the first week of the month, and the 
-   *   `periodEnd` equal to the end of the last week of the month. This behavior could be 
-   *   desired when rendering opportunities in a calendar view, where the calendar renders 
-   *   full weeks (which may result in the calendar displaying dates in the
-   *   previous or next months).
-   *
-   * @param args CollectionsArgs
-   */
-  public collections(args: CollectionsArgs<T> = {}) {
-    return new CollectionIterator(this, args)
-  }
-
-  /**
-   * Iterates over the intersection calendar's occurrences and simply spits them out in order.
-   * Unlike `Schedule#occurrences()`, this method may spit out duplicate dates,
-   * each of which are associated with a different `Schedule`. To see what
-   * `Schedule` a date is associated with, you may use `DateAdapter#schedule`.
-   *
-   * @param args
-   */
-  public occurrences(args: OccurrencesArgs<T> = {}) {
-    return new OccurrenceIterator(this, args)
-  }
-
-  /**
-   * Checks to see if an occurrence exists which equals the given date.
-   */
-  public occursOn(args: {date: T}): boolean
-  /**
-   * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
-   * 
-   * Optional arguments:
-   * 
-   * - `after` and `before` arguments can be provided which limit the
-   *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
-   *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
-   *       than inclusive.
-   */
-  public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
-  public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean {
-    if (args.weekday)
-      return this.schedules.some(schedule => schedule.occursOn(args as {weekday: DateAdapter.Weekday}))
-    else
-      return super.occursOn(args as {date: T})
   }
 
   // `_run()` follows in the footsteps of `Calendar#_run()`,
@@ -192,6 +124,8 @@ export class IntersectionCalendar<
 
   /**  @private use collections() instead */
   public *_run(args: CollectionsArgs<T> = {}) {
+    if (!args.end) args.end = this.defaultEndDate;
+
     if (!schedulesIntersect(this.schedules, args.start, args.end)) {
       return;
     }
@@ -204,40 +138,50 @@ export class IntersectionCalendar<
           date: iterator.next().value,
         }
       })
-      .filter(item => !!item.date)
+      
+    if (cache.some(item => !item.date)) return;
 
-    let next: { iterator: OccurrenceIterator<T, any>; date?: T }
+    let next: { iterator: OccurrenceIterator<T, any>; date?: T } | undefined
 
     if (cache.length === 0) { return }
 
-    getNextIntersectingDate(cache, args.reverse)
-
-    else if (allCacheObjectsHaveEqualDates(cache)) {
+    if (allCacheObjectsHaveEqualDates(cache)) {
+      // if yes, arbitrarily select the first cache object
       next = cache[0]
     }
     else {
-      selectFarthestUpcomingCacheObj(cache[0], cache, args.reverse)
+      // if no, select the first itersecting date
+      next = getNextIntersectingIterator(cache, args.reverse, this.maxFailedIterations)
     }
   
     const count = args.take
     let index = 0
   
-    while (next.date && (count === undefined || count > index)) {
+    while (next && next.date && (count === undefined || count > index)) {
       // add the current intersection calendar to the metadata
       next.date.generators.push(this)
   
-      yield next.date.clone()
-  
-      next.date = next.iterator.next().value
-  
-      if (!next.date) {
-        cache = cache.filter(item => item !== next)
-        next = cache[0]
-  
-        if (cache.length === 0) { break }
+      const yieldArgs = yield next.date.clone()
+
+      if (yieldArgs && yieldArgs.skipToDate) {
+        cache.forEach(obj => {
+          obj.date = obj.iterator.next(yieldArgs).value
+        })
       }
-  
-      next = selectNextUpcomingCacheObj(next, cache, args.reverse)
+      else {
+        cache.forEach(obj => {
+          obj.date = obj.iterator.next().value
+        })
+      }
+
+      if (cache.some(item => !item.date)) return;
+
+      if (allCacheObjectsHaveEqualDates(cache)) {
+        next = cache[0]
+      }
+      else {
+        next = getNextIntersectingIterator(cache, args.reverse, this.maxFailedIterations)
+      }
   
       index++
     }
@@ -290,7 +234,7 @@ function schedulesIntersect<
     return false
   }
 
-  return false
+  return true
 }
 
 
@@ -298,7 +242,7 @@ function schedulesIntersect<
  * @param cache the cache
  */
 function allCacheObjectsHaveEqualDates<T extends DateAdapter<T>>(
-  cache: Array<{ iterator: IHasOccurrences<T, any>; date?: T }>,
+  cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>,
 ) {
   if (cache.length === 1) { return true }
 
@@ -309,31 +253,34 @@ function allCacheObjectsHaveEqualDates<T extends DateAdapter<T>>(
   return !cache.some(obj => !date.isEqual(obj.date))
 }
 
-function getNextIntersectingDate<T extends DateAdapter<T>>(
-  cache: Array<{ iterator: IHasOccurrences<T, any>; date?: T }>,
+function getNextIntersectingIterator<T extends DateAdapter<T>>(
+  cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>,
   reverse?: boolean,
-): { iterator: IHasOccurrences<T, any>; date?: T } | undefined {
+  maxFailedIterations?: number,
+  currentIteration = 0,
+): { iterator: OccurrenceIterator<T, any>; date?: T } | undefined {
   if (cache.length < 2) { return cache[0] }
+  if (maxFailedIterations && currentIteration > maxFailedIterations) return;
 
   const farthest = selectFarthestUpcomingCacheObj(cache, reverse)
 
   if (!farthest) return;
 
   cache.forEach(obj => {
-    obj.date = obj.iterator.occurrences({
-      start: farthest.date!,
-      take: 1,
-      reverse,
-    }).toArray()![0]
+    // skip to the farthest ahead date
+    obj.date = obj.iterator.next({
+      skipToDate: farthest.date!,
+    }).value
   })
 
-  cache = cache.filter(obj => !!obj.date)
+  if (cache.some(item => !item.date)) return;
 
   if (allCacheObjectsHaveEqualDates(cache)) {
     return cache[0]
   }
   else {
-    return getNextIntersectingDate(cache, reverse)
+    currentIteration++
+    return getNextIntersectingIterator(cache, reverse, maxFailedIterations, currentIteration)
   }
 }
 
@@ -344,9 +291,9 @@ function getNextIntersectingDate<T extends DateAdapter<T>>(
  * @param reverse whether we're iterating in reverse or not
  */
 function selectFarthestUpcomingCacheObj<T extends DateAdapter<T>>(
-  cache: Array<{ iterator: IHasOccurrences<T, any>; date?: T }>,
+  cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>,
   reverse?: boolean,
-): { iterator: IHasOccurrences<T, any>; date?: T } | undefined {
+): { iterator: OccurrenceIterator<T, any>; date?: T } | undefined {
   if (cache.length < 2) { return cache[0] }
 
   return cache.reduce((prev, curr) => {

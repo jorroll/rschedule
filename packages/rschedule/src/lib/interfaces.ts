@@ -112,8 +112,8 @@ export class OccurrenceIterator<
 
   public [Symbol.iterator] = () => this.iterator
 
-  public next() {
-    return this.iterator.next()
+  public next(args?: {skipToDate?: T}) {
+    return this.iterator.next(args)
   }
 
   public toArray() {

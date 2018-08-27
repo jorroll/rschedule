@@ -82,6 +82,10 @@ export class PipeController<T extends DateAdapter<T>>
     // see `_run()` below for explaination of why `this.reverse` might !== `args.reverse`
     this.reverse = this.options.count === undefined ? !!args.reverse : false;
 
+    this.initialize()
+  }
+
+  private initialize() {
     // Pipe ordering is defined in the ICAL spec 
     // https://tools.ietf.org/html/rfc5545#section-3.3.10
     if (this.reverse) {
@@ -149,8 +153,8 @@ export class PipeController<T extends DateAdapter<T>>
       this.addPipe(new ResultPipe(this))  
     }
 
-    this.setStartDate(args.start)
-    this.setEndDate(args.end)
+    this.setStartDate(this.args.start)
+    this.setEndDate(this.args.end)
   }
 
   /**
@@ -178,9 +182,15 @@ export class PipeController<T extends DateAdapter<T>>
    * there's anything to be done about this.
    */
   public *_run() {
+    const iterable = this.iterate()
+
     if (this.options.count === undefined) {
-      for (const date of this.iterate()) {
-        yield date.clone()
+      let date = iterable.next().value
+
+      while (date) {
+        const args = yield date
+
+        date = iterable.next(args).value
       }
 
       return;
@@ -193,7 +203,7 @@ export class PipeController<T extends DateAdapter<T>>
     if (this.args.reverse) {
       const dates: T[] = [];
 
-      for (const date of this.iterate()) {
+      for (const date of iterable) {
         if (index >= this.options.count) break;
         index++
 
@@ -203,20 +213,60 @@ export class PipeController<T extends DateAdapter<T>>
         dates.push(date)
       }
 
-      for (const date of dates.reverse()) {
-        yield date
+      let dateCache = dates.reverse().slice()
+
+      let date = dateCache.shift()
+      let args: {skipToDate?: T} | undefined
+
+      while (date) {
+        if (args) {
+          if (args.skipToDate && args.skipToDate.isBefore(date)) {
+            date = dateCache.shift()
+            continue
+          }
+
+          args = undefined;
+        }
+
+        args = yield date
+
+        if (args && args.skipToDate) {
+          // need to reset the date cache to allow the same date to be picked again.
+          // Also, I suppose it's possible someone might want to go back in time,
+          // which this allows.
+          dateCache = dates.slice()
+        }
+
+        date = dateCache.shift()
       }
 
       return;
     }
 
-    for (const date of this.iterate()) {
+    let date = iterable.next().value
+    let args: {skipToDate?: T} | undefined
+
+    while (date) {
       if (index >= this.options.count) break;
       index++
 
-      if (date.isBefore(this.start)) continue;
+      if (
+        date.isBefore(this.start) ||
+        (args && args.skipToDate && date.isBefore(args.skipToDate))
+      ) {
+        date = iterable.next().value
+        continue;
+      }
 
-      yield date.clone()          
+      args = yield date
+
+      if (args && args.skipToDate) {
+        index = 0
+        date = iterable.next({reset: true}).value
+      }
+      else {
+        date = iterable.next().value
+      }
     }
   }
 
@@ -229,29 +279,24 @@ export class PipeController<T extends DateAdapter<T>>
     while (date) {
       const args = yield date.clone()
 
-      if (args && args.skipToDate)
-        date = this.focusedPipe.run({ date, skipToDate: args.skipToDate })
-      else
-        date = this.focusedPipe.run({ date })
+      if (args) {
+        // need to reinitialize to clear state. For exampe, a pipe could be expanding and have
+        // focus, which would prevent `skipToDate` from running.
+        this.initialize()
+
+        if (args.skipToDate) {
+          date = this.focusedPipe.run({ date, skipToDate: args.skipToDate.clone() });
+        }
+        else {
+          // reset requested because `options.count !== undefined`
+          date = this.focusedPipe.run({ date, skipToDate: this.options.start.clone() });
+        }
+      }
+      else {
+        date = this.focusedPipe.run({ date });
+      }
     }
   }
-
-  // public *_run() {    
-  //   let date = this.focusedPipe.run({
-  //     date: this.start, // <- just present to satisfy interface
-  //     skipToDate: this.start,
-  //   })
-
-  //   let index = 0
-
-  //   while (date && (this.count === undefined || index < this.count)) {
-  //     index++
-
-  //     yield date.clone()
-
-  //     date = this.focusedPipe.run({ date })
-  //   }
-  // }
 
   private addPipe(pipe: any) {
     const lastPipe = this.pipes[this.pipes.length - 1]

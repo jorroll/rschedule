@@ -234,9 +234,12 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
 
     while (date && (args.take === undefined || index < args.take)) {
       index++
+      
       date.generators.push(this)
-      yield date
-      date = iterator.next().value
+      
+      const yieldArgs = yield date
+
+      date = iterator.next(yieldArgs).value
     }
   }
 

@@ -218,19 +218,32 @@ export class Calendar<
       // add the current calendar to the metadata
       next.date.generators.push(this)
   
-      yield next.date.clone()
-  
-      next.date = next.iterator.next().value
-  
-      if (!next.date) {
-        cache = cache.filter(item => item !== next)
-        next = cache[0]
-  
-        if (cache.length === 0) { break }
+      const yieldArgs = yield next.date.clone()
+
+      if (yieldArgs && yieldArgs.skipToDate) {
+        cache.forEach(obj => {
+          obj.date = obj.iterator.next(yieldArgs).value
+        })
+
+        cache = cache.filter(obj => !!obj.date)
+
+        if (cache.length === 0) return;
+
+        next = selectNextUpcomingCacheObj(cache[0], cache, args.reverse)  
       }
+      else {
+        next.date = next.iterator.next().value
   
-      next = selectNextUpcomingCacheObj(next, cache, args.reverse)
-  
+        if (!next.date) {
+          cache = cache.filter(item => item !== next)
+          next = cache[0]
+    
+          if (cache.length === 0) { break }
+        }
+    
+        next = selectNextUpcomingCacheObj(next, cache, args.reverse)  
+      }
+    
       index++
     }
   }

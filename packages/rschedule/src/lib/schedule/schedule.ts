@@ -223,9 +223,10 @@ export class Schedule<
       next = getFirstIteratorCacheObj(cache, exdates, args.reverse)!
 
       if (!next) {
-        return // here we make sure our select is actually the next upcoming occurrence
+        return
       }
       
+      // here we make sure our select is actually the next upcoming occurrence
       [next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
     }
 
@@ -238,24 +239,51 @@ export class Schedule<
       next.date.generators.push(this)
 
       // yield the selected cache object's date to the user
-      yield next.date.clone()
+      const yieldArgs = yield next.date.clone()
 
-      // iterate the date on the selected cache object
-      next.date = next.iterator.next().value
-      next.date = getNextDateThatIsNotInExdates(next, exdates, args.reverse)
+      if (yieldArgs && yieldArgs.skipToDate) {
+        // if we receive a `skipToDate` arg, we skip all iterators up
+        // to that date.
+        cache.forEach(obj => {
+          obj.date = obj.iterator.next(yieldArgs).value
+        })
 
-      if (!next.date || mustFilter) {
-        // if the selected cache object now doesn't have a date,
-        // remove it from the cache and arbitrarily select another one
-        cache = cache.filter(cacheObj => !!cacheObj.date)
-        next = cache[0]
+        // at this point, it's akin to starting over since we don't know which
+        // iterator comes next.
+        next = getFirstIteratorCacheObj(cache, exdates, args.reverse)!
 
-        // if there are no more cache objects, end iteration
-        if (cache.length === 0) { break }
+        if (!next) {
+          return
+        }
+
+        // here we make sure our select is actually the next upcoming occurrence
+        [next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
+
+        if (mustFilter) {
+          cache = cache.filter(cacheObj => !!cacheObj.date)
+
+          // if there are no more cache objects, end iteration
+          if (cache.length === 0) { break }
+        }
       }
+      else {
+        // iterate the date on the selected cache object
+        next.date = next.iterator.next().value
+        next.date = getNextDateThatIsNotInExdates(next, exdates, args.reverse)
 
-      // select the next upcoming cache object from the cache
-      [next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
+        if (!next.date || mustFilter) {
+          // if the selected cache object now doesn't have a date,
+          // remove it from the cache and arbitrarily select another one
+          cache = cache.filter(cacheObj => !!cacheObj.date)
+          next = cache[0]
+
+          // if there are no more cache objects, end iteration
+          if (cache.length === 0) { break }
+        }
+
+        // select the next upcoming cache object from the cache
+        [next, mustFilter] = getNextIteratorCacheObj(next, cache, exdates, args.reverse)
+      }
 
       index++
     }
