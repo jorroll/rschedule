@@ -6,7 +6,6 @@ import {
   OccurrencesArgs,
   RunnableIterator,
 } from '../interfaces'
-import { Schedule } from '../schedule/schedule'
 import { Utils } from '../utilities'
 import { CollectionIterator, CollectionsArgs } from './collection'
 
@@ -14,7 +13,7 @@ const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')
 
 export class Calendar<
   T extends DateAdapter<T>,
-  S extends Schedule<T>,
+  S extends IHasOccurrences<T, any>,
   D = any
 > extends HasOccurrences<T>
   implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, S, D>> {
@@ -217,7 +216,7 @@ export class Calendar<
   
     while (next.date && (count === undefined || count > index)) {
       // add the current calendar to the metadata
-      next.date.calendar = this
+      next.date.generators.push(this)
   
       yield next.date.clone()
   

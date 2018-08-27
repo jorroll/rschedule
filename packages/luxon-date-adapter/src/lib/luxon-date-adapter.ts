@@ -22,12 +22,25 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
 
   public get utcOffset() { return this.date.offset }
 
-  /** The `Rule` which generated this `DateAdapter` */
-  public rule: RRule<LuxonDateAdapter> | RDates<LuxonDateAdapter> | undefined
-  /** The `Schedule` which generated this `DateAdapter` */
-  public schedule: Schedule<LuxonDateAdapter> | undefined
-  /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<LuxonDateAdapter, Schedule<LuxonDateAdapter>> | undefined
+  /** 
+   * This property contains an ordered array of the generator objects
+   * responsible for producing this DateAdapter.
+   * 
+   * - If this DateAdapter was produced by a `RRule` object, this array
+   *   will just contain the `RRule` object.
+   * - If this DateAdapter was produced by a `Schedule` object, this
+   *   array will contain the `Schedule` object as well as the `RRule`
+   *   or `RDates` object which generated it.
+   * - If this DateAdapter was produced by a `Calendar` object, this
+   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
+   *   `RRule`/`RDates` objects which generated it.
+   */
+  public generators: Array<
+    | RRule<LuxonDateAdapter>
+    | RDates<LuxonDateAdapter>
+    | Schedule<LuxonDateAdapter>
+    | Calendar<LuxonDateAdapter, Schedule<LuxonDateAdapter>>
+  > = []
   
   constructor(date?: DateTime, args: {} = {}) {
     if (date) {
@@ -96,9 +109,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
    */
   clone(): LuxonDateAdapter {
     const adapter = new LuxonDateAdapter(this.date)
-    adapter.rule = this.rule
-    adapter.schedule = this.schedule
-    adapter.calendar = this.calendar
+    adapter.generators = this.generators.slice()
     return adapter
   }
 

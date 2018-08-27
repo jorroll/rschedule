@@ -234,11 +234,17 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
 
     while (date && (args.take === undefined || index < args.take)) {
       index++
-      date.rule = this
+      date.generators.push(this)
       yield date
       date = iterator.next().value
     }
   }
+
+  // just exists to satisfy interface
+  public clone(): Rule<T, D> {
+    return this
+  }
+
 
   public toICal() {
     return ''

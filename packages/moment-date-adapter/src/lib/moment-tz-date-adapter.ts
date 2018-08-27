@@ -23,12 +23,25 @@ export class MomentTZDateAdapter
   // to work.
   public get utcOffset() { return this.date.utcOffset() === 0 ? 0 : -this.date.utcOffset() }
 
-  /** The `Rule` which generated this `DateAdapter` */
-  public rule: RRule<MomentTZDateAdapter> | RDates<MomentTZDateAdapter> | undefined
-  /** The `Schedule` which generated this `DateAdapter` */
-  public schedule: Schedule<MomentTZDateAdapter> | undefined
-  /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<MomentTZDateAdapter, Schedule<MomentTZDateAdapter>> | undefined
+  /** 
+   * This property contains an ordered array of the generator objects
+   * responsible for producing this DateAdapter.
+   * 
+   * - If this DateAdapter was produced by a `RRule` object, this array
+   *   will just contain the `RRule` object.
+   * - If this DateAdapter was produced by a `Schedule` object, this
+   *   array will contain the `Schedule` object as well as the `RRule`
+   *   or `RDates` object which generated it.
+   * - If this DateAdapter was produced by a `Calendar` object, this
+   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
+   *   `RRule`/`RDates` objects which generated it.
+   */
+  public generators: Array<
+    | RRule<MomentTZDateAdapter>
+    | RDates<MomentTZDateAdapter>
+    | Schedule<MomentTZDateAdapter>
+    | Calendar<MomentTZDateAdapter, Schedule<MomentTZDateAdapter>>
+  > = []
 
   constructor(date?: moment.Moment, args: {} = {}) {
     if (moment.isMoment(date) && typeof date.tz === 'function') {
@@ -94,9 +107,7 @@ export class MomentTZDateAdapter
    */
   clone(): MomentTZDateAdapter {
     const adapter = new MomentTZDateAdapter(this.date)
-    adapter.rule = this.rule
-    adapter.schedule = this.schedule
-    adapter.calendar = this.calendar
+    adapter.generators = this.generators.slice()
     return adapter
   }
 

@@ -41,6 +41,13 @@ export class PipeController<T extends DateAdapter<T>>
     return this.start
   }
 
+  // to conform to the `RunnableIterator` interface
+  get endDate() {
+    if (this.isInfinite) return null;
+    if (this.end) return this.end;
+    return null;
+  }
+  
   /**
    * If the parent of this pipe controller (`Rule` object) changes the `options` object
    * this pipe controller will be invalid. To prevent someone from accidently continuing
@@ -220,9 +227,12 @@ export class PipeController<T extends DateAdapter<T>>
     })
 
     while (date) {
-      yield date.clone()
+      const args = yield date.clone()
 
-      date = this.focusedPipe.run({ date })
+      if (args && args.skipToDate)
+        date = this.focusedPipe.run({ date, skipToDate: args.skipToDate })
+      else
+        date = this.focusedPipe.run({ date })
     }
   }
 

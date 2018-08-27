@@ -235,7 +235,7 @@ export class Schedule<
     // iterate over the cache objects until we run out of dates or hit our max count
     while (next.date && (count === undefined || count > index)) {
       // add this schedule to the metadata
-      next.date.schedule = this
+      next.date.generators.push(this)
 
       // yield the selected cache object's date to the user
       yield next.date.clone()

@@ -5,12 +5,21 @@ export type ParsedDatetime =
   | [number,number,number]
 
 export interface DateAdapter<T, D=any> {
-  /** The `Rule` which generated this `DateAdapter` */
-  rule: any
-  /** The `Schedule` which generated this `DateAdapter` */
-  schedule: any
-  /** The `Calendar` which generated this `DateAdapter` */
-  calendar: any
+  /** 
+   * This property contains an ordered array of the generator objects
+   * responsible for producing this DateAdapter.
+   * 
+   * - If this DateAdapter was produced by a `RRule` object, this array
+   *   will just contain the `RRule` object.
+   * - If this DateAdapter was produced by a `Schedule` object, this
+   *   array will contain the `Schedule` object as well as the `RRule`
+   *   or `RDates` object which generated it.
+   * - If this DateAdapter was produced by a `Calendar` object, this
+   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
+   *   `RRule`/`RDates` objects which generated it.
+   */
+  generators: any[]
+
   /** Returns a duplicate of original DateAdapter */
   clone(): T
 

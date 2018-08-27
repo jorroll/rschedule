@@ -94,12 +94,16 @@ export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
     let date = dates.shift()
 
     while (date) {
-      date.rule = this
+      date.generators.push(this)
       
       yield date
 
       date = dates.shift()
     }
+  }
+
+  public clone() {
+    return new Dates(this.dates.map(date => date.clone()))
   }
 
   public toICal() {

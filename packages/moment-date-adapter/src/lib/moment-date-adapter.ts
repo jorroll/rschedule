@@ -21,12 +21,25 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
   // output sign to solve the issue.
   public get utcOffset() { return this.date.utcOffset() === 0 ? 0 : -this.date.utcOffset() }
 
-  /** The `Rule` which generated this `DateAdapter` */
-  public rule: RRule<MomentDateAdapter> | RDates<MomentDateAdapter> | undefined
-  /** The `Schedule` which generated this `DateAdapter` */
-  public schedule: Schedule<MomentDateAdapter> | undefined
-  /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<MomentDateAdapter, Schedule<MomentDateAdapter>> | undefined
+  /** 
+   * This property contains an ordered array of the generator objects
+   * responsible for producing this DateAdapter.
+   * 
+   * - If this DateAdapter was produced by a `RRule` object, this array
+   *   will just contain the `RRule` object.
+   * - If this DateAdapter was produced by a `Schedule` object, this
+   *   array will contain the `Schedule` object as well as the `RRule`
+   *   or `RDates` object which generated it.
+   * - If this DateAdapter was produced by a `Calendar` object, this
+   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
+   *   `RRule`/`RDates` objects which generated it.
+   */
+  public generators: Array<
+    | RRule<MomentDateAdapter>
+    | RDates<MomentDateAdapter>
+    | Schedule<MomentDateAdapter>
+    | Calendar<MomentDateAdapter, Schedule<MomentDateAdapter>>
+  > = []
   
   constructor(date?: moment.Moment, args: {} = {}) {
     if (moment.isMoment(date)) {
@@ -91,9 +104,7 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
    */
   clone(): MomentDateAdapter {
     const adapter = new MomentDateAdapter(this.date)
-    adapter.rule = this.rule
-    adapter.schedule = this.schedule
-    adapter.calendar = this.calendar
+    adapter.generators = this.generators.slice()
     return adapter
   }
 

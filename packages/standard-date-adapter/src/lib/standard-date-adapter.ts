@@ -31,12 +31,25 @@ export class StandardDateAdapter
     return this._timezone === 'UTC' ? 0 : this.date.getTimezoneOffset()
   }
 
-  /** The `Rule` which generated this `DateAdapter` */
-  public rule: RRule<StandardDateAdapter> | RDates<StandardDateAdapter> | undefined
-  /** The `Schedule` which generated this `DateAdapter` */
-  public schedule: Schedule<StandardDateAdapter> | undefined
-  /** The `Calendar` which generated this `DateAdapter` */
-  public calendar: Calendar<StandardDateAdapter, Schedule<StandardDateAdapter>> | undefined
+  /** 
+   * This property contains an ordered array of the generator objects
+   * responsible for producing this DateAdapter.
+   * 
+   * - If this DateAdapter was produced by a `RRule` object, this array
+   *   will just contain the `RRule` object.
+   * - If this DateAdapter was produced by a `Schedule` object, this
+   *   array will contain the `Schedule` object as well as the `RRule`
+   *   or `RDates` object which generated it.
+   * - If this DateAdapter was produced by a `Calendar` object, this
+   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
+   *   `RRule`/`RDates` objects which generated it.
+   */
+  public generators: Array<
+    | RRule<StandardDateAdapter>
+    | RDates<StandardDateAdapter>
+    | Schedule<StandardDateAdapter>
+    | Calendar<StandardDateAdapter, Schedule<StandardDateAdapter>>
+  > = []
 
   constructor(date?: Date, args: {timezone?: 'UTC' | undefined} = {}) {
     this.date = date ? new Date(date) : new Date()
@@ -95,9 +108,7 @@ export class StandardDateAdapter
    */
   clone(): StandardDateAdapter {
     const adapter = new StandardDateAdapter(this.date, {timezone: this._timezone})
-    adapter.rule = this.rule
-    adapter.schedule = this.schedule
-    adapter.calendar = this.calendar
+    adapter.generators = this.generators.slice()
     return adapter
   }
 

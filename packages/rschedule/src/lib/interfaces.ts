@@ -7,6 +7,7 @@ export interface Serializable {
 export interface RunnableIterator<T extends DateAdapter<T>> {
   isInfinite: boolean
   startDate: T | null
+  endDate: T | null
   _run(args?: any): IterableIterator<T>
 }
 
@@ -20,16 +21,27 @@ export interface OccurrencesArgs<T extends DateAdapter<T>> {
 export interface IHasOccurrences<
   T extends DateAdapter<T>,
   K extends RunnableIterator<T>
-> {
+> extends RunnableIterator<T> {
   occurrences(args: OccurrencesArgs<T>): OccurrenceIterator<T, K>
   occursBetween(start: T, end: T, options: { excludeEnds?: boolean }): boolean
   occursOn(args: {date: T}): boolean
   occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
   occursAfter(date: T, options: { excludeStart?: boolean }): boolean
   occursBefore(date: T, options: { excludeStart?: boolean }): boolean
+  setTimezone(timezone: string | undefined, options?: {keepLocalTime?: boolean}): this
+  clone(): IHasOccurrences<T, K>
 }
 
 export abstract class HasOccurrences<T extends DateAdapter<T>> {
+  public isInfinite!: boolean
+
+  /** If generator is infinite, returns `undefined`. Otherwise returns the end date */
+  public get endDate() {
+    if (this.isInfinite) return null;
+
+    return this.occurrences({reverse: true, take: 1}).toArray()![0]
+  }
+
   // just to satisfy the interface
   public occurrences(args: any): OccurrenceIterator<T, any> {
     return args
