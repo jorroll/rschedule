@@ -32,23 +32,27 @@ export interface IHasOccurrences<
   clone(): IHasOccurrences<T, K>
 }
 
-export abstract class HasOccurrences<T extends DateAdapter<T>> {
+export abstract class HasOccurrences<T extends DateAdapter<T>, K extends RunnableIterator<T>> {
   public isInfinite!: boolean
 
-  /** If generator is infinite, returns `undefined`. Otherwise returns the end date */
+  /** Returns the first occurrence or, if there are no occurrences, null. */
+  public get startDate(): T | null {  
+    return (this as any)._run().next().value || null
+  }  
+
+  /** If generator is infinite, returns `null`. Otherwise returns the end date */
   public get endDate() {
     if (this.isInfinite) return null;
 
-    return this.occurrences({reverse: true, take: 1}).toArray()![0]
+    return (this as any)._run({reverse: true}).next().value
   }
 
-  // just to satisfy the interface
-  public occurrences(args: any): OccurrenceIterator<T, any> {
-    return args
+  public occurrences(args: OccurrencesArgs<T> = {}): OccurrenceIterator<T, K> {
+    return new OccurrenceIterator(this as any, args)
   }
-
+  
   public occursBetween(start: T, end: T, options: { excludeEnds?: boolean } = {}) {
-    for (const day of this.occurrences({ start, end })) {
+    for (const day of (this as any)._run({ start, end })) {
       if (options.excludeEnds) {
         if (day.isEqual(start)) { continue }
         if (day.isEqual(end)) { break }
@@ -77,14 +81,14 @@ export abstract class HasOccurrences<T extends DateAdapter<T>> {
   public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}) {
     if (!args.date) throw new Error('Was expecting an argument in the form `{date: DateAdapter}`');
 
-    for (const day of this.occurrences({ start: args.date, end: args.date })) {
+    for (const day of (this as any)._run({ start: args.date, end: args.date })) {
       return !!day
     }
     return false
   }
 
   public occursAfter(date: T, options: { excludeStart?: boolean } = {}) {
-    for (const day of this.occurrences({ start: date })) {
+    for (const day of (this as any)._run({ start: date })) {
       if (options.excludeStart && day.isEqual(date)) { continue }
       return true
     }
@@ -92,7 +96,7 @@ export abstract class HasOccurrences<T extends DateAdapter<T>> {
   }
 
   public occursBefore(date: T, options: { excludeStart?: boolean } = {}) {
-    for (const day of this.occurrences({ start: date, reverse: true })) {
+    for (const day of (this as any)._run({ start: date, reverse: true })) {
       if (options.excludeStart && day.isEqual(date)) { continue }
       return true
     }

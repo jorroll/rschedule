@@ -107,7 +107,7 @@ This library has four basic parts:
 - `Rule`
 - `Schedule`
 - `Calendar`
-- `IntersectionCalendar`
+- Occurrence stream operators
 
 It also has makes use of a `DateAdapter` interface to abstract away from individual date implementations. As mentioned, a `StandardDateAdapter` is included for use with the javascript `Date` object (which only supports local and UTC time).
 
@@ -211,7 +211,7 @@ interface HasOccurrences<T extends DateAdapter<T>> {
 
 ### Calendar class
 
-`Calendar` objects support iterating through *the union* of a group of `HasOccurrences` objects occurrence's. Unlike Schedule or RRule objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different object). Because `Calendar` objects are constructed from objects, which implement the `HasOccurrences` interface, you can construct calendars out of other Calendars, out of Schedules, IntersectionCalendars, Rules, etc.
+`Calendar` objects support iterating through *the union* of a group of `HasOccurrences` objects occurrence's. Unlike Schedule or RRule objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different object). Because `Calendar` objects are constructed from objects, which implement the `HasOccurrences` interface, you can construct calendars out of other Calendars, out of Schedules, Rules, etc.
 
 Calendar objects have `Calendar#collections()` which groups occurrences into a `Collection` by a specified `granularity` before yielding the `Collection`.
 
@@ -277,6 +277,73 @@ for (const collection of calendar.collections(args)) {
 ```
 
 As a convenience, Calendar objects have a `data` property which can hold arbitrary data.
+
+### Occurrence stream operators
+
+This library exports a selection of occurrence stream operator objects for manipulating a stream of occurrences. Current operators are:
+
+- `ExcludeOperator`
+- `IntersectionOperator`
+- `TakeOperator`
+- `UnionOperator`
+- `UniqueOperator`
+
+If you look at the code in `Schedule` and `Calendar`, you'll see that, internally, their iteration logic is implemented entirely with these operators. By using the operators directly, you can create complex custom schedules. Each operator recieves an object implemented `HasOccurrences` and returns an object implementing `HasOccurrences`.
+
+#### ExcludeOperator
+
+This operator receives two `HasOccurrences` objects. The first object produces occurrences that should be excluded from the second. This operator returns a stream of all the occurrences that the second outputs which are not output by the first. You're basically subtracting the first stream from the second (i.e. `second - first`).
+
+Example:
+```typescript
+new ExcludeOperator(excludeThis, includeThis)
+```
+
+#### IntersectionOperator
+
+The `IntersectionOperator` receives an array of `HasOccurrences` objects, and only returns occurrences which every one of those objects outputs.
+
+The constructor takes an array of occurrence streams (objects implementing the `HasOccurrences` interface) as well as an options object.
+
+Because it's possible for all the streams to never intersect, and because the intersection operator's current ability to detect this lack of intersection is very poor, the IntersectionOperator must be constructed with either a `{maxFailedIterations: number}` argument or a `{defaultEndDate: T}` argument.
+
+The `maxFailedIterations` argument caps the number of iterations `IterationOperator#_run()` will run through without finding a single valid occurrence. If this number is reached, the operator will stop iterating (preventing a possible infinite loop).
+
+- Note: I'm going to emphasize that `maxFailedIterations` caps the number of iterations which fail to turn up a single valid occurrenc Every time a valid occurrence is returned, the current iteration count is reset to 0.
+
+Alternatively, you can construct the operator with a `defaultEndDate` argument. This argument acts as the default `end` argument for `IterationOperator#_run()` for when you call that method without supplying an `end` argument (again, preventing possible infinite loops).
+
+Example:
+```typescript
+new IntersectionOperator([stream], {maxFailedIterations: 50})
+```
+
+#### TakeOperator
+
+The other operators ignore the `take` option which you may pass to the `occurrences()` method. This operator applies `take`. It goes at the end and receives a single `HasOccurrences` object. Without this operator, a collection of operators will ignore the take option of `occurrences()`.
+
+Example:
+```typescript
+new TakeOperator(stream)
+```
+
+#### UnionOperator
+
+When given an array of `HasOccurrences` objects, it returns all the occurrences of all the objects, which may include duplicates, in order.
+
+Example:
+```typescript
+new UnionOperator([stream])
+```
+
+#### UniqueOperator
+
+When given a single `HasOccurrences` object, it returns a unique/dedupliated stream of occurrences.
+
+Example:
+```typescript
+new UniqueOperator(stream)
+```
 
 ### DateAdapter interface
 
@@ -412,10 +479,9 @@ Feel free to open an issue if you have questions.
 
 ## Known Issues / Todo
 
-- This library does not support `EXRULE`. I'm, personally, not particularly interested in adding support (it's also deprecated in the spec). This being said, it should be pretty easy to add if you're interested in doing so, and I think I've designed all the interfaces specifically so `EXRULE` can be added in the future. All someone would need to do is write the logic to add `EXRule`'s to `Schedule` objects and have them delete occurrences, as appropriate. You'd also need to make sure that the ICAL parsing functions added EXRULE's. But I think `EXRULE` has the same API as `RRULE`, so again, it should be *really easy* for someone else to do this.
 - No `BYWEEKNO`, `BYYEARDAY`, or `BYSETPOS` rule support. "By day of year" and "by position in set" should both be pretty straightforward, they're just not something I need so not on my todo list.
   - "By week of year" is different though. I spent a fair bit trying to get it to work and its just SUPER annoying (because it can create a valid date for year A in year B. e.g. the Saturday of the last week of 1998 *is in the year 1999*). Anyway, obviously doable, I have no plans to implement it though.
-    
+- See the [1.0 roadmap](https://gitlab.com/john.carroll.p/rschedule/issues/5) issue.
 
 ### About
 

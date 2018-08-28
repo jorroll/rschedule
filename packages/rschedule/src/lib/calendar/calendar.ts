@@ -8,6 +8,7 @@ import {
 } from '../interfaces'
 import { Utils } from '../utilities'
 import { CollectionIterator, CollectionsArgs } from './collection'
+import { UnionOperator, TakeOperator } from '../operators';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')
 
@@ -15,7 +16,7 @@ export class Calendar<
   T extends DateAdapter<T>,
   S extends IHasOccurrences<T, any>,
   D = any
-> extends HasOccurrences<T>
+> extends HasOccurrences<T, Calendar<T,S,D>>
   implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, S, D>> {
   public schedules: S[] = []
 
@@ -156,12 +157,17 @@ export class Calendar<
   }
 
   /**
-   * Iterates over the calendar's occurrences and simply spits them out in order.
-   * Unlike `Schedule#occurrences()`, this method may spit out duplicate dates,
-   * each of which are associated with a different `Schedule`. To see what
-   * `Schedule` a date is associated with, you may use `DateAdapter#schedule`.
+   * Iterates over the calendar's occurrences and returns them in order.
+   * Unlike `Schedule#occurrences()`, this method may return duplicate dates,
+   * each of which are associated with a different `Schedule`.
+   * 
+   * Options object:
+   * - `start` the date to begin iteration on
+   * - `end` the date to end iteration on
+   * - `take` the max number of dates to take before ending iteration
+   * - `reverse` whether to iterate in reverse or not
    *
-   * @param args
+   * @param arg `OccurrencesArgs` options object
    */
   public occurrences(args: OccurrencesArgs<T> = {}) {
     return new OccurrenceIterator(this, args)
@@ -193,72 +199,21 @@ export class Calendar<
   // which is fully commented.
 
   /**  @private use collections() instead */
-  public *_run(args: CollectionsArgs<T> = {}) {
-    let cache = this.schedules
-      .map(schedule => {
-        const iterator = schedule.occurrences(args)
-        return {
-          iterator,
-          date: iterator.next().value,
-        }
-      })
-      .filter(item => !!item.date)
+  *_run(args: CollectionsArgs<T> = {}) {
+    let stream: IHasOccurrences<T, any> = new UnionOperator<T>(this.schedules)
 
-    let next: { iterator: OccurrenceIterator<T, any>; date?: T }
+    stream = new TakeOperator(stream)    
 
-    if (cache.length === 0) { return }
-    else {
-      next = selectNextUpcomingCacheObj(cache[0], cache, args.reverse)
-    }
-  
-    const count = args.take
-    let index = 0
-  
-    while (next.date && (count === undefined || count > index)) {
-      // add the current calendar to the metadata
-      next.date.generators.push(this)
-  
-      const yieldArgs = yield next.date.clone()
+    const iterator = stream._run(args)
 
-      if (yieldArgs && yieldArgs.skipToDate) {
-        cache.forEach(obj => {
-          obj.date = obj.iterator.next(yieldArgs).value
-        })
+    let date = iterator.next().value
 
-        cache = cache.filter(obj => !!obj.date)
+    while (date) {
+      date.generators.push(this)
 
-        if (cache.length === 0) return;
+      const yieldArgs = yield date.clone()
 
-        next = selectNextUpcomingCacheObj(cache[0], cache, args.reverse)  
-      }
-      else {
-        next.date = next.iterator.next().value
-  
-        if (!next.date) {
-          cache = cache.filter(item => item !== next)
-          next = cache[0]
-    
-          if (cache.length === 0) { break }
-        }
-    
-        next = selectNextUpcomingCacheObj(next, cache, args.reverse)  
-      }
-    
-      index++
+      date = iterator.next(yieldArgs).value
     }
   }
-}
-
-function selectNextUpcomingCacheObj<T extends DateAdapter<T>>(
-  current: { iterator: OccurrenceIterator<T, any>; date?: T },
-  cache: Array<{ iterator: OccurrenceIterator<T, any>; date?: T }>,
-  reverse?: boolean,
-) {
-  if (cache.length === 1) { return cache[0] }
-
-  return cache.reduce((prev, curr) => {
-    if (!curr.date) { return prev }
-    else if (reverse ? curr.date.isAfter(prev.date as T) : curr.date.isBefore(prev.date as T)) { return curr }
-    else { return prev }
-  }, current)
 }

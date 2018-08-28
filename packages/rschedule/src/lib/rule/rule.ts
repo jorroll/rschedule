@@ -14,7 +14,7 @@ import { buildValidatedRuleOptions, Options } from './rule-options'
 export type RuleArgs<T extends DateAdapter<T>, D = undefined> = [Options.ProvidedOptions<T>, {data?: D} | undefined]
 
 export abstract class Rule<T extends DateAdapter<T>, D = any>
-  extends HasOccurrences<T>
+  extends HasOccurrences<T, Rule<T>>
   implements Serializable, RunnableIterator<T>, IHasOccurrences<T, Rule<T, D>> {
   /**
    * NOTE: The options object is frozen. To make changes you must assign a new options object.
