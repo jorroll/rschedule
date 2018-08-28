@@ -35,11 +35,16 @@ export interface IHasOccurrences<
 export abstract class HasOccurrences<T extends DateAdapter<T>> {
   public isInfinite!: boolean
 
-  /** If generator is infinite, returns `undefined`. Otherwise returns the end date */
+  /** Returns the first occurrence or, if there are no occurrences, null. */
+  public get startDate(): T | null {  
+    return (this as any)._run().next().value || null
+  }  
+
+  /** If generator is infinite, returns `null`. Otherwise returns the end date */
   public get endDate() {
     if (this.isInfinite) return null;
 
-    return this.occurrences({reverse: true, take: 1}).toArray()![0]
+    return (this as any)._run({reverse: true}).next().value
   }
 
   // just to satisfy the interface
