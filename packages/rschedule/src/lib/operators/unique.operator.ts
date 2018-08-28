@@ -2,7 +2,11 @@ import { DateAdapter } from '../date-adapter'
 import { OccurrencesArgs } from '../interfaces'
 import { IOperator, StreamOperator } from './interface';
 
-export class UniqueOperator<T extends DateAdapter<T>> extends StreamOperator<T> implements IOperator<T> {
+export class UniqueOperator<T extends DateAdapter<T>> extends StreamOperator<T, UniqueOperator<T>> implements IOperator<T> {
+
+  clone() {
+    return new UniqueOperator(this.stream.clone())
+  }
 
   *_run(args: OccurrencesArgs<T> = {}) {
     const iterable = this.stream._run(args)

@@ -2,7 +2,11 @@ import { DateAdapter } from '../date-adapter'
 import { OccurrencesArgs } from '../interfaces'
 import { IOperator, StreamOperator } from './interface';
 
-export class TakeOperator<T extends DateAdapter<T>> extends StreamOperator<T> implements IOperator<T> {
+export class TakeOperator<T extends DateAdapter<T>> extends StreamOperator<T, TakeOperator<T>> implements IOperator<T> {
+
+  clone() {
+    return new TakeOperator(this.stream.clone())
+  }
 
   *_run(args: OccurrencesArgs<T> = {}) {
     const count = args.take;

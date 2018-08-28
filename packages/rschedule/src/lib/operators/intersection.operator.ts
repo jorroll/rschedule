@@ -2,15 +2,64 @@ import { DateAdapter } from '../date-adapter'
 import {
   OccurrencesArgs,
   RunnableIterator,
+  IHasOccurrences,
 } from '../interfaces'
 import { StreamsOperator, IOperator } from './interface';
 
-export class IntersectionOperator<T extends DateAdapter<T>> extends StreamsOperator<T> implements IOperator<T> {
+/**
+ * ## IntersectionOperator
+ * 
+ * The constructor takes an array of occurrence streams (objects implementing the
+ * `HasOccurrences` interface) as well as an options object.
+ * 
+ * When iterating, the iteration operator only returns occurrences
+ * which every stream object contains.
+ * 
+ * Because it's possible for all the streams to never intersect,
+ * and because the intersection operator's current ability to detect this lack of intersection
+ * is very poor, the IntersectionOperator must be constructed with either a
+ * `{maxFailedIterations: number}` argument or a `{defaultEndDate: T}` argument.
+ * 
+ * The `maxFailedIterations` argument caps the number of iterations `IterationOperator#_run()` will
+ * run through without finding a single valid occurrence. If this number is reached, the operator will
+ * stop iterating (preventing a possible infinite loop).
+ * 
+ * - Note: I'm going to emphasize that `maxFailedIterations` caps the number of iterations which
+ *   *fail to turn up a single valid occurrence*. Every time a valid occurrence is returned,
+ *   the current iteration count is reset to 0.
+ * 
+ * Alternatively, you can construct the operator with a `defaultEndDate` argument. This argument
+ * acts as the default `end` argument for `IterationOperator#_run()` for when you call that method
+ * without supplying an `end` argument (again, preventing possible infinite loops).
+ * 
+ * @param streams An array of objects adhering to the HasOccurrences interface
+ * @param maxFailedIterations see above
+ * @param defaultEndDate see above
+ */
+export class IntersectionOperator<T extends DateAdapter<T>> extends StreamsOperator<T, IntersectionOperator<T>> implements IOperator<T> {
+
   constructor(
-    protected streams: RunnableIterator<T>[] = [],
-    private options: {defaultEndDate?: T, maxFailedIterations?: number} = {},
+    streams: IHasOccurrences<T, any>[],
+    options: {defaultEndDate: T, maxFailedIterations?: number},
+  )
+  constructor(
+    streams: IHasOccurrences<T, any>[],
+    options: {defaultEndDate?: T, maxFailedIterations: number},
+  )
+  constructor(
+    protected streams: IHasOccurrences<T, any>[],
+    private options: {defaultEndDate?: T, maxFailedIterations?: number},
   ) {
     super(streams)
+
+    if (options.defaultEndDate) options.defaultEndDate = options.defaultEndDate.clone();
+  }
+
+  clone() {
+    return new IntersectionOperator(
+      this.streams.map(stream => stream.clone()),
+      {...this.options} as any
+    )
   }
 
   *_run(args: OccurrencesArgs<T> = {}) {
@@ -149,9 +198,16 @@ function getNextIntersectingIterator<T extends DateAdapter<T>>(
   if (!farthest) return;
 
   cache.forEach(obj => {
+    if (
+      reverse
+      ? obj.date!.isBeforeOrEqual(farthest.date as T)
+      : obj.date!.isAfterOrEqual(farthest.date as T)
+    ) {
+      return;
+    }
     // skip to the farthest ahead date
     obj.date = obj.iterator.next({
-      skipToDate: farthest.date!,
+      skipToDate: farthest.date,
     }).value
   })
 

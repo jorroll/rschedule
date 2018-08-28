@@ -32,10 +32,12 @@ export function parseICalStrings<
   dateAdapterConstructor: T
 ): {
   rrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>>
+  exrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>>
   rdates: InstanceOfDateAdapterConstructor<T>[]
   exdates: InstanceOfDateAdapterConstructor<T>[]
 } {
   const rrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>> = []
+  const exrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>> = []
   const rdates: InstanceOfDateAdapterConstructor<T>[] = []
   const exdates: InstanceOfDateAdapterConstructor<T>[] = []
 
@@ -49,7 +51,7 @@ export function parseICalStrings<
       const parts = part.split(':')
       const name = parts[0]
 
-      if (name === 'RRULE') {
+      if (['RRULE', 'EXRULE'].includes(name)) {
         const options = parts[1].split(';').map(op => op.split('='))
         const parsedOptions: any = {
           start: dtstart,
@@ -111,7 +113,7 @@ export function parseICalStrings<
           }
         })
 
-        rrules.push(parsedOptions)
+        name === 'RRULE' ? rrules.push(parsedOptions) : exrules.push(parsedOptions)
       } else if (name === 'RDATE') {
         const time = dateAdapterConstructor.fromTimeObject(
           parseDatetime(parts[1])
@@ -132,6 +134,7 @@ export function parseICalStrings<
     rdates,
     exdates,
     rrules,
+    exrules,
   }
 }
 

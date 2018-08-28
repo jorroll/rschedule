@@ -1,8 +1,8 @@
 import { DateAdapter } from '../date-adapter'
-import { OccurrencesArgs, RunnableIterator } from '../interfaces'
+import { OccurrencesArgs, IHasOccurrences } from '../interfaces'
 import { IOperator, StreamOperator } from './interface';
 
-export class ExcludeOperator<T extends DateAdapter<T>> extends StreamOperator<T> implements IOperator<T> {
+export class ExcludeOperator<T extends DateAdapter<T>> extends StreamOperator<T, ExcludeOperator<T>> implements IOperator<T> {
 
   // to make sure this stays in sync with StreamOperator ancestor
   protected get stream() { return this.include }
@@ -12,9 +12,13 @@ export class ExcludeOperator<T extends DateAdapter<T>> extends StreamOperator<T>
    * @param include The stream containing dates you wish to include.
    */
   constructor(
-    protected exclude: RunnableIterator<T>,
-    protected include: RunnableIterator<T>,
+    protected exclude: IHasOccurrences<T, any>,
+    protected include: IHasOccurrences<T, any>,
   ) { super(include) }
+
+  clone() {
+    return new ExcludeOperator(this.exclude.clone(), this.include.clone())
+  }
 
   *_run(args: OccurrencesArgs<T> = {}) {
     const positiveIterator = this.include._run(args)

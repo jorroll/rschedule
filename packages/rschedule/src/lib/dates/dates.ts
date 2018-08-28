@@ -13,7 +13,7 @@ import { Utils } from '../utilities'
 /**
  * This base class provides a `HasOccurrences` API wrapper around arrays of dates
  */
-export class Dates<T extends DateAdapter<T>, D=any> extends HasOccurrences<T>
+export class Dates<T extends DateAdapter<T>, D=any> extends HasOccurrences<T, Dates<T>>
   implements
     Serializable,
     RunnableIterator<T>,

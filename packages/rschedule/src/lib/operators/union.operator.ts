@@ -3,13 +3,19 @@ import { OccurrencesArgs } from '../interfaces'
 import { StreamsOperator, IOperator } from './interface';
 import { Utils } from '../utilities';
 
-export class UnionOperator<T extends DateAdapter<T>> extends StreamsOperator<T> implements IOperator<T> {
+export class UnionOperator<T extends DateAdapter<T>> extends StreamsOperator<T, UnionOperator<T>> implements IOperator<T> {
 
   get startDate() {
     return Utils.getEarliestDate(
       this.streams
       .map(stream => stream.startDate)
       .filter(date => !!date) as T[]
+    )
+  }
+
+  clone() {
+    return new UnionOperator(
+      this.streams.map(stream => stream.clone())
     )
   }
 

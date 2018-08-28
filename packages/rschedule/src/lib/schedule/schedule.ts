@@ -7,26 +7,22 @@ import { parseICalStrings } from '../ical/parser'
 import {
   HasOccurrences,
   IHasOccurrences,
-  OccurrenceIterator,
   OccurrencesArgs,
-  RunnableIterator,
   Serializable,
+  OccurrenceIterator,
 } from '../interfaces'
 import { RRule, Rule, RuleArgs } from '../rule'
 import { EXDates, RDates } from '../dates'
 import { Options } from '../rule/rule-options'
 import { UnionOperator, ExcludeOperator, UniqueOperator, TakeOperator } from '../operators';
+import { EXRule } from '../rule/exrule';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')
 
-export class Schedule<
-  T extends DateAdapter<T>,
-  D = any
-> extends HasOccurrences<T>
-  implements
-    Serializable,
-    RunnableIterator<T>,
-    IHasOccurrences<T, Schedule<T, D>> {
+export class Schedule<T extends DateAdapter<T>, D = any>
+  extends HasOccurrences<T, Schedule<T>>
+  implements Serializable, IHasOccurrences<T, Schedule<T, D>>
+{
 
   get isInfinite() {
     return this.rrules.some(rule => rule.isInfinite)
@@ -61,6 +57,7 @@ export class Schedule<
   }
   
   public rrules: RRule<T>[] = []
+  public exrules: EXRule<T>[] = []
   public rdates = new RDates<T>()
   public exdates = new EXDates<T>()
 
@@ -70,6 +67,7 @@ export class Schedule<
   constructor(args: {
     data?: D
     rrules?: (RuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>)[]
+    exrules?: (RuleArgs<T> | Options.ProvidedOptions<T> | EXRule<T>)[]
     rdates?: T[] | RDates<T>
     exdates?: T[] | EXDates<T>
   } = {}) {
@@ -87,6 +85,17 @@ export class Schedule<
           return new RRule(args)
       })
     }
+    if (args.exrules) {
+      this.exrules = args.exrules.map(args => {
+        if (Array.isArray(args))
+          // @ts-ignore typescript doesn't like spread operator
+          return  new EXRule(...args)
+        else if (EXRule.isEXRule(args))
+          return args.clone()
+        else
+          return new EXRule(args)
+      })
+    }
     if (args.rdates) { this.rdates = RDates.isRDates(args.rdates) ? args.rdates.clone() : new RDates({dates: args.rdates}) }
     if (args.exdates) { this.exdates = EXDates.isEXDates(args.exdates) ? args.exdates.clone() : new EXDates({dates: args.exdates}) }
   }
@@ -95,6 +104,7 @@ export class Schedule<
     const icals: string[] = []
 
     this.rrules.forEach(rule => icals.push(rule.toICal()))
+    this.exrules.forEach(rule => icals.push(rule.toICal()))
     if (this.rdates.length > 0) { icals.push(this.rdates.toICal()) }
     if (this.exdates.length > 0) { icals.push(this.exdates.toICal()) }
 
@@ -107,6 +117,7 @@ export class Schedule<
    */
   public setTimezone(timezone: string | undefined, options: {keepLocalTime?: boolean} = {}) {
     this.rrules.forEach(rule => rule.setTimezone(timezone, options))
+    this.exrules.forEach(rule => rule.setTimezone(timezone, options))
     this.rdates.setTimezone(timezone, options)
     this.exdates.setTimezone(timezone, options)
 
@@ -122,23 +133,35 @@ export class Schedule<
     return new Schedule<T, D>({
       data: this.data,
       rrules: this.rrules,
+      // exrules: this.exrules,
       rdates: this.rdates,
       exdates: this.exdates,
     })
   }
 
-  public occurrences(
-    args: OccurrencesArgs<T> = {}
-  ): OccurrenceIterator<T, Schedule<T, D>> {
+  /**
+   * Processed the internal rrules, exrules, rdates, and exdates and
+   * iterates over the resulting occurrences. Occurrences are deduplicated.
+   *
+   * Options object:
+   * - `start` the date to begin iteration on
+   * - `end` the date to end iteration on
+   * - `take` the max number of dates to take before ending iteration
+   * - `reverse` whether to iterate in reverse or not
+   *
+   * @param arg `OccurrencesArgs` options object
+   */
+  public occurrences(args: OccurrencesArgs<T> = {}) {
     return new OccurrenceIterator(this, args)
   }
-
 
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
   public occursOn(args: {date: T}): boolean
   /**
+   * **DOES NOT CURRENTLY TAKE INTO ACCOUNT EXRULES.**
+   * 
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * 
    * Optional arguments:
@@ -173,21 +196,33 @@ export class Schedule<
   }
 
   /**  @private use occurrences() instead */
-  _run(args: OccurrencesArgs<T> = {}) {
-    const rruleOccurrences = new UnionOperator<T>(this.rrules)
+  *_run(args: OccurrencesArgs<T> = {}) {
+    let stream: IHasOccurrences<T, any> = new UnionOperator<T>(this.rrules)
 
-    // const exruleOccurrences = new UnionOperator<T>(this.exrules)
+    if (this.exrules.length > 0) {
+      stream = new ExcludeOperator(new UnionOperator<T>(this.exrules), stream)  
+    }
 
-    // const stepOne = new ExcludeOperator(exruleOccurrences, rruleOccurrences)
+    stream = new UnionOperator<T>([stream, this.rdates])
 
-    const stepTwo = new UnionOperator<T>([rruleOccurrences, this.rdates])
+    if (this.exdates.dates.length > 0) {
+      stream = new ExcludeOperator(this.exdates, stream)
+    }
 
-    const stepThree = new ExcludeOperator(this.exdates, stepTwo)
+    stream = new UniqueOperator(stream)
 
-    const stepFour = new UniqueOperator(stepThree)
+    stream = new TakeOperator(stream)
 
-    const stepFive = new TakeOperator(stepFour)
+    const iterator = stream._run(args)
 
-    return stepFive._run(args)
+    let date = iterator.next().value
+
+    while (date) {
+      date.generators.push(this)
+
+      const yieldArgs = yield date.clone()
+
+      date = iterator.next(yieldArgs).value
+    }
   }
 }
