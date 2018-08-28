@@ -42,7 +42,11 @@ yarn add @rschedule/rschedule @rschedule/standard-date-adapter
 npm install @rschedule/rschedule @rschedule/standard-date-adapter
 ```
 
-## [See the wiki for more information](https://gitlab.com/john.carroll.p/rschedule/wikis/home)
+rSchedule makes use of a fairly simple `DateAdapter` wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
+
+`StandardDateAdapter`, `LuxonDateAdapter`, `MomentDateAdapter`, and `MomentTZDateAdapter` packages currently exists which provide a `DateAdapter` complient wrapper for the standard javascript `Date` object, as well as [`moment`](https://momentjs.com), [`moment-timezone`](https://momentjs.com), and [luxon `DateTime`](https://moment.github.io/luxon/) objects. Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the [DateAdapter section](https://gitlab.com/john.carroll.p/rschedule/wikis/usage/date-adapter) for more info.
+
+## [See the wiki for more information](https://gitlab.com/john.carroll.p/rschedule/wikis/home#installation)
 
 The wiki page has more information on rSchedule and how to use it.
 
