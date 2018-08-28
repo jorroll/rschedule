@@ -103,10 +103,11 @@ This library can serialize `RRule` and `Schedule` objects to / from `ICAL` forma
 
 ## Usage
 
-This library has three basic parts:
+This library has four basic parts:
 - `Rule`
 - `Schedule`
 - `Calendar`
+- `IntersectionCalendar`
 
 It also has makes use of a `DateAdapter` interface to abstract away from individual date implementations. As mentioned, a `StandardDateAdapter` is included for use with the javascript `Date` object (which only supports local and UTC time).
 
@@ -210,7 +211,9 @@ interface HasOccurrences<T extends DateAdapter<T>> {
 
 ### Calendar class
 
-`Calendar` objects support iterating through groups of `Schedule` objects (and `Schedule` objects support iterating through groups of `RRule` objects). Unlike Schedule or RRule objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different Schedule). As such, Calendar objects have `Calendar#collections()` which groups occurrences into a `Collection` by a specified `granularity` before yielding the `Collection`.
+`Calendar` objects support iterating through *the union* of a group of `HasOccurrences` objects occurrence's. Unlike Schedule or RRule objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different object). Because `Calendar` objects are constructed from objects, which implement the `HasOccurrences` interface, you can construct calendars out of other Calendars, out of Schedules, IntersectionCalendars, Rules, etc.
+
+Calendar objects have `Calendar#collections()` which groups occurrences into a `Collection` by a specified `granularity` before yielding the `Collection`.
 
 `collections()` granularity options are:
 - `"INSTANTANIOUSLY"` -- default
@@ -236,11 +239,16 @@ As you iterate through a Calendar using `collections()`, the object will return 
 collections(args: {start?: T; end?: T; take?: number; granularity?: Granularity; weekStart?: Options.Weekstart}): CollectionIterator<T>
 ```
 
-You can create a calendar object by feeding it an array of schedules
+You can create a calendar object by feeding it an array of objects implementing `HasOccurrences`
 
 ```typescript
+
+const scheduleOne = new Schedule()
+
+const scheduleTwo = new Calendar()
+
 const calendar = new Calendar({
-  schedules: []
+  schedules: [scheduleOne, scheduleTwo]
 })
 
 const args = {
@@ -252,7 +260,9 @@ let pageTitle: string
 
 for (const collection of calendar.collections(args)) {
   for (const date of collection.dates) {
-    const data = date.schedule.data // arbitrary data property for you to use
+    const schedule = date.generators[1]
+    
+    const data = schedule.data // arbitrary data property for you to use
 
     data.name // 'My great event'
 
@@ -274,25 +284,26 @@ The DateAdapter object that this library consumes has the following interface:
 
 ```typescript
 interface DateAdapter<T, D=any> {
-  /** The `Rule` which generated this `DateAdapter` */
-  rule: any | undefined
-  /** The `Schedule` which generated this `DateAdapter` */
-  schedule: any | undefined
-  /** The `Calendar` which generated this `DateAdapter` */
-  calendar: any | undefined
+  /** 
+   * This property contains an ordered array of the generator objects
+   * responsible for producing this DateAdapter.
+   * 
+   * - If this DateAdapter was produced by a `RRule` object, this array
+   *   will just contain the `RRule` object.
+   * - If this DateAdapter was produced by a `Schedule` object, this
+   *   array will contain the `Schedule` object as well as the `RRule`
+   *   or `RDates` object which generated it.
+   * - If this DateAdapter was produced by a `Calendar` object, this
+   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
+   *   `RRule`/`RDates` objects which generated it.
+   */
+  generators: any[]
+
   /** Returns a duplicate of original DateAdapter */
   clone(): T
 
   /** Returns the date object this DateAdapter is wrapping */
   date: D
-
-  /**
-   * Returns the date's timezone
-   * 
-   * - if "UTC" then `"UTC"`
-   * - if local then `undefined`
-   */
-  timezone: string | undefined
 
   // in minutes
   utcOffset: number
@@ -312,9 +323,18 @@ interface DateAdapter<T, D=any> {
   get(unit: 'minute'): number
   get(unit: 'second'): number
   get(unit: 'millisecond'): number
+  /**
+   * Returns the date's timezone
+   * 
+   * - if "UTC" then `"UTC"`
+   * - if local then `undefined`
+   * - otherwise then `string`
+   */
+  get(unit: 'timezone'): string | undefined
 
   /** mutates original object */
   set(unit: DateAdapter.Unit, value: number): T
+  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): T
 
   /** same format as new Date().toISOString() */
   toISOString(): string
