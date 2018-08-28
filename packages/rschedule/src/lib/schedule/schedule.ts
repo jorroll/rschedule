@@ -98,8 +98,8 @@ export class Schedule<
           return new RRule(args)
       })
     }
-    if (args.rdates) { this.rdates = RDates.isRDates(args.rdates) ? args.rdates.clone() : new RDates(args.rdates) }
-    if (args.exdates) { this.exdates = EXDates.isEXDates(args.exdates) ? args.exdates.clone() : new EXDates(args.exdates) }
+    if (args.rdates) { this.rdates = RDates.isRDates(args.rdates) ? args.rdates.clone() : new RDates({dates: args.rdates}) }
+    if (args.exdates) { this.exdates = EXDates.isEXDates(args.exdates) ? args.exdates.clone() : new EXDates({dates: args.exdates}) }
   }
 
   public toICal() {

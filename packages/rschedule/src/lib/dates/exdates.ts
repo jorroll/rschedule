@@ -24,7 +24,7 @@ export class EXDates<T extends DateAdapter<T>> extends Dates<T> {
    * Returns a clone of the EXDates object.
    */
   public clone() {
-    return new EXDates<T>(this.dates.map(date => date.clone()))
+    return new EXDates<T>({dates: this.dates.map(date => date.clone()), data: this.data})
   }
 
   public toICal() {

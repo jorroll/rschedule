@@ -13,7 +13,7 @@ import { Utils } from '../utilities'
 /**
  * This base class provides a `HasOccurrences` API wrapper around arrays of dates
  */
-export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
+export class Dates<T extends DateAdapter<T>, D=any> extends HasOccurrences<T>
   implements
     Serializable,
     RunnableIterator<T>,
@@ -28,10 +28,12 @@ export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
   }
 
   public dates: T[] = []
+  public data?: D
 
-  constructor(dates?: T[]) {
+  constructor(args: {dates?: T[], data?: D} = {}) {
     super()
-    if (dates) this.dates = dates
+    if (args.dates) this.dates = args.dates
+    this.data = args.data
   }
 
   public occurrences(args: OccurrencesArgs<T> = {}) {
@@ -125,7 +127,7 @@ export class Dates<T extends DateAdapter<T>> extends HasOccurrences<T>
   }
 
   public clone() {
-    return new Dates(this.dates.map(date => date.clone()))
+    return new Dates({dates: this.dates.map(date => date.clone()), data: this.data})
   }
 
   public toICal() {
