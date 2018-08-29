@@ -8,7 +8,7 @@ import { Dates } from './dates'
 
 const RDATES_ID = Symbol.for('10c93605-2fb8-4ab5-ba54-635f19cd81f4')
 
-export class RDates<T extends DateAdapter<T>> extends Dates<T> {
+export class RDates<T extends DateAdapter<T>, D=any> extends Dates<T, D> {
   public readonly [RDATES_ID] = true
 
   /**

@@ -8,7 +8,7 @@ import { datesToIcalString } from '../ical'
 
 const EXDATES_ID = Symbol.for('3c83a9bf-13dc-4045-8361-0d55744427e7')
 
-export class EXDates<T extends DateAdapter<T>> extends Dates<T> {
+export class EXDates<T extends DateAdapter<T>, D=any> extends Dates<T, D> {
   public readonly [EXDATES_ID] = true
 
   /**
