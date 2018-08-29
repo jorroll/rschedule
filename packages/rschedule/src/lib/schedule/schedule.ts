@@ -203,7 +203,9 @@ export class Schedule<T extends DateAdapter<T>, D = any>
       stream = new ExcludeOperator(new UnionOperator<T>(this.exrules), stream)  
     }
 
-    stream = new UnionOperator<T>([stream, this.rdates])
+    if (this.rdates.dates.length > 0) {
+      stream = new UnionOperator<T>([stream, this.rdates])
+    }
 
     if (this.exdates.dates.length > 0) {
       stream = new ExcludeOperator(this.exdates, stream)
