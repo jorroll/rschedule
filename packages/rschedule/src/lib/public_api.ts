@@ -6,7 +6,7 @@ export * from './date-adapter'
 export * from './schedule'
 export * from './calendar'
 
-export { OccurrencesArgs, OccurrenceIterator } from './interfaces'
+export { OccurrencesArgs, OccurrenceIterator, IHasOccurrences } from './interfaces'
 
 export * from './rule/public_api'
 export * from './dates/public_api'
