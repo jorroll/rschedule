@@ -37,6 +37,9 @@ import { StreamsOperator, IOperator } from './interface';
  * @param defaultEndDate see above
  */
 export class IntersectionOperator<T extends DateAdapter<T>> extends StreamsOperator<T, IntersectionOperator<T>> implements IOperator<T> {
+  get isInfinite() {
+    return !this.streams.some(stream => !stream.isInfinite)
+  }
 
   constructor(
     streams: IHasOccurrences<T, any>[],
