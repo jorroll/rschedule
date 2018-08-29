@@ -113,7 +113,9 @@ export class Dates<T extends DateAdapter<T>, D=any> extends HasOccurrences<T, Da
         yieldArgs = undefined;
       }
 
-      yieldArgs = yield date
+      date.generators.push(this)
+
+      yieldArgs = yield date.clone()
 
       if (yieldArgs && yieldArgs.skipToDate) {
         // need to reset the date cache to allow the same date to be picked again.
