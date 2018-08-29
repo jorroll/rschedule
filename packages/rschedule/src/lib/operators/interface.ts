@@ -71,6 +71,10 @@ abstract class Operator<T extends DateAdapter<T>, K extends RunnableIterator<T>>
   }
 }
 
+/**
+ * Used for operators that accept an array of streams in the constructor
+ */
+
 export abstract class StreamsOperator<T extends DateAdapter<T>, K extends RunnableIterator<T>> extends Operator<T, K> {
   get isInfinite() {
     return this.streams.some(stream => stream.isInfinite)
@@ -108,6 +112,10 @@ export abstract class StreamsOperator<T extends DateAdapter<T>, K extends Runnab
       return super.occursOn(args as {date: T})
   }
 }
+
+/**
+ * Used for operators that accept only a single stream in the constructor
+ */
 
 export abstract class StreamOperator<T extends DateAdapter<T>, K extends RunnableIterator<T>> extends Operator<T, K> {
   public get isInfinite() {
