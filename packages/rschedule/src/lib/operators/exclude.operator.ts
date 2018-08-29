@@ -6,6 +6,7 @@ export class ExcludeOperator<T extends DateAdapter<T>> extends StreamOperator<T,
 
   // to make sure this stays in sync with StreamOperator ancestor
   protected get stream() { return this.include }
+  protected set stream(value) { this.include = value }
 
   /**
    * @param exclude The stream containing dates you wish to exclude.
