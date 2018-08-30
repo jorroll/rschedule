@@ -5,7 +5,7 @@ import { add } from './add.operator'
 
 /**
  * An operator function, intended as an argument for
- * `buildIterator()`, which gets excludes the occurrences of input arguments from the
+ * `buildIterator()`, which excludes the occurrences of input arguments from the
  * occurrences of the previous schedule's occurrences in the `buildIterator` pipe.
  * 
  * @param inputs a spread of scheduling objects

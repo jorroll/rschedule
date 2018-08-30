@@ -1,7 +1,5 @@
 import { DateAdapter } from '../date-adapter'
-import { OccurrencesArgs } from '../interfaces'
-import { OperatorInput, OperatorOutput } from './interface';
-import { add } from './add.operator';
+import { OperatorOutput } from './interface';
 
 /**
  * An operator function, intended as an argument for `buildIterator()`,
@@ -10,27 +8,22 @@ import { add } from './add.operator';
  * 
  * @param inputs a spread of scheduling objects
  */
-export function unique<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
-  return (base?: IterableIterator<T>) => {
+export function unique<T extends DateAdapter<T>>(): OperatorOutput<T> {
+  return (base?: IterableIterator<T>, baseIsInfinite?: boolean) => {
     return {
-      get isInfinite() { return inputs.some(input => input.isInfinite) },
+      get isInfinite() { return !!baseIsInfinite },
 
-      setTimezone(timezone: string | undefined, options?: {keepLocalTime?: boolean}) {
-        inputs.forEach(input => input.setTimezone(timezone, options))
-      },
+      setTimezone() {},
 
       clone() {
-        return unique(...inputs.map(input => input.clone()))(base)
+        return unique()(base, baseIsInfinite)
       },
 
-      *_run(args: OccurrencesArgs<T>={}) {
+      *_run() {
         let iterable: IterableIterator<T>
         
-        if (base && inputs.length === 0) {
+        if (base) {
           iterable = base
-        }
-        else if (inputs.length > 0) {
-          iterable = add(...inputs)(base)._run(args)
         }
         else {
           return
