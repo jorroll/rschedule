@@ -1,7 +1,7 @@
 export * from './interface'
 
-export * from './exclude.operator'
+export * from './subtract.operator'
 export * from './intersection.operator'
-export * from './take.operator'
-export * from './union.operator'
+export * from './add.operator'
 export * from './unique.operator'
+export * from './build-iterator'

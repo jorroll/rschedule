@@ -2,12 +2,15 @@ import { dateAdapter, isoString } from './utilities'
 import {
   OccurrencesArgs,
   Schedule,
-  IntersectionOperator,
+  buildIterator,
+  intersection,
+  OperatorObject,
+  Calendar,
 } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
 function toISOStringsOCC(
-  calendar: IntersectionOperator<StandardDateAdapter>,
+  calendar: Calendar<StandardDateAdapter, any>,
   args?: OccurrencesArgs<StandardDateAdapter>
 ) {
   return calendar
@@ -16,15 +19,7 @@ function toISOStringsOCC(
     .map(occ => occ.toISOString())
 }
 
-describe('CalendarClass', () => {
-  it('is instantiable', () => expect(
-    new IntersectionOperator<StandardDateAdapter>([], {
-      maxFailedIterations: 50
-    })
-  ).toBeInstanceOf(IntersectionOperator))
-})
-
-describe('IntersectionCalendar', () => {
+describe('Intersection Calendar', () => {
   describe('#occurrences()', () => {
     describe('NO args', () => {
       it('with a single schedule', () => {
@@ -41,7 +36,7 @@ describe('IntersectionCalendar', () => {
           ],
         })
 
-        const calendar = new IntersectionOperator([schedule], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 5, 9, 0),
@@ -103,7 +98,9 @@ describe('IntersectionCalendar', () => {
           ]
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        
+
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -149,7 +146,7 @@ describe('IntersectionCalendar', () => {
           ],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -187,7 +184,7 @@ describe('IntersectionCalendar', () => {
           ],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 1, 9, 0),
@@ -203,7 +200,7 @@ describe('IntersectionCalendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([])
       })
@@ -219,7 +216,7 @@ describe('IntersectionCalendar', () => {
           exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(2017, 1, 1, 9, 0),
@@ -232,7 +229,7 @@ describe('IntersectionCalendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new IntersectionOperator([schedule], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
         expect(toISOStringsOCC(calendar)).toEqual([])
       })
@@ -285,7 +282,7 @@ describe('IntersectionCalendar', () => {
           exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo, scheduleThree], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo, scheduleThree))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -309,7 +306,7 @@ describe('IntersectionCalendar', () => {
           ],
         })
 
-        const calendar = new IntersectionOperator([schedule], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
           isoString(1998, 1, 5, 9, 0),
@@ -357,7 +354,7 @@ describe('IntersectionCalendar', () => {
           ],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar, { reverse: true })).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -379,7 +376,7 @@ describe('IntersectionCalendar', () => {
           ],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar, { reverse: true })).toEqual([
           isoString(1998, 1, 1, 9, 0),
@@ -395,7 +392,7 @@ describe('IntersectionCalendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 20, 9, 0), reverse: true })).toEqual([])
       })
@@ -411,7 +408,7 @@ describe('IntersectionCalendar', () => {
           exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new IntersectionOperator([scheduleOne, scheduleTwo], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
           isoString(2017, 1, 1, 9, 0),
@@ -424,7 +421,7 @@ describe('IntersectionCalendar', () => {
           exdates: [dateAdapter(1998, 1, 1, 9, 0)],
         })
 
-        const calendar = new IntersectionOperator([schedule], { maxFailedIterations: 50 })
+        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
         expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
       })

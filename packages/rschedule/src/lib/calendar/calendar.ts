@@ -6,15 +6,15 @@ import {
   OccurrencesArgs,
   RunnableIterator,
 } from '../interfaces'
-import { Utils } from '../utilities'
 import { CollectionIterator, CollectionsArgs } from './collection'
-import { UnionOperator, TakeOperator } from '../operators';
+import { add, OperatorObject } from '../operators';
+import { Utils } from '../utilities';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')
 
 export class Calendar<
   T extends DateAdapter<T>,
-  S extends IHasOccurrences<T, any>,
+  S extends OperatorObject<T>,
   D = any
 > extends HasOccurrences<T, Calendar<T,S,D>>
   implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, S, D>> {
@@ -22,12 +22,6 @@ export class Calendar<
 
   /** Convenience property for holding arbitrary data */
   public data!: D
-
-  get startDate() {
-    return Utils.getEarliestDate(this.schedules
-      .map(schedule => schedule.startDate)
-      .filter(date => !!date) as T[])
-  }
 
   get isInfinite() {
     return this.schedules.some(schedule => schedule.isInfinite)
@@ -179,41 +173,78 @@ export class Calendar<
   public occursOn(args: {date: T}): boolean
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
+   * By default, only checks dates in the first year.
    * 
    * Optional arguments:
    * 
    * - `after` and `before` arguments can be provided which limit the
    *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
+   *   - by default, `before` is equal to 1 year from the start date.
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
   public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
   public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean {
-    if (args.weekday)
-      return this.schedules.some(schedule => schedule.occursOn(args as {weekday: DateAdapter.Weekday}))
+    if (args.weekday) {
+      const start = args.after && (args.excludeEnds ? args.after.clone().add(1, 'day') : args.after)
+      let end = args.before && (args.excludeEnds ? args.before.clone().subtract(1, 'day') : args.before)
+
+      const iterator = this._run({start, end})
+
+      let date = iterator.next().value
+
+      if (!date) return false;
+
+      if (!end) end = date.clone().add(1, 'year');
+
+      while (date && date.isBefore(end)) {
+        if (date.get('weekday') === args.weekday) {
+          return true
+        }
+
+        date = iterator.next({
+          skipToDate: date.add(
+            Utils.differenceInDaysBetweenTwoWeekdays(date.get('weekday'), args.weekday),
+            'day'
+          )
+        }).value
+      }
+
+      return false
+    }
     else
       return super.occursOn(args as {date: T})
   }
 
-  // `_run()` follows in the footsteps of `Schedule#_run()`,
-  // which is fully commented.
-
   /**  @private use collections() instead */
   *_run(args: CollectionsArgs<T> = {}) {
-    let stream: IHasOccurrences<T, any> = new UnionOperator<T>(this.schedules)
+    const count = args.take;
+    
+    delete args.take;
 
-    stream = new TakeOperator(stream)    
+    let iterator: IterableIterator<T>
 
-    const iterator = stream._run(args)
+    switch (this.schedules.length) {
+      case 0: return
+      case 1:
+        iterator = this.schedules[0]._run(args)
+        break
+      default:
+        iterator = add(...this.schedules)()._run(args)
+        break
+    }
 
     let date = iterator.next().value
+    let index = 0
 
-    while (date) {
+    while (date && (count === undefined || count > index)) {
       date.generators.push(this)
 
       const yieldArgs = yield date.clone()
 
       date = iterator.next(yieldArgs).value
+
+      index++
     }
   }
 }

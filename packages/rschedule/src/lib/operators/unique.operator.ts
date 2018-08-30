@@ -1,35 +1,62 @@
 import { DateAdapter } from '../date-adapter'
 import { OccurrencesArgs } from '../interfaces'
-import { IOperator, StreamOperator } from './interface';
+import { OperatorInput, OperatorOutput } from './interface';
+import { add } from './add.operator';
 
-export class UniqueOperator<T extends DateAdapter<T>> extends StreamOperator<T, UniqueOperator<T>> implements IOperator<T> {
+/**
+ * An operator function, intended as an argument for `buildIterator()`,
+ * which combines the input occurrence streams, if any, with the previous occurrence stream
+ * in the `buildIterator()` pipe and removes any duplicate dates from the stream.
+ * 
+ * @param inputs a spread of scheduling objects
+ */
+export function unique<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
+  return (base?: IterableIterator<T>) => {
+    return {
+      get isInfinite() { return inputs.some(input => input.isInfinite) },
 
-  clone() {
-    return new UniqueOperator(this.stream.clone())
-  }
+      setTimezone(timezone: string | undefined, options?: {keepLocalTime?: boolean}) {
+        inputs.forEach(input => input.setTimezone(timezone, options))
+      },
 
-  *_run(args: OccurrencesArgs<T> = {}) {
-    const iterable = this.stream._run(args)
+      clone() {
+        return unique(...inputs.map(input => input.clone()))(base)
+      },
 
-    const firstDate = iterable.next().value as T | undefined
+      *_run(args: OccurrencesArgs<T>={}) {
+        let iterable: IterableIterator<T>
+        
+        if (base && inputs.length === 0) {
+          iterable = base
+        }
+        else if (inputs.length > 0) {
+          iterable = add(...inputs)(base)._run(args)
+        }
+        else {
+          return
+        }
+        
+        const firstDate = iterable.next().value as T | undefined
 
-    if (!firstDate) return;
+        if (!firstDate) return;
 
-    const cache = {
-      iterator: iterable,
-      date: firstDate,
-      mostRecentlyYieldedDate: firstDate.clone(),
-    }
+        const cache = {
+          iterator: iterable,
+          date: firstDate,
+          mostRecentlyYieldedDate: firstDate.clone(),
+        }
 
-    // iterate over the cache objects until we run out of dates or hit our max count
-    while (cache.date) {
-      const yieldArgs = yield cache.date.clone()
+        // iterate over the cache objects until we run out of dates or hit our max count
+        while (cache.date) {
+          const yieldArgs = yield cache.date.clone()
 
-      cache.mostRecentlyYieldedDate = cache.date.clone()
+          cache.mostRecentlyYieldedDate = cache.date.clone()
 
-      cache.date = cache.iterator.next(yieldArgs).value
+          cache.date = cache.iterator.next(yieldArgs).value
 
-      if (!iterateCacheToNextUniqueDate(cache)) return;
+          if (!iterateCacheToNextUniqueDate(cache)) return;
+        }
+      }
     }
   }
 }

@@ -1,23 +1,17 @@
 import { DateAdapter } from '../date-adapter'
 import {
   OccurrencesArgs,
-  RunnableIterator,
-  IHasOccurrences,
 } from '../interfaces'
-import { StreamsOperator, IOperator } from './interface';
+import { OperatorInput, OperatorOutput } from './interface';
 
 /**
- * ## IntersectionOperator
- * 
- * The constructor takes an array of occurrence streams (objects implementing the
- * `HasOccurrences` interface) as well as an options object.
- * 
- * When iterating, the iteration operator only returns occurrences
- * which every stream object contains.
+ * An operator function, intended as an argument for
+ * `buildIterator()`, which takes a spread of occurrence streams and only
+ * returns the dates which intersect every occurrence stream.
  * 
  * Because it's possible for all the streams to never intersect,
- * and because the intersection operator's current ability to detect this lack of intersection
- * is very poor, the IntersectionOperator must be constructed with either a
+ * and because the intersection operator can't detect this lack of intersection,
+ * the IntersectionOperator must be constructed with either a
  * `{maxFailedIterations: number}` argument or a `{defaultEndDate: T}` argument.
  * 
  * The `maxFailedIterations` argument caps the number of iterations `IterationOperator#_run()` will
@@ -32,95 +26,104 @@ import { StreamsOperator, IOperator } from './interface';
  * acts as the default `end` argument for `IterationOperator#_run()` for when you call that method
  * without supplying an `end` argument (again, preventing possible infinite loops).
  * 
- * @param streams An array of objects adhering to the HasOccurrences interface
- * @param maxFailedIterations see above
- * @param defaultEndDate see above
+ * @param options On object containing the defaultEndDate and/or maxFailedIterations args
+ * @param inputs a spread of occurrence streams
  */
-export class IntersectionOperator<T extends DateAdapter<T>> extends StreamsOperator<T, IntersectionOperator<T>> implements IOperator<T> {
-  get isInfinite() {
-    return !this.streams.some(stream => !stream.isInfinite)
-  }
 
-  constructor(
-    streams: IHasOccurrences<T, any>[],
-    options: {defaultEndDate: T, maxFailedIterations?: number},
-  )
-  constructor(
-    streams: IHasOccurrences<T, any>[],
-    options: {defaultEndDate?: T, maxFailedIterations: number},
-  )
-  constructor(
-    protected streams: IHasOccurrences<T, any>[],
-    private options: {defaultEndDate?: T, maxFailedIterations?: number},
-  ) {
-    super(streams)
+export function intersection<T extends DateAdapter<T>>(
+  options: {defaultEndDate: T, maxFailedIterations?: number},
+  ...inputs: OperatorInput<T>[]
+): OperatorOutput<T>
 
-    if (options.defaultEndDate) options.defaultEndDate = options.defaultEndDate.clone();
-  }
+export function intersection<T extends DateAdapter<T>>(
+  options: {defaultEndDate?: T, maxFailedIterations: number},
+  ...inputs: OperatorInput<T>[]
+): OperatorOutput<T>
 
-  clone() {
-    return new IntersectionOperator(
-      this.streams.map(stream => stream.clone()),
-      {...this.options} as any
-    )
-  }
+export function intersection<T extends DateAdapter<T>>(
+  options: {defaultEndDate?: T, maxFailedIterations?: number},
+  ...inputs: OperatorInput<T>[]
+): OperatorOutput<T> {
 
-  *_run(args: OccurrencesArgs<T> = {}) {
-    if (!args.end) args.end = this.options.defaultEndDate;
+  return (base?: IterableIterator<T>, baseIsInfinite?: boolean) => {
 
-    if (!schedulesIntersect(this.streams, args.start, args.end)) {
-      return;
-    }
-    
-    let cache = this.streams
-      .map(stream => {
-        const iterator = stream._run(args)
-        return {
-          iterator,
-          date: iterator.next().value as T | undefined,
+    return {
+      get isInfinite() {
+        if (baseIsInfinite === false) return false;
+
+        return !inputs.some(input => !input.isInfinite)
+      },
+
+      setTimezone(timezone: string | undefined, options?: {keepLocalTime?: boolean}) {
+        inputs.forEach(input => input.setTimezone(timezone, options))
+      },
+
+      clone() {
+        return intersection(
+          {
+            defaultEndDate: options.defaultEndDate && options.defaultEndDate.clone(),
+            maxFailedIterations: options.maxFailedIterations!
+          },
+          ...inputs.map(input => input.clone())
+        )(base, baseIsInfinite)
+      },
+
+      *_run(args: OccurrencesArgs<T>={}) {      
+        if (!args.end) args.end = options.defaultEndDate;
+
+        const streams = inputs.map(input => input._run(args));
+
+        if (base) streams.push(base);
+        
+        let cache = streams
+          .map(iterator => ({
+            iterator,
+            date: iterator.next().value as T | undefined,
+          }))
+          
+        if (cache.some(item => !item.date)) return;
+
+        let next: { iterator: IterableIterator<T>; date?: T } | undefined
+
+        if (cache.length === 0) { return }
+
+        if (allCacheObjectsHaveEqualDates(cache)) {
+          // if yes, arbitrarily select the first cache object
+          next = cache[0]
         }
-      })
-      
-    if (cache.some(item => !item.date)) return;
+        else {
+          // if no, select the first itersecting date
+          next = getNextIntersectingIterator(cache, args.reverse, options.maxFailedIterations)
+        }
+        
+        while (next && next.date) {  
+          const yieldArgs = yield next.date.clone()
 
-    let next: { iterator: IterableIterator<T>; date?: T } | undefined
+          if (yieldArgs && yieldArgs.skipToDate) {
+            cache.forEach(obj => {
+              obj.date = obj.iterator.next(yieldArgs).value
+            })
+          }
+          else {
+            cache.forEach(obj => {
+              obj.date = obj.iterator.next().value
+            })
+          }
 
-    if (cache.length === 0) { return }
+          if (cache.some(item => !item.date)) return;
 
-    if (allCacheObjectsHaveEqualDates(cache)) {
-      // if yes, arbitrarily select the first cache object
-      next = cache[0]
-    }
-    else {
-      // if no, select the first itersecting date
-      next = getNextIntersectingIterator(cache, args.reverse, this.options.maxFailedIterations)
-    }
-    
-    while (next && next.date) {  
-      const yieldArgs = yield next.date.clone()
-
-      if (yieldArgs && yieldArgs.skipToDate) {
-        cache.forEach(obj => {
-          obj.date = obj.iterator.next(yieldArgs).value
-        })
+          if (allCacheObjectsHaveEqualDates(cache)) {
+            next = cache[0]
+          }
+          else {
+            next = getNextIntersectingIterator(cache, args.reverse, options.maxFailedIterations)
+          }
+        }
       }
-      else {
-        cache.forEach(obj => {
-          obj.date = obj.iterator.next().value
-        })
-      }
-
-      if (cache.some(item => !item.date)) return;
-
-      if (allCacheObjectsHaveEqualDates(cache)) {
-        next = cache[0]
-      }
-      else {
-        next = getNextIntersectingIterator(cache, args.reverse, this.options.maxFailedIterations)
-      }  
     }
   }
 }
+
 
 /**
  * General strategy:
@@ -140,37 +143,6 @@ export class IntersectionOperator<T extends DateAdapter<T>> extends StreamsOpera
  * if all cache objects are equal again, and the cycle repeats.
  * Until a match is found.
  */
-
-
- /**
-  * This is a WIP function. Ideally it will do a deep comparison of the rules
-  * in all the given schedules to make sure they all have the possibility of
-  * intersecting. At the moment though, it just checks the start / end times
-  * to see if there's an obvious schedule which doesn't intersect.
-  */
-function schedulesIntersect<
-  T extends DateAdapter<T>
->(
-  schedules: RunnableIterator<T>[],
-  start?: T,
-  end?: T
-) {
-  if (
-    (
-      start &&
-      schedules.some(schedule => !!schedule.endDate && schedule.endDate.isBefore(start as T))  
-    ) ||
-    (
-      end &&
-      schedules.some(schedule => !schedule.startDate || schedule.startDate.isAfter(end as T))  
-    )
-  ) {
-    return false
-  }
-
-  return true
-}
-
 
 /**
  * @param cache the cache

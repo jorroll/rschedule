@@ -14,8 +14,8 @@ import {
 import { RRule, Rule, RuleArgs } from '../rule'
 import { EXDates, RDates } from '../dates'
 import { Options } from '../rule/rule-options'
-import { UnionOperator, ExcludeOperator, UniqueOperator, TakeOperator } from '../operators';
 import { EXRule } from '../rule/exrule';
+import { buildIterator, add, subtract, unique } from '../operators';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')
 
@@ -132,10 +132,10 @@ export class Schedule<T extends DateAdapter<T>, D = any>
   public clone() {
     return new Schedule<T, D>({
       data: this.data,
-      rrules: this.rrules,
-      // exrules: this.exrules,
-      rdates: this.rdates,
-      exdates: this.exdates,
+      rrules: this.rrules.map(rule => rule.clone()),
+      exrules: this.exrules.map(rule => rule.clone()),
+      rdates: this.rdates.clone(),
+      exdates: this.exdates.clone(),
     })
   }
 
@@ -197,34 +197,29 @@ export class Schedule<T extends DateAdapter<T>, D = any>
 
   /**  @private use occurrences() instead */
   *_run(args: OccurrencesArgs<T> = {}) {
-    let stream: IHasOccurrences<T, any> = new UnionOperator<T>(this.rrules)
+    const count = args.take;
+    
+    delete args.take;
 
-    if (this.exrules.length > 0) {
-      stream = new ExcludeOperator(new UnionOperator<T>(this.exrules), stream)  
-    }
-
-    if (this.rdates.dates.length > 0) {
-      stream = new UnionOperator<T>([stream, this.rdates])
-    }
-
-    if (this.exdates.dates.length > 0) {
-      stream = new ExcludeOperator(this.exdates, stream)
-    }
-
-    stream = new UniqueOperator(stream)
-
-    stream = new TakeOperator(stream)
-
-    const iterator = stream._run(args)
+    const iterator = buildIterator(
+      add(...this.rrules),
+      subtract(...this.exrules),
+      add(this.rdates),
+      subtract(this.exdates),
+      unique(),
+    )._run(args)
 
     let date = iterator.next().value
+    let index = 0
 
-    while (date) {
+    while (date && (count === undefined || count > index)) {
       date.generators.push(this)
 
       const yieldArgs = yield date.clone()
 
       date = iterator.next(yieldArgs).value
+
+      index++
     }
   }
 }

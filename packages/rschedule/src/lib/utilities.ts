@@ -59,6 +59,9 @@ export namespace Utils {
     })
   }
 
+  /**
+   * Calculates the forward distance in days between two weekdays.
+   */
   export function differenceInDaysBetweenTwoWeekdays(
     a: DateAdapter.Weekday,
     b: DateAdapter.Weekday
