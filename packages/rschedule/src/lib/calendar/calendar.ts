@@ -78,7 +78,7 @@ export class Calendar<
    * read about each option & combination of options in the `details` section
    * below.
    * 
-   * Options object argument:
+   * Options object:
    *   - start?: DateAdapter
    *   - end?: DateAdapter
    *   - take?: number
