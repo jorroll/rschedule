@@ -1,4 +1,4 @@
-import { IDateAdapter, DateAdapterBase, RRule, ParsedDatetime, Utils } from '@rschedule/rschedule';
+import { IDateAdapter, DateAdapterBase, ParsedDatetime, Utils } from '@rschedule/rschedule';
 import moment from 'moment';
 
 /**

@@ -7,7 +7,7 @@ import { Utils } from './utilities'
 
 import { addMilliseconds } from 'date-fns'
 
-const DATETIME_ID = Symbol.for('b1231462-3560-4770-94f0-d16295d5965c')
+export const DATETIME_ID = Symbol.for('b1231462-3560-4770-94f0-d16295d5965c')
 
 type ComparisonObject = {valueOf: () => number, get: (unit: 'timezone') =>  string | undefined}
 
