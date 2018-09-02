@@ -1,12 +1,11 @@
-import { DateAdapter } from '../../date-adapter'
+import { DateTime } from '../../date-time'
 import { Options } from '../rule-options'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
-export class ByHourOfDayPipe<T extends DateAdapter<T>> extends PipeRule<T>
-  implements IPipeRule<T> {
+export class ByHourOfDayPipe extends PipeRule implements IPipeRule {
 
   private upcomingHours: Options.ByHourOfDay[] = []
-  public run(args: IPipeRunFn<T>) {
+  public run(args: IPipeRunFn) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
     if (
@@ -15,7 +14,7 @@ export class ByHourOfDayPipe<T extends DateAdapter<T>> extends PipeRule<T>
       return this.expand(args)
     } else { return this.filter(args) }
   }
-  public expand(args: IPipeRunFn<T>) {
+  public expand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingHours.length === 0) {
@@ -42,7 +41,7 @@ export class ByHourOfDayPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return this.nextPipe.run({ date })
   }
 
-  public filter(args: IPipeRunFn<T>) {
+  public filter(args: IPipeRunFn) {
     let validHour = false
     let nextValidHourThisDay: Options.ByHourOfDay | null = null
 
@@ -59,7 +58,7 @@ export class ByHourOfDayPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
     if (validHour) { return this.nextPipe.run({ date: args.date }) }
 
-    let next: T
+    let next: DateTime
 
     // if the current date does not pass this filter,
     // is it possible for a date to pass this filter for the remainder of the year?

@@ -1,5 +1,5 @@
-import { DateAdapter } from '../date-adapter'
-import { OccurrencesArgs } from '../interfaces'
+import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
+import { RunArgs } from '../interfaces'
 import { OperatorInput, OperatorOutput } from './interface';
 import { add } from './add.operator'
 
@@ -10,9 +10,9 @@ import { add } from './add.operator'
  * 
  * @param inputs a spread of scheduling objects
  */
-export function subtract<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
+export function subtract<T extends DateAdapterConstructor>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
 
-  return (base?: IterableIterator<T>) => {
+  return (base?: IterableIterator<DateAdapter<T>>) => {
     return {
       get isInfinite() { return inputs.some(input => input.isInfinite) },
 
@@ -24,7 +24,7 @@ export function subtract<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]
         return subtract(...inputs.map(input => input.clone()))(base)
       },
 
-      *_run(args: OccurrencesArgs<T>={}) {
+      *_run(args: RunArgs<T>={}): IterableIterator<DateAdapter<T>> {
         if (!base) return;
         
         const forInclusion = base
@@ -32,20 +32,20 @@ export function subtract<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]
 
         let positiveCache = {
           iterator: forInclusion,
-          date: forInclusion.next().value as T | undefined,
+          date: forInclusion.next().value as DateAdapter<T> | undefined,
         }
 
         if (!positiveCache.date) return;
 
         let negativeCache = {
           iterator: forExclusion,
-          date: forExclusion.next().value as T | undefined,
+          date: forExclusion.next().value as DateAdapter<T> | undefined,
         }
       
         let date = selectValidDate(positiveCache, negativeCache, args.reverse)
       
         while (date) {  
-          const yieldArgs = yield date.clone()
+          const yieldArgs = yield date.clone() as DateAdapter<T>
 
           positiveCache.date = positiveCache.iterator.next(yieldArgs).value
 
@@ -56,11 +56,11 @@ export function subtract<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]
   }
 }
 
-function selectValidDate<T extends DateAdapter<T>>(
-  positiveCache: { iterator: IterableIterator<T>, date?: T},
-  negativeCache: { iterator: IterableIterator<T>, date?: T},
+function selectValidDate<T extends DateAdapterConstructor>(
+  positiveCache: { iterator: IterableIterator<DateAdapter<T>>, date?: DateAdapter<T>},
+  negativeCache: { iterator: IterableIterator<DateAdapter<T>>, date?: DateAdapter<T>},
   reverse?: boolean,
-): T | undefined {
+): DateAdapter<T> | undefined {
   if (!positiveCache.date) return;
 
   if (!negativeCache.date) return positiveCache.date;

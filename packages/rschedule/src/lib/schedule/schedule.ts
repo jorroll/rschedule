@@ -1,17 +1,19 @@
 import {
+  IDateAdapter,
   DateAdapter,
   IDateAdapterConstructor,
-  InstanceOfDateAdapterConstructor,
+  DateAdapterConstructor,
+  DateProp,
 } from '../date-adapter'
 import { parseICalStrings } from '../ical/parser'
 import {
   HasOccurrences,
   IHasOccurrences,
   OccurrencesArgs,
-  Serializable,
   OccurrenceIterator,
+  RunArgs,
 } from '../interfaces'
-import { RRule, Rule, RuleArgs } from '../rule'
+import { RRule } from '../rule'
 import { EXDates, RDates } from '../dates'
 import { Options } from '../rule/rule-options'
 import { EXRule } from '../rule/exrule';
@@ -19,9 +21,11 @@ import { buildIterator, add, subtract, unique } from '../operators';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')
 
-export class Schedule<T extends DateAdapter<T>, D = any>
-  extends HasOccurrences<T, Schedule<T>>
-  implements Serializable, IHasOccurrences<T, Schedule<T, D>>
+export type ScheduleRuleArgs<T extends DateAdapterConstructor> = [Options.ProvidedOptions<T>, {data?: any, dateAdapter?: T}]
+
+export class Schedule<T extends DateAdapterConstructor, D = any>
+  extends HasOccurrences<T>
+  implements IHasOccurrences<T>
 {
 
   get isInfinite() {
@@ -45,59 +49,82 @@ export class Schedule<T extends DateAdapter<T>, D = any>
     args: {
       data?: D
     } = {}
-  ): Schedule<InstanceOfDateAdapterConstructor<T>, D> { // specifying the return fixes a build bug
+  ): Schedule<T, D> { // specifying the return fixes a build bug
     if (!Array.isArray(icals)) { icals = [icals] }
 
     const options = parseICalStrings(icals, dateAdapterConstructor)
 
     return new Schedule({
       ...options,
-      data: args.data
+      data: args.data,
+      dateAdapter: dateAdapterConstructor
     })
   }
   
   public rrules: RRule<T>[] = []
   public exrules: EXRule<T>[] = []
-  public rdates = new RDates<T>()
-  public exdates = new EXDates<T>()
+  public rdates: RDates<T>
+  public exdates: EXDates<T>
 
   /** Convenience property for holding arbitrary data */
   public data!: D
 
+  protected dateAdapter: IDateAdapterConstructor<T>
+
   constructor(args: {
+    dateAdapter: T
     data?: D
-    rrules?: (RuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>)[]
-    exrules?: (RuleArgs<T> | Options.ProvidedOptions<T> | EXRule<T>)[]
-    rdates?: T[] | RDates<T>
-    exdates?: T[] | EXDates<T>
-  } = {}) {
+    rrules?: (ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>)[]
+    exrules?: (ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | EXRule<T>)[]
+    rdates?: DateProp<T>[] | RDates<T>
+    exdates?: DateProp<T>[] | EXDates<T>
+  }) {
     super()
 
+    this.dateAdapter = args.dateAdapter as any
+    
     if (args.data) this.data = args.data;
+
     if (args.rrules) {
-      this.rrules = args.rrules.map(args => {
-        if (Array.isArray(args))
-          // @ts-ignore typescript doesn't like spread operator
-          return  new RRule(...args)
-        else if (RRule.isRRule(args))
-          return args.clone()
+      this.rrules = args.rrules.map(ruleArgs => {
+        if (Array.isArray(ruleArgs))
+          return  new RRule(ruleArgs[0], {dateAdapter: args.dateAdapter, ...ruleArgs[1]})
+        else if (RRule.isRRule(ruleArgs))
+          return ruleArgs.clone()
         else
-          return new RRule(args)
+          return new RRule(ruleArgs, {dateAdapter: args.dateAdapter})
       })
     }
+
     if (args.exrules) {
-      this.exrules = args.exrules.map(args => {
-        if (Array.isArray(args))
+      this.exrules = args.exrules.map(ruleArgs => {
+        if (Array.isArray(ruleArgs))
           // @ts-ignore typescript doesn't like spread operator
-          return  new EXRule(...args)
-        else if (EXRule.isEXRule(args))
-          return args.clone()
+          return  new EXRule(ruleArgs[0], {dateAdapter: args.dateAdapter, ...ruleArgs[1]})
+        else if (EXRule.isEXRule(ruleArgs))
+          return ruleArgs.clone()
         else
-          return new EXRule(args)
+          return new EXRule(ruleArgs, {dateAdapter: args.dateAdapter})
       })
     }
-    if (args.rdates) { this.rdates = RDates.isRDates(args.rdates) ? args.rdates.clone() : new RDates({dates: args.rdates}) }
-    if (args.exdates) { this.exdates = EXDates.isEXDates(args.exdates) ? args.exdates.clone() : new EXDates({dates: args.exdates}) }
+
+    if (args.rdates) {
+        this.rdates = RDates.isRDates(args.rdates)
+          ? args.rdates.clone()
+          : new RDates({dates: args.rdates, dateAdapter: args.dateAdapter})
+    }
+    else {
+      this.rdates = new RDates({dateAdapter: args.dateAdapter})
+    }
+
+    if (args.exdates) {
+      this.exdates = EXDates.isEXDates(args.exdates)
+        ? args.exdates.clone()
+        : new EXDates({dates: args.exdates, dateAdapter: args.dateAdapter})
+    }
+    else {
+      this.exdates = new EXDates({dateAdapter: args.dateAdapter})
+    }
   }
 
   public toICal() {
@@ -131,6 +158,7 @@ export class Schedule<T extends DateAdapter<T>, D = any>
    */
   public clone() {
     return new Schedule<T, D>({
+      dateAdapter: this.dateAdapter as any,
       data: this.data,
       rrules: this.rrules.map(rule => rule.clone()),
       exrules: this.exrules.map(rule => rule.clone()),
@@ -152,13 +180,13 @@ export class Schedule<T extends DateAdapter<T>, D = any>
    * @param arg `OccurrencesArgs` options object
    */
   public occurrences(args: OccurrencesArgs<T> = {}) {
-    return new OccurrenceIterator(this, args)
+    return new OccurrenceIterator(this, this.processOccurrencesArgs(args))
   }
 
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(args: {date: T}): boolean
+  public occursOn(rawArgs: {date: T}): boolean
   /**
    * **DOES NOT CURRENTLY TAKE INTO ACCOUNT EXRULES.**
    * 
@@ -171,32 +199,40 @@ export class Schedule<T extends DateAdapter<T>, D = any>
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
-  public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
-  public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean {
+  public occursOn(rawArgs: {weekday: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean
+  public occursOn(rawArgs: {date?: DateProp<T>; weekday?: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean {
+    const args = this.processOccursOnArgs(rawArgs)
+
     if (args.weekday) {
       let before = args.before && (args.excludeEnds ? args.before.clone().subtract(1, 'day') : args.before)
       let after = args.after && (args.excludeEnds ? args.after.clone().add(1, 'day') : args.after)
 
       // Filter to get relevant exdates
-      const excludeDates = this.exdates.dates.filter(date => 
-        date.get('weekday') === args.weekday && (
-          !after || date.isAfterOrEqual(after)
-        ) && (
-          !before || date.isBeforeOrEqual(before)
-        )
-      )
+      const excludeDates = this.exdates.dates.filter(date => {
+        const adapter = new this.dateAdapter(date)
 
-      const rules: (Rule<T> | RDates<T>)[] = this.rrules.slice()
+        adapter.get('weekday') === args.weekday && (
+          !after || adapter.isAfterOrEqual(after)
+        ) && (
+          !before || adapter.isBeforeOrEqual(before)
+        )
+      })
+
+      const rules: (RRule<T> | RDates<T>)[] = this.rrules.slice()
       rules.push(this.rdates)
 
-      return rules.some(rule => rule.occursOn({...args as {weekday: DateAdapter.Weekday}, excludeDates}))
+      return rules.some(rule => rule.occursOn({...args as {weekday: IDateAdapter.Weekday}, excludeDates}))
     }
-    else
-      return super.occursOn(args as {date: T})
+    else {
+      for (const day of this._run({ start: args.date, end: args.date })) {
+        return !!day
+      }
+      return false  
+    }
   }
 
   /**  @private use occurrences() instead */
-  *_run(args: OccurrencesArgs<T> = {}) {
+  *_run(args: RunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
     const count = args.take;
     
     delete args.take;
@@ -215,7 +251,7 @@ export class Schedule<T extends DateAdapter<T>, D = any>
     while (date && (count === undefined || count > index)) {
       date.generators.push(this)
 
-      const yieldArgs = yield date.clone()
+      const yieldArgs = yield date.clone() as DateAdapter<T>
 
       date = iterator.next(yieldArgs).value
 

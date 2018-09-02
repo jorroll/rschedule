@@ -1,21 +1,21 @@
-import { DateAdapter } from '../date-adapter'
+import { DateAdapter, DateProp, DateAdapterBase, IDateAdapterConstructor, DateAdapterConstructor } from '../date-adapter'
+import { DateTime } from '../date-time'
 import {
   HasOccurrences,
   IHasOccurrences,
   OccurrenceIterator,
   OccurrencesArgs,
   RunnableIterator,
-  Serializable,
+  RunArgs,
 } from '../interfaces'
 import { PipeController } from './pipes'
-import { Utils } from '../utilities'
 import { buildValidatedRuleOptions, Options } from './rule-options'
+import { Utils } from '../utilities'
 
-export type RuleArgs<T extends DateAdapter<T>, D = undefined> = [Options.ProvidedOptions<T>, {data?: D} | undefined]
+// export type RuleArgs<T extends IDateAdapter, D = undefined> = [Options.ProvidedOptions<T>, {data?: D} | undefined]
 
-export abstract class Rule<T extends DateAdapter<T>, D = any>
-  extends HasOccurrences<T, Rule<T>>
-  implements Serializable, RunnableIterator<T>, IHasOccurrences<T, Rule<T, D>> {
+export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasOccurrences<T>
+  implements RunnableIterator<T>, IHasOccurrences<T> {
   /**
    * NOTE: The options object is frozen. To make changes you must assign a new options object.
    */
@@ -29,7 +29,7 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
     // Yay for forseeing/preventing possible SUPER annoying bugs!!!
     this.usedPipeControllers.forEach(controller => (controller.invalid = true))
     this.usedPipeControllers = []
-    this.processedOptions = buildValidatedRuleOptions(value)
+    this.processedOptions = buildValidatedRuleOptions<T>(this.dateAdapter as any, value as any)
 
     this._options = Object.freeze({ ...value })
   }
@@ -40,20 +40,28 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
 
   /** From `options.start`. Note: you should not mutate the start date directly */
   get startDate() {
-    return this.options.start
+    return DateAdapterBase.isInstance(this.options.start)
+      ? this.options.start
+      : new this.dateAdapter(this.options.start)
   }
+
+  static dateAdapter: any
 
   /** Convenience property for holding arbitrary data */
   public data!: D
   
   private _options!: Options.ProvidedOptions<T>
 
-  private usedPipeControllers: Array<PipeController<T>> = [] // only so that we can invalidate them, if necessary
+  private usedPipeControllers: PipeController<T>[] = [] // only so that we can invalidate them, if necessary
   private processedOptions!: Options.ProcessedOptions<T>
 
-  constructor(options: Options.ProvidedOptions<T>, args: {data?: D} = {}) {
+  protected dateAdapter: IDateAdapterConstructor<T>
+
+  constructor(options: Options.ProvidedOptions<T>, args: {data?: D, dateAdapter: T}) {
     super()
-    
+
+    // hack to trick typescript into inferring the correct types
+    this.dateAdapter = args.dateAdapter as any
     this.options = options;
     if (args.data) this.data = args.data;
   }
@@ -62,7 +70,9 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
    * Updates the timezone associated with this rule.
    */
   public setTimezone(timezone: string | undefined, options: {keepLocalTime?: boolean} = {}) {
-    const start = this.options.start.clone()
+    const start = DateAdapterBase.isInstance(this.options.start)
+      ? this.options.start.clone()
+      : new this.dateAdapter(this.options.start)
 
     start.set('timezone', timezone, options)
 
@@ -77,14 +87,14 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
 
   public occurrences(
     args: OccurrencesArgs<T> = {}
-  ): OccurrenceIterator<T, Rule<T, D>> {
-    return new OccurrenceIterator(this, args)
+  ): OccurrenceIterator<T> {
+    return new OccurrenceIterator(this, this.processOccurrencesArgs(args))
   }
 
   /**
    *   Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(args: {date: T}): boolean
+  public occursOn(rawArgs: {date: DateProp<T>}): boolean
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * 
@@ -97,8 +107,10 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
    * - `excludeDates` argument can be provided which limits the possible occurrences
    *   to ones not equal to a date in the `excludeDates` array.
    */
-  public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean, excludeDates?: T[]}): boolean
-  public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean, excludeDates?: T[]}): boolean {
+  public occursOn(rawArgs: {weekday: DateTime.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean, excludeDates?: DateProp<T>[]}): boolean
+  public occursOn(rawArgs: {date?: DateProp<T>; weekday?: DateTime.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean, excludeDates?: DateProp<T>[]}): boolean {
+    let args = this.processOccursOnArgs(rawArgs)
+
     if (args.weekday) {
       if (
         this.processedOptions.byDayOfWeek &&
@@ -108,9 +120,9 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
         return false
       }
 
-      let until: T | undefined;
-      let before = args.before && (args.excludeEnds ? args.before.clone().subtract(1, 'day') : args.before)
-      let after = args.after && (args.excludeEnds ? args.after.clone().add(1, 'day') : args.after)
+      let until: DateAdapter<T> | undefined;
+      let before = args.before && (args.excludeEnds ? args.before.clone().subtract(1, 'day') : args.before) as DateAdapter<T>
+      let after = args.after && (args.excludeEnds ? args.after.clone().add(1, 'day') : args.after) as DateAdapter<T>
 
       if (this.processedOptions.until && before)
         until = before.isBefore(this.processedOptions.until) ? before : this.processedOptions.until
@@ -120,7 +132,7 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
         until = before;
       }
 
-      if (until && until.isBefore(this.options.start)) return false;
+      if (until && until.isBefore(this.processedOptions.start)) return false;
 
       // This function allows for an "intelligent" brute forcing of occurrences.
       // For rules with a frequency less than a day, it only checks one
@@ -141,15 +153,15 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
         return false
       }
 
-      const getNextDateNotInExdates = (exdates?: T[], start?: T, end?: T) => {
-        let date = this.occurrences({start, end}).next().value
+      const getNextDateNotInExdates = (exdates?: DateAdapter<T>[], start?: DateAdapter<T>, end?: DateAdapter<T>) => {
+        let date = this._run({start, end}).next().value
 
         if (!exdates || exdates.length === 0) return date;
 
         while (date && exdates.some(exdate => exdate.isEqual(date))) {
           Utils.setDateToStartOfDay(date).add(24, 'hour')
 
-          date = this.occurrences({start: date, end}).next().value
+          date = this._run({start: date, end}).next().value
         }
 
         return date
@@ -183,10 +195,10 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
 
             // If our timespan is less then a week, we simply test to see if it occurs on the day we're interested in.
             if (!args.excludeDates && difference < 6) {
-              let date = this.processedOptions.start.clone()
+              const date = this.processedOptions.start.clone()
 
               date.add(
-                Utils.differenceInDaysBetweenTwoWeekdays(date.get('weekday'), args.weekday),
+                Utils.differenceInDaysBetweenTwoWeekdays(date.get('weekday'), args.weekday!),
                 'day'
               )
 
@@ -218,13 +230,27 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
       else
         return true;
     }
-    else
-      return super.occursOn(args as {date: T})
+    else {
+      for (const day of this._run({ start: args.date, end: args.date })) {
+        return !!day
+      }
+      return false  
+    }
   }
 
   /**  @private use occurrences() instead */
-  public *_run(args: OccurrencesArgs<T> = {}) {
-    const controller = new PipeController(this.processedOptions, args)
+  public *_run(args: RunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
+    const pipeArgs = {
+      ...args,
+      start: args.start && new DateTime(
+        args.start.clone().set('timezone', this.processedOptions.start.get('timezone'))
+      ),
+      end: args.end && new DateTime(
+        args.end.clone().set('timezone', this.processedOptions.start.get('timezone'))
+      ),
+    }
+
+    const controller = new PipeController(this.processedOptions, pipeArgs)
     this.usedPipeControllers.push(controller)
     const iterator = controller._run()
 
@@ -237,19 +263,22 @@ export abstract class Rule<T extends DateAdapter<T>, D = any>
       
       date.generators.push(this)
       
-      const yieldArgs = yield date
+      const yieldArgs = yield this.dateAdapter.fromTimeObject(date.toTimeObject())[0]
 
       date = iterator.next(yieldArgs).value
     }
   }
 
   // just exists to satisfy interface
-  public clone(): Rule<T, D> {
-    return this
-  }
+  abstract clone(): Rule<T, D>
 
+  abstract toICal(): string
 
-  public toICal() {
-    return ''
+  protected buildDateAdapter(date?: DateProp<T> | DateAdapter<T>) {
+    if (!date) return;
+
+    if (DateAdapterBase.isInstance(date)) return date;
+
+    return new this.dateAdapter(date)
   }
 }

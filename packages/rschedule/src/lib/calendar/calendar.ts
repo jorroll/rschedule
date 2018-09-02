@@ -1,23 +1,22 @@
-import { DateAdapter } from '../date-adapter'
+import { IDateAdapter, DateProp, DateAdapter, DateAdapterConstructor, IDateAdapterConstructor } from '../date-adapter'
 import {
   HasOccurrences,
   IHasOccurrences,
   OccurrenceIterator,
   OccurrencesArgs,
-  RunnableIterator,
 } from '../interfaces'
-import { CollectionIterator, CollectionsArgs } from './collection'
+import { CollectionIterator, CollectionsArgs, CollectionsRunArgs } from './collection'
 import { add, OperatorObject } from '../operators';
 import { Utils } from '../utilities';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')
 
 export class Calendar<
-  T extends DateAdapter<T>,
+  T extends DateAdapterConstructor,
   S extends OperatorObject<T>,
   D = any
-> extends HasOccurrences<T, Calendar<T,S,D>>
-  implements RunnableIterator<T>, IHasOccurrences<T, Calendar<T, S, D>> {
+> extends HasOccurrences<T>
+  implements IHasOccurrences<T> {
   public schedules: S[] = []
 
   /** Convenience property for holding arbitrary data */
@@ -38,9 +37,12 @@ export class Calendar<
     return !!(object && object[Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')])
   }
 
-  constructor(args: { schedules?: Array<S> | S, data?: D } = {}) {
+  protected dateAdapter: IDateAdapterConstructor<T>
+
+  constructor(args: { schedules?: Array<S> | S, data?: D, dateAdapter: T }) {
     super()
 
+    this.dateAdapter = args.dateAdapter as any
     if (args.data) this.data = args.data;
     if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }
     else if (args.schedules) { this.schedules.push(args.schedules) }
@@ -53,6 +55,7 @@ export class Calendar<
    */
   public clone() {
     return new Calendar<T, S, D>({
+      dateAdapter: this.dateAdapter as any,
       data: this.data,
       schedules: this.schedules.map(schedule => schedule.clone()) as S[],
     })
@@ -147,7 +150,7 @@ export class Calendar<
    * @param args CollectionsArgs
    */
   public collections(args: CollectionsArgs<T> = {}) {
-    return new CollectionIterator(this, args)
+    return new CollectionIterator(this, this.processOccurrencesArgs(args))
   }
 
   /**
@@ -164,13 +167,13 @@ export class Calendar<
    * @param arg `OccurrencesArgs` options object
    */
   public occurrences(args: OccurrencesArgs<T> = {}) {
-    return new OccurrenceIterator(this, args)
+    return new OccurrenceIterator(this, this.processOccurrencesArgs(args))
   }
 
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(args: {date: T}): boolean
+  public occursOn(rawArgs: {date: T}): boolean
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * By default, only checks dates in the first year.
@@ -183,11 +186,13 @@ export class Calendar<
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
-  public occursOn(args: {weekday: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean
-  public occursOn(args: {date?: T; weekday?: DateAdapter.Weekday; after?: T; before?: T; excludeEnds?: boolean}): boolean {
+  public occursOn(rawArgs: {weekday: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean
+  public occursOn(rawArgs: {date?: DateProp<T>; weekday?: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean {
+    const args = this.processOccursOnArgs(rawArgs)
+
     if (args.weekday) {
-      const start = args.after && (args.excludeEnds ? args.after.clone().add(1, 'day') : args.after)
-      let end = args.before && (args.excludeEnds ? args.before.clone().subtract(1, 'day') : args.before)
+      const start = args.after && (args.excludeEnds ? args.after.clone().add(1, 'day') as DateAdapter<T> : args.after)
+      let end = args.before && (args.excludeEnds ? args.before.clone().subtract(1, 'day') as DateAdapter<T> : args.before)
 
       const iterator = this._run({start, end})
 
@@ -195,7 +200,7 @@ export class Calendar<
 
       if (!date) return false;
 
-      if (!end) end = date.clone().add(1, 'year');
+      if (!end) end = date.clone().add(1, 'year') as DateAdapter<T>;
 
       while (date && date.isBefore(end)) {
         if (date.get('weekday') === args.weekday) {
@@ -212,17 +217,21 @@ export class Calendar<
 
       return false
     }
-    else
-      return super.occursOn(args as {date: T})
+    else {
+      for (const day of this._run({ start: args.date, end: args.date })) {
+        return !!day
+      }
+      return false  
+    }
   }
 
   /**  @private use collections() instead */
-  *_run(args: CollectionsArgs<T> = {}) {
+  *_run(args: CollectionsRunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
     const count = args.take;
     
     delete args.take;
 
-    let iterator: IterableIterator<T>
+    let iterator: IterableIterator<DateAdapter<T>>
 
     switch (this.schedules.length) {
       case 0: return
@@ -240,7 +249,7 @@ export class Calendar<
     while (date && (count === undefined || count > index)) {
       date.generators.push(this)
 
-      const yieldArgs = yield date.clone()
+      const yieldArgs = yield date.clone() as DateAdapter<T>
 
       date = iterator.next(yieldArgs).value
 

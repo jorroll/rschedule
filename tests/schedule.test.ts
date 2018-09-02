@@ -1,4 +1,4 @@
-import { Schedule, OccurrencesArgs, Options, DateAdapter as IDateAdapter, IDateAdapterConstructor } from '@rschedule/rschedule'
+import { Schedule, OccurrencesArgs, Options, IDateAdapter, IDateAdapterConstructor, DateAdapterConstructor, DateAdapter } from '@rschedule/rschedule'
 import { dateAdapter, DatetimeFn, environment, context, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, TIMEZONES, luxonDatetimeFn } from './utilities'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 import { Moment as MomentTZ } from 'moment-timezone';
@@ -8,13 +8,15 @@ import { Moment as MomentST } from 'moment';
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { DateTime } from 'luxon';
 
-function testOccursMethods<T extends IDateAdapter<T>>(
+function testOccursMethods<T extends DateAdapterConstructor>(
   name: string,
   options: {
-    rrules?: Array<Options.ProvidedOptions<T>>
+    dateAdapter: T,
+    rrules?: Options.ProvidedOptions<T>[]
+    exrules?: Options.ProvidedOptions<T>[]
     rdates?: T[]
     exdates?: T[]
-  } | undefined,
+  },
   tests: any[],
   // Array<
   //   { occursBefore: IDateAdapter<T>, excludeStart?: boolean, expect: boolean } |
@@ -24,7 +26,7 @@ function testOccursMethods<T extends IDateAdapter<T>>(
   // >
 ) {
   describe(name, () => {
-    let schedule: Schedule<IDateAdapter<T>, any>
+    let schedule: Schedule<T, any>
 
     beforeEach(() => {
       schedule = new Schedule(options)
@@ -34,21 +36,21 @@ function testOccursMethods<T extends IDateAdapter<T>>(
       if (obj.occursBefore) {
         describe('#occursBefore()', () => {
           it(`"${obj.occursBefore.toISOString()}" excludeStart: ${!!obj.excludeStart}`, () => {
-            expect(schedule.occursBefore(obj.occursBefore, { excludeStart: obj.excludeStart })).toBe(obj.expect)
+            expect(schedule.occursBefore(obj.occursBefore.date, { excludeStart: obj.excludeStart })).toBe(obj.expect)
           })
         })
       }
       else if (obj.occursAfter) {
         describe('#occursAfter()', () => {
           it(`"${obj.occursAfter.toISOString()}" excludeStart: ${!!obj.excludeStart}`, () => {
-            expect(schedule.occursAfter(obj.occursAfter, { excludeStart: obj.excludeStart })).toBe(obj.expect)
+            expect(schedule.occursAfter(obj.occursAfter.date, { excludeStart: obj.excludeStart })).toBe(obj.expect)
           })          
         })
       }
       else if (obj.occursBetween) {
         describe('#occursBetween()', () => {
           it(`"${obj.occursBetween[0].toISOString()}" & "${obj.occursBetween[1].toISOString()}" excludeEnds: ${!!obj.excludeEnds}`, () => {
-            expect(schedule.occursBetween(obj.occursBetween[0], obj.occursBetween[1], { excludeEnds: obj.excludeEnds })).toBe(obj.expect)
+            expect(schedule.occursBetween(obj.occursBetween[0].date, obj.occursBetween[1].date, { excludeEnds: obj.excludeEnds })).toBe(obj.expect)
           })
         })
       }
@@ -56,7 +58,7 @@ function testOccursMethods<T extends IDateAdapter<T>>(
         if (obj.occursOn.date) {
           describe('#occursOn()', () => {
             it(`"${obj.occursOn.date.toISOString()}"`, () => {
-              expect(schedule.occursOn(obj.occursOn)).toBe(obj.expect)
+              expect(schedule.occursOn({date: obj.occursOn.date.date})).toBe(obj.expect)
             })
           })
         }
@@ -77,10 +79,6 @@ function testOccursMethods<T extends IDateAdapter<T>>(
   })
 }
 
-describe('ScheduleClass', () => {
-  it('is instantiable', () => expect(new Schedule()).toBeInstanceOf(Schedule))
-})
-
 const DATE_ADAPTERS = [
   [StandardDateAdapter, standardDatetimeFn],
   [MomentDateAdapter, momentDatetimeFn],
@@ -97,7 +95,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
 environment(dateAdapterSet, (dateAdapterSet) => {
 
-const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>]
+const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<DateAdapterConstructor>, DatetimeFn<any>]
 
 const zones = !DateAdapter.hasTimezoneSupport
   ? [undefined, 'UTC']
@@ -128,15 +126,21 @@ const isoString: DatetimeFn<string> = (...args: (number|string|undefined)[]) =>
   dateAdapter(...args).toISOString()
 
 // function to get a schedule's occurrences as ISO strings
-function toISOStrings<T extends IDateAdapter<T>>(
+function toISOStrings<T extends DateAdapterConstructor>(
   schedule: Schedule<T>,
-  args?: OccurrencesArgs<T>
+  args: OccurrencesArgs<T>={}
 ) {
   return schedule
-    .occurrences(args)
+    .occurrences({...args, start: args.start && (args.start as any).date, end: args.end && (args.end as any).date})
     .toArray()!
     .map(occ => occ.toISOString())
 }
+
+describe('ScheduleClass', () => {
+  it('is instantiable', () => expect(
+    new Schedule({ dateAdapter: DateAdapter })
+  ).toBeInstanceOf(Schedule))
+})
 
 describe(`${zone}`, () => {
   describe('#occurrences()', () => {
@@ -144,6 +148,7 @@ describe(`${zone}`, () => {
       it('with a single rule', () => {
         // YearlyByMonthAndMonthDay
         const schedule = new Schedule({
+          dateAdapter: DateAdapter,
           rrules: [
             {
               frequency: 'YEARLY',
@@ -179,7 +184,7 @@ describe(`${zone}`, () => {
       })
 
       it('with multiple rules', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -236,12 +241,12 @@ describe(`${zone}`, () => {
       })
 
       it('with RDates & duplicate', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
         })
 
@@ -253,21 +258,21 @@ describe(`${zone}`, () => {
       })
 
       it('with EXDates', () => {
-        const schedule = new Schedule({
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule)).toEqual([])
       })
 
       it('with RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule)).toEqual([
@@ -277,16 +282,16 @@ describe(`${zone}`, () => {
       })
 
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule)).toEqual([])
       })
 
       it('with multiple rules & RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -313,11 +318,11 @@ describe(`${zone}`, () => {
             },
           ],
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule)).toEqual([
@@ -333,7 +338,7 @@ describe(`${zone}`, () => {
       })
 
       it('with multiple rules & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             {
               frequency: 'WEEKLY',
@@ -343,10 +348,10 @@ describe(`${zone}`, () => {
             },
           ],
           exdates: [
-            dateAdapter(2018, 9, 11),
+            dateAdapter(2018, 9, 11).date,
           ],
           rdates: [
-            dateAdapter(2018, 9, 22),
+            dateAdapter(2018, 9, 22).date,
           ],
         })
 
@@ -363,7 +368,7 @@ describe(`${zone}`, () => {
     describe('args: END', () => {
       it('with a single rule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             {
               frequency: 'YEARLY',
@@ -382,7 +387,7 @@ describe(`${zone}`, () => {
       })
 
       it('with multiple rules', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -421,11 +426,11 @@ describe(`${zone}`, () => {
       })
 
       it('with RDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
         })
 
@@ -436,21 +441,21 @@ describe(`${zone}`, () => {
       })
 
       it('with EXDates', () => {
-        const schedule = new Schedule({
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { end: dateAdapter(1998, 1, 7, 9, 0) })).toEqual([])
       })
 
       it('with RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { end: dateAdapter(2000, 1, 1, 9, 0) })).toEqual([
@@ -459,16 +464,16 @@ describe(`${zone}`, () => {
       })
 
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { end: dateAdapter(1998, 1, 7, 9, 0) })).toEqual([])
       })
 
       it('with multiple rules & RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -495,11 +500,11 @@ describe(`${zone}`, () => {
             },
           ],
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { end: dateAdapter(1998, 3, 5, 9, 0) })).toEqual([
@@ -516,7 +521,7 @@ describe(`${zone}`, () => {
     describe('args: TAKE', () => {
       it('with a single rule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             {
               frequency: 'YEARLY',
@@ -535,7 +540,7 @@ describe(`${zone}`, () => {
       })
 
       it('with multiple rules', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -570,11 +575,11 @@ describe(`${zone}`, () => {
       })
 
       it('with RDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
         })
 
@@ -585,21 +590,21 @@ describe(`${zone}`, () => {
       })
 
       it('with EXDates', () => {
-        const schedule = new Schedule({
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { take: 2 })).toEqual([])
       })
 
       it('with RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { take: 3 })).toEqual([
@@ -609,16 +614,16 @@ describe(`${zone}`, () => {
       })
 
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { take: 3 })).toEqual([])
       })
 
       it('with multiple rules & RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -645,11 +650,11 @@ describe(`${zone}`, () => {
             },
           ],
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
         expect(toISOStrings(schedule, { take: 5 })).toEqual([
@@ -665,7 +670,7 @@ describe(`${zone}`, () => {
     describe('args: REVERSE', () => {
       it('with a single rule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             {
               frequency: 'YEARLY',
@@ -685,7 +690,7 @@ describe(`${zone}`, () => {
       })
   
       it('with multiple rules', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -726,12 +731,12 @@ describe(`${zone}`, () => {
       })
   
       it('with RDates & duplicate', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
         })
   
@@ -743,21 +748,21 @@ describe(`${zone}`, () => {
       })
   
       it('with EXDates', () => {
-        const schedule = new Schedule({
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
   
         expect(toISOStrings(schedule, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
       })
   
       it('with RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
   
         expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
@@ -767,16 +772,16 @@ describe(`${zone}`, () => {
       })
   
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
   
         expect(toISOStrings(schedule, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
       })
   
       it('with multiple rules & RDates & EXDates', () => {
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: DateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -803,11 +808,11 @@ describe(`${zone}`, () => {
             },
           ],
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
   
         expect(toISOStrings(schedule, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
@@ -828,6 +833,7 @@ describe(`${zone}`, () => {
     testOccursMethods(
       'with a single rule',
       {
+        dateAdapter: DateAdapter,
         rrules: [
           {
             frequency: 'YEARLY',
@@ -865,6 +871,7 @@ describe(`${zone}`, () => {
     testOccursMethods(
       'with multiple rules',
       {
+        dateAdapter: DateAdapter,
         rrules: [
           // YearlyByMonthAndMonthDay
           {
@@ -911,11 +918,12 @@ describe(`${zone}`, () => {
     testOccursMethods(
       'with RDates & duplicate',
       {
+        dateAdapter: DateAdapter,
         rdates: [
-          dateAdapter(1998, 1, 1, 9, 0),
-          dateAdapter(1998, 1, 1, 9, 0),
-          dateAdapter(2000, 1, 1, 9, 0),
-          dateAdapter(2017, 1, 1, 9, 0),
+          dateAdapter(1998, 1, 1, 9, 0).date,
+          dateAdapter(1998, 1, 1, 9, 0).date,
+          dateAdapter(2000, 1, 1, 9, 0).date,
+          dateAdapter(2017, 1, 1, 9, 0).date,
         ],
       },
       [
@@ -938,7 +946,8 @@ describe(`${zone}`, () => {
     testOccursMethods(
       'with EXDates',
       {
-        exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        dateAdapter: DateAdapter,
+        exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
       },
       [
         { occursBefore: dateAdapter(1999, 12, 1, 9, 0), expect: false },
@@ -960,12 +969,13 @@ describe(`${zone}`, () => {
     testOccursMethods(
       'with RDates & EXDates',
       {
+        dateAdapter: DateAdapter,
         rdates: [
-          dateAdapter(1998, 1, 1, 9, 0),
-          dateAdapter(2000, 1, 1, 9, 0),
-          dateAdapter(2017, 1, 1, 9, 0),
+          dateAdapter(1998, 1, 1, 9, 0).date,
+          dateAdapter(2000, 1, 1, 9, 0).date,
+          dateAdapter(2017, 1, 1, 9, 0).date,
         ],
-        exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
       },
       [
         { occursBefore: dateAdapter(2015, 12, 1, 9, 0), expect: true },
@@ -986,8 +996,9 @@ describe(`${zone}`, () => {
     testOccursMethods(
       'with RDates & EXDates cancelling out',
       {
-        rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-        exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        dateAdapter: DateAdapter,
+        rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
+        exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
       },
       [
         { occursBefore: dateAdapter(1999, 12, 1, 9, 0), expect: false },
@@ -1007,6 +1018,7 @@ describe(`${zone}`, () => {
     testOccursMethods(
       'with multiple rules & RDates & EXDates',
       {
+        dateAdapter: DateAdapter,
         rrules: [
           // YearlyByMonthAndMonthDay
           {
@@ -1033,11 +1045,11 @@ describe(`${zone}`, () => {
           },
         ],
         rdates: [
-          dateAdapter(1998, 1, 1, 9, 0),
-          dateAdapter(2000, 1, 1, 9, 0),
-          dateAdapter(2017, 1, 1, 9, 0),
+          dateAdapter(1998, 1, 1, 9, 0).date,
+          dateAdapter(2000, 1, 1, 9, 0).date,
+          dateAdapter(2017, 1, 1, 9, 0).date,
         ],
-        exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
       },
       [
         { occursBefore: dateAdapter(1998, 1, 5, 9, 0), expect: true },

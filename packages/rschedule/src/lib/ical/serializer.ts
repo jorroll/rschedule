@@ -1,4 +1,4 @@
-import { DateAdapter } from '../date-adapter'
+import { IDateAdapter, DateAdapter, DateAdapterConstructor, IDateAdapterConstructor } from '../date-adapter'
 import { buildValidatedRuleOptions, Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
@@ -12,16 +12,28 @@ export class ICalStringSerialzeError extends Error {}
  * @param type Determins if the serialized options object is labeled as an
  * "RRULE" or an "EXRULE".
  */
-export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
+export function ruleOptionsToIcalString<T extends DateAdapterConstructor>(
+  dateAdapterConstructor: T,
   options: Options.ProvidedOptions<T>,
   type: 'RRULE' | 'EXRULE'
 ): string {
   // First validate options object, but don't use the result
-  buildValidatedRuleOptions(options)
+  buildValidatedRuleOptions(dateAdapterConstructor, options)
+
+  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any;
 
   let icalString: string
 
-  const start = options.start
+  const start = dateAdapter.isInstance(options.start)
+    ? options.start
+    : new dateAdapter(options.start)
+
+  let until: IDateAdapter | undefined
+  if (options.until) {
+    until = dateAdapter.isInstance(options.until)
+      ? options.until
+      : new dateAdapter(options.until)
+  }
 
   const seperator = [undefined, 'UTC'].includes(start.get('timezone'))
     ? ':'
@@ -42,7 +54,7 @@ export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
           break
         case 'until':
           stringOptions.push(
-            `UNTIL=${options.until!.toICal({format: !!start.get('timezone') ? 'UTC' : undefined})}`
+            `UNTIL=${until!.toICal({format: !!start.get('timezone') ? 'UTC' : undefined})}`
           )
           break
         case 'count':
@@ -90,8 +102,8 @@ function serializeByDayOfWeek(args: Options.ByDayOfWeek[]) {
  * @param dates array of DateAdapter dates
  * @param type whether these are RDATEs or EXDATEs
  */
-export function datesToIcalString<T extends DateAdapter<T>>(
-  dates: T[],
+export function datesToIcalString<T extends DateAdapterConstructor>(
+  dates: DateAdapter<T>[],
   type: 'RDATE' | 'EXDATE' = 'RDATE'
 ) {
   if (dates.length === 0) {
@@ -127,8 +139,8 @@ export function datesToIcalString<T extends DateAdapter<T>>(
   return icalString
 }
 
-export function dateAdapterToICal<T extends DateAdapter<T>>(
-  date: T,
+export function dateAdapterToICal<T extends DateAdapterConstructor>(
+  date: DateAdapter<T>,
   utc?: boolean
 ) {
   const timezone = utc ? 'UTC' : date.get('timezone')

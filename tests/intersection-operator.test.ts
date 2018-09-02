@@ -10,8 +10,8 @@ import {
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
 function toISOStringsOCC(
-  calendar: Calendar<StandardDateAdapter, any>,
-  args?: OccurrencesArgs<StandardDateAdapter>
+  calendar: Calendar<typeof StandardDateAdapter, any>,
+  args?: OccurrencesArgs<typeof StandardDateAdapter>
 ) {
   return calendar
     .occurrences(args)
@@ -24,7 +24,7 @@ describe('Intersection Calendar', () => {
     describe('NO args', () => {
       it('with a single schedule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             {
               frequency: 'YEARLY',
@@ -36,7 +36,7 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 5, 9, 0),
@@ -62,7 +62,7 @@ describe('Intersection Calendar', () => {
       })
 
       it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -82,7 +82,7 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const scheduleTwo = new Schedule({
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -94,13 +94,13 @@ describe('Intersection Calendar', () => {
             },
           ],
           rdates: [
-            dateAdapter(1997, 9, 2, 9),
+            dateAdapter(1997, 9, 2, 9).date,
           ]
         })
 
         
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -108,7 +108,7 @@ describe('Intersection Calendar', () => {
       })
 
       it('with multiple schedules two', () => {
-        const scheduleOne = new Schedule({
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -134,7 +134,7 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const scheduleTwo = new Schedule({
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -146,7 +146,7 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -172,19 +172,19 @@ describe('Intersection Calendar', () => {
       })
 
       it('with RDates', () => {
-        const scheduleOne = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const scheduleTwo = new Schedule({
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 1, 9, 0),
@@ -192,31 +192,31 @@ describe('Intersection Calendar', () => {
       })
 
       it('with EXDates', () => {
-        const scheduleOne = new Schedule({
-          exdates: [dateAdapter(1998, 1, 20, 9, 0)],
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
         })
 
-        const scheduleTwo = new Schedule({
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([])
       })
 
       it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const scheduleTwo = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
-          exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(2017, 1, 1, 9, 0),
@@ -224,18 +224,18 @@ describe('Intersection Calendar', () => {
       })
 
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
         expect(toISOStringsOCC(calendar)).toEqual([])
       })
 
       it('with multiple rules & RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -254,7 +254,7 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const scheduleTwo = new Schedule({
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -272,17 +272,18 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const scheduleThree = new Schedule<StandardDateAdapter>({
+        const scheduleThree = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rdates: [
-            dateAdapter(1997, 9, 2, 9, 0),
-            dateAdapter(1997, 9, 9, 9, 0),  
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
+            dateAdapter(1997, 9, 2, 9, 0).date,
+            dateAdapter(1997, 9, 9, 9, 0).date,  
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo, scheduleThree))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo, scheduleThree))})
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -294,7 +295,7 @@ describe('Intersection Calendar', () => {
     describe('args: REVERSE', () => {
       it('with a single schedule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
+        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             {
               frequency: 'YEARLY',
@@ -306,9 +307,9 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 3, 5, 9, 0), reverse: true })).toEqual([
+        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 3, 5, 9, 0).date, reverse: true })).toEqual([
           isoString(1998, 1, 5, 9, 0),
           isoString(1998, 1, 7, 9, 0),
           isoString(1998, 3, 5, 9, 0),
@@ -316,7 +317,7 @@ describe('Intersection Calendar', () => {
       })
 
       it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -342,7 +343,7 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const scheduleTwo = new Schedule({
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -354,7 +355,7 @@ describe('Intersection Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar, { reverse: true })).toEqual([
           isoString(1997, 9, 2, 9, 0),
@@ -364,19 +365,19 @@ describe('Intersection Calendar', () => {
       })
 
       it('with RDates', () => {
-        const scheduleOne = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const scheduleTwo = new Schedule({
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
           rdates: [
-            dateAdapter(1998, 1, 1, 9, 0),
-            dateAdapter(2000, 1, 1, 9, 0),
-            dateAdapter(2017, 1, 1, 9, 0),
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
           ],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
         expect(toISOStringsOCC(calendar, { reverse: true })).toEqual([
           isoString(1998, 1, 1, 9, 0),
@@ -384,46 +385,46 @@ describe('Intersection Calendar', () => {
       })
 
       it('with EXDates', () => {
-        const scheduleOne = new Schedule({
-          exdates: [dateAdapter(1998, 1, 20, 9, 0)],
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
         })
 
-        const scheduleTwo = new Schedule({
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 20, 9, 0), reverse: true })).toEqual([])
+        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 20, 9, 0).date, reverse: true })).toEqual([])
       })
 
       it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const scheduleTwo = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
-          exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(2017, 1, 1, 9, 0), reverse: true })).toEqual([
+        expect(toISOStringsOCC(calendar, { start: dateAdapter(2017, 1, 1, 9, 0).date, reverse: true })).toEqual([
           isoString(2017, 1, 1, 9, 0),
         ].reverse())
       })
 
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          rdates: [dateAdapter(1998, 1, 1, 9, 0)],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0)],
+        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
+          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
+          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
         })
 
-        const calendar = new Calendar<StandardDateAdapter, any>({schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: buildIterator(intersection({ maxFailedIterations: 50 }, schedule))})
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 1, 9, 0), reverse: true })).toEqual([])
+        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 1, 9, 0).date, reverse: true })).toEqual([])
       })
 
     })

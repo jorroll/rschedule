@@ -1,6 +1,7 @@
-import { DateAdapter } from '../../date-adapter'
 import { RunnableIterator } from '../../interfaces'
 import { Options } from '../rule-options'
+import { DateTime } from '../../date-time'
+import { IDateAdapter, DateAdapterConstructor } from '../../date-adapter'
 
 import { FrequencyPipe } from './01-frequency.pipe'
 import { ByMonthOfYearPipe } from './02-by-month-of-year.pipe'
@@ -24,13 +25,17 @@ import { IPipeController, IPipeRule } from './interfaces'
 
 import cloneDeep from 'lodash.clonedeep'
 
-export class PipeController<T extends DateAdapter<T>>
-  implements IPipeController<T>, RunnableIterator<T> {
-  public start!: T
-  public end?: T
+export interface PipeControllerOptions extends Options.ProcessedOptions<any> {
+  start: DateTime,
+  until?: DateTime
+}
+
+export class PipeController<T extends DateAdapterConstructor> implements IPipeController, RunnableIterator<any> {
+  public start!: DateTime
+  public end?: DateTime
   public reverse = false
 
-  public expandingPipes: Array<IPipeRule<T>> = []
+  public expandingPipes: Array<IPipeRule> = []
 
   get focusedPipe() {
     return this.expandingPipes[this.expandingPipes.length - 1]
@@ -59,26 +64,22 @@ export class PipeController<T extends DateAdapter<T>>
     return !this.end && this.options.count === undefined
   }
 
-  public options: Options.ProcessedOptions<T>
+  public options: PipeControllerOptions
 
-  private pipes: Array<IPipeRule<T>> = []
+  private pipes: Array<IPipeRule> = []
 
   constructor(
     options: Options.ProcessedOptions<T>,
-    private args: { start?: T; end?: T; reverse?: boolean },
+    private args: { start?: DateTime; end?: DateTime; reverse?: boolean },
   ) {
-    this.options = cloneDeep(options)
+    const clonedOptions = cloneDeep(options)
+
+    this.options = {
+      ...clonedOptions,
+      start: options.start.toDateTime() as DateTime,
+      until: options.until && options.until.toDateTime() as DateTime,
+    }
     
-    // args need to be in the same timezone
-    if (this.args.start) {
-      this.args.start = this.args.start.clone().set('timezone', this.options.start.get('timezone'))
-    }
-
-    // args need to be in the same timezone
-    if (this.args.end) {
-      this.args.end = this.args.end.clone().set('timezone', this.options.start.get('timezone'))
-    }
-
     // see `_run()` below for explaination of why `this.reverse` might !== `args.reverse`
     this.reverse = this.options.count === undefined ? !!args.reverse : false;
 
@@ -190,7 +191,7 @@ export class PipeController<T extends DateAdapter<T>>
       while (date) {
         const args = yield date
 
-        date = iterable.next(args).value
+        date = iterable.next(this.processArgs(args)).value
       }
 
       return;
@@ -201,7 +202,7 @@ export class PipeController<T extends DateAdapter<T>>
     let index = 0
 
     if (this.args.reverse) {
-      const dates: T[] = [];
+      const dates: DateTime[] = [];
 
       for (const date of iterable) {
         if (index >= this.options.count) break;
@@ -216,8 +217,9 @@ export class PipeController<T extends DateAdapter<T>>
       let dateCache = dates.reverse().slice()
 
       let date = dateCache.shift()
-      let args: {skipToDate?: T} | undefined
-
+      let rawArgs: {skipToDate?: IDateAdapter} | undefined
+      let args: {skipToDate?: DateTime} | undefined
+  
       while (date) {
         if (args) {
           if (args.skipToDate && args.skipToDate.isBefore(date)) {
@@ -228,7 +230,9 @@ export class PipeController<T extends DateAdapter<T>>
           args = undefined;
         }
 
-        args = yield date
+        rawArgs = yield date
+
+        args = this.processArgs(rawArgs)
 
         if (args && args.skipToDate) {
           // need to reset the date cache to allow the same date to be picked again.
@@ -244,7 +248,8 @@ export class PipeController<T extends DateAdapter<T>>
     }
 
     let date = iterable.next().value
-    let args: {skipToDate?: T} | undefined
+    let rawArgs: {skipToDate?: IDateAdapter} | undefined
+    let args: {skipToDate?: DateTime} | undefined
 
     while (date) {
       if (index >= this.options.count) break;
@@ -258,7 +263,9 @@ export class PipeController<T extends DateAdapter<T>>
         continue;
       }
 
-      args = yield date
+      rawArgs = yield date
+
+      args = this.processArgs(rawArgs)
 
       if (args && args.skipToDate) {
         index = 0
@@ -268,6 +275,12 @@ export class PipeController<T extends DateAdapter<T>>
         date = iterable.next().value
       }
     }
+  }
+
+  private processArgs(args?: {skipToDate?: IDateAdapter}) {
+    return (args && args.skipToDate)
+      ? {skipToDate: new DateTime(args.skipToDate.clone().set("timezone", this.options.start.get('timezone')))}
+      : undefined
   }
 
   public *iterate() {
@@ -280,16 +293,19 @@ export class PipeController<T extends DateAdapter<T>>
       const args = yield date.clone()
 
       if (args) {
-        // need to reinitialize to clear state. For exampe, a pipe could be expanding and have
+        // need to reinitialize to clear state. For example, a pipe could be expanding and have
         // focus, which would prevent `skipToDate` from running.
         this.initialize()
 
         if (args.skipToDate) {
-          date = this.focusedPipe.run({ date, skipToDate: args.skipToDate.clone() });
+          date = this.focusedPipe.run({ date, skipToDate: args.skipToDate });
         }
-        else {
+        else if (args.reset) {
           // reset requested because `options.count !== undefined`
           date = this.focusedPipe.run({ date, skipToDate: this.options.start.clone() });
+        }
+        else {
+          throw new Error('yielded args contained unexpected value')
         }
       }
       else {
@@ -308,7 +324,7 @@ export class PipeController<T extends DateAdapter<T>>
     }
   }
 
-  private setStartDate(date?: T) {
+  private setStartDate(date?: DateTime) {
     if (this.reverse) {
       if (date && this.options.until) {
        this.start = date.isAfter(this.options.until)
@@ -327,7 +343,7 @@ export class PipeController<T extends DateAdapter<T>>
       // generally, the `FrequencyReversePipe` expects to always be pushing a given date
       // backwards in time. On the first iteration only though, it needs to move forward to
       // the starting interval, which is what we're doing here.
-      return (this.focusedPipe as FrequencyReversePipe<T>).skipToStartInterval(this.start.clone())
+      return (this.focusedPipe as FrequencyReversePipe).skipToStartInterval(this.start.clone())
     }
     
     return this.start =
@@ -336,7 +352,7 @@ export class PipeController<T extends DateAdapter<T>>
         : this.options.start.clone()
   }
 
-  private setEndDate(date?: T) {
+  private setEndDate(date?: DateTime) {
     if (this.reverse) {
       if (date && date.isAfter(this.options.start)) {
         return this.end = date.clone()

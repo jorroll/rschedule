@@ -1,11 +1,11 @@
-import { DateAdapter } from '../date-adapter'
+import {DateAdapterConstructor} from '../date-adapter'
 import { ruleOptionsToIcalString } from '../ical'
 import cloneDeep from 'lodash.clonedeep'
 import { Rule } from './rule'
 
 const EXRULE_ID = Symbol.for('73912d70-7a9b-41d7-926d-19ef5745a4ea')
 
-export class EXRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
+export class EXRule<T extends DateAdapterConstructor, D = any> extends Rule<T, D> {
   public readonly [EXRULE_ID] = true
 
   /**
@@ -23,10 +23,12 @@ export class EXRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
    * new EXRule).
    */
   public clone() {
-    return new EXRule<T, D>(cloneDeep(this.options), {data: this.data})
+    const dateAdapter: T = this.dateAdapter as any
+    return new EXRule<T, D>(cloneDeep(this.options), {data: this.data, dateAdapter})
   }
 
   public toICal() {
-    return ruleOptionsToIcalString(this.options, 'EXRULE')
+    const dateAdapter: T = this.dateAdapter as any
+    return ruleOptionsToIcalString(dateAdapter, this.options, 'EXRULE')
   }
 }

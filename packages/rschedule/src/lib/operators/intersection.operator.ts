@@ -1,7 +1,5 @@
-import { DateAdapter } from '../date-adapter'
-import {
-  OccurrencesArgs,
-} from '../interfaces'
+import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
+import { RunArgs } from '../interfaces'
 import { OperatorInput, OperatorOutput } from './interface';
 
 /**
@@ -30,22 +28,22 @@ import { OperatorInput, OperatorOutput } from './interface';
  * @param inputs a spread of occurrence streams
  */
 
-export function intersection<T extends DateAdapter<T>>(
-  options: {defaultEndDate: T, maxFailedIterations?: number},
+export function intersection<T extends DateAdapterConstructor>(
+  options: {defaultEndDate: DateAdapter<T>, maxFailedIterations?: number},
   ...inputs: OperatorInput<T>[]
 ): OperatorOutput<T>
 
-export function intersection<T extends DateAdapter<T>>(
-  options: {defaultEndDate?: T, maxFailedIterations: number},
+export function intersection<T extends DateAdapterConstructor>(
+  options: {defaultEndDate?: DateAdapter<T>, maxFailedIterations: number},
   ...inputs: OperatorInput<T>[]
 ): OperatorOutput<T>
 
-export function intersection<T extends DateAdapter<T>>(
-  options: {defaultEndDate?: T, maxFailedIterations?: number},
+export function intersection<T extends DateAdapterConstructor>(
+  options: {defaultEndDate?: DateAdapter<T>, maxFailedIterations?: number},
   ...inputs: OperatorInput<T>[]
 ): OperatorOutput<T> {
 
-  return (base?: IterableIterator<T>, baseIsInfinite?: boolean) => {
+  return (base?: IterableIterator<DateAdapter<T>>, baseIsInfinite?: boolean) => {
 
     return {
       get isInfinite() {
@@ -68,7 +66,7 @@ export function intersection<T extends DateAdapter<T>>(
         )(base, baseIsInfinite)
       },
 
-      *_run(args: OccurrencesArgs<T>={}) {      
+      *_run(args: RunArgs<T>={}): IterableIterator<DateAdapter<T>> {      
         if (!args.end) args.end = options.defaultEndDate;
 
         const streams = inputs.map(input => input._run(args));
@@ -78,12 +76,12 @@ export function intersection<T extends DateAdapter<T>>(
         let cache = streams
           .map(iterator => ({
             iterator,
-            date: iterator.next().value as T | undefined,
+            date: iterator.next().value as DateAdapter<T> | undefined,
           }))
           
         if (cache.some(item => !item.date)) return;
 
-        let next: { iterator: IterableIterator<T>; date?: T } | undefined
+        let next: { iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> } | undefined
 
         if (cache.length === 0) { return }
 
@@ -97,7 +95,7 @@ export function intersection<T extends DateAdapter<T>>(
         }
         
         while (next && next.date) {  
-          const yieldArgs = yield next.date.clone()
+          const yieldArgs = yield next.date.clone() as DateAdapter<T>
 
           if (yieldArgs && yieldArgs.skipToDate) {
             cache.forEach(obj => {
@@ -147,8 +145,8 @@ export function intersection<T extends DateAdapter<T>>(
 /**
  * @param cache the cache
  */
-function allCacheObjectsHaveEqualDates<T extends DateAdapter<T>>(
-  cache: Array<{ iterator: IterableIterator<T>; date?: T }>,
+function allCacheObjectsHaveEqualDates<T extends DateAdapterConstructor>(
+  cache: Array<{ iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> }>,
 ) {
   if (cache.length === 1) { return true }
 
@@ -159,12 +157,12 @@ function allCacheObjectsHaveEqualDates<T extends DateAdapter<T>>(
   return !cache.some(obj => !date.isEqual(obj.date))
 }
 
-function getNextIntersectingIterator<T extends DateAdapter<T>>(
-  cache: Array<{ iterator: IterableIterator<T>; date?: T }>,
+function getNextIntersectingIterator<T extends DateAdapterConstructor>(
+  cache: Array<{ iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> }>,
   reverse?: boolean,
   maxFailedIterations?: number,
   currentIteration = 0,
-): { iterator: IterableIterator<T>; date?: T } | undefined {
+): { iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> } | undefined {
   if (cache.length < 2) { return cache[0] }
   if (maxFailedIterations && currentIteration > maxFailedIterations) return;
 
@@ -175,8 +173,8 @@ function getNextIntersectingIterator<T extends DateAdapter<T>>(
   cache.forEach(obj => {
     if (
       reverse
-      ? obj.date!.isBeforeOrEqual(farthest.date as T)
-      : obj.date!.isAfterOrEqual(farthest.date as T)
+      ? obj.date!.isBeforeOrEqual(farthest.date!)
+      : obj.date!.isAfterOrEqual(farthest.date!)
     ) {
       return;
     }
@@ -203,15 +201,15 @@ function getNextIntersectingIterator<T extends DateAdapter<T>>(
  * @param cache the cache
  * @param reverse whether we're iterating in reverse or not
  */
-function selectFarthestUpcomingCacheObj<T extends DateAdapter<T>>(
-  cache: Array<{ iterator: IterableIterator<T>; date?: T }>,
+function selectFarthestUpcomingCacheObj<T extends DateAdapterConstructor>(
+  cache: Array<{ iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> }>,
   reverse?: boolean,
-): { iterator: IterableIterator<T>; date?: T } | undefined {
+): { iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> } | undefined {
   if (cache.length < 2) { return cache[0] }
 
   return cache.reduce((prev, curr) => {
     if (!curr.date) { return prev }
-    else if (reverse ? curr.date.isBefore(prev.date as T) : curr.date.isAfter(prev.date as T)) { return curr }
+    else if (reverse ? curr.date.isBefore(prev.date!) : curr.date.isAfter(prev.date!)) { return curr }
     else { return prev }
   }, cache[0])
 }

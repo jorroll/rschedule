@@ -1,4 +1,4 @@
-import { DateAdapter } from '../date-adapter'
+import { DateAdapterConstructor } from '../date-adapter'
 import { Dates } from './dates'
 import { datesToIcalString } from '../ical'
 
@@ -8,7 +8,7 @@ import { datesToIcalString } from '../ical'
 
 const EXDATES_ID = Symbol.for('3c83a9bf-13dc-4045-8361-0d55744427e7')
 
-export class EXDates<T extends DateAdapter<T>, D=any> extends Dates<T, D> {
+export class EXDates<T extends DateAdapterConstructor, D=any> extends Dates<T, D> {
   public readonly [EXDATES_ID] = true
 
   /**
@@ -24,10 +24,15 @@ export class EXDates<T extends DateAdapter<T>, D=any> extends Dates<T, D> {
    * Returns a clone of the EXDates object.
    */
   public clone() {
-    return new EXDates<T>({dates: this.dates.map(date => date.clone()), data: this.data})
+    const dates = this.dates.map(date => new this.dateAdapter(date))
+    const dateAdapter: T = this.dateAdapter as any
+
+    return new EXDates<T>({dates, data: this.data, dateAdapter})
   }
 
   public toICal() {
-    return datesToIcalString(this.dates, 'EXDATE')
+    const dates = this.dates.map(date => new this.dateAdapter(date))
+
+    return datesToIcalString(dates, 'EXDATE')
   }
 }

@@ -1,7 +1,5 @@
-import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, RDates } from '@rschedule/rschedule';
+import { IDateAdapter, DateAdapterBase, ParsedDatetime, Utils } from '@rschedule/rschedule';
 import { DateTime } from 'luxon';
-
-const LUXON_DATE_ADAPTER_ID = Symbol.for('6e11cae3-344a-4c49-a5b1-5bcb84fe1f26')
 
 /**
  * The `LuxonDateAdapter` is a DateAdapter for `luxon` DateTime
@@ -16,33 +14,12 @@ const LUXON_DATE_ADAPTER_ID = Symbol.for('6e11cae3-344a-4c49-a5b1-5bcb84fe1f26')
  * you want). If this is a problem for you, you can try opening
  * an issue in the rSchedule monorepo.
  */
-export class LuxonDateAdapter
-implements DateAdapter<LuxonDateAdapter, DateTime> {
+export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
   public date: DateTime
 
-  public get utcOffset() { return this.date.offset }
-
-  /** 
-   * This property contains an ordered array of the generator objects
-   * responsible for producing this DateAdapter.
-   * 
-   * - If this DateAdapter was produced by a `RRule` object, this array
-   *   will just contain the `RRule` object.
-   * - If this DateAdapter was produced by a `Schedule` object, this
-   *   array will contain the `Schedule` object as well as the `RRule`
-   *   or `RDates` object which generated it.
-   * - If this DateAdapter was produced by a `Calendar` object, this
-   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
-   *   `RRule`/`RDates` objects which generated it.
-   */
-  public generators: Array<
-    | RRule<LuxonDateAdapter>
-    | RDates<LuxonDateAdapter>
-    | Schedule<LuxonDateAdapter>
-    | Calendar<LuxonDateAdapter, Schedule<LuxonDateAdapter>>
-  > = []
-  
   constructor(date?: DateTime, args: {} = {}) {
+    super()
+
     if (date) {
       this.assertIsValid(date)
 
@@ -58,23 +35,13 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
     else this.date = DateTime.local();    
   }
 
-  public readonly [LUXON_DATE_ADAPTER_ID] = true
-
-  /**
-   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
-   * of determining if an object is a `LuxonDateAdapter` by checking against the
-   * global symbol registry.
-   */
-  static isInstance(object: any): object is LuxonDateAdapter {
-    return !!(object && object[Symbol.for('6e11cae3-344a-4c49-a5b1-5bcb84fe1f26')])
-  }
-
   static readonly hasTimezoneSupport = true;
+
+  static date: DateTime
 
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
     timezone: string | undefined
-    raw: string
   }): LuxonDateAdapter[] {
     const dates = args.datetimes.map(datetime => {
       switch (args.timezone) {
@@ -92,6 +59,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
               hour: datetime[3],
               minute: datetime[4],
               second: datetime[5],
+              millisecond: datetime[6],
               zone: args.timezone,
             })
           )
@@ -113,127 +81,17 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
     return adapter
   }
 
-  isSameClass(object: any): object is LuxonDateAdapter {
-    return LuxonDateAdapter.isInstance(object)
-  }
-
-  isEqual<T extends DateAdapter<T>>(object?: T): boolean {
-    return !!object && typeof object.valueOf === 'function' && object.valueOf() === this.valueOf()
-  }
-  isBefore<T extends DateAdapter<T>>(object: T): boolean {
-    return this.valueOf() < object.valueOf()
-  }
-  isBeforeOrEqual<T extends DateAdapter<T>>(object: T): boolean {
-    return this.valueOf() <= object.valueOf()
-  }
-  isAfter<T extends DateAdapter<T>>(object: T): boolean {
-    return this.valueOf() > object.valueOf()
-  }
-  isAfterOrEqual<T extends DateAdapter<T>>(object: T): boolean {
-    return this.valueOf() >= object.valueOf()
-  }
-
-  add(amount: number, unit: DateAdapter.Unit): LuxonDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date = this.date.plus({years: amount})
-        break
-      case 'month':
-        this.date = this.date.plus({months: amount})
-        break
-      case 'week':
-        this.date = this.date.plus({weeks: amount})
-        break
-      case 'day':
-        this.date = this.date.plus({days: amount})
-        break
-      case 'hour':
-        this.date = this.date.plus({hours: amount})
-        break
-      case 'minute':
-        this.date = this.date.plus({minutes: amount})
-        break
-      case 'second':
-        this.date = this.date.plus({seconds: amount})
-        break
-      case 'millisecond':
-        this.date = this.date.plus({milliseconds: amount})
-        break
-      default:
-        throw new Error('Invalid unit provided to `LuxonDateAdapter#add()`')
-    }
-
-    this.assertIsValid()
-
-    return this
-  }
-
-  // clones date before manipulating it
-  subtract(amount: number, unit: DateAdapter.Unit): LuxonDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date = this.date.minus({years: amount})
-        break
-      case 'month':
-        this.date = this.date.minus({months: amount})
-        break
-      case 'week':
-        this.date = this.date.minus({weeks: amount})
-        break
-      case 'day':
-        this.date = this.date.minus({days: amount})
-        break
-      case 'hour':
-        this.date = this.date.minus({hours: amount})
-        break
-      case 'minute':
-        this.date = this.date.minus({minutes: amount})
-        break
-      case 'second':
-        this.date = this.date.minus({seconds: amount})
-        break
-      case 'millisecond':
-        this.date = this.date.minus({milliseconds: amount})
-        break
-      default:
-        throw new Error('Invalid unit provided to `LuxonDateAdapter#subtract()`')
-    }
-
-    this.assertIsValid()
-
-    return this
-  }
-
-  get(unit: 'year'): number
-  get(unit: 'month'): number
-  get(unit: 'yearday'): number
-  get(unit: 'weekday'): DateAdapter.Weekday
-  get(unit: 'day'): number
-  get(unit: 'hour'): number
-  get(unit: 'minute'): number
-  get(unit: 'second'): number
-  get(unit: 'millisecond'): number
-  get(unit: 'timezone'): string | undefined
-  get(
-    unit:
-      | 'year'
-      | 'month'
-      | 'yearday'
-      | 'weekday'
-      | 'day'
-      | 'hour'
-      | 'minute'
-      | 'second'
-      | 'millisecond'
-      | 'timezone'
-  ) {
+  get(unit: IDateAdapter.Unit | 'yearday'): number
+  get(unit: 'weekday'): IDateAdapter.Weekday
+  get(unit: 'timezone'): 'UTC' | undefined
+  get(unit: IDateAdapter.Unit | 'yearday' | 'weekday' | 'timezone') {
     switch (unit) {
       case 'year':
         return this.date.get('year')
       case 'month':
         return this.date.get('month')
       case 'yearday':
-        return Math.floor(this.date.diff(this.date.startOf('year'), 'days').days) + 1
+        return Utils.getYearDay(this.get('year'), this.get('month'), this.get('day'))
       case 'weekday':
         return WEEKDAYS[this.date.get('weekday') - 1]
       case 'day':
@@ -253,79 +111,37 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
     }
   }
 
-  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): LuxonDateAdapter
-  set(unit: DateAdapter.Unit, value: number): LuxonDateAdapter
-  set(unit: DateAdapter.Unit | 'timezone', value: number | string | undefined, options: {keepLocalTime?: boolean} = {}): LuxonDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date = this.date.set({year: value as number})
-        break
-      case 'month':
-        this.date = this.date.set({month: value as number})
-        break
-      case 'day':
-        this.date = this.date.set({day: value as number})
-        break
-      case 'hour':
-        this.date = this.date.set({hour: value as number})
-        break
-      case 'minute':
-        this.date = this.date.set({minute: value as number})
-        break
-      case 'second':
-        this.date = this.date.set({second: value as number})
-        break
-      case 'millisecond':
-        this.date = this.date.set({millisecond: value as number})
-        break
-      case 'timezone':
-        if (value)
-          this.date = this.date.setZone(value as string, {keepLocalTime: options.keepLocalTime})
-        else if (options.keepLocalTime) {
-          this.date = DateTime.fromObject({
-            year: this.get('year'),
-            month: this.get('month'),
-            day: this.get('day'),
-            hour: this.get('hour'),
-            minute: this.get('minute'),
-            second: this.get('second'),
-            millisecond: this.get('millisecond'),
-          })
-        }
-        else {
-          this.date = this.date.toLocal()
-        }
+  set(unit: IDateAdapter.Unit, value: number): this
+  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): this
+  set(unit: IDateAdapter.Unit | 'timezone', value: number | string | undefined, options: {keepLocalTime?: boolean}={}): this {
+    if (unit !== 'timezone') return super.set(unit, value);
 
-        if (value !== undefined && this.date.zoneName !== value) {
-          throw new DateAdapter.InvalidDateError(
-            `LuxonDateAdapter provided invalid timezone "${value}".`
-          )
-        }
-        break
-      default:
-        throw new Error('Invalid unit provided to `LuxonDateAdapter#set`')
+    if (value)
+      this.date = this.date.setZone(value as string, {keepLocalTime: options.keepLocalTime})
+    else if (options.keepLocalTime) {
+      this.date = DateTime.fromObject({
+        year: this.get('year'),
+        month: this.get('month'),
+        day: this.get('day'),
+        hour: this.get('hour'),
+        minute: this.get('minute'),
+        second: this.get('second'),
+        millisecond: this.get('millisecond'),
+      })
+    }
+    else {
+      this.date = this.date.toLocal()
+    }
+
+    if (value !== undefined && this.date.zoneName !== value) {
+      throw new IDateAdapter.InvalidDateError(
+        `LuxonDateAdapter provided invalid timezone "${value}".`
+      )
     }
 
     this.assertIsValid()
 
     return this
-  }
-
-  toISOString() {
-    return this.date.toUTC().toISO()
-  }
-
-  toICal(options: {format?: string} = {}): string {
-    const format = options.format || this.get('timezone');
-
-    if (format === 'UTC')
-      return this.date.toUTC().toFormat("yyyyMMdd'T'HHmmss'Z'")
-    else if (format === 'local')
-      return this.date.toFormat("yyyyMMdd'T'HHmmss")
-    else if (format)
-      return `TZID=${format}:${this.date.setZone(format).toFormat("yyyyMMdd'T'HHmmss")}`
-    else
-      return `TZID=${this.date.zoneName}:${this.date.toFormat("yyyyMMdd'T'HHmmss")}`
   }
 
   valueOf() { return this.date.valueOf() }
@@ -334,7 +150,7 @@ implements DateAdapter<LuxonDateAdapter, DateTime> {
     date = date || this.date;
 
     if (!date.isValid) {
-      throw new DateAdapter.InvalidDateError()
+      throw new IDateAdapter.InvalidDateError()
     }
 
     return true

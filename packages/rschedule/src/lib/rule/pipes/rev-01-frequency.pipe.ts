@@ -1,17 +1,15 @@
-import { DateAdapter } from '../../date-adapter'
+import { DateTime } from '../../date-time'
 import { Utils } from '../../utilities'
 import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 
 /**
  * Same as `FrequencyPipe`, but iterates in reverse order.
  */
-export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
-  implements IPipeRule<T>
-{
-  public intervalStartDate: T = this.normalizeDate(this.options.start.clone());
+export class FrequencyReversePipe extends ReversePipeRule implements IPipeRule {
+  public intervalStartDate: DateTime = this.normalizeDate(this.options.start.clone());
 
-  public run(args: IPipeRunFn<T>) {
-    let date: T
+  public run(args: IPipeRunFn) {
+    let date: DateTime
 
     if (args.skipToDate) {
       this.skipToIntervalOnOrBefore(args.skipToDate)
@@ -27,7 +25,7 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
     return this.nextPipe.run({ date })
   }
   
-  public normalizeDate(date: T) {
+  public normalizeDate(date: DateTime) {
     switch (this.options.frequency) {
       case 'YEARLY':
         Utils.setDateToEndOfYear(date)
@@ -59,44 +57,7 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
   private decrementInterval() {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
-    const oldTZOffset = this.intervalStartDate.utcOffset
-
     this.intervalStartDate.subtract(this.options.interval, unit)
-
-    const newTZOffset = this.intervalStartDate.utcOffset
-
-    // DST is handled for us by `Date` when adding units of DAY or larger. But for hours or
-    // smaller units, we must manually adjust for DST, if appropriate.
-    if (
-      [
-        'hour',
-        'minute',
-        'second',
-        'millisecond',
-      ].includes(unit)
-    ) {
-      // DST goes in the opposite direction in northern vs southern hemispheres.
-      // This function might actually be returning `true` when client is in
-      // southern hemisphere...but regardless, the arithmatic is "relatively" correct.
-      //
-      // Still seem to be running into DST issue with large hourly interval in southern
-      // hemisphere.
-      const tzOffset = Utils.isInNorthernHemisphere(this.intervalStartDate)
-        ? oldTZOffset - newTZOffset
-        : newTZOffset - oldTZOffset;
-
-      // might need to subtract offset when going in reverse, not sure.
-      const newDate = this.intervalStartDate.clone().add(tzOffset, 'minute')
-
-      if (newDate.utcOffset !== this.intervalStartDate.utcOffset) {
-        throw new DateAdapter.InvalidDateError(
-          `A date was created on the border of daylight savings time "${newDate.toISOString()}". ` +
-          'Not sure how to handle it.'
-        )
-      } else {
-        this.intervalStartDate = newDate
-      }
-    }
 
     // it's necessary to normalize the date because, for example, if we're iterating
     // `MONTLY` and we're on the last day of February and we subtract 1 month, we will
@@ -105,7 +66,7 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
     this.normalizeDate(this.intervalStartDate)
   }
 
-  private skipToIntervalOnOrBefore(date: T) {
+  private skipToIntervalOnOrBefore(date: DateTime) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
     const difference = Utils.unitDifferenceBetweenDates(
@@ -138,7 +99,7 @@ export class FrequencyReversePipe<T extends DateAdapter<T>> extends ReversePipeR
    * This method is only used by the `PipeController` to set the first
    * `intervalStartDate`.
    */
-  public skipToStartInterval(date: T) {
+  public skipToStartInterval(date: DateTime) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
     const difference = Utils.unitDifferenceBetweenDates(

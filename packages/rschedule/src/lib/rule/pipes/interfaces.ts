@@ -1,14 +1,14 @@
-import { DateAdapter } from '../../date-adapter'
-import { Options } from '../rule-options'
 import { Utils } from '../../utilities'
+import { DateTime } from '../../date-time'
+import { PipeControllerOptions } from './pipe-controller'
 
 export class PipeError extends Error {}
 
-export interface IPipeRunFn<T extends DateAdapter<T>> {
+export interface IPipeRunFn {
   /**
    * The current date to be evaluated by the rule pipe.
    */
-  date: T
+  date: DateTime
 
   /**
    * This argument is added by a pipe to indicate that the current date
@@ -28,32 +28,32 @@ export interface IPipeRunFn<T extends DateAdapter<T>> {
    * given the rule's `frequency`, `interval`, and `start` options, or it will
    * skip to the first valid date after the `skipToDate` date.
    */
-  skipToDate?: T
+  skipToDate?: DateTime
 }
 
-export interface IPipeRule<T extends DateAdapter<T>> {
-  nextPipe: IPipeRule<T> | null
-  controller: IPipeController<T>
+export interface IPipeRule {
+  nextPipe: IPipeRule | null
+  controller: IPipeController
 
-  run(args: IPipeRunFn<T>): T | null
+  run(args: IPipeRunFn): DateTime | null
 }
 
-export interface IPipeController<T extends DateAdapter<T>> {
-  start: T
-  end?: T
+export interface IPipeController {
+  start: DateTime
+  end?: DateTime
   count?: number
   reverse: boolean
-  options: Options.ProcessedOptions<T>
+  options: PipeControllerOptions
   invalid: boolean
 
-  expandingPipes: Array<IPipeRule<T>>
-  focusedPipe: IPipeRule<T>
+  expandingPipes: Array<IPipeRule>
+  focusedPipe: IPipeRule
 }
 
-export abstract class PipeRuleBase<T extends DateAdapter<T>> {
-  public nextPipe!: IPipeRule<T>
+export abstract class PipeRuleBase {
+  public nextPipe!: IPipeRule
 
-  constructor(public controller: IPipeController<T>) {}
+  constructor(public controller: IPipeController) {}
 
   get options() {
     return this.controller.options
@@ -76,9 +76,9 @@ export abstract class PipeRuleBase<T extends DateAdapter<T>> {
 }
 
 
-export abstract class PipeRule<T extends DateAdapter<T>> extends PipeRuleBase<T> {
+export abstract class PipeRule extends PipeRuleBase {
   protected cloneDateWithGranularity(
-    date: T,
+    date: DateTime,
     granularity: 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second'
   ) {
     date = date.clone()
@@ -102,9 +102,9 @@ export abstract class PipeRule<T extends DateAdapter<T>> extends PipeRuleBase<T>
   }
 }
 
-export abstract class ReversePipeRule<T extends DateAdapter<T>> extends PipeRuleBase<T> {
+export abstract class ReversePipeRule extends PipeRuleBase {
   protected cloneDateWithGranularity(
-    date: T,
+    date: DateTime,
     granularity: 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second'
   ) {
     date = date.clone()

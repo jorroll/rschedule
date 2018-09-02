@@ -1,10 +1,10 @@
-import { DateAdapter } from './date-adapter'
+import { IDateAdapter } from './date-adapter'
 import { Options } from './rule'
 
 export namespace Utils {
 
   /** ['SU','MO','TU','WE','TH','FR','SA'] */
-  export const WEEKDAYS: DateAdapter.Weekday[] = [
+  export const WEEKDAYS: IDateAdapter.Weekday[] = [
     'SU',
     'MO',
     'TU',
@@ -20,17 +20,17 @@ export namespace Utils {
   export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24
   export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7
 
-  export function weekdayToInt<T extends DateAdapter<T>>(
-    weekday: DateAdapter.Weekday,
-    wkst: DateAdapter.Weekday = 'SU'
+  export function weekdayToInt(
+    weekday: IDateAdapter.Weekday,
+    wkst: IDateAdapter.Weekday = 'SU'
   ) {
     const weekdays = orderedWeekdays(wkst)
 
     return weekdays.indexOf(weekday)
   }
 
-  export function orderedWeekdays<T extends DateAdapter<T>>(
-    wkst: DateAdapter.Weekday = 'SU'
+  export function orderedWeekdays(
+    wkst: IDateAdapter.Weekday = 'SU'
   ) {
     const wkdays = WEEKDAYS.slice()
     let index = wkdays.indexOf(wkst)
@@ -51,7 +51,7 @@ export namespace Utils {
     return array
   }
 
-  export function sortDates<T extends DateAdapter<T>>(dates: T[]) {
+  export function sortDates<T extends {isAfter: (arg: any) => boolean}>(dates: T[]) {
     return dates.sort((a, b) => {
       if (a.isAfter(b)) { return 1 }
       else if (b.isAfter(a)) { return -1 }
@@ -63,8 +63,8 @@ export namespace Utils {
    * Calculates the forward distance in days between two weekdays.
    */
   export function differenceInDaysBetweenTwoWeekdays(
-    a: DateAdapter.Weekday,
-    b: DateAdapter.Weekday
+    a: IDateAdapter.Weekday,
+    b: IDateAdapter.Weekday
   ) {
     const result = Utils.WEEKDAYS.indexOf(a) - Utils.WEEKDAYS.indexOf(b)
   
@@ -76,7 +76,7 @@ export namespace Utils {
    * return `null`.
    * @param dates
    */
-  export function getEarliestDate<T extends DateAdapter<T>>(dates: T[]) {
+  export function getEarliestDate(dates: IDateAdapter[]) {
     if (dates.length === 0) { return null }
     else if (dates.length === 1) { return dates[0] }
 
@@ -147,36 +147,36 @@ export namespace Utils {
     return days
   }
 
-  export function setDateToStartOfYear<T extends DateAdapter<T>>(date: T) {
+  export function setDateToStartOfYear(date: IDateAdapter) {
     return date.set('month', 1).set('day', 1)
   }
 
-  export function setDateToEndOfYear<T extends DateAdapter<T>>(date: T) {
+  export function setDateToEndOfYear(date: IDateAdapter) {
     return date.set('month', 12).set('day', 31)
   }
 
-  export function setDateToEndOfMonth<T extends DateAdapter<T>>(date: T) {
+  export function setDateToEndOfMonth(date: IDateAdapter) {
     return date.add(1, 'month').set('day', 1).subtract(1, 'day')
   }
 
-  export function setDateToStartOfWeek<T extends DateAdapter<T>>(
-    date: T,
-    wkst: DateAdapter.Weekday
+  export function setDateToStartOfWeek(
+    date: IDateAdapter,
+    wkst: IDateAdapter.Weekday
   ) {
     const index = orderedWeekdays(wkst).indexOf(date.get('weekday'))
     return date.subtract(index, 'day')
   }
 
-  export function setDateToEndOfWeek<T extends DateAdapter<T>>(date: T, wkst: DateAdapter.Weekday) {
+  export function setDateToEndOfWeek(date: IDateAdapter, wkst: IDateAdapter.Weekday) {
     const index = orderedWeekdays(wkst).indexOf(date.get('weekday'))
     return date.add(6 - index, 'day')
   }
 
-  export function setDateToStartOfDay<T extends DateAdapter<T>>(date: T) {
+  export function setDateToStartOfDay(date: IDateAdapter) {
     return date.set('hour', 0).set('minute', 0).set('second', 0)
   }
 
-  export function setDateToEndOfDay<T extends DateAdapter<T>>(date: T) {
+  export function setDateToEndOfDay(date: IDateAdapter) {
     return date.set('hour', 23).set('minute', 59).set('second', 59)
   }
 
@@ -187,9 +187,9 @@ export namespace Utils {
    * @param wkst
    * @return [numberOfWeeks, weekStartOffset]
    */
-  export function getWeeksInYear<T extends DateAdapter<T>>(
-    date: T,
-    wkst: DateAdapter.Weekday
+  export function getWeeksInYear(
+    date: IDateAdapter,
+    wkst: IDateAdapter.Weekday
   ): [number, number] {
     date = date.clone()
     const year = date.get('year')
@@ -253,14 +253,22 @@ export namespace Utils {
     }
   }
 
-  export function dateToStandardizedString<T extends DateAdapter<T>>(date: T) {
-    return `${date.get('year')}${toTwoCharString(
+  export function dateToStandardizedString(date: {
+    get(unit: IDateAdapter.Unit): number
+  }) {
+    let string = `${date.get('year')}${toTwoCharString(
       date.get('month')
     )}${toTwoCharString(date.get('day'))}T${toTwoCharString(
       date.get('hour')
     )}${toTwoCharString(date.get('minute'))}${toTwoCharString(
       date.get('second')
     )}`
+
+    if (date.get('millisecond')) {
+      string = `${string}.${date.get('millisecond')}`
+    }
+
+    return string
   }
 
   function toTwoCharString(int: number) {
@@ -273,10 +281,10 @@ export namespace Utils {
    * The first date argument is subtracted from the second. I.e.
    * when going forward in time, the second date is larger than the first.
    */
-  export function unitDifferenceBetweenDates<T extends DateAdapter<T>>(
-    first: T,
-    second: T,
-    unit: DateAdapter.Unit,
+  export function unitDifferenceBetweenDates(
+    first: IDateAdapter,
+    second: IDateAdapter,
+    unit: IDateAdapter.Unit | 'week',
   ) {
     let intervalDuration: number;
 
@@ -310,26 +318,5 @@ export namespace Utils {
     const sign = Math.sign(second.valueOf() - first.valueOf())
     
     return Math.floor(Math.abs(second.valueOf() - first.valueOf()) / intervalDuration) * sign
-  }
-
-  /**
-   * This function tries to detect if the client is in the northern
-   * hemisphere. It returns `true` if yes, `false` if the client is in the 
-   * southern hemisphere, and `null` if unknown. It will only work if the 
-   * client observes DST.
-   * 
-   * This is fine, because it is used to correct for DST changes, which 
-   * happen in opposite directions based on the hemisphere. If a timezone 
-   * doesn't observe DST, then we don't need to correct for it anyway.
-   */
-  export function isInNorthernHemisphere<T extends DateAdapter<T>>(date: T) {
-    date = date.clone();
-
-    const jan = -date.set('month', 1).set('day', 1).utcOffset
-    const jul = -date.set('month', 6).set('day', 1).utcOffset
-    const diff= jan-jul;
-    if(diff> 0) return true;
-    else if(diff< 0) return false
-    else return null;
   }
 }

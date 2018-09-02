@@ -1,13 +1,28 @@
-import { DateAdapter } from '../date-adapter'
+import { IDateAdapter, DateAdapterBase, DateAdapter, DateProp, DateAdapterConstructor, IDateAdapterConstructor } from '../date-adapter'
+import { DateTime } from '../date-time'
 
 /**
  * This function performs validation checks on the provided rule options and retuns
  * a cloned validated options object.
  */
-export function buildValidatedRuleOptions<T extends DateAdapter<T>>(
+export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
+  dateAdapterConstructor: T,
   options: Options.ProvidedOptions<T>
 ): Options.ProcessedOptions<T> {
-  const start = options.start
+  // hack to trick typescript into inferring the correct types
+  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any
+
+  const start = DateAdapterBase.isInstance(options.start)
+    ? options.start
+    : new dateAdapter(options.start);
+  
+  let until: DateAdapter<T> | undefined
+
+  if (options.until) {
+    until = DateAdapterBase.isInstance(options.until)
+      ? options.until.set('timezone', start.get('timezone'))
+      : new dateAdapter(options.until).set('timezone', start.get('timezone'));
+  }
 
   if (options.interval !== undefined && options.interval < 1) {
     throw new RuleValidationError('"interval" cannot be less than 1')
@@ -80,11 +95,11 @@ export function buildValidatedRuleOptions<T extends DateAdapter<T>>(
   if (options.until !== undefined && options.count !== undefined) {
     throw new RuleValidationError('"until" and "count" cannot both be present')
   }
-  if (options.until !== undefined && !options.until!.isSameClass(start)) {
-    throw new RuleValidationError(
-      '"until" and "start" must both be of the same class'
-    )
-  }
+  // if (options.until !== undefined && !options.until!.isSameClass(start)) {
+  //   throw new RuleValidationError(
+  //     '"until" and "start" must both be of the same class'
+  //   )
+  // }
 
   if (options.byMonthOfYear) {
     options.byMonthOfYear.sort((a, b) => {
@@ -118,8 +133,8 @@ export function buildValidatedRuleOptions<T extends DateAdapter<T>>(
     })
   }
 
-  const defaultOptions: Options.ProcessedOptions<T> = {
-    start: options.start,
+  const defaultOptions: any = {
+    timezone: start.get('timezone'),
     frequency: options.frequency,
     interval: 1,
     weekStart: 'MO',
@@ -129,16 +144,16 @@ export function buildValidatedRuleOptions<T extends DateAdapter<T>>(
     switch (options.frequency) {
       case 'YEARLY':
         defaultOptions.byMonthOfYear = [
-          options.start.get('month'),
+          start.get('month'),
         ] as Options.ByMonthOfYear[]
       case 'MONTHLY':
         defaultOptions.byDayOfMonth = [
-          options.start.get('day'),
+          start.get('day'),
         ] as Options.ByDayOfMonth[]
         break
       case 'WEEKLY':
         defaultOptions.byDayOfWeek = [
-          options.start.get('weekday'),
+          start.get('weekday'),
         ] as Options.ByDayOfWeek[]
         break
     }
@@ -150,22 +165,23 @@ export function buildValidatedRuleOptions<T extends DateAdapter<T>>(
     case 'WEEKLY':
     case 'DAILY':
       defaultOptions.byHourOfDay = [
-        options.start.get('hour'),
+        start.get('hour'),
       ] as Options.ByHourOfDay[]
     case 'HOURLY':
       defaultOptions.byMinuteOfHour = [
-        options.start.get('minute'),
+        start.get('minute'),
       ] as Options.ByMinuteOfHour[]
     case 'MINUTELY':
       defaultOptions.bySecondOfMinute = [
-        options.start.get('second'),
+        start.get('second'),
       ] as Options.BySecondOfMinute[]
   }
 
   return {
     ...defaultOptions,
     ...options,
-    start: options.start.clone(),
+    start,
+    until,
   }
 }
 
@@ -190,10 +206,10 @@ export namespace Options {
    * If the number is negative, it is calculated from the end of
    * the month / year.
    */
-  export type ByDayOfWeek = DateAdapter.Weekday | [DateAdapter.Weekday, number]
+  export type ByDayOfWeek = IDateAdapter.Weekday | [IDateAdapter.Weekday, number]
 
-  export interface ProvidedOptions<T extends DateAdapter<T>> {
-    start: T
+  export interface ProvidedOptions<T extends DateAdapterConstructor> {
+    start: DateProp<T> | DateAdapter<T>
     frequency: Frequency
     interval?: number
     bySecondOfMinute?: BySecondOfMinute[]
@@ -202,20 +218,29 @@ export namespace Options {
     byDayOfWeek?: ByDayOfWeek[]
     byDayOfMonth?: ByDayOfMonth[]
     byMonthOfYear?: ByMonthOfYear[]
-    until?: T
+    until?: DateProp<T> | DateAdapter<T>
     count?: number
-    weekStart?: DateAdapter.Weekday
+    weekStart?: IDateAdapter.Weekday
   }
 
-  export interface ProcessedOptions<T extends DateAdapter<T>>
-    extends ProvidedOptions<T> {
+  export interface ProcessedOptions<T extends DateAdapterConstructor> {
+    frequency: Frequency
     interval: number
-    weekStart: DateAdapter.Weekday
+    start: DateAdapter<T>
+    until?: DateAdapter<T>
+    count?: number
+    weekStart: DateTime.Weekday
+    byMonthOfYear?: ByMonthOfYear[]
+    byDayOfMonth?: ByDayOfMonth[]
+    byDayOfWeek?: ByDayOfWeek[]
+    byHourOfDay: ByHourOfDay[]
+    byMinuteOfHour: ByMinuteOfHour[]
+    bySecondOfMinute: BySecondOfMinute[]
   }
 
   export type BySecondOfMinute = ByMinuteOfHour | 60
 
-  export type ByMonthOfYear = DateAdapter.IMonth
+  export type ByMonthOfYear = IDateAdapter.IMonth
 
   // >= 0 && <= 59
   export type ByMinuteOfHour =

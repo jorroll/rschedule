@@ -1,7 +1,5 @@
-import { DateAdapter, RRule, Schedule, Calendar, ParsedDatetime, Utils, RDates } from '@rschedule/rschedule';
+import { IDateAdapter, DateAdapterBase, RRule, ParsedDatetime, Utils } from '@rschedule/rschedule';
 import moment from 'moment';
-
-const MOMENT_DATE_ADAPTER_ID = Symbol.for('44069a20-dc6f-4479-8737-d86a93e9b357')
 
 /**
  * The `MomentDateAdapter` is for using with momentjs *without* the
@@ -12,42 +10,19 @@ const MOMENT_DATE_ADAPTER_ID = Symbol.for('44069a20-dc6f-4479-8737-d86a93e9b357'
  * `moment-timezone` package, and use it with the
  * `MomentTZDateAdapter`.
  */
-export class MomentDateAdapter
-implements DateAdapter<MomentDateAdapter, moment.Moment> {
+export class MomentDateAdapter extends DateAdapterBase<moment.Moment> {
   public date: moment.Moment
   
-  // moment() seems to output utcOffset with the opposite sign (-/+) from 
-  // the native Date object. I'm going to side with Date and flip moment's
-  // output sign to solve the issue.
-  public get utcOffset() { return this.date.utcOffset() === 0 ? 0 : -this.date.utcOffset() }
-
-  /** 
-   * This property contains an ordered array of the generator objects
-   * responsible for producing this DateAdapter.
-   * 
-   * - If this DateAdapter was produced by a `RRule` object, this array
-   *   will just contain the `RRule` object.
-   * - If this DateAdapter was produced by a `Schedule` object, this
-   *   array will contain the `Schedule` object as well as the `RRule`
-   *   or `RDates` object which generated it.
-   * - If this DateAdapter was produced by a `Calendar` object, this
-   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
-   *   `RRule`/`RDates` objects which generated it.
-   */
-  public generators: Array<
-    | RRule<MomentDateAdapter>
-    | RDates<MomentDateAdapter>
-    | Schedule<MomentDateAdapter>
-    | Calendar<MomentDateAdapter, Schedule<MomentDateAdapter>>
-  > = []
-  
   constructor(date?: moment.Moment, args: {} = {}) {
+    super()
+
     if (moment.isMoment(date)) {
       this.date = date.clone()
     }
     else if (date) {
-      throw new DateAdapter.InvalidDateError(
-        'The `MomentDateAdapter` constructor only accepts `moment()` dates.'
+      throw new IDateAdapter.InvalidDateError(
+        'The `MomentDateAdapter` constructor only accepts `moment()` dates. ' +
+        `Received: ${date}`
       )
     }
     else this.date = moment();
@@ -55,23 +30,11 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
     this.assertIsValid()
   }
 
-  public readonly [MOMENT_DATE_ADAPTER_ID] = true
-
-  /**
-   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
-   * of determining if an object is a `MomentDateAdapter` by checking against the
-   * global symbol registry.
-   */
-  static isInstance(object: any): object is MomentDateAdapter {
-    return !!(object && object[Symbol.for('44069a20-dc6f-4479-8737-d86a93e9b357')])
-  }
-
-  static readonly hasTimezoneSupport = false;
+  static date: moment.Moment
 
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
     timezone: string | undefined
-    raw: string
   }): MomentDateAdapter[] {
     const dates = args.datetimes.map(datetime => {
       // adjust for `Date`'s base-0 months
@@ -84,7 +47,7 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
         case 'DATE':
           return new MomentDateAdapter(moment(datetime))
         default:
-          throw new DateAdapter.InvalidDateError(
+          throw new IDateAdapter.InvalidDateError(
             'The `MomentDateAdapter` only supports datetimes in UTC or LOCAL time. ' +
             `You attempted to parse an ICAL string with a "${args.timezone}" timezone. ` +
             'Timezones are supported by the `MomentTZDateAdapter` with the ' +
@@ -108,127 +71,17 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
     return adapter
   }
 
-  isSameClass(object: any): object is MomentDateAdapter {
-    return MomentDateAdapter.isInstance(object)
-  }
-
-  isEqual<O extends DateAdapter<O>>(object?: O): boolean {
-    return !!object && typeof object.toISOString === 'function' && object.toISOString() === this.toISOString()
-  }
-  isBefore<O extends DateAdapter<O>>(object: O): boolean {
-    return this.valueOf() < object.valueOf()
-  }
-  isBeforeOrEqual<O extends DateAdapter<O>>(object: O): boolean {
-    return this.valueOf() <= object.valueOf()
-  }
-  isAfter<O extends DateAdapter<O>>(object: O): boolean {
-    return this.valueOf() > object.valueOf()
-  }
-  isAfterOrEqual<O extends DateAdapter<O>>(object: O): boolean {
-    return this.valueOf() >= object.valueOf()
-  }
-
-  add(amount: number, unit: DateAdapter.Unit): MomentDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date.add(amount, 'year')
-        break
-      case 'month':
-        this.date.add(amount, 'month')
-        break
-      case 'week':
-        this.date.add(amount, 'week')
-        break
-      case 'day':
-        this.date.add(amount, 'day')
-        break
-      case 'hour':
-        this.date.add(amount, 'hour')
-        break
-      case 'minute':
-        this.date.add(amount, 'minute')
-        break
-      case 'second':
-        this.date.add(amount, 'second')
-        break
-      case 'millisecond':
-        this.date.add(amount, 'millisecond')
-        break
-      default:
-        throw new Error('Invalid unit provided to `MomentDateAdapter#add`')
-    }
-
-    this.assertIsValid()
-
-    return this
-  }
-
-  // clones date before manipulating it
-  subtract(amount: number, unit: DateAdapter.Unit): MomentDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date.subtract(amount, 'year')
-        break
-      case 'month':
-        this.date.subtract(amount, 'month')
-        break
-      case 'week':
-        this.date.subtract(amount, 'week')
-        break
-      case 'day':
-        this.date.subtract(amount, 'day')
-        break
-      case 'hour':
-        this.date.subtract(amount, 'hour')
-        break
-      case 'minute':
-        this.date.subtract(amount, 'minute')
-        break
-      case 'second':
-        this.date.subtract(amount, 'second')
-        break
-      case 'millisecond':
-        this.date.subtract(amount, 'millisecond')
-        break
-      default:
-        throw new Error('Invalid unit provided to `MomentDateAdapter#subtract`')
-    }
-
-    this.assertIsValid()
-
-    return this
-  }
-
-  get(unit: 'year'): number
-  get(unit: 'month'): number
-  get(unit: 'yearday'): number
-  get(unit: 'weekday'): DateAdapter.Weekday
-  get(unit: 'day'): number
-  get(unit: 'hour'): number
-  get(unit: 'minute'): number
-  get(unit: 'second'): number
-  get(unit: 'millisecond'): number
+  get(unit: IDateAdapter.Unit | 'yearday'): number
+  get(unit: 'weekday'): IDateAdapter.Weekday
   get(unit: 'timezone'): 'UTC' | undefined
-  get(
-    unit:
-      | 'year'
-      | 'month'
-      | 'yearday'
-      | 'weekday'
-      | 'day'
-      | 'hour'
-      | 'minute'
-      | 'second'
-      | 'millisecond'
-      | 'timezone'
-  ) {
+  get(unit: IDateAdapter.Unit | 'yearday' | 'weekday' | 'timezone') {
     switch (unit) {
       case 'year':
         return this.date.get('year')
       case 'month':
         return this.date.get('month') + 1
       case 'yearday':
-        return this.date.get('dayOfYear')
+        return Utils.getYearDay(this.get('year'), this.get('month'), this.get('day'))
       case 'weekday':
         return Utils.WEEKDAYS[this.date.get('weekday')]
       case 'day':
@@ -242,72 +95,37 @@ implements DateAdapter<MomentDateAdapter, moment.Moment> {
       case 'millisecond':
         return this.date.get('millisecond')
       case 'timezone':
-        return this.utcOffset === 0 ? 'UTC' : undefined
+        return this.date.isUTC() ? 'UTC' : undefined
       default:
         throw new Error('Invalid unit provided to `MomentDateAdapter#set`')
     }
   }
 
-  set(unit: 'timezone', value: 'UTC' | undefined, options?: {keepLocalTime?: boolean}): MomentDateAdapter
-  set(unit: DateAdapter.Unit, value: number): MomentDateAdapter
-  set(unit: DateAdapter.Unit | 'timezone', value: number | 'UTC' | undefined, options: {keepLocalTime?: boolean} = {}): MomentDateAdapter {
-    switch (unit) {
-      case 'year':
-        this.date.set('year', value as number)
-        break
-      case 'month':
-        this.date.set('month', (value as number) - 1)
-        break
-      case 'day':
-        this.date.set('date', value as number)
-        break
-      case 'hour':
-        this.date.set('hour', value as number)
-        break
-      case 'minute':
-        this.date.set('minute', value as number)
-        break
-      case 'second':
-        this.date.set('second', value as number)
-        break
-      case 'millisecond':
-        this.date.set('millisecond', value as number)
-        break
-      case 'timezone':
-        if (['UTC', undefined].includes(value as 'UTC' | undefined))
-          value === 'UTC' ? this.date.utc(options.keepLocalTime) : this.date.local(options.keepLocalTime)
-        else
-          throw new DateAdapter.InvalidDateError(
-            `MomentDateAdapter does not support "${value}" timezone.`
-          )
-        break
-      default:
-        throw new Error('Invalid unit provided to `MomentDateAdapter#set`')
+  set(unit: IDateAdapter.Unit, value: number): this
+  set(unit: 'timezone', value: 'UTC' | undefined, options?: {keepLocalTime?: boolean}): this
+  set(unit: IDateAdapter.Unit | 'timezone', value: number | 'UTC' | undefined, options: {keepLocalTime?: boolean}={}): this {
+    if (unit !== 'timezone') return super.set(unit, value);
+
+    if (!['UTC', undefined].includes(value as 'UTC' | undefined)) {
+      throw new IDateAdapter.InvalidDateError(
+        `MomentDateAdapter does not support "${value}" timezone.`
+      )
     }
+
+    value === 'UTC'
+      ? this.date.utc(options.keepLocalTime)
+      : this.date.local(options.keepLocalTime);
 
     this.assertIsValid()
 
     return this
   }
 
-  toISOString() {
-    return this.date.toISOString()
-  }
-
-  toICal(options: {format?: string} = {}): string {
-    const format = options.format || this.get('timezone');
-
-    if (format === 'UTC')
-      return this.date.clone().utc().format('YYYYMMDDTHHmmss[Z]')
-    else
-      return this.date.local().format('YYYYMMDDTHHmmss')
-  }
-
   valueOf() { return this.date.valueOf() }
 
   assertIsValid() {
     if (!this.date.isValid()) {
-      throw new DateAdapter.InvalidDateError()
+      throw new IDateAdapter.InvalidDateError()
     }
 
     return true

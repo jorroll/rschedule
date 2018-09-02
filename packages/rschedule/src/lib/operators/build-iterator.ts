@@ -1,6 +1,6 @@
-import { DateAdapter } from "../date-adapter";
+import { DateAdapter, DateAdapterConstructor } from "../date-adapter";
 import { OperatorOutput, OperatorObject } from "./interface";
-import { OccurrencesArgs } from "../interfaces";
+import { RunArgs } from "../interfaces";
 import cloneDeep from 'lodash.clonedeep';
 
 /**
@@ -42,21 +42,21 @@ import cloneDeep from 'lodash.clonedeep';
  * 
  * @param operators a spread of operator functions
  */
-export function buildIterator<T extends DateAdapter<T>>(...operators: OperatorOutput<T>[]) {
-  let _run: (args?: OccurrencesArgs<T>) => IterableIterator<T>
+export function buildIterator<T extends DateAdapterConstructor>(...operators: OperatorOutput<T>[]) {
+  let _run: (args?: RunArgs<T>) => IterableIterator<DateAdapter<T>>
   let first: OperatorObject<T>
 
   switch (operators.length) {
     case 0:
-      _run = () => ({[Symbol.iterator]: (() => {}) as any, next: () => ({value: undefined as any, done: true} as IteratorResult<T>)})
+      _run = () => ({[Symbol.iterator]: (() => {}) as any, next: () => ({value: undefined as any, done: true} as IteratorResult<DateAdapter<T>>)})
       break
     case 1:
       first = operators.shift()!()
-      _run = (args: OccurrencesArgs<T>={}) => first._run(args)
+      _run = (args: RunArgs<T>={}) => first._run(args)
       break
     default:
       first = operators.shift()!()
-      _run = (args: OccurrencesArgs<T>={}) => operators.reduce((prev, curr) => curr(prev)._run(args), first._run(args))
+      _run = (args: RunArgs<T>={}) => operators.reduce((prev, curr) => curr(prev)._run(args), first._run(args))
       break
   }
 
