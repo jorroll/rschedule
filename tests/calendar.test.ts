@@ -9,6 +9,10 @@ import {
 } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
+RRule.dateAdapterConstructor = StandardDateAdapter
+Schedule.dateAdapterConstructor = StandardDateAdapter
+Calendar.dateAdapterConstructor = StandardDateAdapter
+
 function toISOStringsOCC(
   calendar: Calendar<typeof StandardDateAdapter, any>,
   args?: OccurrencesArgs<typeof StandardDateAdapter>
@@ -33,7 +37,7 @@ function toISOStringsCOL(
 }
 
 describe('CalendarClass', () => {
-  it('is instantiable', () => expect(new Calendar({dateAdapter: StandardDateAdapter})).toBeInstanceOf(Calendar))
+  it('is instantiable', () => expect(new Calendar()).toBeInstanceOf(Calendar))
 })
 
 describe('Calendar', () => {
@@ -41,7 +45,7 @@ describe('Calendar', () => {
     describe('NO args', () => {
       it('with a single schedule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({ dateAdapter: StandardDateAdapter,
+        const schedule = new Schedule({
           rrules: [
             {
               frequency: 'YEARLY',
@@ -53,7 +57,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: schedule })
+        const calendar = new Calendar({ schedules: schedule })
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 5, 9, 0),
@@ -79,7 +83,7 @@ describe('Calendar', () => {
       })
 
       it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter,
+        const scheduleOne = new Schedule({
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -99,7 +103,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter,
+        const scheduleTwo = new Schedule({
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -112,7 +116,7 @@ describe('Calendar', () => {
           ],
         })
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: [scheduleOne, scheduleTwo] })
+        const calendar = new Calendar({ schedules: [scheduleOne, scheduleTwo] })
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),

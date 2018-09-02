@@ -37,12 +37,23 @@ export class Calendar<
     return !!(object && object[Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')])
   }
 
+  static dateAdapterConstructor: DateAdapterConstructor
+
   protected dateAdapter: IDateAdapterConstructor<T>
 
-  constructor(args: { schedules?: Array<S> | S, data?: D, dateAdapter: T }) {
+  constructor(args: { schedules?: Array<S> | S, data?: D, dateAdapter?: T }={}) {
     super()
 
-    this.dateAdapter = args.dateAdapter as any
+    this.dateAdapter = args.dateAdapter 
+      ? args.dateAdapter
+      : Calendar.dateAdapterConstructor as any;
+
+    if (!this.dateAdapter) {
+      throw new Error(
+        "Oops! You've initialized a Calendar object without a dateAdapter."
+      )
+    }
+
     if (args.data) this.data = args.data;
     if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }
     else if (args.schedules) { this.schedules.push(args.schedules) }

@@ -45,7 +45,7 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
       : new this.dateAdapter(this.options.start)
   }
 
-  static dateAdapter: any
+  static dateAdapterConstructor: DateAdapterConstructor
 
   /** Convenience property for holding arbitrary data */
   public data!: D
@@ -57,11 +57,19 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
 
   protected dateAdapter: IDateAdapterConstructor<T>
 
-  constructor(options: Options.ProvidedOptions<T>, args: {data?: D, dateAdapter: T}) {
+  constructor(options: Options.ProvidedOptions<T>, args: {data?: D, dateAdapter?: T}={}) {
     super()
 
-    // hack to trick typescript into inferring the correct types
-    this.dateAdapter = args.dateAdapter as any
+    this.dateAdapter = args.dateAdapter 
+      ? args.dateAdapter
+      : Rule.dateAdapterConstructor as any;
+
+    if (!this.dateAdapter) {
+      throw new Error(
+        "Oops! You've initialized a Rule object without a dateAdapter."
+      )
+    }
+
     this.options = options;
     if (args.data) this.data = args.data;
   }

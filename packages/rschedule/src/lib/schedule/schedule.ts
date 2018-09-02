@@ -39,11 +39,13 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
    * of determining if an object is a `Schedule` by checking against the
    * global symbol registry.
    */
-  public static isSchedule(object: any): object is Schedule<any> {
+  static isSchedule(object: any): object is Schedule<any> {
     return !!(object && object[Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')])
   }
 
-  public static fromICal<T extends IDateAdapterConstructor<T>, D = undefined>(
+  static dateAdapterConstructor: DateAdapterConstructor
+
+  static fromICal<T extends DateAdapterConstructor, D = undefined>(
     icals: string | string[],
     dateAdapterConstructor: T,
     args: {
@@ -72,27 +74,35 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
   protected dateAdapter: IDateAdapterConstructor<T>
 
   constructor(args: {
-    dateAdapter: T
+    dateAdapter?: T
     data?: D
     rrules?: (ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>)[]
     exrules?: (ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | EXRule<T>)[]
     rdates?: DateProp<T>[] | RDates<T>
     exdates?: DateProp<T>[] | EXDates<T>
-  }) {
+  }={}) {
     super()
 
-    this.dateAdapter = args.dateAdapter as any
+    this.dateAdapter = args.dateAdapter 
+      ? args.dateAdapter
+      : Schedule.dateAdapterConstructor as any;
+
+    if (!this.dateAdapter) {
+      throw new Error(
+        "Oops! You've initialized a Schedule object without a dateAdapter."
+      )
+    }
     
     if (args.data) this.data = args.data;
 
     if (args.rrules) {
       this.rrules = args.rrules.map(ruleArgs => {
         if (Array.isArray(ruleArgs))
-          return  new RRule(ruleArgs[0], {dateAdapter: args.dateAdapter, ...ruleArgs[1]})
+          return  new RRule(ruleArgs[0], {dateAdapter: this.dateAdapter as any, ...ruleArgs[1]})
         else if (RRule.isRRule(ruleArgs))
           return ruleArgs.clone()
         else
-          return new RRule(ruleArgs, {dateAdapter: args.dateAdapter})
+          return new RRule(ruleArgs, {dateAdapter: this.dateAdapter as any})
       })
     }
 
@@ -100,30 +110,30 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
       this.exrules = args.exrules.map(ruleArgs => {
         if (Array.isArray(ruleArgs))
           // @ts-ignore typescript doesn't like spread operator
-          return  new EXRule(ruleArgs[0], {dateAdapter: args.dateAdapter, ...ruleArgs[1]})
+          return  new EXRule(ruleArgs[0], {dateAdapter: this.dateAdapter as any, ...ruleArgs[1]})
         else if (EXRule.isEXRule(ruleArgs))
           return ruleArgs.clone()
         else
-          return new EXRule(ruleArgs, {dateAdapter: args.dateAdapter})
+          return new EXRule(ruleArgs, {dateAdapter: this.dateAdapter as any})
       })
     }
 
     if (args.rdates) {
         this.rdates = RDates.isRDates(args.rdates)
           ? args.rdates.clone()
-          : new RDates({dates: args.rdates, dateAdapter: args.dateAdapter})
+          : new RDates({dates: args.rdates, dateAdapter: this.dateAdapter as any})
     }
     else {
-      this.rdates = new RDates({dateAdapter: args.dateAdapter})
+      this.rdates = new RDates({dateAdapter: this.dateAdapter as any})
     }
 
     if (args.exdates) {
       this.exdates = EXDates.isEXDates(args.exdates)
         ? args.exdates.clone()
-        : new EXDates({dates: args.exdates, dateAdapter: args.dateAdapter})
+        : new EXDates({dates: args.exdates, dateAdapter: this.dateAdapter as any})
     }
     else {
-      this.exdates = new EXDates({dateAdapter: args.dateAdapter})
+      this.exdates = new EXDates({dateAdapter: this.dateAdapter as any})
     }
   }
 

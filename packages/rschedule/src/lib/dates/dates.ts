@@ -31,13 +31,25 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
   public dates: DateProp<T>[] = []
   public data?: D
 
+  static dateAdapterConstructor: DateAdapterConstructor
+
   protected dateAdapter: IDateAdapterConstructor<T>
 
-  constructor(args: {dates?: DateProp<T>[], data?: D, dateAdapter: T}) {
+  constructor(args: {dates?: DateProp<T>[], data?: D, dateAdapter?: T}={}) {
     super()
+
+    this.dateAdapter = args.dateAdapter 
+      ? args.dateAdapter
+      : Dates.dateAdapterConstructor as any;
+
+    if (!this.dateAdapter) {
+      throw new Error(
+        "Oops! You've initialized a Dates object without a dateAdapter."
+      )
+    }
+
     if (args.dates) this.dates = args.dates
     this.data = args.data
-    this.dateAdapter = args.dateAdapter as any
   }
 
   public occurrences(args: OccurrencesArgs<T> = {}) {
