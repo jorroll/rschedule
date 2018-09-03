@@ -285,12 +285,10 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
 
     while (date && (args.take === undefined || index < args.take)) {
       index++
-      
-      date.generators.push(this)
 
       const adapter = this.dateAdapter.fromTimeObject(date.toTimeObject())[0]
-
-      adapter.generators = date.generators.slice()
+      
+      adapter.generators.push(this)
       
       const yieldArgs = yield adapter
 
