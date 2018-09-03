@@ -30,8 +30,8 @@ export class RRule<T extends DateAdapterConstructor, D = any> extends Rule<T, D>
     return new RRule<T, D>(cloneDeep(this.options), {data: this.data, dateAdapter})
   }
 
-  public toICal() {
+  public toICal(options: {excludeDTSTART?: boolean}={}) {
     const dateAdapter: T = this.dateAdapter as any
-    return ruleOptionsToIcalString(dateAdapter, this.options, 'RRULE')
+    return ruleOptionsToIcalString(dateAdapter, this.options, 'RRULE', options)
   }
 }

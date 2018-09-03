@@ -6,18 +6,20 @@ import {
   OccurrencesArgs,
 } from '../interfaces'
 import { CollectionIterator, CollectionsArgs, CollectionsRunArgs } from './collection'
-import { add, OperatorObject } from '../operators';
+import { add, OperatorObject, OccurrenceStream } from '../operators';
 import { Utils } from '../utilities';
+import { RScheduleConfig } from '../rschedule-config';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')
 
 export class Calendar<
   T extends DateAdapterConstructor,
-  S extends OperatorObject<T>,
+  S extends (OperatorObject<T> | OccurrenceStream<T>),
   D = any
 > extends HasOccurrences<T>
-  implements IHasOccurrences<T> {
-  public schedules: S[] = []
+  implements IHasOccurrences<T>
+{
+  public schedules: OperatorObject<T>[] = []
 
   /** Convenience property for holding arbitrary data */
   public data!: D
@@ -38,16 +40,20 @@ export class Calendar<
     return !!(object && object[CALENDAR_ID])
   }
 
-  static dateAdapterConstructor: DateAdapterConstructor
+  static defaultDateAdapter?: DateAdapterConstructor
 
   protected dateAdapter: IDateAdapterConstructor<T>
 
   constructor(args: { schedules?: Array<S> | S, data?: D, dateAdapter?: T }={}) {
     super()
 
-    this.dateAdapter = args.dateAdapter 
-      ? args.dateAdapter
-      : Calendar.dateAdapterConstructor as any;
+    if (args.dateAdapter)
+      this.dateAdapter = args.dateAdapter as any
+    else if (Calendar.defaultDateAdapter)
+      this.dateAdapter = Calendar.defaultDateAdapter as any
+    else {
+      this.dateAdapter = RScheduleConfig.defaultDateAdapter as any
+    }
 
     if (!this.dateAdapter) {
       throw new Error(
@@ -56,8 +62,20 @@ export class Calendar<
     }
 
     if (args.data) this.data = args.data;
-    if (Array.isArray(args.schedules)) { this.schedules = args.schedules.slice() }
-    else if (args.schedules) { this.schedules.push(args.schedules) }
+    if (Array.isArray(args.schedules)) {
+      this.schedules = args.schedules.map(schedule =>
+        typeof schedule === 'function'
+          ? (schedule as OccurrenceStream<T>)(this.dateAdapter as any)
+          : schedule as OperatorObject<T>
+      )
+    }
+    else if (args.schedules) {
+      this.schedules.push(
+        typeof args.schedules === 'function'
+          ? (args.schedules as OccurrenceStream<T>)(this.dateAdapter as any)
+          : args.schedules as OperatorObject<T>
+      )
+    }
   }
 
   /**
@@ -263,7 +281,7 @@ export class Calendar<
         iterator = this.schedules[0]._run(args)
         break
       default:
-        iterator = add(...this.schedules)()._run(args)
+        iterator = add(...this.schedules)({dateAdapter: this.dateAdapter as any})._run(args)
         break
     }
 

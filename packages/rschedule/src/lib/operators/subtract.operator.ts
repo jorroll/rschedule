@@ -1,18 +1,18 @@
 import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
 import { RunArgs } from '../interfaces'
-import { OperatorInput, OperatorOutput } from './interface';
+import { OperatorInput, OperatorOutput, OperatorOutputOptions } from './interface';
 import { add } from './add.operator'
 
 /**
  * An operator function, intended as an argument for
- * `buildIterator()`, which excludes the occurrences of input arguments from the
- * occurrences of the previous schedule's occurrences in the `buildIterator` pipe.
+ * `occurrenceStream()`, which excludes the occurrences of input arguments from the
+ * occurrences of the previous schedule's occurrences in the `occurrenceStream` pipe.
  * 
  * @param inputs a spread of scheduling objects
  */
 export function subtract<T extends DateAdapterConstructor>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
 
-  return (base?: IterableIterator<DateAdapter<T>>) => {
+  return (options: OperatorOutputOptions<T>) => {
     return {
       get isInfinite() { return inputs.some(input => input.isInfinite) },
 
@@ -21,14 +21,14 @@ export function subtract<T extends DateAdapterConstructor>(...inputs: OperatorIn
       },
 
       clone() {
-        return subtract(...inputs.map(input => input.clone()))(base)
+        return subtract(...inputs.map(input => input.clone()))(options)
       },
 
       *_run(args: RunArgs<T>={}): IterableIterator<DateAdapter<T>> {
-        if (!base) return;
+        if (!options.base) return;
         
-        const forInclusion = base
-        const forExclusion = add(...inputs)()._run(args)
+        const forInclusion = options.base
+        const forExclusion = add(...inputs)({dateAdapter: options.dateAdapter})._run(args)
 
         let positiveCache = {
           iterator: forInclusion,

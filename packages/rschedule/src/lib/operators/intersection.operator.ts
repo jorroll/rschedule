@@ -1,10 +1,10 @@
-import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
+import { DateAdapter, DateProp, DateAdapterConstructor, DateAdapterBase } from '../date-adapter'
 import { RunArgs } from '../interfaces'
-import { OperatorInput, OperatorOutput } from './interface';
+import { OperatorInput, OperatorOutput, OperatorOutputOptions } from './interface';
 
 /**
  * An operator function, intended as an argument for
- * `buildIterator()`, which takes a spread of occurrence streams and only
+ * `occurrenceStream()`, which takes a spread of occurrence streams and only
  * returns the dates which intersect every occurrence stream.
  * 
  * Because it's possible for all the streams to never intersect,
@@ -29,25 +29,33 @@ import { OperatorInput, OperatorOutput } from './interface';
  */
 
 export function intersection<T extends DateAdapterConstructor>(
-  options: {defaultEndDate: DateAdapter<T>, maxFailedIterations?: number},
+  options: {defaultEndDate: DateProp<T> | DateAdapter<T>, maxFailedIterations?: number},
   ...inputs: OperatorInput<T>[]
 ): OperatorOutput<T>
 
 export function intersection<T extends DateAdapterConstructor>(
-  options: {defaultEndDate?: DateAdapter<T>, maxFailedIterations: number},
+  options: {defaultEndDate?: DateProp<T> | DateAdapter<T>, maxFailedIterations: number},
   ...inputs: OperatorInput<T>[]
 ): OperatorOutput<T>
 
 export function intersection<T extends DateAdapterConstructor>(
-  options: {defaultEndDate?: DateAdapter<T>, maxFailedIterations?: number},
+  intersectionOptions: {defaultEndDate?: DateProp<T> | DateAdapter<T>, maxFailedIterations?: number},
   ...inputs: OperatorInput<T>[]
 ): OperatorOutput<T> {
 
-  return (base?: IterableIterator<DateAdapter<T>>, baseIsInfinite?: boolean) => {
+  return (options: OperatorOutputOptions<T>) => {
+    let defaultEndDate: DateAdapter<T> | undefined
+
+    if (DateAdapterBase.isInstance(intersectionOptions.defaultEndDate)) {
+      defaultEndDate = intersectionOptions.defaultEndDate
+    }
+    else if (intersectionOptions.defaultEndDate) {
+      defaultEndDate = new options.dateAdapter(intersectionOptions.defaultEndDate) as DateAdapter<T>
+    }
 
     return {
       get isInfinite() {
-        if (baseIsInfinite === false) return false;
+        if (options.baseIsInfinite === false) return false;
 
         return !inputs.some(input => !input.isInfinite)
       },
@@ -59,19 +67,19 @@ export function intersection<T extends DateAdapterConstructor>(
       clone() {
         return intersection(
           {
-            defaultEndDate: options.defaultEndDate && options.defaultEndDate.clone(),
-            maxFailedIterations: options.maxFailedIterations!
+            defaultEndDate: defaultEndDate && defaultEndDate.clone(),
+            maxFailedIterations: intersectionOptions.maxFailedIterations!
           },
           ...inputs.map(input => input.clone())
-        )(base, baseIsInfinite)
+        )(options)
       },
 
       *_run(args: RunArgs<T>={}): IterableIterator<DateAdapter<T>> {      
-        if (!args.end) args.end = options.defaultEndDate;
+        if (!args.end) args.end = defaultEndDate;
 
         const streams = inputs.map(input => input._run(args));
 
-        if (base) streams.push(base);
+        if (options.base) streams.push(options.base);
         
         let cache = streams
           .map(iterator => ({
@@ -91,7 +99,7 @@ export function intersection<T extends DateAdapterConstructor>(
         }
         else {
           // if no, select the first itersecting date
-          next = getNextIntersectingIterator(cache, args.reverse, options.maxFailedIterations)
+          next = getNextIntersectingIterator(cache, args.reverse, intersectionOptions.maxFailedIterations)
         }
         
         while (next && next.date) {  
@@ -114,7 +122,7 @@ export function intersection<T extends DateAdapterConstructor>(
             next = cache[0]
           }
           else {
-            next = getNextIntersectingIterator(cache, args.reverse, options.maxFailedIterations)
+            next = getNextIntersectingIterator(cache, args.reverse, intersectionOptions.maxFailedIterations)
           }
         }
       }

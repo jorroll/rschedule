@@ -8,6 +8,15 @@ export interface OperatorObject<T extends DateAdapterConstructor> {
   _run: (args?: RunArgs<T>) => IterableIterator<DateAdapter<T>>
 }
 
+export interface OperatorOutputOptions<T extends DateAdapterConstructor> {
+  dateAdapter: T
+  base?: IterableIterator<DateAdapter<T>>
+  baseIsInfinite?: boolean
+}
+
 export type OperatorInput<T extends DateAdapterConstructor> = OperatorObject<T>
 export type OperatorOutput<T extends DateAdapterConstructor> =
-  (base?: IterableIterator<DateAdapter<T>>, baseIsInfinite?: boolean) => OperatorObject<T>
+  (options: OperatorOutputOptions<T>) => OperatorObject<T>
+
+export type OccurrenceStream<T extends DateAdapterConstructor> =
+  (dateAdapter: T) => OperatorObject<T>

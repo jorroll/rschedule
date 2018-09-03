@@ -8,13 +8,14 @@ import {
   RunArgs,
 } from '../interfaces'
 import { Utils } from '../utilities'
+import { RScheduleConfig } from '../rschedule-config';
 
 const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac')
 
 /**
  * This base class provides a `HasOccurrences` API wrapper around arrays of dates
  */
-export abstract class Dates<T extends DateAdapterConstructor, D=any> extends HasOccurrences<T> implements IHasOccurrences<T> {
+export class Dates<T extends DateAdapterConstructor, D=any> extends HasOccurrences<T> implements IHasOccurrences<T> {
   public readonly isInfinite = false
   get length() {
     return this.dates.length
@@ -33,7 +34,7 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
   public dates: DateProp<T>[] = []
   public data?: D
 
-  static dateAdapterConstructor: DateAdapterConstructor
+  static defaultDateAdapter?: DateAdapterConstructor
 
   // @ts-ignore used by static method
   private readonly [DATES_ID] = true
@@ -52,9 +53,13 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
   constructor(args: {dates?: (DateProp<T> | DateAdapter<T>)[], data?: D, dateAdapter?: T}={}) {
     super()
 
-    this.dateAdapter = args.dateAdapter 
-      ? args.dateAdapter
-      : Dates.dateAdapterConstructor as any;
+    if (args.dateAdapter)
+      this.dateAdapter = args.dateAdapter as any
+    else if (Dates.defaultDateAdapter)
+      this.dateAdapter = Dates.defaultDateAdapter as any
+    else {
+      this.dateAdapter = RScheduleConfig.defaultDateAdapter as any
+    }
 
     if (!this.dateAdapter) {
       throw new Error(
@@ -189,7 +194,11 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
     }
   }
 
-  abstract clone(): Dates<T>
-
-  abstract toICal(): string
+  clone(): Dates<T, D> {
+    return new Dates({
+      dateAdapter: this.dateAdapter as any,
+      dates: this.dates.slice(),
+      data: this.data,
+    })
+  }
 }

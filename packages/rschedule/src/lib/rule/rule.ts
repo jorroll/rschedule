@@ -11,6 +11,7 @@ import {
 import { PipeController } from './pipes'
 import { buildValidatedRuleOptions, Options } from './rule-options'
 import { Utils } from '../utilities'
+import { RScheduleConfig } from '../rschedule-config';
 
 const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45')
 
@@ -45,7 +46,7 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
       : new this.dateAdapter(this.options.start)
   }
 
-  static dateAdapterConstructor: DateAdapterConstructor
+  static defaultDateAdapter?: DateAdapterConstructor
 
   // @ts-ignore used by static method
   private readonly [RULE_ID] = true
@@ -72,9 +73,13 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
   constructor(options: Options.ProvidedOptions<T>, args: {data?: D, dateAdapter?: T}={}) {
     super()
 
-    this.dateAdapter = args.dateAdapter 
-      ? args.dateAdapter
-      : Rule.dateAdapterConstructor as any;
+    if (args.dateAdapter)
+      this.dateAdapter = args.dateAdapter as any
+    else if (Rule.defaultDateAdapter)
+      this.dateAdapter = Rule.defaultDateAdapter as any
+    else {
+      this.dateAdapter = RScheduleConfig.defaultDateAdapter as any
+    }
 
     if (!this.dateAdapter) {
       throw new Error(

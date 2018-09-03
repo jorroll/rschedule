@@ -1,18 +1,18 @@
 import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
 import { RunArgs } from '../interfaces'
-import { OperatorOutput, OperatorInput } from './interface';
+import { OperatorOutput, OperatorInput, OperatorOutputOptions } from './interface';
 
 /**
  * An operator function, intended as an argument for
- * `buildIterator()`, which gets the union of the previous
- * schedule's occurrences in the `buildIterator` pipe as well as the occurrences
+ * `occurrenceStream()`, which gets the union of the previous
+ * schedule's occurrences in the `occurrenceStream` pipe as well as the occurrences
  * of any input arguments.
  * 
  * @param inputs a spread of scheduling objects
  */
 export function add<T extends DateAdapterConstructor>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
 
-  return (base?: IterableIterator<DateAdapter<T>>) => {
+  return (options: OperatorOutputOptions<T>) => {
 
     return {
       get isInfinite() { return inputs.some(input => input.isInfinite) },
@@ -22,13 +22,13 @@ export function add<T extends DateAdapterConstructor>(...inputs: OperatorInput<T
       },
 
       clone() {
-        return add(...inputs.map(input => input.clone()))(base)
+        return add(...inputs.map(input => input.clone()))(options)
       },
 
       *_run(args: RunArgs<T>={}): IterableIterator<DateAdapter<T>> {
         const streams = inputs.map(input => input._run(args))
 
-        if (base) streams.push(base);
+        if (options.base) streams.push(options.base);
 
         let cache = streams
           .map(iterator => {

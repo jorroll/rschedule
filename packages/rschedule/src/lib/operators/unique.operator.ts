@@ -1,29 +1,29 @@
 import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
-import { OperatorOutput } from './interface';
+import { OperatorOutput, OperatorOutputOptions } from './interface';
 
 /**
- * An operator function, intended as an argument for `buildIterator()`,
+ * An operator function, intended as an argument for `occurrenceStream()`,
  * which combines the input occurrence streams, if any, with the previous occurrence stream
- * in the `buildIterator()` pipe and removes any duplicate dates from the stream.
+ * in the `occurrenceStream()` pipe and removes any duplicate dates from the stream.
  * 
  * @param inputs a spread of scheduling objects
  */
 export function unique<T extends DateAdapterConstructor>(): OperatorOutput<T> {
-  return (base?: IterableIterator<DateAdapter<T>>, baseIsInfinite?: boolean) => {
+  return (options: OperatorOutputOptions<T>) => {
     return {
-      get isInfinite() { return !!baseIsInfinite },
+      get isInfinite() { return !!options.baseIsInfinite },
 
       setTimezone() {},
 
       clone() {
-        return unique()(base, baseIsInfinite)
+        return unique()(options)
       },
 
       *_run(): IterableIterator<DateAdapter<T>> {
         let iterable: IterableIterator<DateAdapter<T>>
         
-        if (base) {
-          iterable = base
+        if (options.base) {
+          iterable = options.base
         }
         else {
           return

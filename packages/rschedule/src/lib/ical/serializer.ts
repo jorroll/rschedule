@@ -14,43 +14,44 @@ export class ICalStringSerialzeError extends Error {}
  */
 export function ruleOptionsToIcalString<T extends DateAdapterConstructor>(
   dateAdapterConstructor: T,
-  options: Options.ProvidedOptions<T>,
-  type: 'RRULE' | 'EXRULE'
+  ruleConfig: Options.ProvidedOptions<T>,
+  type: 'RRULE' | 'EXRULE',
+  options: {
+    excludeDTSTART?: boolean
+  }={},
 ): string {
   // First validate options object, but don't use the result
-  buildValidatedRuleOptions(dateAdapterConstructor, options)
+  buildValidatedRuleOptions(dateAdapterConstructor, ruleConfig)
 
   const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any;
 
   let icalString: string
 
-  const start = dateAdapter.isInstance(options.start)
-    ? options.start
-    : new dateAdapter(options.start)
+  const start = dateAdapter.isInstance(ruleConfig.start)
+    ? ruleConfig.start
+    : new dateAdapter(ruleConfig.start)
 
   let until: IDateAdapter | undefined
-  if (options.until) {
-    until = dateAdapter.isInstance(options.until)
-      ? options.until
-      : new dateAdapter(options.until)
+  if (ruleConfig.until) {
+    until = dateAdapter.isInstance(ruleConfig.until)
+      ? ruleConfig.until
+      : new dateAdapter(ruleConfig.until)
   }
 
-  const seperator = [undefined, 'UTC'].includes(start.get('timezone'))
-    ? ':'
-    : ';';
-
-  icalString = `DTSTART${seperator}${start.toICal()}\n${type}:`;
+  icalString = options.excludeDTSTART 
+    ? `${type}:`
+    : `${buildDTStart(start)}\n${type}:`;
 
   const stringOptions: string[] = []
 
-  for (const option in options) {
-    if (options.hasOwnProperty(option)) {
+  for (const option in ruleConfig) {
+    if (ruleConfig.hasOwnProperty(option)) {
       switch (option) {
         case 'frequency':
-          stringOptions.push(`FREQ=${options.frequency}`)
+          stringOptions.push(`FREQ=${ruleConfig.frequency}`)
           break
         case 'interval':
-          stringOptions.push(`INTERVAL=${options.interval}`)
+          stringOptions.push(`INTERVAL=${ruleConfig.interval}`)
           break
         case 'until':
           stringOptions.push(
@@ -58,30 +59,30 @@ export function ruleOptionsToIcalString<T extends DateAdapterConstructor>(
           )
           break
         case 'count':
-          stringOptions.push(`COUNT=${options.count}`)
+          stringOptions.push(`COUNT=${ruleConfig.count}`)
           break
         case 'bySecondOfMinute':
-          stringOptions.push(`BYSECOND=${options.bySecondOfMinute!.join(',')}`)
+          stringOptions.push(`BYSECOND=${ruleConfig.bySecondOfMinute!.join(',')}`)
           break
         case 'byMinuteOfHour':
-          stringOptions.push(`BYMINUTE=${options.byMinuteOfHour!.join(',')}`)
+          stringOptions.push(`BYMINUTE=${ruleConfig.byMinuteOfHour!.join(',')}`)
           break
         case 'byHourOfDay':
-          stringOptions.push(`BYHOUR=${options.byHourOfDay!.join(',')}`)
+          stringOptions.push(`BYHOUR=${ruleConfig.byHourOfDay!.join(',')}`)
           break
         case 'byDayOfWeek':
           stringOptions.push(
-            `BYDAY=${serializeByDayOfWeek(options.byDayOfWeek!)}`
+            `BYDAY=${serializeByDayOfWeek(ruleConfig.byDayOfWeek!)}`
           )
           break
         case 'byDayOfMonth':
-          stringOptions.push(`BYMONTHDAY=${options.byDayOfMonth!.join(',')}`)
+          stringOptions.push(`BYMONTHDAY=${ruleConfig.byDayOfMonth!.join(',')}`)
           break
         case 'byMonthOfYear':
-          stringOptions.push(`BYMONTH=${options.byMonthOfYear!.join(',')}`)
+          stringOptions.push(`BYMONTH=${ruleConfig.byMonthOfYear!.join(',')}`)
           break
         case 'weekStart':
-          stringOptions.push(`WKST=${options.weekStart}`)
+          stringOptions.push(`WKST=${ruleConfig.weekStart}`)
           break
       }
     }
@@ -104,7 +105,10 @@ function serializeByDayOfWeek(args: Options.ByDayOfWeek[]) {
  */
 export function datesToIcalString<T extends DateAdapterConstructor>(
   dates: DateAdapter<T>[],
-  type: 'RDATE' | 'EXDATE' = 'RDATE'
+  type: 'RDATE' | 'EXDATE' = 'RDATE',
+  options: {
+    excludeDTSTART?: boolean
+  }={},
 ) {
   if (dates.length === 0) {
     throw new ICalStringSerialzeError(
@@ -126,7 +130,9 @@ export function datesToIcalString<T extends DateAdapterConstructor>(
     ? ':'
     : ';';
 
-  icalString = `DTSTART${seperator}${start.toICal()}\n${type}${seperator}${start.toICal()}`
+  icalString = options.excludeDTSTART
+    ? `${type}${seperator}${start.toICal()}`
+    : `${buildDTStart(start)}\n${type}${seperator}${start.toICal()}`
 
   dates.forEach(date => {
     const seperator = [undefined, 'UTC'].includes(date.get('timezone'))
@@ -155,4 +161,14 @@ export function dateAdapterToICal<T extends DateAdapterConstructor>(
         date
       )}`
   }
+}
+
+export function buildDTStart<T extends DateAdapterConstructor>(
+  start: DateAdapter<T>
+) {
+  const seperator = [undefined, 'UTC'].includes(start.get('timezone'))
+    ? ':'
+    : ';';
+
+  return `DTSTART${seperator}${start.toICal()}`;
 }

@@ -17,7 +17,9 @@ import { RRule } from '../rule'
 import { EXDates, RDates } from '../dates'
 import { Options } from '../rule/rule-options'
 import { EXRule } from '../rule/exrule';
-import { buildIterator, add, subtract, unique } from '../operators';
+import { occurrenceStream, add, subtract, unique } from '../operators';
+import { RScheduleConfig } from '../rschedule-config';
+import { buildDTStart } from '../ical';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')
 
@@ -44,8 +46,6 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     return !!(object && object[SCHEDULE_ID])
   }
 
-  static dateAdapterConstructor: DateAdapterConstructor
-
   static fromICal<T extends DateAdapterConstructor, D = undefined>(
     icals: string | string[],
     dateAdapterConstructor: T,
@@ -64,6 +64,8 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     })
   }
   
+  static defaultDateAdapter?: DateAdapterConstructor
+
   public rrules: RRule<T>[] = []
   public exrules: EXRule<T>[] = []
   public rdates: RDates<T>
@@ -84,9 +86,13 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
   }={}) {
     super()
 
-    this.dateAdapter = args.dateAdapter 
-      ? args.dateAdapter
-      : Schedule.dateAdapterConstructor as any;
+    if (args.dateAdapter)
+      this.dateAdapter = args.dateAdapter as any
+    else if (Schedule.defaultDateAdapter)
+      this.dateAdapter = Schedule.defaultDateAdapter as any
+    else {
+      this.dateAdapter = RScheduleConfig.defaultDateAdapter as any
+    }
 
     if (!this.dateAdapter) {
       throw new Error(
@@ -138,7 +144,22 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     }
   }
 
-  public toICal() {
+  public toICal(options: {singleStartDate: DateProp<T> | DateAdapter<T>}): string
+  public toICal(): string[]
+  public toICal(options: {singleStartDate?: DateProp<T> | DateAdapter<T>}={}): string[] | string {
+    const start = this.buildDateAdapter(options.singleStartDate)
+
+    if (start && options.singleStartDate !== undefined) {
+      const strings = [buildDTStart(start)]
+
+      this.rrules.forEach(rule => strings.push(rule.toICal({excludeDTSTART: true})))
+      this.exrules.forEach(rule => strings.push(rule.toICal({excludeDTSTART: true})))
+      if (this.rdates.length > 0) { strings.push(this.rdates.toICal({excludeDTSTART: true})) }
+      if (this.exdates.length > 0) { strings.push(this.exdates.toICal({excludeDTSTART: true})) }
+  
+      return strings.join('\n')
+    }
+
     const icals: string[] = []
 
     this.rrules.forEach(rule => icals.push(rule.toICal()))
@@ -187,6 +208,19 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
    * - `end` the date to end iteration on
    * - `take` the max number of dates to take before ending iteration
    * - `reverse` whether to iterate in reverse or not
+   * 
+   * Examples:
+   * 
+   ```
+   const iterator = schedule.occurrences()
+   
+   for (const date of iterator) {
+     // do stuff
+   }
+
+   iterator.toArray()
+   iterator.next().value
+   ```
    *
    * @param arg `OccurrencesArgs` options object
    */
@@ -260,13 +294,13 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     
     delete args.take;
 
-    const iterator = buildIterator(
+    const iterator = occurrenceStream(
       add(...this.rrules),
       subtract(...this.exrules),
       add(this.rdates),
       subtract(this.exdates),
       unique(),
-    )._run(args)
+    )(this.dateAdapter as any)._run(args)
 
     let date = iterator.next().value
     let index = 0

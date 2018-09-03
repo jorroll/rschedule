@@ -31,9 +31,9 @@ export class RDates<T extends DateAdapterConstructor, D=any> extends Dates<T, D>
     return new RDates<T>({dates, data: this.data, dateAdapter})
   }
 
-  public toICal() {
+  public toICal(options: {excludeDTSTART?: boolean}={}) {
     const dates = this.dates.map(date => new this.dateAdapter(date))
 
-    return datesToIcalString(dates, 'RDATE')
+    return datesToIcalString(dates, 'RDATE', options)
   }
 }
