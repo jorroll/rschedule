@@ -69,7 +69,7 @@
 		"node": ">=8.9"
 	},
 	"peerDependencies": {
-		"@rschedule/rschedule": "^0.2.0",
+		"@rschedule/rschedule": "^0.6.0",
 		"moment": "^2.0.0"
 	},
 	"optionalDependencies": {

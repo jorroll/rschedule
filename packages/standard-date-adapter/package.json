@@ -68,8 +68,7 @@
     "node": ">=8.9"
   },
   "peerDependencies": {
-    "@rschedule/rschedule": "^0.2.0",
-    "date-fns": "^1.29.0"
+    "@rschedule/rschedule": "^0.6.0"
   },
   "devDependencies": {
     "codecov": "file:../../node_modules/codecov",
