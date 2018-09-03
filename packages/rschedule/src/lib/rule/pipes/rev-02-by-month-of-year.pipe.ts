@@ -1,14 +1,13 @@
-import { DateAdapter } from '../../date-adapter'
+import { DateTime } from '../../date-time'
 import { Options } from '../rule-options'
 import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 import { Utils } from '../../utilities'
 
-export class ByMonthOfYearReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
-  implements IPipeRule<T> {
+export class ByMonthOfYearReversePipe extends ReversePipeRule implements IPipeRule {
 
-  private upcomingMonths: DateAdapter.IMonth[] = []
+  private upcomingMonths: DateTime.IMonth[] = []
 
-  public run(args: IPipeRunFn<T>) {
+  public run(args: IPipeRunFn) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
     if (this.options.frequency === 'YEARLY') {
@@ -16,7 +15,7 @@ export class ByMonthOfYearReversePipe<T extends DateAdapter<T>> extends ReverseP
     } else { return this.filter(args) }
   }
 
-  public expand(args: IPipeRunFn<T>) {
+  public expand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingMonths.length === 0) {
@@ -47,7 +46,7 @@ export class ByMonthOfYearReversePipe<T extends DateAdapter<T>> extends ReverseP
     return this.nextPipe.run({ date })
   }
 
-  public filter(args: IPipeRunFn<T>) {
+  public filter(args: IPipeRunFn) {
     let validMonth = false
     let nextValidMonthThisYear: Options.ByMonthOfYear | null = null
 
@@ -64,7 +63,7 @@ export class ByMonthOfYearReversePipe<T extends DateAdapter<T>> extends ReverseP
 
     if (validMonth) { return this.nextPipe.run({ date: args.date }) }
 
-    let next: T
+    let next: DateTime
 
     // if the current date does not pass this filter,
     // is it possible for a date to pass this filter for the remainder of the year?

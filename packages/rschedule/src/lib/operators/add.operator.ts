@@ -1,18 +1,18 @@
-import { DateAdapter } from '../date-adapter'
-import { OccurrencesArgs } from '../interfaces'
-import { OperatorOutput, OperatorInput } from './interface';
+import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
+import { RunArgs } from '../interfaces'
+import { OperatorOutput, OperatorInput, OperatorOutputOptions } from './interface';
 
 /**
  * An operator function, intended as an argument for
- * `buildIterator()`, which gets the union of the previous
- * schedule's occurrences in the `buildIterator` pipe as well as the occurrences
+ * `occurrenceStream()`, which gets the union of the previous
+ * schedule's occurrences in the `occurrenceStream` pipe as well as the occurrences
  * of any input arguments.
  * 
  * @param inputs a spread of scheduling objects
  */
-export function add<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
+export function add<T extends DateAdapterConstructor>(...inputs: OperatorInput<T>[]): OperatorOutput<T> {
 
-  return (base?: IterableIterator<T>) => {
+  return (options: OperatorOutputOptions<T>) => {
 
     return {
       get isInfinite() { return inputs.some(input => input.isInfinite) },
@@ -22,19 +22,19 @@ export function add<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]): Op
       },
 
       clone() {
-        return add(...inputs.map(input => input.clone()))(base)
+        return add(...inputs.map(input => input.clone()))(options)
       },
 
-      *_run(args: OccurrencesArgs<T>={}) {
+      *_run(args: RunArgs<T>={}): IterableIterator<DateAdapter<T>> {
         const streams = inputs.map(input => input._run(args))
 
-        if (base) streams.push(base);
+        if (options.base) streams.push(options.base);
 
         let cache = streams
           .map(iterator => {
             return {
               iterator,
-              date: iterator.next().value as T | undefined,
+              date: iterator.next().value,
             }
           })
           .filter(item => !!item.date)
@@ -44,7 +44,7 @@ export function add<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]): Op
         let next = selectNextUpcomingCacheObj(cache[0], cache, args.reverse)
         
         while (next.date) {
-          const yieldArgs = yield next.date.clone()
+          const yieldArgs = yield next.date.clone() as DateAdapter<T>
 
           if (yieldArgs && yieldArgs.skipToDate) {
             cache.forEach(obj => {
@@ -75,16 +75,16 @@ export function add<T extends DateAdapter<T>>(...inputs: OperatorInput<T>[]): Op
   }
 }
 
-function selectNextUpcomingCacheObj<T extends DateAdapter<T>>(
-  current: { iterator: IterableIterator<T>; date?: T },
-  cache: Array<{ iterator: IterableIterator<T>; date?: T }>,
+function selectNextUpcomingCacheObj<T extends DateAdapterConstructor>(
+  current: { iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> },
+  cache: Array<{ iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> }>,
   reverse?: boolean,
 ) {
   if (cache.length === 1) { return cache[0] }
 
   return cache.reduce((prev, curr) => {
     if (!curr.date) { return prev }
-    else if (reverse ? curr.date.isAfter(prev.date as T) : curr.date.isBefore(prev.date as T)) { return curr }
+    else if (reverse ? curr.date.isAfter(prev.date!) : curr.date.isBefore(prev.date!)) { return curr }
     else { return prev }
   }, current)
 }

@@ -1,12 +1,13 @@
-import { DateAdapter } from '../date-adapter'
+import {DateAdapterConstructor} from '../date-adapter'
 import { ruleOptionsToIcalString } from '../ical'
 import cloneDeep from 'lodash.clonedeep'
 import { Rule } from './rule'
 
 const EXRULE_ID = Symbol.for('73912d70-7a9b-41d7-926d-19ef5745a4ea')
 
-export class EXRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
-  public readonly [EXRULE_ID] = true
+export class EXRule<T extends DateAdapterConstructor, D = any> extends Rule<T, D> {
+  // @ts-ignore used by static method
+  private readonly [EXRULE_ID] = true
 
   /**
    * Similar to `Array.isArray()`, `isEXRule()` provides a surefire method
@@ -14,7 +15,7 @@ export class EXRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
    * global symbol registry.
    */
   public static isEXRule(object: any): object is EXRule<any> {
-    return !!(object && object[Symbol.for('73912d70-7a9b-41d7-926d-19ef5745a4ea')])
+    return !!(object && object[EXRULE_ID] && super.isRule(object))
   }
 
   /**
@@ -23,10 +24,12 @@ export class EXRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
    * new EXRule).
    */
   public clone() {
-    return new EXRule<T, D>(cloneDeep(this.options), {data: this.data})
+    const dateAdapter: T = this.dateAdapter as any
+    return new EXRule<T, D>(cloneDeep(this.options), {data: this.data, dateAdapter})
   }
 
-  public toICal() {
-    return ruleOptionsToIcalString(this.options, 'EXRULE')
+  public toICal(options: {excludeDTSTART?: boolean}={}) {
+    const dateAdapter: T = this.dateAdapter as any
+    return ruleOptionsToIcalString(dateAdapter, this.options, 'EXRULE', options)
   }
 }

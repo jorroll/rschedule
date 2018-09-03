@@ -1,19 +1,18 @@
-import { DateAdapter } from '../../date-adapter'
+import { DateTime } from '../../date-time'
 import { Options } from '../rule-options'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
-export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
-  implements IPipeRule<T> {
+export class ByMonthOfYearPipe extends PipeRule implements IPipeRule {
 
-  private upcomingMonths: DateAdapter.IMonth[] = []
-  public run(args: IPipeRunFn<T>) {
+  private upcomingMonths: DateTime.IMonth[] = []
+  public run(args: IPipeRunFn) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
     if (this.options.frequency === 'YEARLY') {
       return this.expand(args)
     } else { return this.filter(args) }
   }
-  public expand(args: IPipeRunFn<T>) {
+  public expand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingMonths.length === 0) {
@@ -44,7 +43,7 @@ export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return this.nextPipe.run({ date })
   }
 
-  public filter(args: IPipeRunFn<T>) {
+  public filter(args: IPipeRunFn) {
     let validMonth = false
     let nextValidMonthThisYear: Options.ByMonthOfYear | null = null
 
@@ -61,7 +60,7 @@ export class ByMonthOfYearPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
     if (validMonth) { return this.nextPipe.run({ date: args.date }) }
 
-    let next: T
+    let next: DateTime
 
     // if the current date does not pass this filter,
     // is it possible for a date to pass this filter for the remainder of the year?

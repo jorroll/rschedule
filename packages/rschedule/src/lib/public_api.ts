@@ -2,6 +2,8 @@
 
 import 'core-js'
 
+export * from './rschedule-config'
+
 export * from './date-adapter'
 export * from './schedule'
 export * from './calendar'

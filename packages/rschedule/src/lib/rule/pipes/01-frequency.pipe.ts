@@ -1,19 +1,17 @@
-import { DateAdapter } from '../../date-adapter'
 import { Utils } from '../../utilities'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
+import { DateTime } from '../../date-time'
 
 /**
  * The `FrequencyPipe` is the first pipe in the chain of rule pipes. It is
  * responsible for incrementing the date, as appropriate, while taking into
  * account the `RRULE` frequency and interval.
  */
-export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
-  implements IPipeRule<T>
-{
-  private intervalStartDate: T = this.normalizeDate(this.options.start.clone());
+export class FrequencyPipe extends PipeRule implements IPipeRule {
+  private intervalStartDate: DateTime = this.normalizeDate(this.options.start.clone());
 
-  public run(args: IPipeRunFn<T>) {
-    let date: T
+  public run(args: IPipeRunFn) {
+    let date: DateTime
 
     if (args.skipToDate) {
         this.skipToIntervalOnOrAfter(args.skipToDate)
@@ -29,7 +27,7 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return this.nextPipe.run({ date })
   }
 
-  public normalizeDate(date: T) {
+  public normalizeDate(date: DateTime) {
     switch (this.options.frequency) {
       case 'YEARLY':
         Utils.setDateToStartOfYear(date)
@@ -57,48 +55,10 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return date
   }
 
-  // need to account for possible daylight savings time shift
   private incrementInterval() {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
-    const oldTZOffset = this.intervalStartDate.utcOffset
-
     this.intervalStartDate.add(this.options.interval, unit);
-
-    const newTZOffset = this.intervalStartDate.utcOffset
-
-    // DST is handled for us by `Date` when adding units of DAY or larger. But for hours or
-    // smaller units, we must manually adjust for DST, if appropriate.
-    if (
-      [
-        'hour',
-        'minute',
-        'second',
-        'millisecond',
-      ].includes(unit)
-    ) {
-      // DST goes in the opposite direction in northern vs southern hemispheres.
-      // This function might actually be returning `true` when client is in
-      // southern hemisphere...but regardless, the arithmatic is "relatively" correct.
-      //
-      // Still seem to be running into DST issue with large hourly interval in southern
-      // hemisphere.
-      const tzOffset = Utils.isInNorthernHemisphere(this.intervalStartDate)
-        ? oldTZOffset - newTZOffset
-        : newTZOffset - oldTZOffset;
-
-      // might need to subtract offset when going in reverse, not sure.
-      const newDate = this.intervalStartDate.clone().add(tzOffset, 'minute')
-
-      if (newDate.utcOffset !== this.intervalStartDate.utcOffset) {
-        throw new DateAdapter.InvalidDateError(
-          `A date was created on the border of daylight savings time "${newDate.toISOString()}". ` +
-          'Not sure how to handle it.'
-        )
-      } else {
-        this.intervalStartDate = newDate
-      }
-    }
   }
 
   /**
@@ -108,7 +68,7 @@ export class FrequencyPipe<T extends DateAdapter<T>> extends PipeRule<T>
    *
    * Tests are passing
    */
-  private skipToIntervalOnOrAfter(date: T) {
+  private skipToIntervalOnOrAfter(date: DateTime) {
     const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
 
     const difference = Utils.unitDifferenceBetweenDates(

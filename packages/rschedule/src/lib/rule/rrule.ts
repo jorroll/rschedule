@@ -1,12 +1,13 @@
-import { DateAdapter } from '../date-adapter'
+import { DateAdapterConstructor } from '../date-adapter'
 import { ruleOptionsToIcalString } from '../ical'
 import cloneDeep from 'lodash.clonedeep'
 import { Rule } from './rule'
 
 const RRULE_ID = Symbol.for('d0f27de8-adee-49d4-8d56-3eb3a8d631f4')
 
-export class RRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
-  public readonly [RRULE_ID] = true
+export class RRule<T extends DateAdapterConstructor, D = any> extends Rule<T, D> {
+  // @ts-ignore used by static method
+  private readonly [RRULE_ID] = true
 
   /**
    * Similar to `Array.isArray()`, `isRRule()` provides a surefire method
@@ -14,7 +15,7 @@ export class RRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
    * global symbol registry.
    */
   public static isRRule(object: any): object is RRule<any> {
-    return !!(object && object[Symbol.for('d0f27de8-adee-49d4-8d56-3eb3a8d631f4')])
+    return !!(object && object[RRULE_ID] && super.isRule(object))
   }
 
   /**
@@ -23,10 +24,14 @@ export class RRule<T extends DateAdapter<T>, D = any> extends Rule<T, D> {
    * new RRule).
    */
   public clone() {
-    return new RRule<T, D>(cloneDeep(this.options), {data: this.data})
+    // hack to trick typescript into inferring the correct types
+    const dateAdapter: T = this.dateAdapter as any
+    
+    return new RRule<T, D>(cloneDeep(this.options), {data: this.data, dateAdapter})
   }
 
-  public toICal() {
-    return ruleOptionsToIcalString(this.options, 'RRULE')
+  public toICal(options: {excludeDTSTART?: boolean}={}) {
+    const dateAdapter: T = this.dateAdapter as any
+    return ruleOptionsToIcalString(dateAdapter, this.options, 'RRULE', options)
   }
 }

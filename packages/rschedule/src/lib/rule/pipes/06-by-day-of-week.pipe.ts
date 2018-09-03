@@ -1,11 +1,10 @@
 import sortedUniq from 'lodash.sorteduniq'
-import { DateAdapter } from '../../date-adapter'
-import { Options } from '../rule-options'
+import { DateTime } from '../../date-time'
+import { PipeControllerOptions } from './pipe-controller'
 import { Utils } from '../../utilities'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
-export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
-  implements IPipeRule<T> {
+export class ByDayOfWeekPipe extends PipeRule implements IPipeRule {
 
   // used to speed up some operations below;
   private cachedValidMonthDays: [string, number[]] = ['', []]
@@ -20,7 +19,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
   // date to January 1st and then add days to the date equal to
   // one of the numbers in the array and you'll be on a valid date.
   private upcomingDays: number[] = []
-  public run(args: IPipeRunFn<T>) {
+  public run(args: IPipeRunFn) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
     if (this.options.frequency === 'MONTHLY') {
@@ -47,7 +46,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     }
   }
 
-  public yearlyExpand(args: IPipeRunFn<T>) {
+  public yearlyExpand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingDays.length === 0) {
@@ -80,7 +79,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return this.nextPipe.run({ date })
   }
 
-  public monthlyExpand(args: IPipeRunFn<T>) {
+  public monthlyExpand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingDays.length === 0) {
@@ -116,7 +115,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return this.nextPipe.run({ date })
   }
 
-  public weeklyExpand(args: IPipeRunFn<T>) {
+  public weeklyExpand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingDays.length === 0) {
@@ -126,7 +125,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
       this.upcomingDays = this.options
         .byDayOfWeek! // calculate the number of days that need to be added to the current date to
         // get to a valid date
-        .map(day => orderedWeekdays.indexOf(day as DateAdapter.Weekday))
+        .map(day => orderedWeekdays.indexOf(day as DateTime.Weekday))
         .filter(day => day >= currentDateIndex)
         .sort((a, b) => {
           if (a > b) { return 1 }
@@ -154,12 +153,12 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return this.nextPipe.run({ date })
   }
 
-  public yearlyFilter(args: IPipeRunFn<T>) {
+  public yearlyFilter(args: IPipeRunFn) {
     const nextValidDateThisYear = getNextValidDateThisYear(
       args.date,
       this.options,
       this.cachedValidYearDays
-    )
+    ) as DateTime | null
 
     const validDay = nextValidDateThisYear
       ? args.date.get('day') === nextValidDateThisYear.get('day')
@@ -178,7 +177,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
           newDate,
           this.options,
           this.cachedValidYearDays
-        )!
+        ) as DateTime
 
     return this.nextPipe.run({
       invalidDate: true,
@@ -187,7 +186,7 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     })
   }
 
-  public monthlyFilter(args: IPipeRunFn<T>) {
+  public monthlyFilter(args: IPipeRunFn) {
     const nextValidDateThisMonth = getNextValidDateThisMonth(
       this.cloneDateWithGranularity(args.date, 'day'),
       this.options,
@@ -215,11 +214,11 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
     })
   }
 
-  public simpleFilter(args: IPipeRunFn<T>) {
+  public simpleFilter(args: IPipeRunFn) {
     const weekdays = Utils.orderedWeekdays(this.options.weekStart)
 
     const validWeekdays = weekdays.filter(
-      day => (this.options.byDayOfWeek as DateAdapter.Weekday[]).includes(day)
+      day => (this.options.byDayOfWeek as DateTime.Weekday[]).includes(day)
     )
 
     const validDay = validWeekdays.includes(args.date.get('weekday'))
@@ -258,9 +257,9 @@ export class ByDayOfWeekPipe<T extends DateAdapter<T>> extends PipeRule<T>
   }
 }
 
-function getNextValidDateThisYear<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>,
+function getNextValidDateThisYear(
+  date: DateTime,
+  options: PipeControllerOptions,
   validYearDaysCache: [number, number[]]
 ) {
   if (validYearDaysCache[0] !== date.get('year')) {
@@ -285,12 +284,12 @@ function getNextValidDateThisYear<T extends DateAdapter<T>>(
   else { return null }
 }
 
-function getValidYearDays<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>
+function getValidYearDays(
+  date: DateTime,
+  options: PipeControllerOptions
 ) {
-  const weekdays: DateAdapter.Weekday[] = []
-  const specificWeekdays: Array<[DateAdapter.Weekday, number]> = []
+  const weekdays: DateTime.Weekday[] = []
+  const specificWeekdays: Array<[DateTime.Weekday, number]> = []
   let hasPositiveWeekdays = false
   let hasNegativeWeekdays = false
   const validDates: number[] = []
@@ -373,9 +372,9 @@ function getValidYearDays<T extends DateAdapter<T>>(
   )
 }
 
-function getNextValidDateThisMonth<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>,
+function getNextValidDateThisMonth(
+  date: DateTime,
+  options: PipeControllerOptions,
   validMonthDaysCache: [string, number[]]
 ) {
   if (validMonthDaysCache[0] !== `${date.get('year')}-${date.get('month')}`) {
@@ -399,12 +398,12 @@ function getNextValidDateThisMonth<T extends DateAdapter<T>>(
   else { return null }
 }
 
-function getValidMonthDays<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>
+function getValidMonthDays(
+  date: DateTime,
+  options: PipeControllerOptions
 ) {
-  const weekdays: DateAdapter.Weekday[] = []
-  const specificWeekdays: Array<[DateAdapter.Weekday, number]> = []
+  const weekdays: DateTime.Weekday[] = []
+  const specificWeekdays: Array<[DateTime.Weekday, number]> = []
   let hasPositiveWeekdays = false
   let hasNegativeWeekdays = false
   const validDates: number[] = []

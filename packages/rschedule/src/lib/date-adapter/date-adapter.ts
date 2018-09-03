@@ -1,44 +1,42 @@
 export type ParsedDatetime =
+  | [number,number,number,number,number,number,number]
   | [number,number,number,number,number,number]
   | [number,number,number,number,number]
   | [number,number,number,number]
-  | [number,number,number]
+  | [number,number,number];
 
-export interface DateAdapter<T, D=any> {
+export interface IDateAdapter<D={}> {
   /** 
    * This property contains an ordered array of the generator objects
-   * responsible for producing this DateAdapter.
+   * responsible for producing this IDateAdapter.
    * 
-   * - If this DateAdapter was produced by a `RRule` object, this array
+   * - If this IDateAdapter was produced by a `RRule` object, this array
    *   will just contain the `RRule` object.
-   * - If this DateAdapter was produced by a `Schedule` object, this
+   * - If this IDateAdapter was produced by a `Schedule` object, this
    *   array will contain the `Schedule` object as well as the `RRule`
    *   or `RDates` object which generated it.
-   * - If this DateAdapter was produced by a `Calendar` object, this
+   * - If this IDateAdapter was produced by a `Calendar` object, this
    *   array will contain, at minimum, the `Calendar`, `Schedule`, and
    *   `RRule`/`RDates` objects which generated it.
    */
   generators: any[]
 
-  /** Returns a duplicate of original DateAdapter */
-  clone(): T
+  /** Returns a duplicate of original IDateAdapter */
+  clone(): IDateAdapter<any>
 
-  /** Returns the date object this DateAdapter is wrapping */
+  /** Returns the date object this IDateAdapter is wrapping */
   date: D
 
-  // in minutes
-  utcOffset: number
+  /** mutates original object */
+  add(amount: number, unit: IDateAdapter.Unit | 'week'): this
 
   /** mutates original object */
-  add(amount: number, unit: DateAdapter.Unit): T
-
-  /** mutates original object */
-  subtract(amount: number, unit: DateAdapter.Unit): T
+  subtract(amount: number, unit: IDateAdapter.Unit | 'week'): this
 
   get(unit: 'year'): number
   get(unit: 'month'): number
-  get(unit: 'yearday'): number
-  get(unit: 'weekday'): DateAdapter.Weekday
+  get(unit: 'yearday'): number  
+  get(unit: 'weekday'): IDateAdapter.Weekday
   get(unit: 'day'): number
   get(unit: 'hour'): number
   get(unit: 'minute'): number
@@ -54,8 +52,8 @@ export interface DateAdapter<T, D=any> {
   get(unit: 'timezone'): string | undefined
 
   /** mutates original object */
-  set(unit: DateAdapter.Unit, value: number): T
-  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): T
+  set(unit: IDateAdapter.Unit, value: number): this
+  set(unit: 'timezone', value: string | undefined, options?: {keepLocalTime?: boolean}): this
 
   /** same format as new Date().toISOString() */
   toISOString(): string
@@ -65,68 +63,63 @@ export interface DateAdapter<T, D=any> {
   // - if `"UTC"`: format as utc time
   // - if `"local"`: format as local time
   // - else the value will contain a timezone. Convert the time to that timezone
-  //   and format time in that timezone (don't mutate the DateAdapter though).
+  //   and format time in that timezone (don't mutate the IDateAdapter though).
   toICal(options?: {format?: 'UTC' | 'local' | string}): string
 
   // returns the underlying date ordinal. The value in milliseconds.
   valueOf(): number
 
-  isSameClass(object: any): object is T
-
-  // Compares to `DateAdapter` objects using `valueOf()`
+  // Compares to `IDateAdapter` objects using `valueOf()`
   // to see if they are occuring at the same time.
-  isEqual<O extends DateAdapter<O>>(object?: O): boolean  
-  isBefore<O extends DateAdapter<O>>(date: O): boolean
-  isBeforeOrEqual<O extends DateAdapter<O>>(date: O): boolean
-  isAfter<O extends DateAdapter<O>>(date: O): boolean
-  isAfterOrEqual<O extends DateAdapter<O>>(date: O): boolean
+  isEqual(object?: {valueOf: () => number}): boolean  
+  isBefore(date: {valueOf: () => number}): boolean
+  isBeforeOrEqual(date: {valueOf: () => number}): boolean
+  isAfter(date: {valueOf: () => number}): boolean
+  isAfterOrEqual(date: {valueOf: () => number}): boolean
 
   /**
-   * If the DateAdapter object is valid, returns `true`.
-   * Otherwise, throws `DateAdapter.InvalidDateError`
+   * If the IDateAdapter object is valid, returns `true`.
+   * Otherwise, throws `IDateAdapter.InvalidDateError`
    */
   assertIsValid(): boolean
+
+  toDateTime(): {}
 }
 
-export interface Constructor {
-  new (...args: any[]): any
-}
+export type DateAdapterConstructor = new (...args: any[]) => IDateAdapter
 
-export type DateAdapterConstructor<T extends Constructor> = new (
-  ...args: any[]
-) => DateAdapter<InstanceType<T>>
-
-export type InstanceOfDateAdapterConstructor<C extends DateAdapterConstructor<C>> = InstanceType<C> & DateAdapter<InstanceType<C>>
-
-export interface IDateAdapterConstructor<T extends DateAdapterConstructor<T>> {
-  new (date?: any, options?: any): InstanceOfDateAdapterConstructor<T>
-  isInstance(object: any): object is InstanceOfDateAdapterConstructor<T>
+export interface IDateAdapterConstructor<T extends DateAdapterConstructor> {
+  new (date?: any, options?: any): DateAdapter<T>
+  date: DateProp<T>
+  isInstance(object?: any): object is DateAdapter<T>
   fromTimeObject(args: {
     datetimes: ParsedDatetime[]
     timezone?: string
-    raw: string
-  }): Array<InstanceOfDateAdapterConstructor<T>>
+  }): DateAdapter<T>[]
   hasTimezoneSupport: boolean
 }
 
-export namespace DateAdapter {
+export type DateAdapter<T extends DateAdapterConstructor> = T extends new (...args: any[]) => infer R ? R : IDateAdapter
+
+export type DateProp<T extends DateAdapterConstructor> = DateAdapter<T>['date']
+
+export namespace IDateAdapter {
   export class InvalidDateError extends Error {
-    constructor(public message = 'DateAdapter has invalid date') {
+    constructor(public message = 'IDateAdapter has invalid date') {
       super(message)
     }
   }
 
+  export type Weekday = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'
+
   export type Unit =
     | 'year'
     | 'month'
-    | 'week'
     | 'day'
     | 'hour'
     | 'minute'
     | 'second'
     | 'millisecond';
-
-  export type Weekday = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'
 
   export enum Month {
     JAN = 1,
@@ -143,5 +136,5 @@ export namespace DateAdapter {
     DEC,
   }
 
-  export type IMonth = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+  export type IMonth = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12  
 }

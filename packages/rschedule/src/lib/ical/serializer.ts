@@ -1,4 +1,4 @@
-import { DateAdapter } from '../date-adapter'
+import { IDateAdapter, DateAdapter, DateAdapterConstructor, IDateAdapterConstructor } from '../date-adapter'
 import { buildValidatedRuleOptions, Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
@@ -12,64 +12,77 @@ export class ICalStringSerialzeError extends Error {}
  * @param type Determins if the serialized options object is labeled as an
  * "RRULE" or an "EXRULE".
  */
-export function ruleOptionsToIcalString<T extends DateAdapter<T>>(
-  options: Options.ProvidedOptions<T>,
-  type: 'RRULE' | 'EXRULE'
+export function ruleOptionsToIcalString<T extends DateAdapterConstructor>(
+  dateAdapterConstructor: T,
+  ruleConfig: Options.ProvidedOptions<T>,
+  type: 'RRULE' | 'EXRULE',
+  options: {
+    excludeDTSTART?: boolean
+  }={},
 ): string {
   // First validate options object, but don't use the result
-  buildValidatedRuleOptions(options)
+  buildValidatedRuleOptions(dateAdapterConstructor, ruleConfig)
+
+  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any;
 
   let icalString: string
 
-  const start = options.start
+  const start = dateAdapter.isInstance(ruleConfig.start)
+    ? ruleConfig.start
+    : new dateAdapter(ruleConfig.start)
 
-  const seperator = [undefined, 'UTC'].includes(start.get('timezone'))
-    ? ':'
-    : ';';
+  let until: IDateAdapter | undefined
+  if (ruleConfig.until) {
+    until = dateAdapter.isInstance(ruleConfig.until)
+      ? ruleConfig.until
+      : new dateAdapter(ruleConfig.until)
+  }
 
-  icalString = `DTSTART${seperator}${start.toICal()}\n${type}:`;
+  icalString = options.excludeDTSTART 
+    ? `${type}:`
+    : `${buildDTStart(start)}\n${type}:`;
 
   const stringOptions: string[] = []
 
-  for (const option in options) {
-    if (options.hasOwnProperty(option)) {
+  for (const option in ruleConfig) {
+    if (ruleConfig.hasOwnProperty(option)) {
       switch (option) {
         case 'frequency':
-          stringOptions.push(`FREQ=${options.frequency}`)
+          stringOptions.push(`FREQ=${ruleConfig.frequency}`)
           break
         case 'interval':
-          stringOptions.push(`INTERVAL=${options.interval}`)
+          stringOptions.push(`INTERVAL=${ruleConfig.interval}`)
           break
         case 'until':
           stringOptions.push(
-            `UNTIL=${options.until!.toICal({format: !!start.get('timezone') ? 'UTC' : undefined})}`
+            `UNTIL=${until!.toICal({format: !!start.get('timezone') ? 'UTC' : undefined})}`
           )
           break
         case 'count':
-          stringOptions.push(`COUNT=${options.count}`)
+          stringOptions.push(`COUNT=${ruleConfig.count}`)
           break
         case 'bySecondOfMinute':
-          stringOptions.push(`BYSECOND=${options.bySecondOfMinute!.join(',')}`)
+          stringOptions.push(`BYSECOND=${ruleConfig.bySecondOfMinute!.join(',')}`)
           break
         case 'byMinuteOfHour':
-          stringOptions.push(`BYMINUTE=${options.byMinuteOfHour!.join(',')}`)
+          stringOptions.push(`BYMINUTE=${ruleConfig.byMinuteOfHour!.join(',')}`)
           break
         case 'byHourOfDay':
-          stringOptions.push(`BYHOUR=${options.byHourOfDay!.join(',')}`)
+          stringOptions.push(`BYHOUR=${ruleConfig.byHourOfDay!.join(',')}`)
           break
         case 'byDayOfWeek':
           stringOptions.push(
-            `BYDAY=${serializeByDayOfWeek(options.byDayOfWeek!)}`
+            `BYDAY=${serializeByDayOfWeek(ruleConfig.byDayOfWeek!)}`
           )
           break
         case 'byDayOfMonth':
-          stringOptions.push(`BYMONTHDAY=${options.byDayOfMonth!.join(',')}`)
+          stringOptions.push(`BYMONTHDAY=${ruleConfig.byDayOfMonth!.join(',')}`)
           break
         case 'byMonthOfYear':
-          stringOptions.push(`BYMONTH=${options.byMonthOfYear!.join(',')}`)
+          stringOptions.push(`BYMONTH=${ruleConfig.byMonthOfYear!.join(',')}`)
           break
         case 'weekStart':
-          stringOptions.push(`WKST=${options.weekStart}`)
+          stringOptions.push(`WKST=${ruleConfig.weekStart}`)
           break
       }
     }
@@ -90,9 +103,12 @@ function serializeByDayOfWeek(args: Options.ByDayOfWeek[]) {
  * @param dates array of DateAdapter dates
  * @param type whether these are RDATEs or EXDATEs
  */
-export function datesToIcalString<T extends DateAdapter<T>>(
-  dates: T[],
-  type: 'RDATE' | 'EXDATE' = 'RDATE'
+export function datesToIcalString<T extends DateAdapterConstructor>(
+  dates: DateAdapter<T>[],
+  type: 'RDATE' | 'EXDATE' = 'RDATE',
+  options: {
+    excludeDTSTART?: boolean
+  }={},
 ) {
   if (dates.length === 0) {
     throw new ICalStringSerialzeError(
@@ -114,7 +130,9 @@ export function datesToIcalString<T extends DateAdapter<T>>(
     ? ':'
     : ';';
 
-  icalString = `DTSTART${seperator}${start.toICal()}\n${type}${seperator}${start.toICal()}`
+  icalString = options.excludeDTSTART
+    ? `${type}${seperator}${start.toICal()}`
+    : `${buildDTStart(start)}\n${type}${seperator}${start.toICal()}`
 
   dates.forEach(date => {
     const seperator = [undefined, 'UTC'].includes(date.get('timezone'))
@@ -127,8 +145,8 @@ export function datesToIcalString<T extends DateAdapter<T>>(
   return icalString
 }
 
-export function dateAdapterToICal<T extends DateAdapter<T>>(
-  date: T,
+export function dateAdapterToICal<T extends DateAdapterConstructor>(
+  date: DateAdapter<T>,
   utc?: boolean
 ) {
   const timezone = utc ? 'UTC' : date.get('timezone')
@@ -143,4 +161,14 @@ export function dateAdapterToICal<T extends DateAdapter<T>>(
         date
       )}`
   }
+}
+
+export function buildDTStart<T extends DateAdapterConstructor>(
+  start: DateAdapter<T>
+) {
+  const seperator = [undefined, 'UTC'].includes(start.get('timezone'))
+    ? ':'
+    : ';';
+
+  return `DTSTART${seperator}${start.toICal()}`;
 }

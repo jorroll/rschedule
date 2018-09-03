@@ -4,7 +4,7 @@
  * which itself credits the python library `dateutil.rrule` for first creating the tests.
  */
 
-import { RRule, Utils, IDateAdapterConstructor, DateAdapter as IDateAdapter } from '@rschedule/rschedule'
+import { RRule, Utils, IDateAdapter, DateAdapterConstructor, IDateAdapterConstructor } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 import { dateAdapter, DatetimeFn, environment, context, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, TIMEZONES, luxonDatetimeFn } from './utilities'
 import { Moment as MomentST } from 'moment';
@@ -17,7 +17,7 @@ import { DateTime } from 'luxon';
 
 function testRecurring(
   testName: string,
-  rule: RRule<IDateAdapter<any>>,
+  rule: RRule<DateAdapterConstructor>,
   expectedDates: IDateAdapter<any>[]
 ) {
   describe(testName, () => {
@@ -42,7 +42,7 @@ function testRecurring(
 
       date = iterable.next({skipToDate: expectedDates[2]}).value
 
-      expect(date.toISOString()).toBe(expectedDates[2].toISOString())
+      expect(date && date.toISOString()).toBe(expectedDates[2].toISOString())
     })
 
     it('allows skipping iterations in reverse', () => {
@@ -85,7 +85,7 @@ function testRecurring(
 
         const expected = newExpectedDates.map(date => date.toISOString())
         const actual = rule
-          .occurrences({ end })
+          .occurrences({ end: end && end.date })
           .toArray()!
           .map(date => date.toISOString())
 
@@ -102,7 +102,7 @@ function testRecurring(
 
         const expected = newExpectedDates.map(date => date.toISOString())
         const actual = rule
-          .occurrences({ start: newExpectedDates[0], reverse: true })
+          .occurrences({ start: newExpectedDates[0].date, reverse: true })
           .toArray()!
           .map(date => date.toISOString())
 
@@ -111,13 +111,13 @@ function testRecurring(
     })
 
     describe('#occursOn()', () => {
-      expectedDates.forEach(date => {
-        describe(date.toISOString(), () => {
-          it('date', () => expect(rule.occursOn({date})).toBeTruthy())
+      expectedDates.forEach(adapter => {
+        describe(adapter.toISOString(), () => {
+          it('date', () => expect(rule.occursOn({date: adapter.date})).toBeTruthy())
 
           describe('weekday', () => {
-            it('no options', () => expect(rule.occursOn({weekday: date.get('weekday')})).toBeTruthy())
-            it('excludeDates', () => expect(rule.occursOn({weekday: date.get('weekday'), excludeDates: expectedDates})).toBeFalsy())
+            it('no options', () => expect(rule.occursOn({weekday: adapter.get('weekday')})).toBeTruthy())
+            it('excludeDates', () => expect(rule.occursOn({weekday: adapter.get('weekday'), excludeDates: expectedDates.map(adapter => adapter.date)})).toBeFalsy())
           })
         })
       })
@@ -128,9 +128,9 @@ function testRecurring(
 
         describe(first.toISOString(), () => {
           describe('weekday', () => {
-            it('before first including', () => expect(rule.occursOn({weekday: first.get('weekday'), before: first})).toBeTruthy())
-            it('before first excluding', () => expect(rule.occursOn({weekday: first.get('weekday'), before: first, excludeEnds: true})).toBeFalsy())
-            it('after first including', () => expect(rule.occursOn({weekday: first.get('weekday'), after: first})).toBeTruthy())
+            it('before first including', () => expect(rule.occursOn({weekday: first.get('weekday'), before: first.date})).toBeTruthy())
+            it('before first excluding', () => expect(rule.occursOn({weekday: first.get('weekday'), before: first.date, excludeEnds: true})).toBeFalsy())
+            it('after first including', () => expect(rule.occursOn({weekday: first.get('weekday'), after: first.date})).toBeTruthy())
             // don't think there's a generic way to know what the answer should be (e.g. take a `MINUTELY` rule of count 3 which only takes place
             // on one day, if you exclude that day it doesn't happen).
             // it('after first excluding', () => expect(rule.occursOn({weekday: first.get('weekday'), after: first, excludeEnds: true})).toBeTruthy())
@@ -139,12 +139,12 @@ function testRecurring(
 
         describe(last.toISOString(), () => {
           describe('weekday', () => {
-            it('before last including', () => expect(rule.occursOn({weekday: last.get('weekday'), before: last})).toBeTruthy())
+            it('before last including', () => expect(rule.occursOn({weekday: last.get('weekday'), before: last.date})).toBeTruthy())
             // don't think there's a generic way to know what the answer should be (e.g. take a `MINUTELY` rule of count 3 which only takes place
             // on one day, if you exclude that day it doesn't happen).
             // it('before last excluding', () => expect(rule.occursOn({weekday: last.get('weekday'), before: last, excludeEnds: true})).toBeTruthy())
-            it('after last including', () => expect(rule.occursOn({weekday: last.get('weekday'), after: last})).toBeTruthy())
-            it('after last excluding', () => expect(rule.occursOn({weekday: last.get('weekday'), after: last, excludeEnds: true})).toBeFalsy())
+            it('after last including', () => expect(rule.occursOn({weekday: last.get('weekday'), after: last.date})).toBeTruthy())
+            it('after last excluding', () => expect(rule.occursOn({weekday: last.get('weekday'), after: last.date, excludeEnds: true})).toBeFalsy())
           })
         })
       }
@@ -154,7 +154,7 @@ function testRecurring(
 
 function testRecurringBetween(
   testName: string,
-  rule: RRule<IDateAdapter<any>>,
+  rule: RRule<DateAdapterConstructor>,
   start: IDateAdapter<any>,
   end: IDateAdapter<any>,
   inclusive: boolean,
@@ -162,7 +162,7 @@ function testRecurringBetween(
 ) {
   describe(testName, () => {
     it('matches expected dates', () => {
-      let occurrences = rule.occurrences({ start, end }).toArray()!
+      let occurrences = rule.occurrences({ start: start.date, end: end.date }).toArray()!
 
       if (!inclusive) {
         occurrences = occurrences.filter(date => !(date.isEqual(start) || date.isEqual(end)))
@@ -175,7 +175,7 @@ function testRecurringBetween(
 
 function testPreviousOccurrence(
   testName: string,
-  rule: RRule<IDateAdapter<any>>,
+  rule: RRule<DateAdapterConstructor>,
   start: IDateAdapter<any>,
   inclusive: boolean,
   expectedDate: IDateAdapter<any>
@@ -184,7 +184,7 @@ function testPreviousOccurrence(
     it('matches expected dates', () => {
       let occurrence: IDateAdapter<any>
 
-      for (const day of rule.occurrences({ start, reverse: true })) {
+      for (const day of rule.occurrences({ start: start.date, reverse: true })) {
         if (!inclusive && day.isEqual(start)) {
           continue
         }
@@ -199,7 +199,7 @@ function testPreviousOccurrence(
 
 function testNextOccurrence(
   testName: string,
-  rule: RRule<IDateAdapter<any>>,
+  rule: RRule<DateAdapterConstructor>,
   start: IDateAdapter<any>,
   inclusive: boolean,
   expectedDate: IDateAdapter<any>
@@ -208,7 +208,7 @@ function testNextOccurrence(
     it('matches expected dates', () => {
       let occurrence: IDateAdapter<any>
 
-      for (const day of rule.occurrences({ start })) {
+      for (const day of rule.occurrences({ start: start.date })) {
         if (!inclusive && day.isEqual(start)) {
           continue
         }
@@ -222,25 +222,25 @@ function testNextOccurrence(
 }
 
 const DATE_ADAPTERS = [
-  [StandardDateAdapter, standardDatetimeFn],
-  [MomentDateAdapter, momentDatetimeFn],
+  // [StandardDateAdapter, standardDatetimeFn],
+  // [MomentDateAdapter, momentDatetimeFn],
   [MomentTZDateAdapter, momentTZDatetimeFn],
-  [LuxonDateAdapter, luxonDatetimeFn],
+  // [LuxonDateAdapter, luxonDatetimeFn],
 ] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>],
-  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
-  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
-  [typeof LuxonDateAdapter, DatetimeFn<DateTime>]
+  // [typeof StandardDateAdapter, DatetimeFn<Date>],
+  // [typeof MomentDateAdapter, DatetimeFn<MomentST>],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>]
+  // [typeof LuxonDateAdapter, DatetimeFn<DateTime>]
 ]
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {
 
 environment(dateAdapterSet, (dateAdapterSet) => {
 
-const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>]
+const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<DateAdapterConstructor>, DatetimeFn<any>]
 
 const zones = !DateAdapter.hasTimezoneSupport
-  ? [undefined, 'UTC']
+  ? ['UTC']
   : TIMEZONES;
 
 zones.forEach(zone => {
@@ -282,7 +282,7 @@ zones.forEach(zone => {
             frequency: 'WEEKLY',
             start,
             byDayOfWeek: ['TH'],
-          })
+          }, {dateAdapter: DateAdapter})
 
           const date = start.clone().set('timezone', 'America/Los_Angeles')
           const first = rule.occurrences({take: 1}).toArray()![0]
@@ -290,7 +290,7 @@ zones.forEach(zone => {
           expect(start.valueOf()).toBe(date.valueOf())
           expect(first.valueOf()).toBe(start.valueOf())
 
-          expect(rule.occursOn({date})).toBeTruthy()
+          expect(rule.occursOn({date: date.date})).toBeTruthy()
         })          
       }
     })
@@ -300,7 +300,7 @@ zones.forEach(zone => {
       new RRule({
         frequency: 'DAILY',
         start: dateAdapter(1997,9,2,9,0,0,0,zone),
-      }),
+      }, {dateAdapter: DateAdapter}),
       dateAdapter(1997,9,5,9,0,0,0,zone),
       false,
       dateAdapter(1997,9,4,9,0,0,0,zone)
@@ -311,7 +311,7 @@ zones.forEach(zone => {
       new RRule({
         frequency: 'DAILY',
         start: dateAdapter(1997,9,2,9,0,0,0,zone),
-      }),
+      }, {dateAdapter: DateAdapter}),
       dateAdapter(1997,9,5,9,0,0,0,zone),
       true,
       dateAdapter(1997,9,5,9,0,0,0,zone)
@@ -322,7 +322,7 @@ zones.forEach(zone => {
       new RRule({
         frequency: 'DAILY',
         start: dateAdapter(1997,9,2,9,0,0,0,zone),
-      }),
+      }, {dateAdapter: DateAdapter}),
       dateAdapter(1997,9,4,9,0,0,0,zone),
       false,
       dateAdapter(1997,9,5,9,0,0,0,zone)
@@ -333,7 +333,7 @@ zones.forEach(zone => {
       new RRule({
         frequency: 'DAILY',
         start: dateAdapter(1997,9,2,9,0,0,0,zone),
-      }),
+      }, {dateAdapter: DateAdapter}),
       dateAdapter(1997,9,4,9,0,0,0,zone),
       true,
       dateAdapter(1997,9,4,9,0,0,0,zone)
@@ -344,7 +344,7 @@ zones.forEach(zone => {
       new RRule({
         frequency: 'DAILY',
         start: dateAdapter(1997,9,2,9,0,0,0,zone),
-      }),
+      }, {dateAdapter: DateAdapter}),
       dateAdapter(1997,9,2,9,0,0,0,zone),
       dateAdapter(1997,9,6,9,0,0,0,zone),
       false,
@@ -360,7 +360,7 @@ zones.forEach(zone => {
       new RRule({
         frequency: 'DAILY',
         start: dateAdapter(1997,9,2,9,0,0,0,zone),
-      }),
+      }, {dateAdapter: DateAdapter}),
       dateAdapter(1997,9,2,9,0,0,0,zone),
       dateAdapter(1997,9,6,9,0,0,0,zone),
       true,
@@ -380,7 +380,7 @@ zones.forEach(zone => {
           frequency: 'YEARLY',
           count: 3,
           start: dateAdapter(1997,9,2,9,0,0,0,zone),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997,9,2,9,0,0,0,zone), 
           dateAdapter(1998,9,2,9,0,0,0,zone), 
@@ -395,7 +395,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 2,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1999, 9, 2, 9, 0), dateAdapter(2001, 9, 2, 9, 0)]
       )
     
@@ -406,7 +406,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 100,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(2097, 9, 2, 9, 0), dateAdapter(2197, 9, 2, 9, 0)]
       )
     
@@ -417,7 +417,7 @@ zones.forEach(zone => {
           count: 3,
           byMonthOfYear: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 2, 9, 0), dateAdapter(1998, 3, 2, 9, 0), dateAdapter(1999, 1, 2, 9, 0)]
       )
     
@@ -428,7 +428,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfMonth: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 10, 1, 9, 0), dateAdapter(1997, 10, 3, 9, 0)]
       )
     
@@ -440,7 +440,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfMonth: [5, 7],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
       )
     
@@ -451,7 +451,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 9, 0),
           dateAdapter(1997, 9, 4, 9, 0),
@@ -471,7 +471,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: [['TU', 1], ['TH', -1]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 12, 25, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 12, 31, 9, 0)]
       )
     
@@ -482,7 +482,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: [['TU', 3], ['TH', -3]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 12, 11, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 12, 17, 9, 0)]
       )
     
@@ -494,7 +494,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
       )
     
@@ -506,7 +506,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: [['TU', 1], ['TH', -1]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 29, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
       )
     
@@ -518,7 +518,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: [['TU', 3], ['TH', -3]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 15, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 3, 12, 9, 0)]
       )
     
@@ -530,7 +530,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
       )
     
@@ -543,7 +543,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)]
       )
     
@@ -554,7 +554,7 @@ zones.forEach(zone => {
           count: 3,
           byHourOfDay: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1998, 9, 2, 6, 0), dateAdapter(1998, 9, 2, 18, 0)]
       )
     
@@ -565,7 +565,7 @@ zones.forEach(zone => {
           count: 3,
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1998, 9, 2, 9, 6)]
       )
     
@@ -576,7 +576,7 @@ zones.forEach(zone => {
           count: 3,
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1998, 9, 2, 9, 0, 6)]
       )
     
@@ -588,7 +588,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1998, 9, 2, 6, 6)]
       )
     
@@ -600,7 +600,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1998, 9, 2, 6, 0, 6)]
       )
     
@@ -612,7 +612,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
       )
     
@@ -625,7 +625,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 6, 6),
           dateAdapter(1997, 9, 2, 18, 6, 18),
@@ -638,7 +638,7 @@ zones.forEach(zone => {
         new RRule({
           frequency: 'YEARLY',
           start: parse('20150101T000000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         parse('20160101T000000'),
         parse('20160101T000000'),
         true,
@@ -650,7 +650,7 @@ zones.forEach(zone => {
         new RRule({
           frequency: 'YEARLY',
           start: parse('19200101T000000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         parse('20160101T000000'),
         parse('20160101T000000'),
         true,
@@ -662,7 +662,7 @@ zones.forEach(zone => {
         new RRule({
           frequency: 'YEARLY',
           start: parse('19200101T000000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         parse('20160101T000000'),
         parse('20170101T000000'),
         true,
@@ -677,7 +677,7 @@ zones.forEach(zone => {
           frequency: 'MONTHLY',
           count: 3,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 10, 2, 9, 0), dateAdapter(1997, 11, 2, 9, 0)]
       )
     
@@ -688,7 +688,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 2,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 11, 2, 9, 0), dateAdapter(1998, 1, 2, 9, 0)]
       )
     
@@ -699,7 +699,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 18,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1999, 3, 2, 9, 0), dateAdapter(2000, 9, 2, 9, 0)]
       )
     
@@ -710,7 +710,7 @@ zones.forEach(zone => {
           count: 3,
           byMonthOfYear: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 2, 9, 0), dateAdapter(1998, 3, 2, 9, 0), dateAdapter(1999, 1, 2, 9, 0)]
       )
     
@@ -721,7 +721,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfMonth: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 10, 1, 9, 0), dateAdapter(1997, 10, 3, 9, 0)]
       )
     
@@ -733,7 +733,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfMonth: [5, 7],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
       )
     
@@ -744,7 +744,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
       )
     
@@ -755,7 +755,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: [['TU', 1], ['TH', -1]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 25, 9, 0), dateAdapter(1997, 10, 7, 9, 0)]
       )
     
@@ -766,7 +766,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: [['TU', 3], ['TH', -3]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 11, 9, 0), dateAdapter(1997, 9, 16, 9, 0), dateAdapter(1997, 10, 16, 9, 0)]
       )
     
@@ -778,7 +778,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
       )
     
@@ -790,7 +790,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: [['TU', 1], ['TH', -1]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 29, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
       )
     
@@ -802,7 +802,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: [['TU', 3], ['TH', -3]],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 15, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 3, 12, 9, 0)]
       )
     
@@ -814,7 +814,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
       )
     
@@ -827,7 +827,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)]
       )
     
@@ -838,7 +838,7 @@ zones.forEach(zone => {
           count: 3,
           byHourOfDay: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 10, 2, 6, 0), dateAdapter(1997, 10, 2, 18, 0)]
       )
     
@@ -849,7 +849,7 @@ zones.forEach(zone => {
           count: 3,
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 10, 2, 9, 6)]
       )
     
@@ -860,7 +860,7 @@ zones.forEach(zone => {
           count: 3,
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 10, 2, 9, 0, 6)]
       )
     
@@ -872,7 +872,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 10, 2, 6, 6)]
       )
     
@@ -884,7 +884,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 0, 6),
           dateAdapter(1997, 9, 2, 18, 0, 18),
@@ -900,7 +900,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
       )
     
@@ -913,7 +913,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 6, 6),
           dateAdapter(1997, 9, 2, 18, 6, 18),
@@ -928,7 +928,7 @@ zones.forEach(zone => {
           count: 4,
           byDayOfMonth: [-1],
           start: parse('20131201T0900000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(2013, 12, 31, 9, 0),
           dateAdapter(2014, 1, 31, 9, 0),
@@ -944,7 +944,7 @@ zones.forEach(zone => {
           count: 4,
           byDayOfMonth: [-1],
           start: parse('20151201T0900000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(2015, 12, 31, 9, 0),
           dateAdapter(2016, 1, 31, 9, 0),
@@ -961,7 +961,7 @@ zones.forEach(zone => {
           frequency: 'WEEKLY',
           count: 3,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 9, 9, 0), dateAdapter(1997, 9, 16, 9, 0)]
       )
     
@@ -972,7 +972,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 2,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 16, 9, 0), dateAdapter(1997, 9, 30, 9, 0)]
       )
     
@@ -983,7 +983,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 20,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 6, 9, 9, 0)]
       )
     
@@ -994,7 +994,7 @@ zones.forEach(zone => {
           count: 3,
           byMonthOfYear: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 13, 9, 0), dateAdapter(1998, 1, 20, 9, 0)]
       )
     
@@ -1005,7 +1005,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
       )
     
@@ -1020,7 +1020,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
       )
     
@@ -1031,7 +1031,7 @@ zones.forEach(zone => {
           count: 3,
           byHourOfDay: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 9, 6, 0), dateAdapter(1997, 9, 9, 18, 0)]
       )
     
@@ -1042,7 +1042,7 @@ zones.forEach(zone => {
           count: 3,
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 9, 9, 6)]
       )
     
@@ -1053,7 +1053,7 @@ zones.forEach(zone => {
           count: 3,
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 9, 9, 0, 6)]
       )
     
@@ -1065,7 +1065,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 9, 6, 6)]
       )
     
@@ -1077,7 +1077,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1997, 9, 9, 6, 0, 6)]
       )
     
@@ -1089,7 +1089,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
       )
     
@@ -1102,7 +1102,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 6, 6),
           dateAdapter(1997, 9, 2, 18, 6, 18),
@@ -1111,19 +1111,19 @@ zones.forEach(zone => {
       )
 
 
-      // testRecurring(
-      //   'calculates weekly recurrences correctly across DST boundaries',
-      //   new RRule({
-      //     frequency: 'WEEKLY',
-      //     start: parse('20181031T180000'),
-      //     until: parse('20181115T050000'),
-      //   }),
-      //   [
-      //     dateAdapter(2018, 10, 31, 18),
-      //     dateAdapter(2018, 11, 7, 18),
-      //     dateAdapter(2018, 11, 14, 18),
-      //   ]
-      // )
+      testRecurring(
+        'calculates weekly recurrences correctly across DST boundaries',
+        new RRule({
+          frequency: 'WEEKLY',
+          start: parse('20181031T180000'),
+          until: parse('20181115T050000'),
+        }, {dateAdapter: DateAdapter}),
+        [
+          dateAdapter(2018, 10, 31, 18),
+          dateAdapter(2018, 11, 7, 18),
+          dateAdapter(2018, 11, 14, 18),
+        ]
+      )
 
       // Grabbed these tests from a recent patch to rrulejs, but, at second glance,
       // this one doesn't look valid. It is expecting a date before the start time...
@@ -1137,7 +1137,7 @@ zones.forEach(zone => {
       //     start: parse('20181000T000000'),
       //     until: parse('20181009T000000'),
       //     byDayOfWeek: ['SU', 'WE'],
-      //   }),
+      //   }, {dateAdapter: DateAdapter}),
       //   [
       //     dateAdapter(2018, 9, 30),
       //     dateAdapter(2018, 10, 3),
@@ -1154,7 +1154,7 @@ zones.forEach(zone => {
           frequency: 'DAILY',
           count: 3,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
       )
     
@@ -1165,7 +1165,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 2,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 6, 9, 0)]
       )
     
@@ -1176,7 +1176,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 92,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 12, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
       )
     
@@ -1187,7 +1187,7 @@ zones.forEach(zone => {
           count: 3,
           byMonthOfYear: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 2, 9, 0), dateAdapter(1998, 1, 3, 9, 0)]
       )
     
@@ -1198,7 +1198,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfMonth: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 10, 1, 9, 0), dateAdapter(1997, 10, 3, 9, 0)]
       )
     
@@ -1210,7 +1210,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfMonth: [5, 7],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0), dateAdapter(1998, 3, 5, 9, 0)]
       )
     
@@ -1221,7 +1221,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)]
       )
     
@@ -1233,7 +1233,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)]
       )
     
@@ -1245,7 +1245,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)]
       )
     
@@ -1258,7 +1258,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)]
       )
     
@@ -1269,7 +1269,7 @@ zones.forEach(zone => {
           count: 3,
           byHourOfDay: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 3, 6, 0), dateAdapter(1997, 9, 3, 18, 0)]
       )
     
@@ -1280,7 +1280,7 @@ zones.forEach(zone => {
           count: 3,
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 3, 9, 6)]
       )
     
@@ -1291,7 +1291,7 @@ zones.forEach(zone => {
           count: 3,
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 3, 9, 0, 6)]
       )
     
@@ -1303,7 +1303,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 3, 6, 6)]
       )
     
@@ -1315,7 +1315,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1997, 9, 3, 6, 0, 6)]
       )
     
@@ -1327,7 +1327,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
       )
     
@@ -1340,7 +1340,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 6, 6),
           dateAdapter(1997, 9, 2, 18, 6, 18),
@@ -1348,22 +1348,22 @@ zones.forEach(zone => {
         ]
       )
 
-      // testRecurring(
-      //   'calculates daily recurrences correctly across DST boundaries',
-      //   new RRule({
-      //     frequency: 'DAILY',
-      //     start: parse('20181101T110000'),
-      //     until: parse('20181106T110000'),
-      //   }),
-      //   [
-      //     dateAdapter(2018, 11, 1, 11),
-      //     dateAdapter(2018, 11, 2, 11),
-      //     dateAdapter(2018, 11, 3, 11),
-      //     dateAdapter(2018, 11, 4, 11),
-      //     dateAdapter(2018, 11, 5, 11),
-      //     dateAdapter(2018, 11, 6, 11),
-      //   ]
-      // )
+      testRecurring(
+        'calculates daily recurrences correctly across DST boundaries',
+        new RRule({
+          frequency: 'DAILY',
+          start: parse('20181101T110000'),
+          until: parse('20181106T110000'),
+        }, {dateAdapter: DateAdapter}),
+        [
+          dateAdapter(2018, 11, 1, 11),
+          dateAdapter(2018, 11, 2, 11),
+          dateAdapter(2018, 11, 3, 11),
+          dateAdapter(2018, 11, 4, 11),
+          dateAdapter(2018, 11, 5, 11),
+          dateAdapter(2018, 11, 6, 11),
+        ]
+      )
     })
     
     describe('HOURLY', () => {
@@ -1373,7 +1373,7 @@ zones.forEach(zone => {
           frequency: 'HOURLY',
           count: 3,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 10, 0), dateAdapter(1997, 9, 2, 11, 0)]
       )
     
@@ -1384,7 +1384,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 2,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 11, 0), dateAdapter(1997, 9, 2, 13, 0)]
       )
     
@@ -1395,7 +1395,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 769,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 10, 4, 10, 0), dateAdapter(1997, 11, 5, 11, 0)]
       )
     
@@ -1406,7 +1406,7 @@ zones.forEach(zone => {
           count: 3,
           byMonthOfYear: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
       )
     
@@ -1417,7 +1417,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfMonth: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 3, 0, 0), dateAdapter(1997, 9, 3, 1, 0), dateAdapter(1997, 9, 3, 2, 0)]
       )
     
@@ -1429,7 +1429,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfMonth: [5, 7],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 5, 0, 0), dateAdapter(1998, 1, 5, 1, 0), dateAdapter(1998, 1, 5, 2, 0)]
       )
     
@@ -1440,7 +1440,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 10, 0), dateAdapter(1997, 9, 2, 11, 0)]
       )
     
@@ -1452,7 +1452,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
       )
     
@@ -1464,7 +1464,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
       )
     
@@ -1477,7 +1477,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)]
       )
     
@@ -1488,7 +1488,7 @@ zones.forEach(zone => {
           count: 3,
           byHourOfDay: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 3, 6, 0), dateAdapter(1997, 9, 3, 18, 0)]
       )
     
@@ -1499,7 +1499,7 @@ zones.forEach(zone => {
           count: 3,
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 2, 10, 6)]
       )
     
@@ -1510,7 +1510,7 @@ zones.forEach(zone => {
           count: 3,
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 10, 0, 6)]
       )
     
@@ -1522,7 +1522,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 3, 6, 6)]
       )
     
@@ -1534,7 +1534,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0, 6), dateAdapter(1997, 9, 2, 18, 0, 18), dateAdapter(1997, 9, 3, 6, 0, 6)]
       )
     
@@ -1546,7 +1546,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
       )
     
@@ -1559,7 +1559,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 6, 6),
           dateAdapter(1997, 9, 2, 18, 6, 18),
@@ -1575,7 +1575,7 @@ zones.forEach(zone => {
           frequency: 'MINUTELY',
           count: 3,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 1), dateAdapter(1997, 9, 2, 9, 2)]
       )
     
@@ -1586,7 +1586,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 2,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 2), dateAdapter(1997, 9, 2, 9, 4)]
       )
     
@@ -1597,7 +1597,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 1501,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 10, 1), dateAdapter(1997, 9, 4, 11, 2)]
       )
     
@@ -1608,7 +1608,7 @@ zones.forEach(zone => {
           count: 3,
           byMonthOfYear: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
       )
     
@@ -1619,7 +1619,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfMonth: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 3, 0, 0), dateAdapter(1997, 9, 3, 0, 1), dateAdapter(1997, 9, 3, 0, 2)]
       )
     
@@ -1631,7 +1631,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfMonth: [5, 7],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 5, 0, 0), dateAdapter(1998, 1, 5, 0, 1), dateAdapter(1998, 1, 5, 0, 2)]
       )
     
@@ -1642,7 +1642,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 1), dateAdapter(1997, 9, 2, 9, 2)]
       )
     
@@ -1654,7 +1654,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
       )
     
@@ -1666,7 +1666,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
       )
     
@@ -1679,7 +1679,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)]
       )
     
@@ -1690,7 +1690,7 @@ zones.forEach(zone => {
           count: 3,
           byHourOfDay: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0), dateAdapter(1997, 9, 2, 18, 1), dateAdapter(1997, 9, 2, 18, 2)]
       )
     
@@ -1701,7 +1701,7 @@ zones.forEach(zone => {
           count: 3,
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6), dateAdapter(1997, 9, 2, 9, 18), dateAdapter(1997, 9, 2, 10, 6)]
       )
     
@@ -1712,7 +1712,7 @@ zones.forEach(zone => {
           count: 3,
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 9, 1, 6)]
       )
     
@@ -1724,7 +1724,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 6), dateAdapter(1997, 9, 2, 18, 18), dateAdapter(1997, 9, 3, 6, 6)]
       )
     
@@ -1736,7 +1736,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 0, 6),
           dateAdapter(1997, 9, 2, 18, 0, 18),
@@ -1752,7 +1752,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
       )
     
@@ -1765,7 +1765,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T180606'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 6, 6),
           dateAdapter(1997, 9, 2, 18, 6, 18),
@@ -1781,7 +1781,7 @@ zones.forEach(zone => {
           frequency: 'SECONDLY',
           count: 3,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 2, 9, 0, 1), dateAdapter(1997, 9, 2, 9, 0, 2)]
       )
     
@@ -1792,7 +1792,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 2,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 2, 9, 0, 2), dateAdapter(1997, 9, 2, 9, 0, 4)]
       )
     
@@ -1803,7 +1803,7 @@ zones.forEach(zone => {
           count: 3,
           interval: 90061,
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 3, 10, 1, 1), dateAdapter(1997, 9, 4, 11, 2, 2)]
       )
     
@@ -1814,7 +1814,7 @@ zones.forEach(zone => {
           count: 3,
           byMonthOfYear: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
       )
     
@@ -1825,7 +1825,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfMonth: [1, 3],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 3, 0, 0, 0), dateAdapter(1997, 9, 3, 0, 0, 1), dateAdapter(1997, 9, 3, 0, 0, 2)]
       )
     
@@ -1837,7 +1837,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfMonth: [5, 7],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 5, 0, 0, 0), dateAdapter(1998, 1, 5, 0, 0, 1), dateAdapter(1998, 1, 5, 0, 0, 2)]
       )
     
@@ -1848,7 +1848,7 @@ zones.forEach(zone => {
           count: 3,
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 0), dateAdapter(1997, 9, 2, 9, 0, 1), dateAdapter(1997, 9, 2, 9, 0, 2)]
       )
     
@@ -1860,7 +1860,7 @@ zones.forEach(zone => {
           byMonthOfYear: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
       )
     
@@ -1872,7 +1872,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
       )
     
@@ -1885,7 +1885,7 @@ zones.forEach(zone => {
           byDayOfMonth: [1, 3],
           byDayOfWeek: ['TU', 'TH'],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1998, 1, 1, 0, 0, 0), dateAdapter(1998, 1, 1, 0, 0, 1), dateAdapter(1998, 1, 1, 0, 0, 2)]
       )
     
@@ -1896,7 +1896,7 @@ zones.forEach(zone => {
           count: 3,
           byHourOfDay: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 0, 0), dateAdapter(1997, 9, 2, 18, 0, 1), dateAdapter(1997, 9, 2, 18, 0, 2)]
       )
     
@@ -1907,7 +1907,7 @@ zones.forEach(zone => {
           count: 3,
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 0), dateAdapter(1997, 9, 2, 9, 6, 1), dateAdapter(1997, 9, 2, 9, 6, 2)]
       )
     
@@ -1918,7 +1918,7 @@ zones.forEach(zone => {
           count: 3,
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0, 6), dateAdapter(1997, 9, 2, 9, 0, 18), dateAdapter(1997, 9, 2, 9, 1, 6)]
       )
     
@@ -1930,7 +1930,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           byMinuteOfHour: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 18, 6, 0), dateAdapter(1997, 9, 2, 18, 6, 1), dateAdapter(1997, 9, 2, 18, 6, 2)]
       )
     
@@ -1942,7 +1942,7 @@ zones.forEach(zone => {
           byHourOfDay: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 0, 6),
           dateAdapter(1997, 9, 2, 18, 0, 18),
@@ -1958,7 +1958,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 6, 6), dateAdapter(1997, 9, 2, 9, 6, 18), dateAdapter(1997, 9, 2, 9, 18, 6)]
       )
     
@@ -1971,7 +1971,7 @@ zones.forEach(zone => {
           byMinuteOfHour: [6, 18],
           bySecondOfMinute: [6, 18],
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [
           dateAdapter(1997, 9, 2, 18, 6, 6),
           dateAdapter(1997, 9, 2, 18, 6, 18),
@@ -1988,7 +1988,7 @@ zones.forEach(zone => {
           // count: 3,
           start: parse('19970902T090000'),
           until: parse('19970905T080000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
       )
     
@@ -1999,7 +1999,7 @@ zones.forEach(zone => {
           // count: 3,
           start: parse('19970902T090000'),
           until: parse('19970904T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
       )
     
@@ -2010,7 +2010,7 @@ zones.forEach(zone => {
           // count: 3,
           start: parse('19970902T090000'),
           until: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0)]
       )
     
@@ -2021,7 +2021,7 @@ zones.forEach(zone => {
           // count: 3,
           start: parse('19970902T090000'),
           until: parse('19970901T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         []
       )
     
@@ -2032,7 +2032,7 @@ zones.forEach(zone => {
           // count: 3,
           start: parse('19970902T090000'),
           until: dateAdapter(1997, 9, 5),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
       )
     })
@@ -2047,7 +2047,7 @@ zones.forEach(zone => {
           byDayOfWeek: ['TU', 'SU'],
           weekStart: 'MO',
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 7, 9, 0), dateAdapter(1997, 9, 16, 9, 0)]
       )
     
@@ -2060,7 +2060,7 @@ zones.forEach(zone => {
           byDayOfWeek: ['TU', 'SU'],
           weekStart: 'SU',
           start: parse('19970902T090000'),
-        }),
+        }, {dateAdapter: DateAdapter}),
         [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 14, 9, 0), dateAdapter(1997, 9, 16, 9, 0)]
       )
     })
@@ -2071,7 +2071,7 @@ zones.forEach(zone => {
         frequency: 'DAILY',
         count: 3,
         start: dateAdapter(1997, 9, 2),
-      }),
+      }, {dateAdapter: DateAdapter}),
       [dateAdapter(1997, 9, 2, 0, 0), dateAdapter(1997, 9, 3, 0, 0), dateAdapter(1997, 9, 4, 0, 0)]
     )
     
@@ -2081,7 +2081,7 @@ zones.forEach(zone => {
         frequency: 'DAILY',
         count: 3,
         start: parse('19970902T090000.5'),
-      }),
+      }, {dateAdapter: DateAdapter}),
       [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)]
     )
     
@@ -2093,7 +2093,7 @@ zones.forEach(zone => {
           byMonthOfYear: [2],
           byDayOfMonth: [31],
           start: parse('99970902T090000'),
-        })
+        }, {dateAdapter: DateAdapter})
     
         expect(() => {
           rule.occurrences().toArray()
@@ -2107,7 +2107,7 @@ zones.forEach(zone => {
         frequency: 'YEARLY',
         count: 1,
         start: dateAdapter(2014,12,31,22,0,0,1),
-      }),
+      }, {dateAdapter: DateAdapter}),
       [dateAdapter(2014,12,31,22,0,0,1)]
     )
   })

@@ -1,37 +1,42 @@
-import { DateAdapter } from '../date-adapter'
-import { RunnableIterator, OccurrencesArgs } from '../interfaces'
+import { IDateAdapter, DateAdapter, DateAdapterConstructor } from '../date-adapter'
+import { RunnableIterator, OccurrencesArgs, RunArgs } from '../interfaces'
 import { Options } from '../rule'
 import { Utils } from '../utilities'
 
-export class Collection<T extends DateAdapter<T>> {
+export class Collection<T extends DateAdapterConstructor> {
   constructor(
-    public readonly dates: T[] = [],
+    public readonly dates: DateAdapter<T>[] = [],
     public readonly granularity: 'INSTANTANIOUSLY' | Options.Frequency,
-    public readonly periodStart: T,
-    public readonly periodEnd: T
+    public readonly periodStart: DateAdapter<T>,
+    public readonly periodEnd: DateAdapter<T>
   ) {}
 }
 
 export type CollectionsGranularity = 'INSTANTANIOUSLY' | Options.Frequency
 
-export interface CollectionsArgs<T extends DateAdapter<T>> extends OccurrencesArgs<T> {
+export interface CollectionsArgs<T extends DateAdapterConstructor> extends OccurrencesArgs<T> {
   granularity?: CollectionsGranularity
-  weekStart?: DateAdapter.Weekday
+  weekStart?: IDateAdapter.Weekday
+  incrementLinearly?: boolean
+}
+
+export interface CollectionsRunArgs<T extends DateAdapterConstructor> extends RunArgs<T> {
+  granularity?: CollectionsGranularity
+  weekStart?: IDateAdapter.Weekday
   incrementLinearly?: boolean
 }
 
 export class CollectionIterator<
-  T extends DateAdapter<T>,
-  K extends RunnableIterator<T>
+  T extends DateAdapterConstructor
 > {
   public readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY'
-  public readonly weekStart?: DateAdapter.Weekday
-  public readonly startDate: T | null
+  public readonly weekStart?: IDateAdapter.Weekday
+  public readonly startDate: DateAdapter<T> | null
   
   private iterator: IterableIterator<Collection<T>>
-  private args: CollectionsArgs<T>
+  private args: CollectionsRunArgs<T>
 
-  constructor(private iterable: K, args: CollectionsArgs<T>) {
+  constructor(private iterable: RunnableIterator<T>, args: CollectionsRunArgs<T>) {
     if (args.granularity) { this.granularity = args.granularity }
     if (args.weekStart) { this.weekStart = args.weekStart }
     if (args.reverse) {
@@ -101,7 +106,7 @@ export class CollectionIterator<
       periodEnd,
       period
     ] = this.getPeriod(
-      (this.args.start || this.iterable.startDate)!
+      (this.args.start || this.iterable.startDate) as DateAdapter<T>
     )
 
     // without this, a MONTHLY `granularity` with `weekStart` might think the first
@@ -114,7 +119,7 @@ export class CollectionIterator<
       ] = this.getPeriod(date);
     }
 
-    let dates: T[] = []
+    let dates: DateAdapter<T>[] = []
     let index = 0
 
     while (date && (this.args.take === undefined || this.args.take > index)) {
@@ -127,8 +132,8 @@ export class CollectionIterator<
       yield new Collection(
         dates,
         this.granularity,
-        periodStart.clone(),
-        periodEnd.clone()
+        periodStart.clone() as DateAdapter<T>,
+        periodEnd.clone() as DateAdapter<T>
       )
 
       if (!date) { return }
@@ -159,7 +164,7 @@ export class CollectionIterator<
     }
   }
 
-  private getPeriod(date: T) {
+  private getPeriod(date: DateAdapter<T>) {
     date = this.getPeriodStart(date, {getRealMonthIfApplicable: true})
 
     return [
@@ -169,8 +174,8 @@ export class CollectionIterator<
     ]
   }
 
-  private getPeriodStart(date: T, option: {getRealMonthIfApplicable?: boolean} = {}) {
-    date = date.clone()
+  private getPeriodStart(date: DateAdapter<T>, option: {getRealMonthIfApplicable?: boolean} = {}) {
+    date = date.clone() as DateAdapter<T>
 
     switch (this.granularity) {
       case 'YEARLY':
@@ -208,8 +213,8 @@ export class CollectionIterator<
     }
   }
 
-  private getPeriodEnd(start: T) {
-    const periodEnd = start.clone()
+  private getPeriodEnd(start: DateAdapter<T>) {
+    const periodEnd = start.clone() as DateAdapter<T>
 
     switch (this.granularity) {
       case 'YEARLY':
@@ -236,8 +241,8 @@ export class CollectionIterator<
     }
   }
 
-  private incrementPeriod(date: T) {
-    date = date.clone()
+  private incrementPeriod(date: DateAdapter<T>) {
+    date = date.clone() as DateAdapter<T>
 
     switch (this.granularity) {
       case 'YEARLY':
@@ -261,9 +266,9 @@ export class CollectionIterator<
   }
 
   private getOccurrenceIterator(
-    iterable: K,
-    args: CollectionsArgs<T>
-  ): IterableIterator<T> {
+    iterable: RunnableIterator<T>,
+    args: CollectionsRunArgs<T>
+  ): IterableIterator<DateAdapter<T>> {
     let start = args.start || iterable.startDate
 
     if (!start) { return iterable._run(args) }

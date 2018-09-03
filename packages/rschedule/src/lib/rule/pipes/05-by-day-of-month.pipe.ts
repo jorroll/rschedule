@@ -1,16 +1,15 @@
 import uniq from 'lodash.uniq'
-import { DateAdapter } from '../../date-adapter'
-import { Options } from '../rule-options'
+import { DateTime } from '../../date-time'
+import { PipeControllerOptions } from './pipe-controller'
 import { Utils } from '../../utilities'
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
 
-export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
-  implements IPipeRule<T> {
+export class ByDayOfMonthPipe extends PipeRule implements IPipeRule {
 
   private upcomingMonthDays: Array<[number, number]> = []
 
   private upcomingDays: number[] = []
-  public run(args: IPipeRunFn<T>) {
+  public run(args: IPipeRunFn) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
     if (
@@ -22,14 +21,14 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
       return this.expand(args)
     } else { return this.filter(args) }
   }
-  public yearlyExpand(args: IPipeRunFn<T>) {
+  public yearlyExpand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingMonthDays.length === 0) {
       this.upcomingMonthDays = getUpcomingMonthDays(date, this.options)
 
       if (this.upcomingMonthDays.length === 0) {
-        const next = Utils.setDateToStartOfYear(date.clone().add(1, 'year'))
+        const next = Utils.setDateToStartOfYear(date.clone().add(1, 'year')) as DateTime
 
         return this.nextPipe.run({
           invalidDate: true,
@@ -52,7 +51,7 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
 
     return this.nextPipe.run({ date })
   }
-  public expand(args: IPipeRunFn<T>) {
+  public expand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.upcomingDays.length === 0) {
@@ -86,7 +85,7 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
     return this.nextPipe.run({ date })
   }
 
-  public filter(args: IPipeRunFn<T>) {
+  public filter(args: IPipeRunFn) {
     const upcomingDays = getUpcomingDays(args.date, this.options)
 
     let validDay = false
@@ -103,7 +102,7 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
     }
 
     if (validDay) { return this.nextPipe.run({ date: args.date }) }
-    let next: T
+    let next: DateTime
 
     // if the current date does not pass this filter,
     // is it possible for a date to pass this filter for the remainder of the month?
@@ -133,9 +132,9 @@ export class ByDayOfMonthPipe<T extends DateAdapter<T>> extends PipeRule<T>
   }
 }
 
-function getUpcomingMonthDays<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>
+function getUpcomingMonthDays(
+  date: DateTime,
+  options: PipeControllerOptions
 ): Array<[number, number]> {
   const next = date.clone()
   const monthDays: Array<[number, number]> = []
@@ -155,9 +154,9 @@ function getUpcomingMonthDays<T extends DateAdapter<T>>(
   return monthDays
 }
 
-function getUpcomingDays<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>
+function getUpcomingDays(
+  date: DateTime,
+  options: PipeControllerOptions
 ) {
   const daysInMonth = Utils.getDaysInMonth(date.get('month'), date.get('year'))
 

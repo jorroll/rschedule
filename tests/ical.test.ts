@@ -123,13 +123,13 @@ describe('parseFrequency()', () => {
 describe('parseUntil()', () => {
   describe('VALID', () => {
     test('19970902T090000Z', text => {
-      expect(parseUntil(text, StandardDateAdapter, new StandardDateAdapter()).toISOString()).toBe(
+      expect(parseUntil(text, StandardDateAdapter, new StandardDateAdapter(new Date())).toISOString()).toBe(
         new StandardDateAdapter(new Date(Date.UTC(1997, 8, 2, 9))).toISOString()
       )
     })
 
     test('19970902T090000', text => {
-      expect(parseUntil(text, StandardDateAdapter, new StandardDateAdapter()).toISOString()).toBe(
+      expect(parseUntil(text, StandardDateAdapter, new StandardDateAdapter(new Date())).toISOString()).toBe(
         new StandardDateAdapter(new Date(1997, 8, 2, 9)).toISOString()
       )
     })
@@ -137,7 +137,7 @@ describe('parseUntil()', () => {
 
   describe('INVALID', () => {
     test('19970902090000', text => {
-      expect(() => parseUntil(text, StandardDateAdapter, new StandardDateAdapter())).toThrowError(
+      expect(() => parseUntil(text, StandardDateAdapter, new StandardDateAdapter(new Date()))).toThrowError(
         `Invalid ICAL date/time string "${text}"`
       )
     })
@@ -336,7 +336,8 @@ describe('parseICalStrings()', () => {
       expect(parseICalStrings([ical], StandardDateAdapter)).toEqual({
         rdates: [],
         exdates: [],
-        rrules: [
+          exrules: [],
+          rrules: [
           {
             start: new StandardDateAdapter(datetime(1997, 9, 2, 9)),
             frequency: 'DAILY',
@@ -355,6 +356,7 @@ describe('parseICalStrings()', () => {
         expect(parseICalStrings([ical], StandardDateAdapter)).toEqual({
           rdates: [],
           exdates: [],
+          exrules: [],
           rrules: [
             {
               start: new StandardDateAdapter(datetime(1997, 9, 2, 9)),
@@ -383,6 +385,7 @@ describe('parseICalStrings()', () => {
             new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30)), {timezone: 'UTC'}),
           ],
           exdates: [new StandardDateAdapter(new Date(Date.UTC(1997, 6, 14, 12, 30)), {timezone: 'UTC'})],
+          exrules: [],
           rrules: [
             {
               start: new StandardDateAdapter(datetime(1997, 9, 2, 9)),
@@ -404,6 +407,7 @@ describe('parseICalStrings()', () => {
         expect(parseICalStrings([ical], StandardDateAdapter)).toEqual({
           rdates: [],
           exdates: [],
+          exrules: [],
           rrules: [
             {
               start: new StandardDateAdapter(datetime(1997, 9, 7, 9)),
@@ -427,6 +431,7 @@ describe('parseICalStrings()', () => {
         expect(parseICalStrings([ical], StandardDateAdapter)).toEqual({
           rdates: [new StandardDateAdapter(datetime(1997, 7, 14, 8, 30))],
           exdates: [],
+          exrules: [],
           rrules: [
             {
               start: new StandardDateAdapter(datetime(1997, 9, 10, 9)),
@@ -480,6 +485,7 @@ describe('ruleOptionsToIcalString()', () => {
     test('DTSTART:19970902T090000\nRRULE:FREQ=DAILY;COUNT=10', ical => {
       expect(
         ruleOptionsToIcalString(
+          StandardDateAdapter,
           {
             start: new StandardDateAdapter(datetime(1997, 9, 2, 9)),
             frequency: 'DAILY',
@@ -498,6 +504,7 @@ describe('ruleOptionsToIcalString()', () => {
       ical => {
         expect(
           ruleOptionsToIcalString(
+            StandardDateAdapter,
             {
               start: new StandardDateAdapter(datetime(1997, 9, 2, 9)),
               frequency: 'YEARLY',
@@ -519,6 +526,7 @@ describe('ruleOptionsToIcalString()', () => {
       ical => {
         expect(
           ruleOptionsToIcalString(
+            StandardDateAdapter,          
             {
               start: new StandardDateAdapter(datetime(1997, 9, 2, 9)),
               frequency: 'WEEKLY',
@@ -539,6 +547,7 @@ describe('ruleOptionsToIcalString()', () => {
       ical => {
         expect(
           ruleOptionsToIcalString(
+            StandardDateAdapter,
             {
               start: new StandardDateAdapter(datetime(1997, 9, 7, 9)),
               frequency: 'MONTHLY',
@@ -560,6 +569,7 @@ describe('ruleOptionsToIcalString()', () => {
       ical => {
         expect(
           ruleOptionsToIcalString(
+            StandardDateAdapter,
             {
               start: new StandardDateAdapter(datetime(1997, 9, 10, 9)),
               frequency: 'SECONDLY',

@@ -1,16 +1,15 @@
 import uniq from 'lodash.uniq'
-import { DateAdapter } from '../../date-adapter'
-import { Options } from '../rule-options'
+import { DateTime } from '../../date-time'
+import { PipeControllerOptions } from './pipe-controller'
 import { Utils } from '../../utilities'
 import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces'
 
-export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
-  implements IPipeRule<T> {
+export class ByDayOfMonthReversePipe extends ReversePipeRule implements IPipeRule {
 
   private preceedingMonthDays: Array<[number, number]> = []
   private preceedingDays: number[] = []
 
-  public run(args: IPipeRunFn<T>) {
+  public run(args: IPipeRunFn) {
     if (args.invalidDate) { return this.nextPipe.run(args) }
 
     if (
@@ -23,7 +22,7 @@ export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePi
     } else { return this.filter(args) }
   }
 
-  public yearlyExpand(args: IPipeRunFn<T>) {
+  public yearlyExpand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.preceedingMonthDays.length === 0) {
@@ -32,7 +31,7 @@ export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePi
       if (this.preceedingMonthDays.length === 0) {
         const next = Utils.setDateToEndOfYear(
           date.clone().subtract(1, 'year')
-        )
+        ) as DateTime
 
         return this.nextPipe.run({
           invalidDate: true,
@@ -57,7 +56,7 @@ export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePi
     return this.nextPipe.run({ date })
   }
 
-  public expand(args: IPipeRunFn<T>) {
+  public expand(args: IPipeRunFn) {
     const date = args.date
 
     if (this.preceedingDays.length === 0) {
@@ -89,7 +88,7 @@ export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePi
     return this.nextPipe.run({ date })
   }
 
-  public filter(args: IPipeRunFn<T>) {
+  public filter(args: IPipeRunFn) {
     const preceedingDays = getPreceedingDays(args.date, this.options)
 
     let validDay = false
@@ -106,7 +105,7 @@ export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePi
     }
 
     if (validDay) { return this.nextPipe.run({ date: args.date }) }
-    let next: T
+    let next: DateTime
 
     // if the current date does not pass this filter,
     // is it possible for a date to pass this filter for the remainder of the month?
@@ -140,9 +139,9 @@ export class ByDayOfMonthReversePipe<T extends DateAdapter<T>> extends ReversePi
   }
 }
 
-function getPreceedingMonthDays<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>,
+function getPreceedingMonthDays(
+  date: DateTime,
+  options: PipeControllerOptions,
 ): Array<[number, number]> {
   const next = date.clone()
   const monthDays: Array<[number, number]> = []
@@ -162,9 +161,9 @@ function getPreceedingMonthDays<T extends DateAdapter<T>>(
   return monthDays
 }
 
-function getPreceedingDays<T extends DateAdapter<T>>(
-  date: T,
-  options: Options.ProcessedOptions<T>,
+function getPreceedingDays(
+  date: DateTime,
+  options: PipeControllerOptions,
 ) {
   const daysInMonth = Utils.getDaysInMonth(date.get('month'), date.get('year'))
 

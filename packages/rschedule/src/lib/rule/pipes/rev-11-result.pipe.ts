@@ -1,14 +1,13 @@
-import { DateAdapter } from '../../date-adapter'
+import { DateTime } from '../../date-time'
 import { IPipeRule, IPipeRunFn, ReversePipeRule, PipeError } from './interfaces'
 
-export class ResultReversePipe<T extends DateAdapter<T>> extends ReversePipeRule<T>
-  implements IPipeRule<T> {
+export class ResultReversePipe extends ReversePipeRule implements IPipeRule {
   private invalidIterationCount = 0
-  private previousIterationDate?: T
+  private previousIterationDate?: DateTime
 
   // This pipe exists to facilitate the adding of dev callbacks to an iteration
   // of the pipe. It is meant to always be the last pipe in the chain.
-  public run(args: IPipeRunFn<T>) {
+  public run(args: IPipeRunFn) {
     if (this.controller.invalid) {
       throw new Error("Ooops! You've continued to use a rule iterator object " +
         'after having updated `Rule#options`. ' +

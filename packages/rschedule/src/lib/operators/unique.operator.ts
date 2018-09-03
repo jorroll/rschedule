@@ -1,49 +1,49 @@
-import { DateAdapter } from '../date-adapter'
-import { OperatorOutput } from './interface';
+import { DateAdapter, DateAdapterConstructor } from '../date-adapter'
+import { OperatorOutput, OperatorOutputOptions } from './interface';
 
 /**
- * An operator function, intended as an argument for `buildIterator()`,
+ * An operator function, intended as an argument for `occurrenceStream()`,
  * which combines the input occurrence streams, if any, with the previous occurrence stream
- * in the `buildIterator()` pipe and removes any duplicate dates from the stream.
+ * in the `occurrenceStream()` pipe and removes any duplicate dates from the stream.
  * 
  * @param inputs a spread of scheduling objects
  */
-export function unique<T extends DateAdapter<T>>(): OperatorOutput<T> {
-  return (base?: IterableIterator<T>, baseIsInfinite?: boolean) => {
+export function unique<T extends DateAdapterConstructor>(): OperatorOutput<T> {
+  return (options: OperatorOutputOptions<T>) => {
     return {
-      get isInfinite() { return !!baseIsInfinite },
+      get isInfinite() { return !!options.baseIsInfinite },
 
       setTimezone() {},
 
       clone() {
-        return unique()(base, baseIsInfinite)
+        return unique()(options)
       },
 
-      *_run() {
-        let iterable: IterableIterator<T>
+      *_run(): IterableIterator<DateAdapter<T>> {
+        let iterable: IterableIterator<DateAdapter<T>>
         
-        if (base) {
-          iterable = base
+        if (options.base) {
+          iterable = options.base
         }
         else {
           return
         }
         
-        const firstDate = iterable.next().value as T | undefined
+        const firstDate = iterable.next().value as DateAdapter<T> | undefined
 
         if (!firstDate) return;
 
         const cache = {
           iterator: iterable,
           date: firstDate,
-          mostRecentlyYieldedDate: firstDate.clone(),
+          mostRecentlyYieldedDate: firstDate.clone() as DateAdapter<T>,
         }
 
         // iterate over the cache objects until we run out of dates or hit our max count
         while (cache.date) {
-          const yieldArgs = yield cache.date.clone()
+          const yieldArgs = yield cache.date.clone() as DateAdapter<T>
 
-          cache.mostRecentlyYieldedDate = cache.date.clone()
+          cache.mostRecentlyYieldedDate = cache.date.clone() as DateAdapter<T>
 
           cache.date = cache.iterator.next(yieldArgs).value
 
@@ -58,8 +58,8 @@ export function unique<T extends DateAdapter<T>>(): OperatorOutput<T> {
  * Mutates the cache object by iterating its date until a new (unyielded) one is found.
  * Returns a boolean indicating if there are any more valid dates.
  */
-function iterateCacheToNextUniqueDate<T extends DateAdapter<T>>(
-  cache: { iterator: IterableIterator<T>; date?: T, mostRecentlyYieldedDate: T }
+function iterateCacheToNextUniqueDate<T extends DateAdapterConstructor>(
+  cache: { iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T>, mostRecentlyYieldedDate: DateAdapter<T> }
 ): boolean {
   if (!cache.date) return false;
 

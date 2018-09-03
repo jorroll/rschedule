@@ -1,7 +1,8 @@
 import {
+  IDateAdapter,
   DateAdapter,
   IDateAdapterConstructor,
-  InstanceOfDateAdapterConstructor,
+  DateAdapterConstructor,
   ParsedDatetime,
 } from '../date-adapter'
 import { Options } from '../rule/rule-options'
@@ -25,25 +26,25 @@ const UNIMPLEMENTED_RULE_OPTION =
  * @param dateAdapterConstructor
  */
 
-export function parseICalStrings<
-  T extends IDateAdapterConstructor<T>,
->(
+export function parseICalStrings<T extends DateAdapterConstructor>(
   icalStrings: string[],
   dateAdapterConstructor: T
 ): {
-  rrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>>
-  exrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>>
-  rdates: InstanceOfDateAdapterConstructor<T>[]
-  exdates: InstanceOfDateAdapterConstructor<T>[]
+  rrules: Options.ProvidedOptions<T>[]
+  exrules: Options.ProvidedOptions<T>[]
+  rdates: DateAdapter<T>[]
+  exdates: DateAdapter<T>[]
 } {
-  const rrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>> = []
-  const exrules: Array<Options.ProvidedOptions<InstanceOfDateAdapterConstructor<T>>> = []
-  const rdates: InstanceOfDateAdapterConstructor<T>[] = []
-  const exdates: InstanceOfDateAdapterConstructor<T>[] = []
+  const rrules: Options.ProvidedOptions<T>[] = []
+  const exrules: Options.ProvidedOptions<T>[] = []
+  const rdates: DateAdapter<T>[] = []
+  const exdates: DateAdapter<T>[] = []
+
+  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any
 
   icalStrings.forEach(ical => {
     const parts = ical.split('\n')
-    const dtstart = dateAdapterConstructor.fromTimeObject(
+    const dtstart = dateAdapter.fromTimeObject(
       parseDTStart(parts.shift())
     )[0]
 
@@ -115,12 +116,12 @@ export function parseICalStrings<
 
         name === 'RRULE' ? rrules.push(parsedOptions) : exrules.push(parsedOptions)
       } else if (name === 'RDATE') {
-        const time = dateAdapterConstructor.fromTimeObject(
+        const time = dateAdapter.fromTimeObject(
           parseDatetime(parts[1])
         )
         rdates.push(...time)
       } else if (name === 'EXDATE') {
-        const time = dateAdapterConstructor.fromTimeObject(
+        const time = dateAdapter.fromTimeObject(
           parseDatetime(parts[1])
         )
         exdates.push(...time)
@@ -243,10 +244,10 @@ export function parseFrequency(text: string) {
 
 // Here we say that the type `T` must be a constructor that returns a DateAdapter
 // complient type
-export function parseUntil<T extends IDateAdapterConstructor<T>>(
+export function parseUntil<T extends DateAdapterConstructor>(
   text: string,
   dateAdapterConstructor: T,
-  start: InstanceOfDateAdapterConstructor<T>
+  start: DateAdapter<T>
 ) {
   const parsedDatetime = parseDatetime(text)
 
@@ -254,7 +255,9 @@ export function parseUntil<T extends IDateAdapterConstructor<T>>(
     throw new ICalStringParseError(`Invalid UNTIL value "${text}"`)
   }
 
-  const date = dateAdapterConstructor.fromTimeObject(parsedDatetime)[0]
+  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any
+
+  const date = dateAdapter.fromTimeObject(parsedDatetime)[0]
   date.set('timezone', start.get('timezone'))
   return date
 }
@@ -325,11 +328,11 @@ export function parseByDay(text: string) {
         throw new ICalStringParseError(`Invalid BYDAY value "${text}"`)
       }
 
-      return [weekday, number] as [DateAdapter.Weekday, number]
+      return [weekday, number] as [IDateAdapter.Weekday, number]
     } else if (!Utils.WEEKDAYS.includes(text as any)) {
       throw new ICalStringParseError(`Invalid BYDAY value "${text}"`)
     } else {
-      return text as DateAdapter.Weekday
+      return text as IDateAdapter.Weekday
     }
   })
 }
