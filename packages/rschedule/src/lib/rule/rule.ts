@@ -287,8 +287,12 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
       index++
       
       date.generators.push(this)
+
+      const adapter = this.dateAdapter.fromTimeObject(date.toTimeObject())[0]
+
+      adapter.generators = date.generators.slice()
       
-      const yieldArgs = yield this.dateAdapter.fromTimeObject(date.toTimeObject())[0]
+      const yieldArgs = yield adapter
 
       date = iterator.next(yieldArgs).value
     }
