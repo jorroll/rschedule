@@ -29,7 +29,7 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
     // Yay for forseeing/preventing possible SUPER annoying bugs!!!
     this.usedPipeControllers.forEach(controller => (controller.invalid = true))
     this.usedPipeControllers = []
-    this.processedOptions = buildValidatedRuleOptions<T>(this.dateAdapter as any, value as any)
+    this.processedOptions = buildValidatedRuleOptions(this.dateAdapter as any, value as any)
 
     this._options = Object.freeze({ ...value })
   }
@@ -102,7 +102,7 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
   /**
    *   Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(rawArgs: {date: DateProp<T>}): boolean
+  public occursOn(rawArgs: {date: DateProp<T> | DateAdapter<T>}): boolean
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * 
@@ -115,8 +115,8 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
    * - `excludeDates` argument can be provided which limits the possible occurrences
    *   to ones not equal to a date in the `excludeDates` array.
    */
-  public occursOn(rawArgs: {weekday: DateTime.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean, excludeDates?: DateProp<T>[]}): boolean
-  public occursOn(rawArgs: {date?: DateProp<T>; weekday?: DateTime.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean, excludeDates?: DateProp<T>[]}): boolean {
+  public occursOn(rawArgs: {weekday: DateTime.Weekday; after?: DateProp<T> | DateAdapter<T>; before?: DateProp<T> | DateAdapter<T>; excludeEnds?: boolean, excludeDates?: (DateProp<T> | DateAdapter<T>)[]}): boolean
+  public occursOn(rawArgs: {date?: DateProp<T> | DateAdapter<T>; weekday?: DateTime.Weekday; after?: DateProp<T> | DateAdapter<T>; before?: DateProp<T> | DateAdapter<T>; excludeEnds?: boolean, excludeDates?: (DateProp<T> | DateAdapter<T>)[]}): boolean {
     let args = this.processOccursOnArgs(rawArgs)
 
     if (args.weekday) {
@@ -281,12 +281,4 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
   abstract clone(): Rule<T, D>
 
   abstract toICal(): string
-
-  protected buildDateAdapter(date?: DateProp<T> | DateAdapter<T>) {
-    if (!date) return;
-
-    if (DateAdapterBase.isInstance(date)) return date;
-
-    return new this.dateAdapter(date)
-  }
 }

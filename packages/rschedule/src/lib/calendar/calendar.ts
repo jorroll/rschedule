@@ -184,7 +184,7 @@ export class Calendar<
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(rawArgs: {date: T}): boolean
+  public occursOn(rawArgs: {date: DateProp<T> | DateAdapter<T>}): boolean
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * By default, only checks dates in the first year.
@@ -197,8 +197,20 @@ export class Calendar<
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
-  public occursOn(rawArgs: {weekday: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean
-  public occursOn(rawArgs: {date?: DateProp<T>; weekday?: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean {
+  public occursOn(rawArgs: {
+    weekday: IDateAdapter.Weekday; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>; 
+    excludeEnds?: boolean
+  }): boolean
+
+  public occursOn(rawArgs: {
+    date?: DateProp<T> | DateAdapter<T>; 
+    weekday?: IDateAdapter.Weekday; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>; 
+    excludeEnds?: boolean
+  }): boolean {
     const args = this.processOccursOnArgs(rawArgs)
 
     if (args.weekday) {

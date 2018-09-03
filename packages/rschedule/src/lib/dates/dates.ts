@@ -1,5 +1,5 @@
 import uniqWith from 'lodash.uniqwith'
-import { IDateAdapter, DateAdapter, DateAdapterConstructor, IDateAdapterConstructor, DateProp } from '../date-adapter'
+import { IDateAdapter, DateAdapter, DateAdapterConstructor, IDateAdapterConstructor, DateProp, DateAdapterBase } from '../date-adapter'
 import {
   HasOccurrences,
   IHasOccurrences,
@@ -35,7 +35,7 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
 
   protected dateAdapter: IDateAdapterConstructor<T>
 
-  constructor(args: {dates?: DateProp<T>[], data?: D, dateAdapter?: T}={}) {
+  constructor(args: {dates?: (DateProp<T> | DateAdapter<T>)[], data?: D, dateAdapter?: T}={}) {
     super()
 
     this.dateAdapter = args.dateAdapter 
@@ -48,7 +48,8 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
       )
     }
 
-    if (args.dates) this.dates = args.dates
+    if (args.dates) this.dates = args.dates.map(date => DateAdapterBase.isInstance(date) ? date.date : date)
+    
     this.data = args.data
   }
 
@@ -56,9 +57,24 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
     return new OccurrenceIterator(this, this.processOccurrencesArgs(args))
   }
 
-  public occursOn(rawArgs: {date: DateProp<T>}): boolean
-  public occursOn(rawArgs: {weekday: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>, excludeEnds?: boolean; excludeDates?: DateProp<T>[]}): boolean
-  public occursOn(rawArgs: {date?: DateProp<T>; weekday?: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>, excludeEnds?: boolean; excludeDates?: DateProp<T>[]}): boolean {
+  public occursOn(rawArgs: {date: DateProp<T> | DateAdapter<T>}): boolean
+  
+  public occursOn(rawArgs: {
+    weekday: IDateAdapter.Weekday; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>, 
+    excludeEnds?: boolean; 
+    excludeDates?: (DateProp<T> | DateAdapter<T>)[]
+  }): boolean
+  
+  public occursOn(rawArgs: {
+    date?: DateProp<T> | DateAdapter<T>; 
+    weekday?: IDateAdapter.Weekday; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>, 
+    excludeEnds?: boolean; 
+    excludeDates?: (DateProp<T> | DateAdapter<T>)[]
+  }): boolean {
     const args = this.processOccursOnArgs(rawArgs)
 
     if (args.weekday) {

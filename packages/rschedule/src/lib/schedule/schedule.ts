@@ -78,8 +78,8 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     data?: D
     rrules?: (ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>)[]
     exrules?: (ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | EXRule<T>)[]
-    rdates?: DateProp<T>[] | RDates<T>
-    exdates?: DateProp<T>[] | EXDates<T>
+    rdates?: (DateProp<T> | DateAdapter<T>)[] | RDates<T>
+    exdates?: (DateProp<T> | DateAdapter<T>)[] | EXDates<T>
   }={}) {
     super()
 
@@ -196,7 +196,7 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(rawArgs: {date: T}): boolean
+  public occursOn(rawArgs: {date: DateProp<T> | DateAdapter<T>}): boolean
   /**
    * **DOES NOT CURRENTLY TAKE INTO ACCOUNT EXRULES.**
    * 
@@ -209,8 +209,20 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
-  public occursOn(rawArgs: {weekday: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean
-  public occursOn(rawArgs: {date?: DateProp<T>; weekday?: IDateAdapter.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean {
+  public occursOn(rawArgs: {
+    weekday: IDateAdapter.Weekday; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>; 
+    excludeEnds?: boolean
+  }): boolean
+
+  public occursOn(rawArgs: {
+    date?: DateProp<T> | DateAdapter<T>; 
+    weekday?: IDateAdapter.Weekday; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>; 
+    excludeEnds?: boolean
+  }): boolean {
     const args = this.processOccursOnArgs(rawArgs)
 
     if (args.weekday) {

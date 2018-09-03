@@ -1,4 +1,4 @@
-import { DateAdapter, DateProp, DateAdapterConstructor, IDateAdapterConstructor } from './date-adapter'
+import { DateAdapter, DateProp, DateAdapterConstructor, IDateAdapterConstructor, DateAdapterBase } from './date-adapter'
 import { DateTime } from './date-time'
 
 export interface RunnableIterator<T extends DateAdapterConstructor> {
@@ -9,8 +9,8 @@ export interface RunnableIterator<T extends DateAdapterConstructor> {
 }
 
 export interface OccurrencesArgs<T extends DateAdapterConstructor> {
-  start?: DateProp<T>
-  end?: DateProp<T>
+  start?: DateProp<T> | DateAdapter<T>
+  end?: DateProp<T> | DateAdapter<T>
   take?: number
   reverse?: boolean
 }
@@ -25,11 +25,11 @@ export interface RunArgs<T extends DateAdapterConstructor> {
 
 export interface IHasOccurrences<T extends DateAdapterConstructor> extends RunnableIterator<T> {
   occurrences(args: OccurrencesArgs<T>): OccurrenceIterator<T>
-  occursBetween(start: DateProp<T>, end: DateProp<T>, options: { excludeEnds?: boolean }): boolean
-  occursOn(args: {date: DateProp<T>}): boolean
-  occursOn(args: {weekday: DateTime.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean
-  occursAfter(date: DateProp<T>, options: { excludeStart?: boolean }): boolean
-  occursBefore(date: DateProp<T>, options: { excludeStart?: boolean }): boolean
+  occursBetween(start: DateProp<T> | DateAdapter<T>, end: DateProp<T> | DateAdapter<T>, options: { excludeEnds?: boolean }): boolean
+  occursOn(args: {date: DateProp<T> | DateAdapter<T>}): boolean
+  occursOn(args: {weekday: DateTime.Weekday; after?: DateProp<T> | DateAdapter<T>; before?: DateProp<T> | DateAdapter<T>; excludeEnds?: boolean}): boolean
+  occursAfter(date: DateProp<T> | DateAdapter<T>, options: { excludeStart?: boolean }): boolean
+  occursBefore(date: DateProp<T> | DateAdapter<T>, options: { excludeStart?: boolean }): boolean
   setTimezone(timezone: string | undefined, options?: {keepLocalTime?: boolean}): this
   clone(): IHasOccurrences<T>
 }
@@ -55,7 +55,11 @@ export abstract class HasOccurrences<T extends DateAdapterConstructor> {
     return new OccurrenceIterator(this as any, this.processOccurrencesArgs(args))
   }
   
-  public occursBetween(start: DateProp<T>, end: DateProp<T>, options: { excludeEnds?: boolean } = {}) {
+  public occursBetween(
+    start: DateProp<T> | DateAdapter<T>, 
+    end: DateProp<T> | DateAdapter<T>, 
+    options: { excludeEnds?: boolean } = {}
+  ) {
     const startAdapter = this.buildDateAdapter(start)
     const endAdapter = this.buildDateAdapter(end)
 
@@ -75,7 +79,7 @@ export abstract class HasOccurrences<T extends DateAdapterConstructor> {
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
-  abstract occursOn(args: {date: DateProp<T>}): boolean
+  abstract occursOn(args: {date: DateProp<T> | DateAdapter<T>}): boolean
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * 
@@ -86,9 +90,17 @@ export abstract class HasOccurrences<T extends DateAdapterConstructor> {
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
-  abstract occursOn(args: {weekday: DateTime.Weekday; after?: DateProp<T>; before?: DateProp<T>; excludeEnds?: boolean}): boolean
+  abstract occursOn(args: {
+    weekday: DateTime.Weekday; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>; 
+    excludeEnds?: boolean
+  }): boolean
 
-  public occursAfter(date: DateProp<T>, options: { excludeStart?: boolean } = {}) {
+  public occursAfter(
+    date: DateProp<T> | DateAdapter<T>, 
+    options: { excludeStart?: boolean } = {}
+  ) {
     const adapter = this.buildDateAdapter(date)
 
     for (const day of this._run({ start: adapter })) {
@@ -98,7 +110,10 @@ export abstract class HasOccurrences<T extends DateAdapterConstructor> {
     return false
   }
 
-  public occursBefore(date: DateProp<T>, options: { excludeStart?: boolean } = {}) {
+  public occursBefore(
+    date: DateProp<T> | DateAdapter<T>, 
+    options: { excludeStart?: boolean } = {}
+  ) {
     const adapter = this.buildDateAdapter(date)
 
     for (const day of this._run({ start: adapter, reverse: true })) {
@@ -117,12 +132,12 @@ export abstract class HasOccurrences<T extends DateAdapterConstructor> {
   }
 
   protected processOccursOnArgs(rawArgs: {
-    date?: DateProp<T>; 
+    date?: DateProp<T> | DateAdapter<T>; 
     weekday?: DateTime.Weekday; 
-    after?: DateProp<T>; 
-    before?: DateProp<T>; 
+    after?: DateProp<T> | DateAdapter<T>; 
+    before?: DateProp<T> | DateAdapter<T>; 
     excludeEnds?: boolean, 
-    excludeDates?: DateProp<T>[]
+    excludeDates?: (DateProp<T> | DateAdapter<T>)[]
   } = {}): {
     date?: DateAdapter<T>; 
     weekday?: DateTime.Weekday; 
@@ -137,12 +152,14 @@ export abstract class HasOccurrences<T extends DateAdapterConstructor> {
       after: this.buildDateAdapter(rawArgs.after),
       before: this.buildDateAdapter(rawArgs.before),
       excludeDates: rawArgs.excludeDates &&
-        rawArgs.excludeDates.map(date => this.buildDateAdapter(date)) as DateAdapter<T>[] | undefined,
+        rawArgs.excludeDates.map(date => this.buildDateAdapter(date) as DateAdapter<T>),
     }
   }
 
-  protected buildDateAdapter(date?: DateProp<T>) {
+  protected buildDateAdapter(date?: DateProp<T> | DateAdapter<T>) {
     if (!date) return;
+
+    if (DateAdapterBase.isInstance(date)) return date;
 
     return new this.dateAdapter(date)
   }
