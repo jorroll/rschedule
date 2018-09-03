@@ -46,7 +46,7 @@ export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
         case 'UTC':
           // TS doesn't like my use of the spread operator
           
-          return new MomentTZDateAdapter(moment.utc(datetime))
+          return new MomentTZDateAdapter(moment.tz(datetime, 'UTC'))
         case undefined:
         case 'DATE':
           // TS doesn't like my use of the spread operator

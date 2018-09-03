@@ -7,9 +7,15 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
   
   private _timezone: 'UTC' | undefined
 
-  constructor(date: Date, options: {timezone?: 'UTC'} = {}) {
+  constructor(date?: Date, options: {timezone?: 'UTC'} = {}) {
     super()
-    this.date = new Date(date)
+
+    if (date)
+      this.date = new Date(date)
+    else {
+      this.date = new Date()
+    }
+
     this._timezone = options.timezone
     this.assertIsValid([date, 'constructing'])
   }
@@ -64,7 +70,7 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
    * new object.
    */
   clone(): StandardDateAdapter {
-    const adapter = new StandardDateAdapter(this.date)
+    const adapter = new StandardDateAdapter(this.date, {timezone: this.get('timezone')})
     adapter.generators = this.generators.slice()
     return adapter
   }
@@ -96,7 +102,7 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
         case 'timezone':
           return this._timezone
         default:
-          throw new Error('Invalid unit provided to `StandardDateAdapter#set`')
+          throw new Error('Invalid unit provided to `StandardDateAdapter#get`')
       }
     }
 
@@ -105,6 +111,8 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
         return this.date.getUTCFullYear()
       case 'month':
         return this.date.getUTCMonth() + 1
+      case 'yearday':
+        return Utils.getYearDay(this.get('year'), this.get('month'), this.get('day'))
       case 'weekday':
         return Utils.WEEKDAYS[this.date.getUTCDay()]
       case 'day':
@@ -130,6 +138,12 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
     if (unit !== 'timezone') return super.set(unit, value);
 
     if (value === this._timezone) return this;
+
+    if (!['UTC', undefined].includes(value as 'UTC' | undefined)) {
+      throw new IDateAdapter.InvalidDateError(
+        `StandardDateAdapter does not support "${value}" timezone.`
+      )
+    }
 
     if (options.keepLocalTime) {
       if (this._timezone === undefined) {

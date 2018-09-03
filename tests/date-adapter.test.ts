@@ -1,10 +1,10 @@
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { MomentDateAdapter, MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
-import { DateAdapter as IDateAdapter, IDateAdapterConstructor, RRule, Schedule, Calendar, Utils } from '@rschedule/rschedule';
+import { IDateAdapter, IDateAdapterConstructor, DateAdapterConstructor, RRule, Schedule, Calendar, Utils } from '@rschedule/rschedule';
 import { Moment as MomentST } from 'moment';
 import { Moment as MomentTZ } from 'moment-timezone';
 
-import { context, environment, DatetimeFn, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, luxonDatetimeFn } from './utilities';
+import { context, environment, DatetimeFn, standardDatetimeFn, momentDatetimeFn, momentTZDatetimeFn, luxonDatetimeFn, TIMEZONES } from './utilities';
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { DateTime } from 'luxon';
 
@@ -29,7 +29,7 @@ const DATE_ADAPTERS = [
 DATE_ADAPTERS.forEach(dateAdapterSet => {
 
 environment(dateAdapterSet, (dateAdapterSet) => {
-  const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<any>, DatetimeFn<any>]
+  const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<DateAdapterConstructor>, DatetimeFn<any>]
 
   // function to create new dateAdapter instances
   const dateAdapter: DatetimeFn<IDateAdapter<any>> = 
@@ -88,13 +88,6 @@ environment(dateAdapterSet, (dateAdapterSet) => {
       adapter = dateAdapter(1970, 1, 1, 1, 1, 1)
     })
 
-    it('#isSameClass()', () => {
-      expect(adapter.isSameClass(new DateAdapter())).toBeTruthy()
-      expect(adapter.isSameClass(new Date())).toBeFalsy()
-      expect(adapter.isSameClass(1)).toBeFalsy()
-      expect(adapter.isSameClass({})).toBeFalsy()
-    })
-
     it('#isEqual()', () => {
       expect(adapter.isEqual(adapter)).toBeTruthy()
       expect(adapter.isEqual(new DateAdapter(adapter.date))).toBeTruthy()
@@ -148,7 +141,6 @@ environment(dateAdapterSet, (dateAdapterSet) => {
       expect(adapter.clone() == adapter).toBeFalsy()
       expect(adapter.clone().date).toEqual(adapter.date)
       expect(adapter.clone().date == adapter.date).toBeFalsy()
-      expect(adapter.clone().utcOffset).toEqual(adapter.utcOffset)
       expect(adapter.clone().get('timezone')).toEqual(adapter.get('timezone'))
       expect(adapter.clone().toISOString() === adapter.toISOString()).toBeTruthy()
       const date = datetime(1984, 5, 5, 2, 1, 4)
@@ -169,34 +161,17 @@ environment(dateAdapterSet, (dateAdapterSet) => {
       }).toThrowError()
     })
 
-    it('#rule', () => {
+    it('#generators', () => {
       const rule = new RRule({
         start: adapter,
         frequency: 'DAILY'
+      }, {
+        dateAdapter: DateAdapter
       })
 
-      adapter.rule = rule
+      adapter.generators.push(rule)
       
-      expect(adapter.rule).toBeInstanceOf(RRule)
-      expect(adapter.rule).toBe(rule)
-    })
-
-    it('#schedule', () => {
-      const schedule = new Schedule()
-
-      adapter.schedule = schedule
-      
-      expect(adapter.schedule).toBeInstanceOf(Schedule)
-      expect(adapter.schedule).toBe(schedule)
-    })
-
-    it('#calendar', () => {
-      const calendar = new Calendar()
-
-      adapter.calendar = calendar
-      
-      expect(adapter.calendar).toBeInstanceOf(Calendar)
-      expect(adapter.calendar).toBe(calendar)
+      expect(adapter.generators[0]).toBe(rule)
     })
 
     describe('#add()', () => {
@@ -348,13 +323,6 @@ environment(dateAdapterSet, (dateAdapterSet) => {
 
       it('ordinal', () => expect(adapter.valueOf()).toBe(32461000))
 
-      // I can't think of a generic way to test TZ offset for all DateAdapters
-      it.skip('tzoffset', () => {
-        const offset = adapter.date.getTimezoneOffset()
-
-        expect(adapter.utcOffset).toBe(offset)
-      })
-
       it('timezone', () => expect(adapter.get('timezone')).toBe(localTimezone))
     })
 
@@ -404,7 +372,6 @@ environment(dateAdapterSet, (dateAdapterSet) => {
       expect(utcAdapter.clone() == utcAdapter).toBeFalsy()
       expect(utcAdapter.clone().date).toEqual(utcAdapter.date)
       expect(utcAdapter.clone().date == utcAdapter.date).toBeFalsy()
-      expect(utcAdapter.clone().utcOffset).toEqual(utcAdapter.utcOffset)
       expect(utcAdapter.clone().get('timezone')).toEqual(utcAdapter.get('timezone'))
       expect(utcAdapter.clone().toISOString() === utcAdapter.toISOString()).toBeTruthy()
       const date = datetime(1984, 5, 5, 2, 1, 4)
@@ -431,8 +398,6 @@ environment(dateAdapterSet, (dateAdapterSet) => {
       it('second', () => expect(utcAdapter.get('second')).toBe(5))
 
       it('ordinal', () => expect(utcAdapter.valueOf()).toBe(946782245000))
-
-      it('tzoffset', () => expect(utcAdapter.utcOffset).toBe(0))
 
       it('timezone', () => expect(utcAdapter.get('timezone')).toBe('UTC'))
     })
@@ -499,21 +464,17 @@ environment(dateAdapterSet, (dateAdapterSet) => {
     /** 
      * Test handling of valid timezones
      */
-    [
-      "Africa/Johannesburg",
-      "America/Los_Angeles",
-      "America/Chicago",
-      "America/New_York",
-      "America/Santiago",
-      "Europe/Athens",
-      "Europe/London",
-      "Asia/Shanghai",
-      "Asia/Singapore",
-      "Australia/Melbourne",
-    ].forEach(zone => {
+    TIMEZONES.forEach(zone => {
       context(zone, (zone) => {
         let localAdapter: IDateAdapter<any>
         let zoneAdapter: IDateAdapter<any>
+
+        const a = dateAdapter(2000, 1, 2, 3, 4, 5, 0, zone)
+      
+        const d = new Date(2000, 0, 2, 3, 4, 5, 0)
+            
+        // used to determine if some tests should be ignored, below
+        const equivalentTimezone = a.toISOString() === d.toISOString()      
     
         beforeEach(() => {
           localAdapter = dateAdapter(2000, 1, 2, 3, 4, 5, 0)
@@ -526,7 +487,6 @@ environment(dateAdapterSet, (dateAdapterSet) => {
           expect(zoneAdapter.clone() == zoneAdapter).toBeFalsy()
           expect(zoneAdapter.clone().date).toEqual(zoneAdapter.date)
           expect(zoneAdapter.clone().date == zoneAdapter.date).toBeFalsy()
-          expect(zoneAdapter.clone().utcOffset).toEqual(zoneAdapter.utcOffset)
           expect(zoneAdapter.clone().get('timezone')).toEqual(zoneAdapter.get('timezone'))
           expect(zoneAdapter.clone().toISOString() === zoneAdapter.toISOString()).toBeTruthy()
           const date = datetime(1984, 5, 5, 2, 1, 4)
@@ -554,18 +514,18 @@ environment(dateAdapterSet, (dateAdapterSet) => {
     
           // don't have a good way of getting the real ordinal value to test against
           it.skip('ordinal', () => expect(zoneAdapter.valueOf()).toBe(946782245000))
-    
-          // don't have a good way of testing the offset as it will change by DST
-          it.skip('tzoffset', () => expect(zoneAdapter.utcOffset).toBe(0))
-    
-          it('timezone', () => expect(zoneAdapter.get('timezone')).toBe(zone))
+        
+          // LuxonDateAdapter always returns a timezone
+          if (DateAdapter !== LuxonDateAdapter) {
+            it('timezone', () => expect(zoneAdapter.get('timezone')).toBe(zone))
+          }
         })
   
         describe('#set()', () => {
           it('year', () => {
             expect(zoneAdapter.set('year', 2001).toISOString()).toBe(isoString(2001, 1, 2, 3, 4, 5, 0, zone))
 
-            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+            if (!equivalentTimezone) {
               expect(zoneAdapter.toISOString()).not.toBe(isoString(2001, 1, 2, 3, 4, 5, 0))
               expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('year', 2001).toISOString())
             }
@@ -574,7 +534,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
           it('month', () => {
             expect(zoneAdapter.set('month', 3).toISOString()).toBe(isoString(2000, 3, 2, 3, 4, 5, 0, zone))
 
-            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+            if (!equivalentTimezone) {
               expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 3, 2, 3, 4, 5, 0))
               expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('month', 3).toISOString())
             }
@@ -583,7 +543,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
           it('day', () => {
             expect(zoneAdapter.set('day', 3).toISOString()).toBe(isoString(2000, 1, 3, 3, 4, 5, 0, zone))
 
-            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+            if (!equivalentTimezone) {
               expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 3, 3, 4, 5, 0))
               expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('day', 3).toISOString())
             }
@@ -592,7 +552,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
           it('hour', () => {
             expect(zoneAdapter.set('hour', 4).toISOString()).toBe(isoString(2000, 1, 2, 4, 4, 5, 0, zone))
 
-            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+            if (!equivalentTimezone) {
               expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 4, 4, 5, 0))
               expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('hour', 4).toISOString())
             }
@@ -601,7 +561,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
           it('minute', () => {
             expect(zoneAdapter.set('minute', 5).toISOString()).toBe(isoString(2000, 1, 2, 3, 5, 5, 0, zone))
 
-            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+            if (!equivalentTimezone) {
               expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 3, 5, 5, 0))
               expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('minute', 5).toISOString())
             }
@@ -610,7 +570,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
           it('second', () => {
             expect(zoneAdapter.set('second', 6).toISOString()).toBe(isoString(2000, 1, 2, 3, 4, 6, 0, zone))
 
-            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+            if (!equivalentTimezone) {
               expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 3, 4, 6, 0))
               expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('second', 6).toISOString())
             }
@@ -619,7 +579,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
           it('millisecond', () => {
             expect(zoneAdapter.set('millisecond', 10).toISOString()).toBe(isoString(2000, 1, 2, 3, 4, 5, 10, zone))
 
-            if (localAdapter.utcOffset !== zoneAdapter.utcOffset) {
+            if (!equivalentTimezone) {
               expect(zoneAdapter.toISOString()).not.toBe(isoString(2000, 1, 2, 3, 4, 5, 10))
               expect(zoneAdapter.toISOString()).not.toBe(localAdapter.set('millisecond', 10).toISOString())
               }
