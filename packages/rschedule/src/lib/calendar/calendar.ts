@@ -26,7 +26,8 @@ export class Calendar<
     return this.schedules.some(schedule => schedule.isInfinite)
   }
 
-  public readonly [CALENDAR_ID] = true
+  // @ts-ignore used by static method
+  private readonly [CALENDAR_ID] = true
 
   /**
    * Similar to `Array.isArray()`, `isCalendar()` provides a surefire method
@@ -34,7 +35,7 @@ export class Calendar<
    * global symbol registry.
    */
   public static isCalendar(object: any): object is Calendar<any, any> {
-    return !!(object && object[Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246')])
+    return !!(object && object[CALENDAR_ID])
   }
 
   static dateAdapterConstructor: DateAdapterConstructor

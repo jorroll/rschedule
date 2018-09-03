@@ -1,5 +1,7 @@
 import { IDateAdapter, DateAdapterBase, ParsedDatetime, Utils } from '@rschedule/rschedule';
 
+const STANDARD_DATE_ADAPTER_ID = Symbol.for('09e206a9-a8b2-4c85-b2c6-6442bb895153')
+
 export class StandardDateAdapter extends DateAdapterBase<Date> {
   public date: Date
   
@@ -41,6 +43,18 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
     })
 
     return dates
+  }
+
+  // @ts-ignore used by static method
+  private readonly [STANDARD_DATE_ADAPTER_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
+   * of determining if an object is a `StandardDateAdapter` by checking against the
+   * global symbol registry.
+   */
+  static isInstance(object: any): object is StandardDateAdapter {
+    return !!(object && object[STANDARD_DATE_ADAPTER_ID] && super.isInstance(object))
   }
 
   /**

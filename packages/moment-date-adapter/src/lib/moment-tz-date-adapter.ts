@@ -1,6 +1,8 @@
 import { IDateAdapter, DateAdapterBase, ParsedDatetime, Utils } from '@rschedule/rschedule';
 import moment from 'moment-timezone';
 
+const MOMENT_TZ_DATE_ADAPTER_ID = Symbol.for('4796ecb9-5ad7-4fdf-9a8f-13f926546576')
+
 /**
  * The `MomentTZDateAdapter` is for using with momentjs and it's optional
  * `moment-timezone` package. It supports robust timezone handling.
@@ -58,6 +60,18 @@ export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
 
     return dates
   }
+
+  // @ts-ignore used by static method
+  private readonly [MOMENT_TZ_DATE_ADAPTER_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
+   * of determining if an object is a `MomentTZDateAdapter` by checking against the
+   * global symbol registry.
+   */
+  static isInstance(object: any): object is MomentTZDateAdapter {
+    return !!(object && object[MOMENT_TZ_DATE_ADAPTER_ID] && super.isInstance(object))
+  }  
 
   /**
    * Returns a clone of the date adapter including a cloned

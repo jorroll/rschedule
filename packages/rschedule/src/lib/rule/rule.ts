@@ -12,7 +12,7 @@ import { PipeController } from './pipes'
 import { buildValidatedRuleOptions, Options } from './rule-options'
 import { Utils } from '../utilities'
 
-// export type RuleArgs<T extends IDateAdapter, D = undefined> = [Options.ProvidedOptions<T>, {data?: D} | undefined]
+const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45')
 
 export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasOccurrences<T>
   implements RunnableIterator<T>, IHasOccurrences<T> {
@@ -46,6 +46,18 @@ export abstract class Rule<T extends DateAdapterConstructor, D=any> extends HasO
   }
 
   static dateAdapterConstructor: DateAdapterConstructor
+
+  // @ts-ignore used by static method
+  private readonly [RULE_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isRule()` provides a surefire method
+   * of determining if an object is a `Rule` by checking against the
+   * global symbol registry.
+   */
+  public static isRule(object: any): object is Rule<any> {
+    return !!(object && object[RULE_ID])
+  }
 
   /** Convenience property for holding arbitrary data */
   public data!: D

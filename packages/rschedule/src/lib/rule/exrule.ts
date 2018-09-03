@@ -6,7 +6,8 @@ import { Rule } from './rule'
 const EXRULE_ID = Symbol.for('73912d70-7a9b-41d7-926d-19ef5745a4ea')
 
 export class EXRule<T extends DateAdapterConstructor, D = any> extends Rule<T, D> {
-  public readonly [EXRULE_ID] = true
+  // @ts-ignore used by static method
+  private readonly [EXRULE_ID] = true
 
   /**
    * Similar to `Array.isArray()`, `isEXRule()` provides a surefire method
@@ -14,7 +15,7 @@ export class EXRule<T extends DateAdapterConstructor, D = any> extends Rule<T, D
    * global symbol registry.
    */
   public static isEXRule(object: any): object is EXRule<any> {
-    return !!(object && object[Symbol.for('73912d70-7a9b-41d7-926d-19ef5745a4ea')])
+    return !!(object && object[EXRULE_ID] && super.isRule(object))
   }
 
   /**

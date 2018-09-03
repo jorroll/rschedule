@@ -1,6 +1,8 @@
 import { IDateAdapter, DateAdapterBase, ParsedDatetime, Utils } from '@rschedule/rschedule';
 import { DateTime } from 'luxon';
 
+const LUXON_DATE_ADAPTER_ID = Symbol.for('9689fd66-841f-4a75-8ee0-f0515571779b')
+
 /**
  * The `LuxonDateAdapter` is a DateAdapter for `luxon` DateTime
  * objects.
@@ -35,6 +37,18 @@ export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
     else this.date = DateTime.local();    
   }
 
+  // @ts-ignore used by static method
+  private readonly [LUXON_DATE_ADAPTER_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
+   * of determining if an object is a `LuxonDateAdapter` by checking against the
+   * global symbol registry.
+   */
+  static isInstance(object: any): object is LuxonDateAdapter {
+    return !!(object && object[LUXON_DATE_ADAPTER_ID] && super.isInstance(object))
+  }
+  
   static readonly hasTimezoneSupport = true;
 
   static date: DateTime

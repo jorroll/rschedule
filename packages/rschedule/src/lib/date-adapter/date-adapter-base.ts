@@ -34,7 +34,7 @@ export abstract class DateAdapterBase<D={}> implements IDateAdapter<D> {
    * global symbol registry.
    */
   static isInstance(object: any): object is IDateAdapter {
-    return !!(object && object[Symbol.for('9d2c0b75-7a72-4f24-b57f-c27e131e37b2')])
+    return !!(object && object[DATE_ADAPTER_ID])
   }
   
   static readonly hasTimezoneSupport: boolean = false;

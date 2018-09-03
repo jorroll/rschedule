@@ -9,6 +9,8 @@ import {
 } from '../interfaces'
 import { Utils } from '../utilities'
 
+const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac')
+
 /**
  * This base class provides a `HasOccurrences` API wrapper around arrays of dates
  */
@@ -32,6 +34,18 @@ export abstract class Dates<T extends DateAdapterConstructor, D=any> extends Has
   public data?: D
 
   static dateAdapterConstructor: DateAdapterConstructor
+
+  // @ts-ignore used by static method
+  private readonly [DATES_ID] = true
+
+  /**
+   * Similar to `Array.isArray()`, `isDates()` provides a surefire method
+   * of determining if an object is a `Dates` by checking against the
+   * global symbol registry.
+   */
+  public static isDates(object: any): object is Dates<any> {
+    return !!(object && object[DATES_ID])
+  }
 
   protected dateAdapter: IDateAdapterConstructor<T>
 

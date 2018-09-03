@@ -32,7 +32,8 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     return this.rrules.some(rule => rule.isInfinite)
   }
 
-  public readonly [SCHEDULE_ID] = true
+  // @ts-ignore used by static method
+  private readonly [SCHEDULE_ID] = true
 
   /**
    * Similar to `Array.isArray`, `isSchedule` provides a surefire method
@@ -40,7 +41,7 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
    * global symbol registry.
    */
   static isSchedule(object: any): object is Schedule<any> {
-    return !!(object && object[Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500')])
+    return !!(object && object[SCHEDULE_ID])
   }
 
   static dateAdapterConstructor: DateAdapterConstructor

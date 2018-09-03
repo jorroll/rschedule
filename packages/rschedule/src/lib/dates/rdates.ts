@@ -2,14 +2,15 @@ import { DateAdapterConstructor } from '../date-adapter'
 import { datesToIcalString } from '../ical'
 import { Dates } from './dates'
 
+const RDATES_ID = Symbol.for('10c93605-2fb8-4ab5-ba54-635f19cd81f4')
+
 /**
  * RDates object for holding RDATEs but providing a `HasOccurrences` api
  */
 
-const RDATES_ID = Symbol.for('10c93605-2fb8-4ab5-ba54-635f19cd81f4')
-
 export class RDates<T extends DateAdapterConstructor, D=any> extends Dates<T, D> {
-  public readonly [RDATES_ID] = true
+  // @ts-ignore used by static method
+  private readonly [RDATES_ID] = true
 
   /**
    * Similar to `Array.isArray()`, `isRDates()` provides a surefire method
@@ -17,7 +18,7 @@ export class RDates<T extends DateAdapterConstructor, D=any> extends Dates<T, D>
    * global symbol registry.
    */
   public static isRDates(object: any): object is RDates<any> {
-    return !!(object && object[Symbol.for('10c93605-2fb8-4ab5-ba54-635f19cd81f4')])
+    return !!(object && object[RDATES_ID] && super.isDates(object))
   }
 
   /**
