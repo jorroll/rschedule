@@ -11,28 +11,9 @@ const MOMENT_TZ_DATE_ADAPTER_ID = Symbol.for('4796ecb9-5ad7-4fdf-9a8f-13f9265465
  * use the `MomentDateAdapter`.
  */
 export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
-  public date: moment.Moment
-
-  constructor(date?: moment.Moment) {
-    super()
-
-    if (moment.isMoment(date) && typeof date.tz === 'function') {
-      this.date = date.clone()
-    }
-    else if (date) {
-      throw new IDateAdapter.InvalidDateError(
-        'The `MomentTZDateAdapter` constructor only accepts `moment()` dates ' +
-        'which have been created with "moment-timezone".'
-      )
-    }
-    else this.date = moment();
-    
-    this.assertIsValid()
-  }
+  static date: moment.Moment
 
   static readonly hasTimezoneSupport = true;
-
-  static date: moment.Moment
 
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
@@ -72,6 +53,25 @@ export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
   static isInstance(object: any): object is MomentTZDateAdapter {
     return !!(object && object[MOMENT_TZ_DATE_ADAPTER_ID] && super.isInstance(object))
   }  
+
+  public date: moment.Moment
+
+  constructor(date?: moment.Moment) {
+    super()
+
+    if (moment.isMoment(date) && typeof date.tz === 'function') {
+      this.date = date.clone()
+    }
+    else if (date) {
+      throw new IDateAdapter.InvalidDateError(
+        'The `MomentTZDateAdapter` constructor only accepts `moment()` dates ' +
+        'which have been created with "moment-timezone".'
+      )
+    }
+    else this.date = moment();
+    
+    this.assertIsValid()
+  }
 
   /**
    * Returns a clone of the date adapter including a cloned

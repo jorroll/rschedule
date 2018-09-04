@@ -3,6 +3,9 @@ import { DateTime } from 'luxon';
 
 const LUXON_DATE_ADAPTER_ID = Symbol.for('9689fd66-841f-4a75-8ee0-f0515571779b')
 
+// Luxon has a different weekday order
+const WEEKDAYS = ['MO','TU','WE','TH','FR','SA','SU'];
+
 /**
  * The `LuxonDateAdapter` is a DateAdapter for `luxon` DateTime
  * objects.
@@ -17,25 +20,9 @@ const LUXON_DATE_ADAPTER_ID = Symbol.for('9689fd66-841f-4a75-8ee0-f0515571779b')
  * an issue in the rSchedule monorepo.
  */
 export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
-  public date: DateTime
+  static date: DateTime
 
-  constructor(date?: DateTime, args: {} = {}) {
-    super()
-
-    if (date) {
-      this.assertIsValid(date)
-
-      const obj = {
-        ...date.toObject(),
-        zone: date.zoneName
-      }
-
-      // I realize that luxon is immutable, but the tests assume that a date is mutable
-      // and check object identity
-      this.date = DateTime.fromObject(obj)
-    }
-    else this.date = DateTime.local();    
-  }
+  static readonly hasTimezoneSupport = true;
 
   // @ts-ignore used by static method
   private readonly [LUXON_DATE_ADAPTER_ID] = true
@@ -48,10 +35,6 @@ export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
   static isInstance(object: any): object is LuxonDateAdapter {
     return !!(object && object[LUXON_DATE_ADAPTER_ID] && super.isInstance(object))
   }
-  
-  static readonly hasTimezoneSupport = true;
-
-  static date: DateTime
 
   static fromTimeObject(args: {
     datetimes: ParsedDatetime[]
@@ -81,6 +64,26 @@ export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
     })
 
     return dates
+  }
+
+  public date: DateTime
+
+  constructor(date?: DateTime, args: {} = {}) {
+    super()
+
+    if (date) {
+      this.assertIsValid(date)
+
+      const obj = {
+        ...date.toObject(),
+        zone: date.zoneName
+      }
+
+      // I realize that luxon is immutable, but the tests assume that a date is mutable
+      // and check object identity
+      this.date = DateTime.fromObject(obj)
+    }
+    else this.date = DateTime.local();    
   }
 
   /**
@@ -170,5 +173,3 @@ export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
     return true
   }
 }
-
-const WEEKDAYS = ['MO','TU','WE','TH','FR','SA','SU'];

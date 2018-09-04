@@ -13,25 +13,6 @@ const MOMENT_DATE_ADAPTER_ID = Symbol.for('9f60d072-15b6-453c-be71-5c8f9c04fbbd'
  * `MomentTZDateAdapter`.
  */
 export class MomentDateAdapter extends DateAdapterBase<moment.Moment> {
-  public date: moment.Moment
-  
-  constructor(date?: moment.Moment, args: {} = {}) {
-    super()
-
-    if (moment.isMoment(date)) {
-      this.date = date.clone()
-    }
-    else if (date) {
-      throw new IDateAdapter.InvalidDateError(
-        'The `MomentDateAdapter` constructor only accepts `moment()` dates. ' +
-        `Received: ${date}`
-      )
-    }
-    else this.date = moment();
-    
-    this.assertIsValid()
-  }
-
   static date: moment.Moment
 
   static fromTimeObject(args: {
@@ -72,7 +53,25 @@ export class MomentDateAdapter extends DateAdapterBase<moment.Moment> {
   static isInstance(object: any): object is MomentDateAdapter {
     return !!(object && object[MOMENT_DATE_ADAPTER_ID] && super.isInstance(object))
   }
+
+  public date: moment.Moment
   
+  constructor(date?: moment.Moment, args: {} = {}) {
+    super()
+
+    if (moment.isMoment(date)) {
+      this.date = date.clone()
+    }
+    else if (date) {
+      throw new IDateAdapter.InvalidDateError(
+        'The `MomentDateAdapter` constructor only accepts `moment()` dates. ' +
+        `Received: ${date}`
+      )
+    }
+    else this.date = moment();
+    
+    this.assertIsValid()
+  }
 
   /**
    * Returns a clone of the date adapter including a cloned

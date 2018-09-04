@@ -3,23 +3,6 @@ import { IDateAdapter, DateAdapterBase, ParsedDatetime, Utils } from '@rschedule
 const STANDARD_DATE_ADAPTER_ID = Symbol.for('09e206a9-a8b2-4c85-b2c6-6442bb895153')
 
 export class StandardDateAdapter extends DateAdapterBase<Date> {
-  public date: Date
-  
-  private _timezone: 'UTC' | undefined
-
-  constructor(date?: Date, options: {timezone?: 'UTC'} = {}) {
-    super()
-
-    if (date)
-      this.date = new Date(date)
-    else {
-      this.date = new Date()
-    }
-
-    this._timezone = options.timezone
-    this.assertIsValid([date, 'constructing'])
-  }
-
   static date: Date
 
   static fromTimeObject(args: {
@@ -61,6 +44,23 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
    */
   static isInstance(object: any): object is StandardDateAdapter {
     return !!(object && object[STANDARD_DATE_ADAPTER_ID] && super.isInstance(object))
+  }
+
+  public date: Date
+  
+  private _timezone: 'UTC' | undefined
+
+  constructor(date?: Date, options: {timezone?: 'UTC'} = {}) {
+    super()
+
+    if (date)
+      this.date = new Date(date)
+    else {
+      this.date = new Date()
+    }
+
+    this._timezone = options.timezone
+    this.assertIsValid([date, 'constructing'])
   }
 
   /**
