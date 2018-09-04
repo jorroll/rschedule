@@ -222,15 +222,15 @@ function testNextOccurrence(
 }
 
 const DATE_ADAPTERS = [
-  // [StandardDateAdapter, standardDatetimeFn],
-  // [MomentDateAdapter, momentDatetimeFn],
+  [StandardDateAdapter, standardDatetimeFn],
+  [MomentDateAdapter, momentDatetimeFn],
   [MomentTZDateAdapter, momentTZDatetimeFn],
-  // [LuxonDateAdapter, luxonDatetimeFn],
+  [LuxonDateAdapter, luxonDatetimeFn],
 ] as [
-  // [typeof StandardDateAdapter, DatetimeFn<Date>],
-  // [typeof MomentDateAdapter, DatetimeFn<MomentST>],
-  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>]
-  // [typeof LuxonDateAdapter, DatetimeFn<DateTime>]
+  [typeof StandardDateAdapter, DatetimeFn<Date>],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
+  [typeof LuxonDateAdapter, DatetimeFn<DateTime>]
 ]
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {
@@ -240,7 +240,7 @@ environment(dateAdapterSet, (dateAdapterSet) => {
 const [DateAdapter, datetime] = dateAdapterSet as [IDateAdapterConstructor<DateAdapterConstructor>, DatetimeFn<any>]
 
 const zones = !DateAdapter.hasTimezoneSupport
-  ? ['UTC']
+  ? [undefined, 'UTC']
   : TIMEZONES;
 
 zones.forEach(zone => {
