@@ -32,10 +32,9 @@ rule.occurrences({
   .map(date => date.toISOString())
 ```
 
-rSchedule makes use of a fairly simple `DateAdapter` wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
+rSchedule makes use of a fairly simple [`IDateAdapter`](https://gitlab.com/john.carroll.p/rschedule/wikis/date-adapter/date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
 
-`StandardDateAdapter`, `LuxonDateAdapter`, `MomentDateAdapter`, and `MomentTZDateAdapter` packages currently exists which provide a `DateAdapter` complient wrapper for the standard javascript `Date` object, as well as [`moment`](https://momentjs.com), [`moment-timezone`](https://momentjs.com), and [luxon `DateTime`](https://moment.github.io/luxon/) objects. Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the [DateAdapter section](https://gitlab.com/john.carroll.p/rschedule/wikis/usage/date-adapter) for more info.
-
+[`StandardDateAdapter`](https://gitlab.com/john.carroll.p/rschedule/wikis/date-adapter/standard-date-adapter), [`LuxonDateAdapter`](https://gitlab.com/john.carroll.p/rschedule/wikis/date-adapter/luxon-date-adapter), [`MomentDateAdapter`](https://gitlab.com/john.carroll.p/rschedule/wikis/date-adapter/moment-date-adapter), and [`MomentTZDateAdapter`](https://gitlab.com/john.carroll.p/rschedule/wikis/date-adapter/moment-tz-date-adapter) packages currently exists which provide a [`IDateAdapter`](https://gitlab.com/john.carroll.p/rschedule/wikis/date-adapter/date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the [DateAdapter section](https://gitlab.com/john.carroll.p/rschedule/wikis/date-adapter/date-adapter) for more info.
 
 ### Installation
 
