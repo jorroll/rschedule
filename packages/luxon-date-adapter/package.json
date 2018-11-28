@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://gitlab.com/john.carroll.p/rschedule.git"
   },
-  "license": "MIT",
+  "license": "Unlicense",
   "keywords": [
     "rschedule",
     "luxon",

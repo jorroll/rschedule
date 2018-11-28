@@ -2,7 +2,7 @@
   "name": "rschedule-monorepo",
   "private": true,
   "author": "John Carroll <john.carroll.p@gmail.com>",
-  "license": "MIT",
+  "license": "Unlicense",
   "workspaces": [
     "packages/*"
   ],
