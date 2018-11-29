@@ -9,9 +9,9 @@ import {
 } from '@rschedule/rschedule'
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
 
-RRule.dateAdapterConstructor = StandardDateAdapter
-Schedule.dateAdapterConstructor = StandardDateAdapter
-Calendar.dateAdapterConstructor = StandardDateAdapter
+RRule.defaultDateAdapter = StandardDateAdapter
+Schedule.defaultDateAdapter = StandardDateAdapter
+Calendar.defaultDateAdapter = StandardDateAdapter
 
 function toISOStringsOCC(
   calendar: Calendar<typeof StandardDateAdapter, any>,
