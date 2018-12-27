@@ -1,8 +1,7 @@
-import { IDateAdapter } from './date-adapter'
-import { Options } from './rule'
+import { IDateAdapter } from './date-adapter';
+import { Options } from './rule';
 
 export namespace Utils {
-
   /** ['SU','MO','TU','WE','TH','FR','SA'] */
   export const WEEKDAYS: IDateAdapter.Weekday[] = [
     'SU',
@@ -12,51 +11,59 @@ export namespace Utils {
     'TH',
     'FR',
     'SA',
-  ]
+  ];
 
-  export const MILLISECONDS_IN_SECOND = 1000
-  export const MILLISECONDS_IN_MINUTE = MILLISECONDS_IN_SECOND * 60
-  export const MILLISECONDS_IN_HOUR = MILLISECONDS_IN_MINUTE * 60
-  export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24
-  export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7
+  export const MILLISECONDS_IN_SECOND = 1000;
+  export const MILLISECONDS_IN_MINUTE = MILLISECONDS_IN_SECOND * 60;
+  export const MILLISECONDS_IN_HOUR = MILLISECONDS_IN_MINUTE * 60;
+  export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24;
+  export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
 
   export function weekdayToInt(
     weekday: IDateAdapter.Weekday,
-    wkst: IDateAdapter.Weekday = 'SU'
+    wkst: IDateAdapter.Weekday = 'SU',
   ) {
-    const weekdays = orderedWeekdays(wkst)
+    const weekdays = orderedWeekdays(wkst);
 
-    return weekdays.indexOf(weekday)
+    return weekdays.indexOf(weekday);
   }
 
-  export function orderedWeekdays(
-    wkst: IDateAdapter.Weekday = 'SU'
-  ) {
-    const wkdays = WEEKDAYS.slice()
-    let index = wkdays.indexOf(wkst)
+  export function orderedWeekdays(wkst: IDateAdapter.Weekday = 'SU') {
+    const wkdays = WEEKDAYS.slice();
+    let index = wkdays.indexOf(wkst);
 
     while (index !== 0) {
-      shiftArray(wkdays)
-      index--
+      shiftArray(wkdays);
+      index--;
     }
 
-    return wkdays
+    return wkdays;
   }
 
   export function shiftArray(array: any[], from: 'first' | 'last' = 'first') {
-    if (array.length === 0) { return array }
-    else if (from === 'first') { array.push(array.shift()) }
-    else { array.unshift(array.pop()) }
+    if (array.length === 0) {
+      return array;
+    } else if (from === 'first') {
+      array.push(array.shift());
+    } else {
+      array.unshift(array.pop());
+    }
 
-    return array
+    return array;
   }
 
-  export function sortDates<T extends {isAfter: (arg: any) => boolean}>(dates: T[]) {
+  export function sortDates<T extends { isAfter: (arg: any) => boolean }>(
+    dates: T[],
+  ) {
     return dates.sort((a, b) => {
-      if (a.isAfter(b)) { return 1 }
-      else if (b.isAfter(a)) { return -1 }
-      else { return 0 }
-    })
+      if (a.isAfter(b)) {
+        return 1;
+      } else if (b.isAfter(a)) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
   }
 
   /**
@@ -64,12 +71,12 @@ export namespace Utils {
    */
   export function differenceInDaysBetweenTwoWeekdays(
     a: IDateAdapter.Weekday,
-    b: IDateAdapter.Weekday
+    b: IDateAdapter.Weekday,
   ) {
-    const result = Utils.WEEKDAYS.indexOf(a) - Utils.WEEKDAYS.indexOf(b)
-  
-    return result > 0 ? 7 - result : Math.abs(result)
-  }  
+    const result = Utils.WEEKDAYS.indexOf(a) - Utils.WEEKDAYS.indexOf(b);
+
+    return result > 0 ? 7 - result : Math.abs(result);
+  }
 
   /**
    * Returns the earliest date in an array of dates. If the array is empty,
@@ -77,20 +84,26 @@ export namespace Utils {
    * @param dates
    */
   export function getEarliestDate(dates: IDateAdapter[]) {
-    if (dates.length === 0) { return null }
-    else if (dates.length === 1) { return dates[0] }
+    if (dates.length === 0) {
+      return null;
+    } else if (dates.length === 1) {
+      return dates[0];
+    }
 
     return dates.reduce((prev, curr) => {
-      if (curr.isBefore(prev)) { return curr }
-      else { return prev }
-    })
+      if (curr.isBefore(prev)) {
+        return curr;
+      } else {
+        return prev;
+      }
+    });
   }
 
   /**
    * Returns the days in the given month.
-   * 
+   *
    * @param month base-1
-   * @param year 
+   * @param year
    */
   export function getDaysInMonth(month: number, year: number) {
     const block = {
@@ -106,22 +119,22 @@ export namespace Utils {
       10: 31,
       11: 30,
       12: 31,
-    }
+    };
 
-    return (block as { [key: number]: number })[month]
+    return (block as { [key: number]: number })[month];
   }
 
   function getDaysInFebruary(year: number) {
-    return isLeapYear(year) ? 29 : 28
+    return isLeapYear(year) ? 29 : 28;
   }
 
   // taken from date-fn
   export function isLeapYear(year: number) {
-    return year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0)  
+    return year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0);
   }
 
   export function getDaysInYear(year: number) {
-    return isLeapYear(year) ? 366 : 365
+    return isLeapYear(year) ? 366 : 365;
   }
 
   /**
@@ -138,48 +151,59 @@ export namespace Utils {
     //   i++
     // }
 
-    const start = new Date(year,0,1).valueOf()
+    const start = new Date(year, 0, 1).valueOf();
 
-    const end = new Date(year,month-1,day).valueOf()
+    const end = new Date(year, month - 1, day).valueOf();
 
-    const days = Math.ceil((end - start) / MILLISECONDS_IN_DAY) + 1
+    const days = Math.ceil((end - start) / MILLISECONDS_IN_DAY) + 1;
 
-    return days
+    return days;
   }
 
   export function setDateToStartOfYear(date: IDateAdapter) {
-    return date.set('month', 1).set('day', 1)
+    return date.set('month', 1).set('day', 1);
   }
 
   export function setDateToEndOfYear(date: IDateAdapter) {
-    return date.set('month', 12).set('day', 31)
+    return date.set('month', 12).set('day', 31);
   }
 
   export function setDateToEndOfMonth(date: IDateAdapter) {
-    return date.add(1, 'month').set('day', 1).subtract(1, 'day')
+    return date
+      .add(1, 'month')
+      .set('day', 1)
+      .subtract(1, 'day');
   }
 
   export function setDateToStartOfWeek(
     date: IDateAdapter,
-    wkst: IDateAdapter.Weekday
+    wkst: IDateAdapter.Weekday,
   ) {
-    const index = orderedWeekdays(wkst).indexOf(date.get('weekday'))
-    return date.subtract(index, 'day')
+    const index = orderedWeekdays(wkst).indexOf(date.get('weekday'));
+    return date.subtract(index, 'day');
   }
 
-  export function setDateToEndOfWeek(date: IDateAdapter, wkst: IDateAdapter.Weekday) {
-    const index = orderedWeekdays(wkst).indexOf(date.get('weekday'))
-    return date.add(6 - index, 'day')
+  export function setDateToEndOfWeek(
+    date: IDateAdapter,
+    wkst: IDateAdapter.Weekday,
+  ) {
+    const index = orderedWeekdays(wkst).indexOf(date.get('weekday'));
+    return date.add(6 - index, 'day');
   }
 
   export function setDateToStartOfDay(date: IDateAdapter) {
-    return date.set('hour', 0).set('minute', 0).set('second', 0)
+    return date
+      .set('hour', 0)
+      .set('minute', 0)
+      .set('second', 0);
   }
 
   export function setDateToEndOfDay(date: IDateAdapter) {
-    return date.set('hour', 23).set('minute', 59).set('second', 59)
+    return date
+      .set('hour', 23)
+      .set('minute', 59)
+      .set('second', 59);
   }
-
 
   /**
    *
@@ -189,12 +213,12 @@ export namespace Utils {
    */
   export function getWeeksInYear(
     date: IDateAdapter,
-    wkst: IDateAdapter.Weekday
+    wkst: IDateAdapter.Weekday,
   ): [number, number] {
-    date = date.clone()
-    const year = date.get('year')
-    setDateToStartOfYear(date)
-    const startWeekday = date.get('weekday')
+    date = date.clone();
+    const year = date.get('year');
+    setDateToStartOfYear(date);
+    const startWeekday = date.get('weekday');
 
     // As explained in the ICAL spec, week 53 only occurs if the year
     // falls on a specific weekday. The first element in each array is the
@@ -208,20 +232,20 @@ export namespace Utils {
       FI: ['MO', 'SU'],
       SA: ['TU', 'MO'],
       SU: ['WE', 'TU'],
-    }
+    };
 
-    let weekStartOffset = 0
+    let weekStartOffset = 0;
     while (date.get('weekday') !== wkst) {
-      date.add(1, 'day')
-      weekStartOffset++
+      date.add(1, 'day');
+      weekStartOffset++;
     }
 
-    let numberOfWeeks: number
+    let numberOfWeeks: number;
 
     if (isLeapYear(year)) {
-      numberOfWeeks = keys[wkst].includes(startWeekday) ? 53 : 52
+      numberOfWeeks = keys[wkst].includes(startWeekday) ? 53 : 52;
     } else {
-      numberOfWeeks = startWeekday === keys[wkst][0] ? 53 : 52
+      numberOfWeeks = startWeekday === keys[wkst][0] ? 53 : 52;
     }
 
     // the end of the year is not necessarily the end of the last week in a year
@@ -231,52 +255,55 @@ export namespace Utils {
 
     // const daysInLastWeek = orderedWeekdays(wkst).indexOf(endWeekday) + 1
 
-    return [numberOfWeeks, weekStartOffset]
+    return [numberOfWeeks, weekStartOffset];
   }
 
   export function ruleFrequencyToDateAdapterUnit(frequency: Options.Frequency) {
     switch (frequency) {
       case 'YEARLY':
-        return 'year'
+        return 'year';
       case 'MONTHLY':
-        return 'month'
+        return 'month';
       case 'WEEKLY':
-        return 'week'
+        return 'week';
       case 'DAILY':
-        return 'day'
+        return 'day';
       case 'HOURLY':
-        return 'hour'
+        return 'hour';
       case 'MINUTELY':
-        return 'minute'
+        return 'minute';
       case 'SECONDLY':
-        return 'second'
+        return 'second';
     }
   }
 
   export function dateToStandardizedString(date: {
-    get(unit: IDateAdapter.Unit): number
+    get(unit: IDateAdapter.Unit): number;
   }) {
     let string = `${date.get('year')}${toTwoCharString(
-      date.get('month')
+      date.get('month'),
     )}${toTwoCharString(date.get('day'))}T${toTwoCharString(
-      date.get('hour')
+      date.get('hour'),
     )}${toTwoCharString(date.get('minute'))}${toTwoCharString(
-      date.get('second')
-    )}`
+      date.get('second'),
+    )}`;
 
     if (date.get('millisecond')) {
-      string = `${string}.${date.get('millisecond')}`
+      string = `${string}.${date.get('millisecond')}`;
     }
 
-    return string
+    return string;
   }
 
   function toTwoCharString(int: number) {
-    if (int < 10) { return `0${int}` }
-    else { return `${int}` }
+    if (int < 10) {
+      return `0${int}`;
+    } else {
+      return `${int}`;
+    }
   }
 
-  /** 
+  /**
    * Calculates the difference between two dates of a given unit.
    * The first date argument is subtracted from the second. I.e.
    * when going forward in time, the second date is larger than the first.
@@ -290,33 +317,40 @@ export namespace Utils {
 
     switch (unit) {
       case 'year':
-        return second.get('year') - first.get('year')
+        return second.get('year') - first.get('year');
       case 'month':
-        return (second.get('year') - first.get('year')) * 12 + (second.get('month') - first.get('month'))
+        return (
+          (second.get('year') - first.get('year')) * 12 +
+          (second.get('month') - first.get('month'))
+        );
       case 'week':
-        intervalDuration = MILLISECONDS_IN_WEEK
-        break
+        intervalDuration = MILLISECONDS_IN_WEEK;
+        break;
       case 'day':
-        intervalDuration = MILLISECONDS_IN_DAY
-        break
+        intervalDuration = MILLISECONDS_IN_DAY;
+        break;
       case 'hour':
-        intervalDuration = MILLISECONDS_IN_HOUR
-        break
+        intervalDuration = MILLISECONDS_IN_HOUR;
+        break;
       case 'minute':
-        intervalDuration = MILLISECONDS_IN_MINUTE
-        break
+        intervalDuration = MILLISECONDS_IN_MINUTE;
+        break;
       case 'second':
-        intervalDuration = MILLISECONDS_IN_SECOND
-        break
+        intervalDuration = MILLISECONDS_IN_SECOND;
+        break;
       case 'millisecond':
-        intervalDuration = 1  
-        break
+        intervalDuration = 1;
+        break;
       default:
-        throw new Error ('Unexpected `unit` value')
+        throw new Error('Unexpected `unit` value');
     }
 
-    const sign = Math.sign(second.valueOf() - first.valueOf())
-    
-    return Math.floor(Math.abs(second.valueOf() - first.valueOf()) / intervalDuration) * sign
+    const sign = Math.sign(second.valueOf() - first.valueOf());
+
+    return (
+      Math.floor(
+        Math.abs(second.valueOf() - first.valueOf()) / intervalDuration,
+      ) * sign
+    );
   }
 }

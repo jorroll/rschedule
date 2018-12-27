@@ -1,5 +1,5 @@
-import { DateAdapterConstructor } from "./date-adapter";
+import { DateAdapterConstructor } from './date-adapter';
 
 export class RScheduleConfig {
-  static defaultDateAdapter?: DateAdapterConstructor
+  public static defaultDateAdapter?: DateAdapterConstructor;
 }

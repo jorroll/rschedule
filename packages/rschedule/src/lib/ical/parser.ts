@@ -1,14 +1,15 @@
+import { ICalStringParseError } from '@rschedule/ical-tools'
 import {
-  IDateAdapter,
   DateAdapter,
-  IDateAdapterConstructor,
   DateAdapterConstructor,
+  IDateAdapter,
+  IDateAdapterConstructor,
   ParsedDatetime,
 } from '../date-adapter'
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
-export class ICalStringParseError extends Error {}
+export { ICalStringParseError }
 
 const UNIMPLEMENTED_RULE_OPTION =
   'rule option is unsupported by rSchedule ' +
@@ -28,25 +29,23 @@ const UNIMPLEMENTED_RULE_OPTION =
 
 export function parseICalStrings<T extends DateAdapterConstructor>(
   icalStrings: string[],
-  dateAdapterConstructor: T
+  dateAdapterConstructor: T,
 ): {
-  rrules: Options.ProvidedOptions<T>[]
-  exrules: Options.ProvidedOptions<T>[]
-  rdates: DateAdapter<T>[]
-  exdates: DateAdapter<T>[]
+  rrules: Array<Options.ProvidedOptions<T>>
+  exrules: Array<Options.ProvidedOptions<T>>
+  rdates: Array<DateAdapter<T>>
+  exdates: Array<DateAdapter<T>>
 } {
-  const rrules: Options.ProvidedOptions<T>[] = []
-  const exrules: Options.ProvidedOptions<T>[] = []
-  const rdates: DateAdapter<T>[] = []
-  const exdates: DateAdapter<T>[] = []
+  const rrules: Array<Options.ProvidedOptions<T>> = []
+  const exrules: Array<Options.ProvidedOptions<T>> = []
+  const rdates: Array<DateAdapter<T>> = []
+  const exdates: Array<DateAdapter<T>> = []
 
   const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any
 
   icalStrings.forEach(ical => {
     const parts = ical.split('\n')
-    const dtstart = dateAdapter.fromTimeObject(
-      parseDTStart(parts.shift())
-    )[0]
+    const dtstart = dateAdapter.fromTimeObject(parseDTStart(parts.shift()))[0]
 
     parts.forEach(part => {
       const parts = part.split(':')
@@ -67,7 +66,7 @@ export function parseICalStrings<T extends DateAdapterConstructor>(
               parsedOptions.until = parseUntil(
                 option[1],
                 dateAdapterConstructor,
-                dtstart
+                dtstart,
               )
               break
             case 'COUNT':
@@ -93,18 +92,18 @@ export function parseICalStrings<T extends DateAdapterConstructor>(
               break
             case 'BYYEARDAY':
               throw new ICalStringParseError(
-                `"BYYEARDAY" ${UNIMPLEMENTED_RULE_OPTION}`
+                `"BYYEARDAY" ${UNIMPLEMENTED_RULE_OPTION}`,
               )
             case 'BYWEEKNO':
               throw new ICalStringParseError(
-                `"BYWEEKNO" ${UNIMPLEMENTED_RULE_OPTION}`
+                `"BYWEEKNO" ${UNIMPLEMENTED_RULE_OPTION}`,
               )
             case 'BYMONTH':
               parsedOptions.byMonthOfYear = parseByMonth(option[1])
               break
             case 'BYSETPOS':
               throw new ICalStringParseError(
-                `"BYSETPOS" ${UNIMPLEMENTED_RULE_OPTION}`
+                `"BYSETPOS" ${UNIMPLEMENTED_RULE_OPTION}`,
               )
             case 'WKST':
               parsedOptions.weekStart = parseWkst(option[1])
@@ -114,16 +113,14 @@ export function parseICalStrings<T extends DateAdapterConstructor>(
           }
         })
 
-        name === 'RRULE' ? rrules.push(parsedOptions) : exrules.push(parsedOptions)
+        name === 'RRULE'
+          ? rrules.push(parsedOptions)
+          : exrules.push(parsedOptions)
       } else if (name === 'RDATE') {
-        const time = dateAdapter.fromTimeObject(
-          parseDatetime(parts[1])
-        )
+        const time = dateAdapter.fromTimeObject(parseDatetime(parts[1]))
         rdates.push(...time)
       } else if (name === 'EXDATE') {
-        const time = dateAdapter.fromTimeObject(
-          parseDatetime(parts[1])
-        )
+        const time = dateAdapter.fromTimeObject(parseDatetime(parts[1]))
         exdates.push(...time)
       } else {
         throw new ICalStringParseError(`Unsupported ICAL part "${name}"`)
@@ -153,18 +150,21 @@ export function parseDTStart(text?: string) {
   const parts = text && text.substring(0, 7)
 
   try {
-    if (parts !== 'DTSTART') { throw new Error('') }
+    if (parts !== 'DTSTART') {
+      throw new Error('')
+    }
 
     const timeObj = parseDatetime(text!.substring(8))
 
-    if (timeObj.datetimes.length !== 1) { throw new Error('') }
+    if (timeObj.datetimes.length !== 1) {
+      throw new Error('')
+    }
 
     return timeObj
   } catch (e) {
     throw new ICalStringParseError(`Invalid "DTSTART" value "${text}"`)
   }
 }
-
 
 /**
  * This function parses an ICAL time string, throwing a `ICalStringParseError`
@@ -198,14 +198,17 @@ export function parseDatetime(text: string) {
       // has TZID part
       const timeLabel = parts[0].split('=')
 
-      if (timeLabel.length !== 2) { throw new Error('') }
-      else if (timeLabel[0] === 'TZID') {
+      if (timeLabel.length !== 2) {
+        throw new Error('')
+      } else if (timeLabel[0] === 'TZID') {
         timezone = timeLabel[1]
         unparsedTime = parts[1]
       } else if (timeLabel[0] === 'value' && timeLabel[1] === 'date') {
         timezone = 'DATE'
         unparsedTime = parts[1]
-      } else { throw new Error('') }
+      } else {
+        throw new Error('')
+      }
     }
 
     datetimes = unparsedTime.split(',').map(time => {
@@ -213,8 +216,9 @@ export function parseDatetime(text: string) {
       newTime && newTime.shift()
       if (newTime) {
         return newTime.map(str => parseInt(str)) as ParsedDatetime
+      } else {
+        throw new Error('')
       }
-      else { throw new Error('') }
     })
   } catch (e) {
     throw new ICalStringParseError(`Invalid ICAL date/time string "${text}"`)
@@ -236,8 +240,7 @@ export function parseFrequency(text: string) {
     ].includes(text)
   ) {
     throw new ICalStringParseError(`Invalid FREQ value "${text}"`)
-  }
-  else {
+  } else {
     return text
   }
 }
@@ -247,7 +250,7 @@ export function parseFrequency(text: string) {
 export function parseUntil<T extends DateAdapterConstructor>(
   text: string,
   dateAdapterConstructor: T,
-  start: DateAdapter<T>
+  start: DateAdapter<T>,
 ) {
   const parsedDatetime = parseDatetime(text)
 

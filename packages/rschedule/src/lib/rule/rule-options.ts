@@ -1,5 +1,12 @@
-import { IDateAdapter, DateAdapterBase, DateAdapter, DateProp, DateAdapterConstructor, IDateAdapterConstructor } from '../date-adapter'
-import { DateTime } from '../date-time'
+import {
+  DateAdapter,
+  DateAdapterBase,
+  DateAdapterConstructor,
+  DateProp,
+  IDateAdapter,
+  IDateAdapterConstructor,
+} from '../date-adapter';
+import { DateTime } from '../date-time';
 
 /**
  * This function performs validation checks on the provided rule options and retuns
@@ -7,16 +14,16 @@ import { DateTime } from '../date-time'
  */
 export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
   dateAdapterConstructor: T,
-  options: Options.ProvidedOptions<T>
+  options: Options.ProvidedOptions<T>,
 ): Options.ProcessedOptions<T> {
   // hack to trick typescript into inferring the correct types
-  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any
+  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any;
 
   const start = DateAdapterBase.isInstance(options.start)
     ? options.start
     : new dateAdapter(options.start);
-  
-  let until: DateAdapter<T> | undefined
+
+  let until: DateAdapter<T> | undefined;
 
   if (options.until) {
     until = DateAdapterBase.isInstance(options.until)
@@ -25,29 +32,29 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
   }
 
   if (options.interval !== undefined && options.interval < 1) {
-    throw new RuleValidationError('"interval" cannot be less than 1')
+    throw new RuleValidationError('"interval" cannot be less than 1');
   }
   if (
     options.bySecondOfMinute !== undefined &&
     options.bySecondOfMinute.some(num => num < 0 || num > 60)
   ) {
     throw new RuleValidationError(
-      '"bySecondOfMinute" values must be >= 0 && <= 60'
-    )
+      '"bySecondOfMinute" values must be >= 0 && <= 60',
+    );
   }
   if (
     options.byMinuteOfHour !== undefined &&
     options.byMinuteOfHour.some(num => num < 0 || num > 59)
   ) {
     throw new RuleValidationError(
-      '"byMinuteOfHour" values must be >= 0 && <= 59'
-    )
+      '"byMinuteOfHour" values must be >= 0 && <= 59',
+    );
   }
   if (
     options.byHourOfDay !== undefined &&
     options.byHourOfDay.some(num => num < 0 || num > 23)
   ) {
-    throw new RuleValidationError('"byHourOfDay" values must be >= 0 && <= 23')
+    throw new RuleValidationError('"byHourOfDay" values must be >= 0 && <= 23');
   }
   if (
     !['YEARLY', 'MONTHLY'].includes(options.frequency) &&
@@ -56,8 +63,8 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
   ) {
     throw new RuleValidationError(
       '"byDayOfWeek" can only include a numeric value when the "frequency" is ' +
-        'either "MONTHLY" or "YEARLY"'
-    )
+        'either "MONTHLY" or "YEARLY"',
+    );
   }
   if (
     options.frequency === 'MONTHLY' &&
@@ -65,13 +72,13 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
     options.byDayOfWeek.some(
       weekday =>
         Array.isArray(weekday) &&
-        (weekday[1] < -31 || weekday[1] === 0 || weekday[1] > 31)
+        (weekday[1] < -31 || weekday[1] === 0 || weekday[1] > 31),
     )
   ) {
     throw new RuleValidationError(
       'when "frequency" is "MONTHLY", each "byDayOfWeek" can optionally only' +
-        ' have a numeric value >= -31 and <= 31 and !== 0'
-    )
+        ' have a numeric value >= -31 and <= 31 and !== 0',
+    );
   }
   if (
     options.frequency === 'YEARLY' &&
@@ -79,21 +86,21 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
     options.byDayOfWeek.some(
       weekday =>
         Array.isArray(weekday) &&
-        (weekday[1] < -366 || weekday[1] === 0 || weekday[1] > 366)
+        (weekday[1] < -366 || weekday[1] === 0 || weekday[1] > 366),
     )
   ) {
     throw new RuleValidationError(
       'when "frequency" is "YEARLY", each "byDayOfWeek" can optionally only' +
-        ' have a numeric value >= -366 and <= 366 and !== 0'
-    )
+        ' have a numeric value >= -366 and <= 366 and !== 0',
+    );
   }
   if (options.frequency === 'WEEKLY' && options.byDayOfMonth !== undefined) {
     throw new RuleValidationError(
-      'when "frequency" is "WEEKLY", "byDayOfMonth" cannot be present'
-    )
+      'when "frequency" is "WEEKLY", "byDayOfMonth" cannot be present',
+    );
   }
   if (options.until !== undefined && options.count !== undefined) {
-    throw new RuleValidationError('"until" and "count" cannot both be present')
+    throw new RuleValidationError('"until" and "count" cannot both be present');
   }
   // if (options.until !== undefined && !options.until!.isSameClass(start)) {
   //   throw new RuleValidationError(
@@ -103,34 +110,50 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
 
   if (options.byMonthOfYear) {
     options.byMonthOfYear.sort((a, b) => {
-      if (a > b) { return 1 }
-      else if (b > a) { return -1 }
-      else { return 0 }
-    })
+      if (a > b) {
+        return 1;
+      } else if (b > a) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
   }
 
   if (options.byHourOfDay) {
     options.byHourOfDay.sort((a, b) => {
-      if (a > b) { return 1 }
-      else if (b > a) { return -1 }
-      else { return 0 }
-    })
+      if (a > b) {
+        return 1;
+      } else if (b > a) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
   }
 
   if (options.byMinuteOfHour) {
     options.byMinuteOfHour.sort((a, b) => {
-      if (a > b) { return 1 }
-      else if (b > a) { return -1 }
-      else { return 0 }
-    })
+      if (a > b) {
+        return 1;
+      } else if (b > a) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
   }
 
   if (options.bySecondOfMinute) {
     options.bySecondOfMinute.sort((a, b) => {
-      if (a > b) { return 1 }
-      else if (b > a) { return -1 }
-      else { return 0 }
-    })
+      if (a > b) {
+        return 1;
+      } else if (b > a) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
   }
 
   const defaultOptions: any = {
@@ -138,24 +161,24 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
     frequency: options.frequency,
     interval: 1,
     weekStart: 'MO',
-  }
+  };
 
   if (!(options.byDayOfMonth || options.byDayOfWeek)) {
     switch (options.frequency) {
       case 'YEARLY':
         defaultOptions.byMonthOfYear = [
           start.get('month'),
-        ] as Options.ByMonthOfYear[]
+        ] as Options.ByMonthOfYear[];
       case 'MONTHLY':
         defaultOptions.byDayOfMonth = [
           start.get('day'),
-        ] as Options.ByDayOfMonth[]
-        break
+        ] as Options.ByDayOfMonth[];
+        break;
       case 'WEEKLY':
         defaultOptions.byDayOfWeek = [
           start.get('weekday'),
-        ] as Options.ByDayOfWeek[]
-        break
+        ] as Options.ByDayOfWeek[];
+        break;
     }
   }
 
@@ -164,17 +187,15 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
     case 'MONTHLY':
     case 'WEEKLY':
     case 'DAILY':
-      defaultOptions.byHourOfDay = [
-        start.get('hour'),
-      ] as Options.ByHourOfDay[]
+      defaultOptions.byHourOfDay = [start.get('hour')] as Options.ByHourOfDay[];
     case 'HOURLY':
       defaultOptions.byMinuteOfHour = [
         start.get('minute'),
-      ] as Options.ByMinuteOfHour[]
+      ] as Options.ByMinuteOfHour[];
     case 'MINUTELY':
       defaultOptions.bySecondOfMinute = [
         start.get('second'),
-      ] as Options.BySecondOfMinute[]
+      ] as Options.BySecondOfMinute[];
   }
 
   return {
@@ -182,7 +203,7 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
     ...options,
     start,
     until,
-  }
+  };
 }
 
 class RuleValidationError extends Error {}
@@ -195,7 +216,7 @@ export namespace Options {
     | 'DAILY'
     | 'WEEKLY'
     | 'MONTHLY'
-    | 'YEARLY'
+    | 'YEARLY';
 
   /**
    * The ByDayOfWeek type corresponds to either a two letter string for the weekday
@@ -206,41 +227,43 @@ export namespace Options {
    * If the number is negative, it is calculated from the end of
    * the month / year.
    */
-  export type ByDayOfWeek = IDateAdapter.Weekday | [IDateAdapter.Weekday, number]
+  export type ByDayOfWeek =
+    | IDateAdapter.Weekday
+    | [IDateAdapter.Weekday, number];
 
   export interface ProvidedOptions<T extends DateAdapterConstructor> {
-    start: DateProp<T> | DateAdapter<T>
-    frequency: Frequency
-    interval?: number
-    bySecondOfMinute?: BySecondOfMinute[]
-    byMinuteOfHour?: ByMinuteOfHour[]
-    byHourOfDay?: ByHourOfDay[]
-    byDayOfWeek?: ByDayOfWeek[]
-    byDayOfMonth?: ByDayOfMonth[]
-    byMonthOfYear?: ByMonthOfYear[]
-    until?: DateProp<T> | DateAdapter<T>
-    count?: number
-    weekStart?: IDateAdapter.Weekday
+    start: DateProp<T> | DateAdapter<T>;
+    frequency: Frequency;
+    interval?: number;
+    bySecondOfMinute?: BySecondOfMinute[];
+    byMinuteOfHour?: ByMinuteOfHour[];
+    byHourOfDay?: ByHourOfDay[];
+    byDayOfWeek?: ByDayOfWeek[];
+    byDayOfMonth?: ByDayOfMonth[];
+    byMonthOfYear?: ByMonthOfYear[];
+    until?: DateProp<T> | DateAdapter<T>;
+    count?: number;
+    weekStart?: IDateAdapter.Weekday;
   }
 
   export interface ProcessedOptions<T extends DateAdapterConstructor> {
-    frequency: Frequency
-    interval: number
-    start: DateAdapter<T>
-    until?: DateAdapter<T>
-    count?: number
-    weekStart: DateTime.Weekday
-    byMonthOfYear?: ByMonthOfYear[]
-    byDayOfMonth?: ByDayOfMonth[]
-    byDayOfWeek?: ByDayOfWeek[]
-    byHourOfDay: ByHourOfDay[]
-    byMinuteOfHour: ByMinuteOfHour[]
-    bySecondOfMinute: BySecondOfMinute[]
+    frequency: Frequency;
+    interval: number;
+    start: DateAdapter<T>;
+    until?: DateAdapter<T>;
+    count?: number;
+    weekStart: DateTime.Weekday;
+    byMonthOfYear?: ByMonthOfYear[];
+    byDayOfMonth?: ByDayOfMonth[];
+    byDayOfWeek?: ByDayOfWeek[];
+    byHourOfDay: ByHourOfDay[];
+    byMinuteOfHour: ByMinuteOfHour[];
+    bySecondOfMinute: BySecondOfMinute[];
   }
 
-  export type BySecondOfMinute = ByMinuteOfHour | 60
+  export type BySecondOfMinute = ByMinuteOfHour | 60;
 
-  export type ByMonthOfYear = IDateAdapter.IMonth
+  export type ByMonthOfYear = IDateAdapter.IMonth;
 
   // >= 0 && <= 59
   export type ByMinuteOfHour =
@@ -303,7 +326,7 @@ export namespace Options {
     | 56
     | 57
     | 58
-    | 59
+    | 59;
 
   export type ByHourOfDay =
     | 0
@@ -329,7 +352,7 @@ export namespace Options {
     | 20
     | 21
     | 22
-    | 23
+    | 23;
 
   // >= -31 && <= 31 && !== 0
   export type ByDayOfMonth =
@@ -394,7 +417,7 @@ export namespace Options {
     | -28
     | -29
     | -30
-    | -31
+    | -31;
 
-  export type ByWeekOfMonth = 1 | 2 | 3 | 4 | 5 | -1 | -2 | -3 | -4
+  export type ByWeekOfMonth = 1 | 2 | 3 | 4 | 5 | -1 | -2 | -3 | -4;
 }

@@ -1,69 +1,84 @@
-import { IDateAdapter, DateAdapter, DateAdapterConstructor } from '../date-adapter'
-import { RunnableIterator, OccurrencesArgs, RunArgs } from '../interfaces'
-import { Options } from '../rule'
-import { Utils } from '../utilities'
+import {
+  DateAdapter,
+  DateAdapterConstructor,
+  IDateAdapter,
+} from '../date-adapter';
+import { OccurrencesArgs, RunArgs, RunnableIterator } from '../interfaces';
+import { Options } from '../rule';
+import { Utils } from '../utilities';
 
 export class Collection<T extends DateAdapterConstructor> {
   constructor(
-    public readonly dates: DateAdapter<T>[] = [],
+    public readonly dates: Array<DateAdapter<T>> = [],
     public readonly granularity: 'INSTANTANIOUSLY' | Options.Frequency,
     public readonly periodStart: DateAdapter<T>,
-    public readonly periodEnd: DateAdapter<T>
+    public readonly periodEnd: DateAdapter<T>,
   ) {}
 }
 
-export type CollectionsGranularity = 'INSTANTANIOUSLY' | Options.Frequency
+export type CollectionsGranularity = 'INSTANTANIOUSLY' | Options.Frequency;
 
-export interface CollectionsArgs<T extends DateAdapterConstructor> extends OccurrencesArgs<T> {
-  granularity?: CollectionsGranularity
-  weekStart?: IDateAdapter.Weekday
-  incrementLinearly?: boolean
+export interface CollectionsArgs<T extends DateAdapterConstructor>
+  extends OccurrencesArgs<T> {
+  granularity?: CollectionsGranularity;
+  weekStart?: IDateAdapter.Weekday;
+  incrementLinearly?: boolean;
 }
 
-export interface CollectionsRunArgs<T extends DateAdapterConstructor> extends RunArgs<T> {
-  granularity?: CollectionsGranularity
-  weekStart?: IDateAdapter.Weekday
-  incrementLinearly?: boolean
+export interface CollectionsRunArgs<T extends DateAdapterConstructor>
+  extends RunArgs<T> {
+  granularity?: CollectionsGranularity;
+  weekStart?: IDateAdapter.Weekday;
+  incrementLinearly?: boolean;
 }
 
-export class CollectionIterator<
-  T extends DateAdapterConstructor
-> {
-  public readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY'
-  public readonly weekStart?: IDateAdapter.Weekday
-  public readonly startDate: DateAdapter<T> | null
-  
-  private iterator: IterableIterator<Collection<T>>
-  private args: CollectionsRunArgs<T>
+export class CollectionIterator<T extends DateAdapterConstructor> {
+  public readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY';
+  public readonly weekStart?: IDateAdapter.Weekday;
+  public readonly startDate: DateAdapter<T> | null;
 
-  constructor(private iterable: RunnableIterator<T>, args: CollectionsRunArgs<T>) {
-    if (args.granularity) { this.granularity = args.granularity }
-    if (args.weekStart) { this.weekStart = args.weekStart }
+  private iterator: IterableIterator<Collection<T>>;
+  private args: CollectionsRunArgs<T>;
+
+  constructor(
+    private iterable: RunnableIterator<T>,
+    args: CollectionsRunArgs<T>,
+  ) {
+    if (args.granularity) {
+      this.granularity = args.granularity;
+    }
+    if (args.weekStart) {
+      this.weekStart = args.weekStart;
+    }
     if (args.reverse) {
       throw new Error(
         '`Calendar#collections()` does not currently support iterating in reverse. ' +
-        "Though `Calendar#occurrences()` does support iterating in reverse."
-      )
+          'Though `Calendar#occurrences()` does support iterating in reverse.',
+      );
     }
 
     // Set the end arg, if present, to the end of the period.
     this.args = {
       ...args,
-      end: args.end && this.getPeriodEnd(
-        this.getPeriodStart(args.end, {getRealMonthIfApplicable: true})
-      )
+      end:
+        args.end &&
+        this.getPeriodEnd(
+          this.getPeriodStart(args.end, { getRealMonthIfApplicable: true }),
+        ),
     };
 
-    const start = args.start || iterable.startDate
+    const start = args.start || iterable.startDate;
 
-    this.startDate = start && this.getPeriodStart(start)
+    this.startDate = start && this.getPeriodStart(start);
 
-    this.iterator = this.getCollectionIterator()
+    this.iterator = this.getCollectionIterator();
   }
 
   public [Symbol.iterator] = () => this.iterator;
 
-  public next() { return this.iterator.next() }
+  public next() {
+    return this.iterator.next();
+  }
 
   /**
    * While `next()` and `[Symbol.iterator]` both share state,
@@ -73,78 +88,70 @@ export class CollectionIterator<
    */
   public toArray() {
     if (!this.args.end && !this.args.take && this.iterable.isInfinite) {
-      return undefined
-    }
-    else {
-      const collections: Array<Collection<T>> = []
+      return undefined;
+    } else {
+      const collections: Array<Collection<T>> = [];
 
       for (const collection of this.getCollectionIterator()) {
-        collections.push(collection)
+        collections.push(collection);
       }
 
-      return collections
+      return collections;
     }
   }
 
   private *getCollectionIterator() {
-    if (!this.startDate) { return }
+    if (!this.startDate) {
+      return;
+    }
 
-    let iterator = this.getOccurrenceIterator(this.iterable, this.args)
+    let iterator = this.getOccurrenceIterator(this.iterable, this.args);
 
-    let date = iterator.next().value
+    let date = iterator.next().value;
 
-    if (!date) { return }
+    if (!date) {
+      return;
+    }
 
     // `period` === `periodStart` unless the granularity
     // is `MONTHLY` and a `weekStart` param was provided. In this case,
-    // period holds a date === the first of the current month while 
+    // period holds a date === the first of the current month while
     // periodStart holds a date === the beginning of the first week of the month
-    // (which might be in the the previous month). Read the 
+    // (which might be in the the previous month). Read the
     // `Calendar#collections()` description for more info.
-    let [
-      periodStart,
-      periodEnd,
-      period
-    ] = this.getPeriod(
-      (this.args.start || this.iterable.startDate) as DateAdapter<T>
-    )
+    let [periodStart, periodEnd, period] = this.getPeriod((this.args.start ||
+      this.iterable.startDate) as DateAdapter<T>);
 
     // without this, a MONTHLY `granularity` with `weekStart` might think the first
     // period is the month before the given `start` date.
     if (!this.args.incrementLinearly && date.isAfter(periodEnd)) {
-      [
-        periodStart,
-        periodEnd,
-        period
-      ] = this.getPeriod(date);
+      [periodStart, periodEnd, period] = this.getPeriod(date);
     }
 
-    let dates: DateAdapter<T>[] = []
-    let index = 0
+    let dates: Array<DateAdapter<T>> = [];
+    let index = 0;
 
     while (date && (this.args.take === undefined || this.args.take > index)) {
       while (date && date.isBeforeOrEqual(periodEnd)) {
-        dates.push(date)
+        dates.push(date);
 
-        date = iterator.next().value
+        date = iterator.next().value;
       }
 
       yield new Collection(
         dates,
         this.granularity,
         periodStart.clone() as DateAdapter<T>,
-        periodEnd.clone() as DateAdapter<T>
-      )
+        periodEnd.clone() as DateAdapter<T>,
+      );
 
-      if (!date) { return }
+      if (!date) {
+        return;
+      }
 
       dates = [];
 
-      [
-        periodStart,
-        periodEnd,
-        period
-      ] = this.args.incrementLinearly
+      [periodStart, periodEnd, period] = this.args.incrementLinearly
         ? this.getPeriod(this.incrementPeriod(period))
         : this.getPeriod(date);
 
@@ -155,44 +162,43 @@ export class CollectionIterator<
         iterator = this.iterable._run({
           start: periodStart,
           end: this.args.end,
-        })
+        });
 
-        date = iterator.next().value
+        date = iterator.next().value;
       }
-      
-      index++
+
+      index++;
     }
   }
 
   private getPeriod(date: DateAdapter<T>) {
-    date = this.getPeriodStart(date, {getRealMonthIfApplicable: true})
+    date = this.getPeriodStart(date, { getRealMonthIfApplicable: true });
 
-    return [
-      this.getPeriodStart(date), 
-      this.getPeriodEnd(date), 
-      date 
-    ]
+    return [this.getPeriodStart(date), this.getPeriodEnd(date), date];
   }
 
-  private getPeriodStart(date: DateAdapter<T>, option: {getRealMonthIfApplicable?: boolean} = {}) {
-    date = date.clone() as DateAdapter<T>
+  private getPeriodStart(
+    date: DateAdapter<T>,
+    option: { getRealMonthIfApplicable?: boolean } = {},
+  ) {
+    date = date.clone() as DateAdapter<T>;
 
     switch (this.granularity) {
       case 'YEARLY':
-        date.set('month', 1).set('day', 1)
-        break
+        date.set('month', 1).set('day', 1);
+        break;
       case 'MONTHLY':
-        if (this.weekStart && !option.getRealMonthIfApplicable)
+        if (this.weekStart && !option.getRealMonthIfApplicable) {
           Utils.setDateToStartOfWeek(date.set('day', 1), this.weekStart);
-        else
-          date.set('day', 1);
-        break
+        }
+        else { date.set('day', 1); }
+        break;
       case 'WEEKLY':
         if (!this.weekStart) {
-          throw new Error('"WEEKLY" granularity requires `weekStart` arg')
+          throw new Error('"WEEKLY" granularity requires `weekStart` arg');
         }
-        Utils.setDateToStartOfWeek(date, this.weekStart)
-        break
+        Utils.setDateToStartOfWeek(date, this.weekStart);
+        break;
     }
 
     switch (this.granularity) {
@@ -200,84 +206,86 @@ export class CollectionIterator<
       case 'MONTHLY':
       case 'WEEKLY':
       case 'DAILY':
-        date.set('hour', 0)
+        date.set('hour', 0);
       case 'HOURLY':
-        date.set('minute', 0)
+        date.set('minute', 0);
       case 'MINUTELY':
-        date.set('second', 0)
+        date.set('second', 0);
       case 'SECONDLY':
-        date.set('millisecond', 0)
+        date.set('millisecond', 0);
       case 'INSTANTANIOUSLY':
       default:
-        return date
+        return date;
     }
   }
 
   private getPeriodEnd(start: DateAdapter<T>) {
-    const periodEnd = start.clone() as DateAdapter<T>
+    const periodEnd = start.clone() as DateAdapter<T>;
 
     switch (this.granularity) {
       case 'YEARLY':
-        return periodEnd.add(1, 'year').subtract(1, 'millisecond')
+        return periodEnd.add(1, 'year').subtract(1, 'millisecond');
       case 'MONTHLY':
-        periodEnd.add(1, 'month').subtract(1, 'millisecond')
-        
-        if (this.weekStart) Utils.setDateToEndOfWeek(periodEnd, this.weekStart);
-  
-        return periodEnd
+        periodEnd.add(1, 'month').subtract(1, 'millisecond');
+
+        if (this.weekStart) { Utils.setDateToEndOfWeek(periodEnd, this.weekStart); }
+
+        return periodEnd;
       case 'WEEKLY':
-        return periodEnd.add(7, 'day').subtract(1, 'millisecond')
+        return periodEnd.add(7, 'day').subtract(1, 'millisecond');
       case 'DAILY':
-        return periodEnd.add(1, 'day').subtract(1, 'millisecond')
+        return periodEnd.add(1, 'day').subtract(1, 'millisecond');
       case 'HOURLY':
-        return periodEnd.add(1, 'hour').subtract(1, 'millisecond')
+        return periodEnd.add(1, 'hour').subtract(1, 'millisecond');
       case 'MINUTELY':
-        return periodEnd.add(1, 'minute').subtract(1, 'millisecond')
+        return periodEnd.add(1, 'minute').subtract(1, 'millisecond');
       case 'SECONDLY':
-        return periodEnd.add(1, 'second').subtract(1, 'millisecond')
+        return periodEnd.add(1, 'second').subtract(1, 'millisecond');
       case 'INSTANTANIOUSLY':
       default:
-        return periodEnd
+        return periodEnd;
     }
   }
 
   private incrementPeriod(date: DateAdapter<T>) {
-    date = date.clone() as DateAdapter<T>
+    date = date.clone() as DateAdapter<T>;
 
     switch (this.granularity) {
       case 'YEARLY':
-        return date.add(1, 'year')
+        return date.add(1, 'year');
       case 'MONTHLY':
-        return date.add(1, 'month')
+        return date.add(1, 'month');
       case 'WEEKLY':
-        return date.add(1, 'week')
+        return date.add(1, 'week');
       case 'DAILY':
-        return date.add(1, 'day')
+        return date.add(1, 'day');
       case 'HOURLY':
-        return date.add(1, 'hour')
+        return date.add(1, 'hour');
       case 'MINUTELY':
-        return date.add(1, 'minute')
+        return date.add(1, 'minute');
       case 'SECONDLY':
-        return date.add(1, 'second')
+        return date.add(1, 'second');
       case 'INSTANTANIOUSLY':
       default:
-        return date.add(1, 'millisecond')
+        return date.add(1, 'millisecond');
     }
   }
 
   private getOccurrenceIterator(
     iterable: RunnableIterator<T>,
-    args: CollectionsRunArgs<T>
+    args: CollectionsRunArgs<T>,
   ): IterableIterator<DateAdapter<T>> {
-    let start = args.start || iterable.startDate
+    let start = args.start || iterable.startDate;
 
-    if (!start) { return iterable._run(args) }
+    if (!start) {
+      return iterable._run(args);
+    }
 
-    start = this.getPeriodStart(start)
+    start = this.getPeriodStart(start);
 
     return iterable._run({
       start,
       end: args.end,
-    })
+    });
   }
 }

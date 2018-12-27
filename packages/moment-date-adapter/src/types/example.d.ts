@@ -15,5 +15,3 @@
  * (This definition was primarily extracted from:
  * https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/node/v8/index.d.ts
  */
-
- 

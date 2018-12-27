@@ -1,108 +1,131 @@
-import uniq from 'lodash.uniq'
-import { DateTime } from '../../date-time'
-import { PipeControllerOptions } from './pipe-controller'
-import { Utils } from '../../utilities'
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
+import uniq from 'lodash.uniq';
+import { DateTime } from '../../date-time';
+import { Utils } from '../../utilities';
+import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
+import { PipeControllerOptions } from './pipe-controller';
 
 export class ByDayOfMonthPipe extends PipeRule implements IPipeRule {
+  private upcomingMonthDays: Array<[number, number]> = [];
 
-  private upcomingMonthDays: Array<[number, number]> = []
-
-  private upcomingDays: number[] = []
+  private upcomingDays: number[] = [];
   public run(args: IPipeRunFn) {
-    if (args.invalidDate) { return this.nextPipe.run(args) }
+    if (args.invalidDate) {
+      return this.nextPipe.run(args);
+    }
 
     if (
       this.options.frequency === 'YEARLY' &&
       this.options.byMonthOfYear === undefined
     ) {
-      return this.yearlyExpand(args)
+      return this.yearlyExpand(args);
     } else if (['YEARLY', 'MONTHLY'].includes(this.options.frequency)) {
-      return this.expand(args)
-    } else { return this.filter(args) }
+      return this.expand(args);
+    } else {
+      return this.filter(args);
+    }
   }
   public yearlyExpand(args: IPipeRunFn) {
-    const date = args.date
+    const date = args.date;
 
     if (this.upcomingMonthDays.length === 0) {
-      this.upcomingMonthDays = getUpcomingMonthDays(date, this.options)
+      this.upcomingMonthDays = getUpcomingMonthDays(date, this.options);
 
       if (this.upcomingMonthDays.length === 0) {
-        const next = Utils.setDateToStartOfYear(date.clone().add(1, 'year')) as DateTime
+        const next = Utils.setDateToStartOfYear(
+          date.clone().add(1, 'year'),
+        ) as DateTime;
 
         return this.nextPipe.run({
           invalidDate: true,
           date,
           skipToDate: next,
-        })
+        });
       }
 
-      this.expandingPipes.push(this)
+      this.expandingPipes.push(this);
     } else {
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) {
+        date.set('hour', 0);
+      }
+      if (this.options.byMinuteOfHour) {
+        date.set('minute', 0);
+      }
+      if (this.options.bySecondOfMinute) {
+        date.set('second', 0);
+      }
     }
 
-    const nextDay = this.upcomingMonthDays.shift()!
-    date.set('month', nextDay[0]).set('day', nextDay[1])
+    const nextDay = this.upcomingMonthDays.shift()!;
+    date.set('month', nextDay[0]).set('day', nextDay[1]);
 
-    if (this.upcomingMonthDays.length === 0) { this.expandingPipes.pop() }
+    if (this.upcomingMonthDays.length === 0) {
+      this.expandingPipes.pop();
+    }
 
-    return this.nextPipe.run({ date })
+    return this.nextPipe.run({ date });
   }
   public expand(args: IPipeRunFn) {
-    const date = args.date
+    const date = args.date;
 
     if (this.upcomingDays.length === 0) {
-      this.upcomingDays = getUpcomingDays(date, this.options)
+      this.upcomingDays = getUpcomingDays(date, this.options);
 
       if (this.upcomingDays.length === 0) {
         const next = date
           .clone()
           .add(1, 'month')
-          .set('day', 1)
+          .set('day', 1);
 
         return this.nextPipe.run({
           invalidDate: true,
           date,
           skipToDate: next,
-        })
+        });
       }
 
-      this.expandingPipes.push(this)
+      this.expandingPipes.push(this);
     } else {
-      if (this.options.byHourOfDay) { date.set('hour', 0) }
-      if (this.options.byMinuteOfHour) { date.set('minute', 0) }
-      if (this.options.bySecondOfMinute) { date.set('second', 0) }
+      if (this.options.byHourOfDay) {
+        date.set('hour', 0);
+      }
+      if (this.options.byMinuteOfHour) {
+        date.set('minute', 0);
+      }
+      if (this.options.bySecondOfMinute) {
+        date.set('second', 0);
+      }
     }
 
-    const nextDay = this.upcomingDays.shift()!
-    date.set('day', nextDay)
+    const nextDay = this.upcomingDays.shift()!;
+    date.set('day', nextDay);
 
-    if (this.upcomingDays.length === 0) { this.expandingPipes.pop() }
+    if (this.upcomingDays.length === 0) {
+      this.expandingPipes.pop();
+    }
 
-    return this.nextPipe.run({ date })
+    return this.nextPipe.run({ date });
   }
 
   public filter(args: IPipeRunFn) {
-    const upcomingDays = getUpcomingDays(args.date, this.options)
+    const upcomingDays = getUpcomingDays(args.date, this.options);
 
-    let validDay = false
-    let nextValidDayThisMonth: number | null = null
+    let validDay = false;
+    let nextValidDayThisMonth: number | null = null;
 
     for (const day of upcomingDays) {
       if (args.date.get('day') === day) {
-        validDay = true
-        break
+        validDay = true;
+        break;
       } else if (args.date.get('day') < day) {
-        nextValidDayThisMonth = day
-        break
+        nextValidDayThisMonth = day;
+        break;
       }
     }
 
-    if (validDay) { return this.nextPipe.run({ date: args.date }) }
-    let next: DateTime
+    if (validDay) {
+      return this.nextPipe.run({ date: args.date });
+    }
+    let next: DateTime;
 
     // if the current date does not pass this filter,
     // is it possible for a date to pass this filter for the remainder of the month?
@@ -113,63 +136,65 @@ export class ByDayOfMonthPipe extends PipeRule implements IPipeRule {
     if (nextValidDayThisMonth !== null) {
       // if yes, advance the current date forward to the next month which would pass
       // this filter
-      next = this.cloneDateWithGranularity(args.date, 'day')
-      next.add(nextValidDayThisMonth - args.date.get('day'), 'day')
+      next = this.cloneDateWithGranularity(args.date, 'day');
+      next.add(nextValidDayThisMonth - args.date.get('day'), 'day');
     } else {
       // if no, advance the current date forward one year &
       // and set the date to whatever month would pass this filter
-      next = this.cloneDateWithGranularity(args.date, 'month')
-      next.add(1, 'month')
-      const nextDay = getUpcomingDays(next, this.options)[0]
-      next.set('day', nextDay)
+      next = this.cloneDateWithGranularity(args.date, 'month');
+      next.add(1, 'month');
+      const nextDay = getUpcomingDays(next, this.options)[0];
+      next.set('day', nextDay);
     }
 
     return this.nextPipe.run({
       invalidDate: true,
       date: args.date,
       skipToDate: next,
-    })
+    });
   }
 }
 
 function getUpcomingMonthDays(
   date: DateTime,
-  options: PipeControllerOptions
+  options: PipeControllerOptions,
 ): Array<[number, number]> {
-  const next = date.clone()
-  const monthDays: Array<[number, number]> = []
+  const next = date.clone();
+  const monthDays: Array<[number, number]> = [];
 
   for (let i = next.get('month'); i <= 12; i++) {
-    const days = getUpcomingDays(next, options)
+    const days = getUpcomingDays(next, options);
 
     monthDays.push(
-      ...days.map(day => [next.get('month'), day] as [number, number])
-    )
+      ...days.map(day => [next.get('month'), day] as [number, number]),
+    );
 
-    next.add(1, 'month').set('day', 1)
+    next.add(1, 'month').set('day', 1);
 
-    i++
+    i++;
   }
 
-  return monthDays
+  return monthDays;
 }
 
-function getUpcomingDays(
-  date: DateTime,
-  options: PipeControllerOptions
-) {
-  const daysInMonth = Utils.getDaysInMonth(date.get('month'), date.get('year'))
+function getUpcomingDays(date: DateTime, options: PipeControllerOptions) {
+  const daysInMonth = Utils.getDaysInMonth(date.get('month'), date.get('year'));
 
   return uniq(
     options
       .byDayOfMonth!.filter(day => {
-        return daysInMonth >= Math.abs(day)
+        return daysInMonth >= Math.abs(day);
       })
       .map(day => (day > 0 ? day : daysInMonth + day + 1))
       .sort((a, b) => {
-        if (a > b) { return 1 }
-        if (a < b) { return -1 }
-        else { return 0 }
-      })
-  ).filter(day => date.get('day') <= day)
+        if (a > b) {
+          return 1;
+        }
+        if (a < b) {
+          return -1;
+        } else {
+          return 0;
+        }
+      }),
+  ).filter(day => date.get('day') <= day);
 }

@@ -1,22 +1,22 @@
-import { dateAdapter, isoString } from './utilities'
 import {
-  OccurrencesArgs,
-  Schedule,
-  occurrenceStream,
-  intersection,
-  OperatorObject,
   Calendar,
-} from '@rschedule/rschedule'
-import { StandardDateAdapter } from '@rschedule/standard-date-adapter'
+  intersection,
+  OccurrencesArgs,
+  occurrenceStream,
+  OperatorObject,
+  Schedule,
+} from '@rschedule/rschedule';
+import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
+import { dateAdapter, isoString } from './utilities';
 
 function toISOStringsOCC(
   calendar: Calendar<typeof StandardDateAdapter, any>,
-  args?: OccurrencesArgs<typeof StandardDateAdapter>
+  args?: OccurrencesArgs<typeof StandardDateAdapter>,
 ) {
   return calendar
     .occurrences(args)
     .toArray()!
-    .map(occ => occ.toISOString())
+    .map(occ => occ.toISOString());
 }
 
 describe('Intersection Calendar', () => {
@@ -24,7 +24,8 @@ describe('Intersection Calendar', () => {
     describe('NO args', () => {
       it('with a single schedule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const schedule = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             {
               frequency: 'YEARLY',
@@ -34,35 +35,43 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, schedule),
+          ),
+        });
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 5, 9, 0),
           isoString(1998, 1, 7, 9, 0),
           isoString(1998, 3, 5, 9, 0),
-        ])
+        ]);
 
-        let iterator = calendar.occurrences()
+        let iterator = calendar.occurrences();
 
-        let date = iterator.next().value
-        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0))
+        let date = iterator.next().value;
+        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0));
 
-        date = iterator.next({skipToDate: dateAdapter(1998, 3, 5, 9, 0)}).value
-        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
+        date = iterator.next({ skipToDate: dateAdapter(1998, 3, 5, 9, 0) })
+          .value;
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0));
 
-        iterator = calendar.occurrences({reverse: true})
+        iterator = calendar.occurrences({ reverse: true });
 
-        date = iterator.next().value
-        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0))
-        
-        date = iterator.next({skipToDate: dateAdapter(1998, 1, 5, 9, 0)}).value
-        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0))
-      })
+        date = iterator.next().value;
+        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0));
+
+        date = iterator.next({ skipToDate: dateAdapter(1998, 1, 5, 9, 0) })
+          .value;
+        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0));
+      });
 
       it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -80,9 +89,10 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -93,22 +103,24 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-          rdates: [
-            dateAdapter(1997, 9, 2, 9).date,
-          ]
-        })
+          rdates: [dateAdapter(1997, 9, 2, 9).date],
+        });
 
-        
-
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
-        ])
-      })
+        ]);
+      });
 
       it('with multiple schedules two', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -132,9 +144,10 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -144,98 +157,147 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
           isoString(1997, 9, 4, 9, 0),
           isoString(1997, 9, 9, 9, 0),
-        ])
+        ]);
 
-        let iterator = calendar.occurrences()
+        let iterator = calendar.occurrences();
 
-        let date = iterator.next().value
-        expect(date.toISOString()).toBe(isoString(1997, 9, 2, 9, 0))
+        let date = iterator.next().value;
+        expect(date.toISOString()).toBe(isoString(1997, 9, 2, 9, 0));
 
-        date = iterator.next({skipToDate: dateAdapter(1997, 9, 9, 9, 0)}).value
-        expect(date.toISOString()).toBe(isoString(1997, 9, 9, 9, 0))
+        date = iterator.next({ skipToDate: dateAdapter(1997, 9, 9, 9, 0) })
+          .value;
+        expect(date.toISOString()).toBe(isoString(1997, 9, 9, 9, 0));
 
-        iterator = calendar.occurrences({reverse: true})
+        iterator = calendar.occurrences({ reverse: true });
 
-        date = iterator.next().value
-        expect(date.toISOString()).toBe(isoString(1997, 9, 9, 9, 0))
-        
-        date = iterator.next({skipToDate: dateAdapter(1997, 9, 2, 9, 0)}).value
-        expect(date.toISOString()).toBe(isoString(1997, 9, 2, 9, 0))
-      })
+        date = iterator.next().value;
+        expect(date.toISOString()).toBe(isoString(1997, 9, 9, 9, 0));
+
+        date = iterator.next({ skipToDate: dateAdapter(1997, 9, 2, 9, 0) })
+          .value;
+        expect(date.toISOString()).toBe(isoString(1997, 9, 2, 9, 0));
+      });
 
       it('with RDates', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rdates: [
             dateAdapter(1998, 1, 1, 9, 0).date,
             dateAdapter(2000, 1, 1, 9, 0).date,
             dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1998, 1, 1, 9, 0),
-        ])
-      })
+        ]);
+      });
 
       it('with EXDates', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar)).toEqual([])
-      })
+        expect(toISOStringsOCC(calendar)).toEqual([]);
+      });
 
       it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
+          rdates: [
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
+          ],
+          exdates: [
+            dateAdapter(1998, 1, 20, 9, 0).date,
+            dateAdapter(1998, 1, 1, 9, 0).date,
+          ],
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
+          rdates: [
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
+          ],
+          exdates: [
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(1998, 1, 1, 9, 0).date,
+          ],
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(2017, 1, 1, 9, 0),
-        ])
-      })
+        ]);
+      });
 
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const schedule = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
           exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, schedule),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar)).toEqual([])
-      })
+        expect(toISOStringsOCC(calendar)).toEqual([]);
+      });
 
       it('with multiple rules & RDates & EXDates', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -252,9 +314,10 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -270,32 +333,46 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
         const scheduleThree = new Schedule({
           dateAdapter: StandardDateAdapter,
           rdates: [
             dateAdapter(1997, 9, 2, 9, 0).date,
-            dateAdapter(1997, 9, 9, 9, 0).date,  
+            dateAdapter(1997, 9, 9, 9, 0).date,
             dateAdapter(1998, 1, 1, 9, 0).date,
             dateAdapter(2000, 1, 1, 9, 0).date,
           ],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+          exdates: [
+            dateAdapter(1998, 1, 20, 9, 0).date,
+            dateAdapter(1998, 1, 1, 9, 0).date,
+          ],
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo, scheduleThree))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection(
+              { maxFailedIterations: 50 },
+              scheduleOne,
+              scheduleTwo,
+              scheduleThree,
+            ),
+          ),
+        });
 
         expect(toISOStringsOCC(calendar)).toEqual([
           isoString(1997, 9, 2, 9, 0),
           isoString(1997, 9, 9, 9, 0),
-        ])
-      })
-    })
+        ]);
+      });
+    });
 
     describe('args: REVERSE', () => {
       it('with a single schedule', () => {
         // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const schedule = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             {
               frequency: 'YEARLY',
@@ -305,19 +382,32 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, schedule),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 3, 5, 9, 0).date, reverse: true })).toEqual([
-          isoString(1998, 1, 5, 9, 0),
-          isoString(1998, 1, 7, 9, 0),
-          isoString(1998, 3, 5, 9, 0),
-        ].reverse())
-      })
+        expect(
+          toISOStringsOCC(calendar, {
+            start: dateAdapter(1998, 3, 5, 9, 0).date,
+            reverse: true,
+          }),
+        ).toEqual(
+          [
+            isoString(1998, 1, 5, 9, 0),
+            isoString(1998, 1, 7, 9, 0),
+            isoString(1998, 3, 5, 9, 0),
+          ].reverse(),
+        );
+      });
 
       it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // YearlyByMonthAndMonthDay
             {
@@ -339,11 +429,12 @@ describe('Intersection Calendar', () => {
               count: 3,
               byDayOfWeek: ['TU', 'TH'],
               start: dateAdapter(1997, 9, 2, 9),
-            },    
+            },
           ],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rrules: [
             // DailyByMonthDayAndWeekDay
             {
@@ -353,80 +444,140 @@ describe('Intersection Calendar', () => {
               start: dateAdapter(1997, 9, 2, 9),
             },
           ],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar, { reverse: true })).toEqual([
-          isoString(1997, 9, 2, 9, 0),
-          isoString(1997, 9, 4, 9, 0),
-          isoString(1997, 9, 9, 9, 0),
-        ].reverse())
-      })
+        expect(toISOStringsOCC(calendar, { reverse: true })).toEqual(
+          [
+            isoString(1997, 9, 2, 9, 0),
+            isoString(1997, 9, 4, 9, 0),
+            isoString(1997, 9, 9, 9, 0),
+          ].reverse(),
+        );
+      });
 
       it('with RDates', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rdates: [
             dateAdapter(1998, 1, 1, 9, 0).date,
             dateAdapter(2000, 1, 1, 9, 0).date,
             dateAdapter(2017, 1, 1, 9, 0).date,
           ],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar, { reverse: true })).toEqual([
-          isoString(1998, 1, 1, 9, 0),
-        ].reverse())
-      })
+        expect(toISOStringsOCC(calendar, { reverse: true })).toEqual(
+          [isoString(1998, 1, 1, 9, 0)].reverse(),
+        );
+      });
 
       it('with EXDates', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
           exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-        })
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
           exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 20, 9, 0).date, reverse: true })).toEqual([])
-      })
+        expect(
+          toISOStringsOCC(calendar, {
+            start: dateAdapter(1998, 1, 20, 9, 0).date,
+            reverse: true,
+          }),
+        ).toEqual([]);
+      });
 
       it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({ dateAdapter: StandardDateAdapter, 
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        const scheduleOne = new Schedule({
+          dateAdapter: StandardDateAdapter,
+          rdates: [
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
+          ],
+          exdates: [
+            dateAdapter(1998, 1, 20, 9, 0).date,
+            dateAdapter(1998, 1, 1, 9, 0).date,
+          ],
+        });
 
-        const scheduleTwo = new Schedule({ dateAdapter: StandardDateAdapter, 
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date, dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(2017, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(2000, 1, 1, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        const scheduleTwo = new Schedule({
+          dateAdapter: StandardDateAdapter,
+          rdates: [
+            dateAdapter(1998, 1, 1, 9, 0).date,
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(2017, 1, 1, 9, 0).date,
+          ],
+          exdates: [
+            dateAdapter(2000, 1, 1, 9, 0).date,
+            dateAdapter(1998, 1, 1, 9, 0).date,
+          ],
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, scheduleOne, scheduleTwo),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(2017, 1, 1, 9, 0).date, reverse: true })).toEqual([
-          isoString(2017, 1, 1, 9, 0),
-        ].reverse())
-      })
+        expect(
+          toISOStringsOCC(calendar, {
+            start: dateAdapter(2017, 1, 1, 9, 0).date,
+            reverse: true,
+          }),
+        ).toEqual([isoString(2017, 1, 1, 9, 0)].reverse());
+      });
 
       it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({ dateAdapter: StandardDateAdapter, 
+        const schedule = new Schedule({
+          dateAdapter: StandardDateAdapter,
           rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
           exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        })
+        });
 
-        const calendar = new Calendar({ dateAdapter: StandardDateAdapter, schedules: occurrenceStream(intersection({ maxFailedIterations: 50 }, schedule))})
+        const calendar = new Calendar({
+          dateAdapter: StandardDateAdapter,
+          schedules: occurrenceStream(
+            intersection({ maxFailedIterations: 50 }, schedule),
+          ),
+        });
 
-        expect(toISOStringsOCC(calendar, { start: dateAdapter(1998, 1, 1, 9, 0).date, reverse: true })).toEqual([])
-      })
-
-    })
-  })
-})
+        expect(
+          toISOStringsOCC(calendar, {
+            start: dateAdapter(1998, 1, 1, 9, 0).date,
+            reverse: true,
+          }),
+        ).toEqual([]);
+      });
+    });
+  });
+});

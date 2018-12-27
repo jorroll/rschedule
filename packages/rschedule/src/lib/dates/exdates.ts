@@ -1,16 +1,17 @@
-import { DateAdapterConstructor } from '../date-adapter'
-import { Dates } from './dates'
-import { datesToIcalString } from '../ical'
+import { DateAdapterConstructor } from '../date-adapter';
+import { datesToIcalString } from '../ical';
+import { Dates } from './dates';
 
-const EXDATES_ID = Symbol.for('3c83a9bf-13dc-4045-8361-0d55744427e7')
+const EXDATES_ID = Symbol.for('3c83a9bf-13dc-4045-8361-0d55744427e7');
 
 /**
  * EXDates object for holding EXDATEs but providing a `HasOccurrences` api
  */
 
-export class EXDates<T extends DateAdapterConstructor, D=any> extends Dates<T, D> {
-  // @ts-ignore used by static method
-  private readonly [EXDATES_ID] = true
+export class EXDates<T extends DateAdapterConstructor, D = any> extends Dates<
+  T,
+  D
+> {
 
   /**
    * Similar to `Array.isArray()`, `isEXDates()` provides a surefire method
@@ -18,22 +19,24 @@ export class EXDates<T extends DateAdapterConstructor, D=any> extends Dates<T, D
    * global symbol registry.
    */
   public static isEXDates(object: any): object is EXDates<any> {
-    return !!(object && object[EXDATES_ID] && super.isDates(object))
+    return !!(object && object[EXDATES_ID] && super.isDates(object));
   }
+  // @ts-ignore used by static method
+  private readonly [EXDATES_ID] = true;
 
   /**
    * Returns a clone of the EXDates object.
    */
   public clone() {
-    const dates = this.dates.map(date => new this.dateAdapter(date))
-    const dateAdapter: T = this.dateAdapter as any
+    const dates = this.dates.map(date => new this.dateAdapter(date));
+    const dateAdapter: T = this.dateAdapter as any;
 
-    return new EXDates<T>({dates, data: this.data, dateAdapter})
+    return new EXDates<T>({ dates, data: this.data, dateAdapter });
   }
 
-  public toICal(options: {excludeDTSTART?: boolean}={}) {
-    const dates = this.dates.map(date => new this.dateAdapter(date))
+  public toICal(options: { excludeDTSTART?: boolean } = {}) {
+    const dates = this.dates.map(date => new this.dateAdapter(date));
 
-    return datesToIcalString(dates, 'EXDATE', options)
+    return datesToIcalString(dates, 'EXDATE', options);
   }
 }

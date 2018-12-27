@@ -1,6 +1,6 @@
-import { Utils } from '../../utilities'
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces'
-import { DateTime } from '../../date-time'
+import { DateTime } from '../../date-time';
+import { Utils } from '../../utilities';
+import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**
  * The `FrequencyPipe` is the first pipe in the chain of rule pipes. It is
@@ -8,36 +8,38 @@ import { DateTime } from '../../date-time'
  * account the `RRULE` frequency and interval.
  */
 export class FrequencyPipe extends PipeRule implements IPipeRule {
-  private intervalStartDate: DateTime = this.normalizeDate(this.options.start.clone());
+  private intervalStartDate: DateTime = this.normalizeDate(
+    this.options.start.clone(),
+  );
 
   public run(args: IPipeRunFn) {
-    let date: DateTime
+    let date: DateTime;
 
     if (args.skipToDate) {
-        this.skipToIntervalOnOrAfter(args.skipToDate)
+      this.skipToIntervalOnOrAfter(args.skipToDate);
 
-        date = args.skipToDate.isAfterOrEqual(this.intervalStartDate)
-          ? args.skipToDate
-          : this.intervalStartDate.clone()
+      date = args.skipToDate.isAfterOrEqual(this.intervalStartDate)
+        ? args.skipToDate
+        : this.intervalStartDate.clone();
     } else {
-      this.incrementInterval()
-      date = this.intervalStartDate.clone()
+      this.incrementInterval();
+      date = this.intervalStartDate.clone();
     }
 
-    return this.nextPipe.run({ date })
+    return this.nextPipe.run({ date });
   }
 
   public normalizeDate(date: DateTime) {
     switch (this.options.frequency) {
       case 'YEARLY':
-        Utils.setDateToStartOfYear(date)
-        break
+        Utils.setDateToStartOfYear(date);
+        break;
       case 'MONTHLY':
-        date.set('day', 1)
-        break
+        date.set('day', 1);
+        break;
       case 'WEEKLY':
-        Utils.setDateToStartOfWeek(date, this.options.weekStart)
-        break
+        Utils.setDateToStartOfWeek(date, this.options.weekStart);
+        break;
     }
 
     switch (this.options.frequency) {
@@ -45,18 +47,18 @@ export class FrequencyPipe extends PipeRule implements IPipeRule {
       case 'MONTHLY':
       case 'WEEKLY':
       case 'DAILY':
-        date.set('hour', 0)
+        date.set('hour', 0);
       case 'HOURLY':
-        date.set('minute', 0)
+        date.set('minute', 0);
       case 'MINUTELY':
-        date.set('second', 0)
+        date.set('second', 0);
     }
 
-    return date
+    return date;
   }
 
   private incrementInterval() {
-    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
+    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency);
 
     this.intervalStartDate.add(this.options.interval, unit);
   }
@@ -69,15 +71,15 @@ export class FrequencyPipe extends PipeRule implements IPipeRule {
    * Tests are passing
    */
   private skipToIntervalOnOrAfter(date: DateTime) {
-    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency)
+    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency);
 
     const difference = Utils.unitDifferenceBetweenDates(
       this.intervalStartDate,
       date,
-      unit
-    )
+      unit,
+    );
 
-    this.intervalStartDate.add(difference, unit)
+    this.intervalStartDate.add(difference, unit);
 
     // This is sort of a quick/hacky solution to a problem experienced with test
     // "testYearlyBetweenIncLargeSpan2" which has a start date of 1920.
@@ -85,7 +87,7 @@ export class FrequencyPipe extends PipeRule implements IPipeRule {
     // but the first call to this method turns up an iteration exactly 1 year
     // before the iteration it should return.
     while (!date.isBefore(this.intervalStartDate.clone().add(1, unit))) {
-      this.intervalStartDate.add(this.options.interval, unit)
+      this.intervalStartDate.add(this.options.interval, unit);
     }
   }
 }
