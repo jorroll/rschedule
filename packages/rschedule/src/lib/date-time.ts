@@ -5,8 +5,6 @@ import { IDateAdapter, ParsedDatetime } from './date-adapter';
 // import { Calendar } from './calendar'
 import { Utils } from './utilities';
 
-import { addMilliseconds } from 'date-fns';
-
 export const DATETIME_ID = Symbol.for('b1231462-3560-4770-94f0-d16295d5965c');
 
 interface ComparisonObject {
@@ -15,7 +13,6 @@ interface ComparisonObject {
 }
 
 export class DateTime implements IDateAdapter {
-
   /**
    * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
    * of determining if an object is a `DateTime` by checking against the
@@ -82,7 +79,9 @@ export class DateTime implements IDateAdapter {
   // While we constrain the argument to be another DateAdapter in typescript
   // we handle the case of someone passing in another type of object in javascript
   public isEqual(object?: ComparisonObject): boolean {
-    if (!object) { return false; }
+    if (!object) {
+      return false;
+    }
 
     if (object.get('timezone') !== this.get('timezone')) {
       throw new DateTime.ComparisonError();
@@ -293,15 +292,21 @@ export class DateTime implements IDateAdapter {
   public toICal(): string {
     const timezone = this.get('timezone');
 
-    if (timezone === 'UTC') { return `${Utils.dateToStandardizedString(this)}Z`; }
-    else if (timezone) {
+    if (timezone === 'UTC') {
+      return `${Utils.dateToStandardizedString(this)}Z`;
+    } else if (timezone) {
       return `TZID=${timezone}:${Utils.dateToStandardizedString(this)}`;
-         }
-    else { return `${Utils.dateToStandardizedString(this)}`; }
+    } else {
+      return `${Utils.dateToStandardizedString(this)}`;
+    }
   }
 
   public toISOString() {
     return this.date.toISOString();
+  }
+
+  public toJSON() {
+    return this.toISOString();
   }
 
   public toDateTime() {
@@ -354,13 +359,25 @@ export function toInteger(input: any) {
     return NaN;
   }
 
-  let number = Number(input);
+  const int = Number(input);
 
-  if (isNaN(number)) {
-    return number;
+  if (isNaN(int)) {
+    return int;
   }
 
-  return number < 0 ? Math.ceil(number) : Math.floor(number);
+  return int < 0 ? Math.ceil(int) : Math.floor(int);
+}
+
+export function addMilliseconds(dirtyDate: Date, dirtyAmount: number) {
+  if (arguments.length < 2) {
+    throw new TypeError(
+      '2 arguments required, but only ' + arguments.length + ' present',
+    );
+  }
+
+  const timestamp = dirtyDate.getTime();
+  const amount = toInteger(dirtyAmount);
+  return new Date(timestamp + amount);
 }
 
 export function addUTCYears(date: Date, input: number) {
@@ -414,7 +431,7 @@ export function addUTCSeconds(date: Date, input: number) {
 
 export function addUTCMilliseconds(date: Date, input: number) {
   const amount = toInteger(input);
-  let timestamp = date.getTime();
+  const timestamp = date.getTime();
   return new Date(timestamp + amount);
 }
 

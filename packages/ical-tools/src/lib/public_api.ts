@@ -1,1 +1,2 @@
-export * from './parser';
+export { ICalStringParseError, parseICalStrings } from './parser';
+export * from './serializer';

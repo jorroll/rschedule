@@ -5,7 +5,6 @@ import { IDateAdapter } from './date-adapter';
 const DATE_ADAPTER_ID = Symbol.for('9d2c0b75-7a72-4f24-b57f-c27e131e37b2');
 
 export abstract class DateAdapterBase<D = {}> implements IDateAdapter<D> {
-
   public static readonly hasTimezoneSupport: boolean = false;
 
   /**
@@ -120,5 +119,9 @@ export abstract class DateAdapterBase<D = {}> implements IDateAdapter<D> {
 
   public toDateTime(): DateTime {
     return new DateTime(this);
+  }
+
+  public toJSON(): string {
+    return this.toISOString();
   }
 }

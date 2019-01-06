@@ -1,6 +1,5 @@
 import cloneDeep from 'lodash.clonedeep';
 import { DateAdapterConstructor } from '../date-adapter';
-import { ruleOptionsToIcalString } from '../ical';
 import { Rule } from './rule';
 
 const EXRULE_ID = Symbol.for('73912d70-7a9b-41d7-926d-19ef5745a4ea');
@@ -9,7 +8,6 @@ export class EXRule<T extends DateAdapterConstructor, D = any> extends Rule<
   T,
   D
 > {
-
   /**
    * Similar to `Array.isArray()`, `isEXRule()` provides a surefire method
    * of determining if an object is a `EXRule` by checking against the
@@ -32,15 +30,5 @@ export class EXRule<T extends DateAdapterConstructor, D = any> extends Rule<
       data: this.data,
       dateAdapter,
     });
-  }
-
-  public toICal(options: { excludeDTSTART?: boolean } = {}) {
-    const dateAdapter: T = this.dateAdapter as any;
-    return ruleOptionsToIcalString(
-      dateAdapter,
-      this.options,
-      'EXRULE',
-      options,
-    );
   }
 }

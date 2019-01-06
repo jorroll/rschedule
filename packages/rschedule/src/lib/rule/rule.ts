@@ -86,11 +86,11 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
   ) {
     super();
 
-    if (args.dateAdapter) { this.dateAdapter = args.dateAdapter as any; }
-    else if (Rule.defaultDateAdapter) {
+    if (args.dateAdapter) {
+      this.dateAdapter = args.dateAdapter as any;
+    } else if (Rule.defaultDateAdapter) {
       this.dateAdapter = Rule.defaultDateAdapter as any;
-         }
-    else {
+    } else {
       this.dateAdapter = RScheduleConfig.defaultDateAdapter as any;
     }
 
@@ -101,7 +101,9 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
     }
 
     this.options = options;
-    if (args.data) { this.data = args.data; }
+    if (args.data) {
+      this.data = args.data;
+    }
   }
 
   /**
@@ -191,13 +193,15 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
         until = before.isBefore(this.processedOptions.until)
           ? before
           : this.processedOptions.until;
-      }
-      else if (this.processedOptions.until) { until = this.processedOptions.until; }
-      else if (before) {
+      } else if (this.processedOptions.until) {
+        until = this.processedOptions.until;
+      } else if (before) {
         until = before;
       }
 
-      if (until && until.isBefore(this.processedOptions.start)) { return false; }
+      if (until && until.isBefore(this.processedOptions.start)) {
+        return false;
+      }
 
       // This function allows for an "intelligent" brute forcing of occurrences.
       // For rules with a frequency less than a day, it only checks one
@@ -205,14 +209,18 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
       const bruteForceCheck = () => {
         let date = getNextDateNotInExdates(args.excludeDates, after, until);
 
-        if (date && date.get('weekday') === args.weekday) { return true; }
+        if (date && date.get('weekday') === args.weekday) {
+          return true;
+        }
 
         while (date) {
           Utils.setDateToStartOfDay(date).add(24, 'hour');
 
           date = getNextDateNotInExdates(args.excludeDates, date, until);
 
-          if (date && date.get('weekday') === args.weekday) { return true; }
+          if (date && date.get('weekday') === args.weekday) {
+            return true;
+          }
         }
 
         return false;
@@ -225,7 +233,9 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
       ) => {
         let date = this._run({ start, end }).next().value;
 
-        if (!exdates || exdates.length === 0) { return date; }
+        if (!exdates || exdates.length === 0) {
+          return date;
+        }
 
         while (date && exdates.some(exdate => exdate.isEqual(date))) {
           Utils.setDateToStartOfDay(date).add(24, 'hour');
@@ -252,7 +262,9 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
             // A particular day of the month will cycle through weekdays in an 11 year cycle.
             // If our timespan is 11 years or above, we can ignore the timestap. Otherwise, we just assume
             // there aren't that many occurrences and brute force it.
-            if (args.excludeDates || difference < 11) { return bruteForceCheck(); }
+            if (args.excludeDates || difference < 11) {
+              return bruteForceCheck();
+            }
 
             break;
           case 'WEEKLY':
@@ -276,7 +288,9 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
                 'day',
               );
 
-              if (after && date.isBefore(after)) { return false; }
+              if (after && date.isBefore(after)) {
+                return false;
+              }
 
               return this.occursOn({ date });
             }
@@ -306,8 +320,9 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
             ? day === args.weekday
             : day[0] === args.weekday,
         );
+      } else {
+        return true;
       }
-      else { return true; }
     } else {
       for (const day of this._run({ start: args.date, end: args.date })) {
         return !!day;
@@ -359,6 +374,4 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
 
   // just exists to satisfy interface
   public abstract clone(): Rule<T, D>;
-
-  public abstract toICal(): string;
 }

@@ -1,6 +1,4 @@
-// Import here Polyfills if needed. Recommended core-js (npm i -D core-js)
-
-import 'core-js';
+// Import here Polyfills if needed.
 
 export * from './rschedule-config';
 
@@ -30,5 +28,4 @@ export * from './operators';
  * These lower level functions may be useful to someone making
  * their own `DateAdapter`
  */
-export * from './ical';
 export { Utils } from './utilities';

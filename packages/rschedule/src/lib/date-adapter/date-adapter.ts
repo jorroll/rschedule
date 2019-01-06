@@ -62,6 +62,8 @@ export interface IDateAdapter<D = {}> {
   /** same format as new Date().toISOString() */
   toISOString(): string;
 
+  toJSON(): string;
+
   // date formatted for ical string
   // if `format` option is present
   // - if `"UTC"`: format as utc time

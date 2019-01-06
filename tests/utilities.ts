@@ -7,8 +7,8 @@ import { DateTime } from 'luxon';
 
 // This function allows me to use the test's name as a
 // variable inside the test
-export function test<T extends string>(name: T, fn: (name: T) => any) {
-  return it(name, () => fn(name));
+export function test<T extends any>(name: T, fn: (name: T) => any) {
+  return it(`${name}`, () => fn(name));
 }
 
 // This function allows me to use the describe block's name as a
@@ -243,13 +243,11 @@ export function datetime(...args: Array<number | string | undefined>) {
   }
 
   if (args.length === 8) {
-    // @ts-ignore
     return args.pop() === 'UTC'
       ? new Date(Date.UTC(...args))
       : new Date(...args);
-  }
-  // @ts-ignore
-  else {
+  } else {
+    // @ts-ignore
     return new Date(...args);
   }
 }

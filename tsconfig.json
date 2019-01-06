@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "baseUrl": "./",
+    "rootDir": ".",
     "target": "es5",
-    "module":"es2015",
+    "module": "es2015",
     "lib": ["es2015", "es2016", "es2017", "dom"],
     "strict": true,
     "sourceMap": true,
@@ -12,22 +13,18 @@
     "emitDecoratorMetadata": true,
     "declarationDir": "dist/types",
     "outDir": "dist/lib",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
+    "typeRoots": ["node_modules/@types"],
     "downlevelIteration": true,
     "paths": {
-      "@rschedule/*": [
-        "packages/*/src"
-      ]
+      "@rschedule/*": ["packages/*/src"]
     },
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "traceResolution": false /* Report module resolution log messages. */,
+    "listEmittedFiles": false /* Print names of generated files part of the compilation. */,
+    "listFiles": false /* Print names of files part of the compilation. */,
+    "pretty": true /* Stylize errors and messages using color and context. */
   },
-  "include": [
-    "packages",
-    "tests"
-  ],
-  "exclude": [
-    "tmp"
-  ]
+  "include": ["packages", "tests"],
+  "exclude": ["tmp"],
+  "compileOnSave": false
 }

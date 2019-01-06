@@ -1,3 +1,4 @@
+import clonedeep from 'lodash.clonedeep';
 import { IDateAdapter } from './date-adapter';
 import { Options } from './rule';
 
@@ -18,6 +19,9 @@ export namespace Utils {
   export const MILLISECONDS_IN_HOUR = MILLISECONDS_IN_MINUTE * 60;
   export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24;
   export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
+
+  // To facilitate usage in `@rschedule/ical-tools` library
+  export const clone = clonedeep;
 
   export function weekdayToInt(
     weekday: IDateAdapter.Weekday,
@@ -295,7 +299,7 @@ export namespace Utils {
     return string;
   }
 
-  function toTwoCharString(int: number) {
+  export function toTwoCharString(int: number) {
     if (int < 10) {
       return `0${int}`;
     } else {

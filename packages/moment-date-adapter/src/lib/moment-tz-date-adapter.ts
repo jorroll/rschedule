@@ -75,7 +75,9 @@ export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
         'The `MomentTZDateAdapter` constructor only accepts `moment()` dates ' +
           'which have been created with "moment-timezone".',
       );
-    } else { this.date = moment(); }
+    } else {
+      this.date = moment();
+    }
 
     this.assertIsValid();
   }
@@ -137,10 +139,13 @@ export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
     value: number | string | undefined,
     options: { keepLocalTime?: boolean } = {},
   ): this {
-    if (unit !== 'timezone') { return super.set(unit, value); }
+    if (unit !== 'timezone') {
+      return super.set(unit, value);
+    }
 
-    if (value) { this.date.tz(value as string, options.keepLocalTime); }
-    else if (options.keepLocalTime) {
+    if (value) {
+      this.date.tz(value as string, options.keepLocalTime);
+    } else if (options.keepLocalTime) {
       this.date = moment([
         this.get('year'),
         this.get('month') - 1,

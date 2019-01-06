@@ -1,5 +1,4 @@
 import { DateAdapterConstructor } from '../date-adapter';
-import { datesToIcalString } from '../ical';
 import { Dates } from './dates';
 
 const EXDATES_ID = Symbol.for('3c83a9bf-13dc-4045-8361-0d55744427e7');
@@ -12,7 +11,6 @@ export class EXDates<T extends DateAdapterConstructor, D = any> extends Dates<
   T,
   D
 > {
-
   /**
    * Similar to `Array.isArray()`, `isEXDates()` provides a surefire method
    * of determining if an object is a `EXDates` by checking against the
@@ -32,11 +30,5 @@ export class EXDates<T extends DateAdapterConstructor, D = any> extends Dates<
     const dateAdapter: T = this.dateAdapter as any;
 
     return new EXDates<T>({ dates, data: this.data, dateAdapter });
-  }
-
-  public toICal(options: { excludeDTSTART?: boolean } = {}) {
-    const dates = this.dates.map(date => new this.dateAdapter(date));
-
-    return datesToIcalString(dates, 'EXDATE', options);
   }
 }

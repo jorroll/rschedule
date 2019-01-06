@@ -6,8 +6,6 @@ import {
   IDateAdapterConstructor,
 } from '../date-adapter';
 import { EXDates, RDates } from '../dates';
-import { buildDTStart } from '../ical';
-import { parseICalStrings } from '../ical/parser';
 import {
   HasOccurrences,
   IHasOccurrences,
@@ -46,27 +44,6 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     return !!(object && object[SCHEDULE_ID]);
   }
 
-  public static fromICal<T extends DateAdapterConstructor, D = undefined>(
-    icals: string | string[],
-    dateAdapterConstructor: T,
-    args: {
-      data?: D;
-    } = {},
-  ): Schedule<T, D> {
-    // specifying the return fixes a build bug
-    if (!Array.isArray(icals)) {
-      icals = [icals];
-    }
-
-    const options = parseICalStrings(icals, dateAdapterConstructor);
-
-    return new Schedule({
-      ...options,
-      data: args.data,
-      dateAdapter: dateAdapterConstructor,
-    });
-  }
-
   public rrules: Array<RRule<T>> = [];
   public exrules: Array<EXRule<T>> = [];
   public rdates: RDates<T>;
@@ -84,22 +61,23 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     args: {
       dateAdapter?: T;
       data?: D;
-      rrules?: Array<ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>>;
+      rrules?: Array<
+        ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | RRule<T>
+      >;
       exrules?: Array<
-        | ScheduleRuleArgs<T>
-        | Options.ProvidedOptions<T>
-        | EXRule<T>>;
+        ScheduleRuleArgs<T> | Options.ProvidedOptions<T> | EXRule<T>
+      >;
       rdates?: Array<DateProp<T> | DateAdapter<T>> | RDates<T>;
       exdates?: Array<DateProp<T> | DateAdapter<T>> | EXDates<T>;
     } = {},
   ) {
     super();
 
-    if (args.dateAdapter) { this.dateAdapter = args.dateAdapter as any; }
-    else if (Schedule.defaultDateAdapter) {
+    if (args.dateAdapter) {
+      this.dateAdapter = args.dateAdapter as any;
+    } else if (Schedule.defaultDateAdapter) {
       this.dateAdapter = Schedule.defaultDateAdapter as any;
-         }
-    else {
+    } else {
       this.dateAdapter = RScheduleConfig.defaultDateAdapter as any;
     }
 
@@ -109,7 +87,9 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
       );
     }
 
-    if (args.data) { this.data = args.data; }
+    if (args.data) {
+      this.data = args.data;
+    }
 
     if (args.rrules) {
       this.rrules = args.rrules.map(ruleArgs => {
@@ -118,11 +98,11 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
             dateAdapter: this.dateAdapter as any,
             ...ruleArgs[1],
           });
-        }
-        else if (RRule.isRRule(ruleArgs)) { return ruleArgs.clone(); }
-        else {
+        } else if (RRule.isRRule(ruleArgs)) {
+          return ruleArgs.clone();
+        } else {
           return new RRule(ruleArgs, { dateAdapter: this.dateAdapter as any });
-             }
+        }
       });
     }
 
@@ -134,11 +114,11 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
             dateAdapter: this.dateAdapter as any,
             ...ruleArgs[1],
           });
-        }
-        else if (EXRule.isEXRule(ruleArgs)) { return ruleArgs.clone(); }
-        else {
+        } else if (EXRule.isEXRule(ruleArgs)) {
+          return ruleArgs.clone();
+        } else {
           return new EXRule(ruleArgs, { dateAdapter: this.dateAdapter as any });
-             }
+        }
       });
     }
 
@@ -163,48 +143,6 @@ export class Schedule<T extends DateAdapterConstructor, D = any>
     } else {
       this.exdates = new EXDates({ dateAdapter: this.dateAdapter as any });
     }
-  }
-
-  public toICal(options: {
-    singleStartDate: DateProp<T> | DateAdapter<T>;
-  }): string;
-  public toICal(): string[];
-  public toICal(
-    options: { singleStartDate?: DateProp<T> | DateAdapter<T> } = {},
-  ): string[] | string {
-    const start = this.buildDateAdapter(options.singleStartDate);
-
-    if (start && options.singleStartDate !== undefined) {
-      const strings = [buildDTStart(start)];
-
-      this.rrules.forEach(rule =>
-        strings.push(rule.toICal({ excludeDTSTART: true })),
-      );
-      this.exrules.forEach(rule =>
-        strings.push(rule.toICal({ excludeDTSTART: true })),
-      );
-      if (this.rdates.length > 0) {
-        strings.push(this.rdates.toICal({ excludeDTSTART: true }));
-      }
-      if (this.exdates.length > 0) {
-        strings.push(this.exdates.toICal({ excludeDTSTART: true }));
-      }
-
-      return strings.join('\n');
-    }
-
-    const icals: string[] = [];
-
-    this.rrules.forEach(rule => icals.push(rule.toICal()));
-    this.exrules.forEach(rule => icals.push(rule.toICal()));
-    if (this.rdates.length > 0) {
-      icals.push(this.rdates.toICal());
-    }
-    if (this.exdates.length > 0) {
-      icals.push(this.exdates.toICal());
-    }
-
-    return icals;
   }
 
   /**
