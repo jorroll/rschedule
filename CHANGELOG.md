@@ -10,10 +10,10 @@ Still marked as a beta release. This package has been updated to depend on the `
 
 ### rschedule
 
-#### Breaking Changes
+**Breaking Changes**
 
 - Removed parsing / serializing functionality from the package and moved it into `ical-tools` package.
 
-#### Features
+**Features**
 
 - Added `toJSON()` method to `DateAdapter` / `IDateAdapter`.
