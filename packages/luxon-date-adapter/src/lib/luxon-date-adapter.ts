@@ -1,6 +1,7 @@
 import {
   DateAdapterBase,
   IDateAdapter,
+  IDateAdapterJSON,
   ParsedDatetime,
   Utils,
 } from '@rschedule/rschedule';
@@ -44,34 +45,31 @@ export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
     );
   }
 
-  public static fromTimeObject(args: {
-    datetimes: ParsedDatetime[];
-    timezone: string | undefined;
-  }): LuxonDateAdapter[] {
-    const dates = args.datetimes.map(datetime => {
-      switch (args.timezone) {
-        case 'UTC':
-          return new LuxonDateAdapter(DateTime.utc(...datetime));
-        case undefined:
-        case 'DATE':
-          return new LuxonDateAdapter(DateTime.local(...datetime));
-        default:
-          return new LuxonDateAdapter(
-            DateTime.fromObject({
-              year: datetime[0],
-              month: datetime[1],
-              day: datetime[2],
-              hour: datetime[3],
-              minute: datetime[4],
-              second: datetime[5],
-              millisecond: datetime[6],
-              zone: args.timezone,
-            }),
-          );
-      }
-    });
+  /**
+   * Checks if object is an instance of `DateTime`
+   */
+  public static isDate(object: any): object is DateTime {
+    return (DateTime as any).isDateTime(object);
+  }
 
-    return dates;
+  public static fromJSON(input: IDateAdapterJSON): LuxonDateAdapter {
+    switch (input.zone) {
+      case undefined:
+      case 'DATE':
+        return new LuxonDateAdapter(
+          DateTime.local(
+            input.year,
+            input.month,
+            input.day,
+            input.hour,
+            input.minute,
+            input.second,
+            input.millisecond,
+          ),
+        );
+      default:
+        return new LuxonDateAdapter(DateTime.fromObject(input));
+    }
   }
 
   public date: DateTime;
@@ -93,7 +91,9 @@ export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
       // I realize that luxon is immutable, but the tests assume that a date is mutable
       // and check object identity
       this.date = DateTime.fromObject(obj);
-    } else { this.date = DateTime.local(); }
+    } else {
+      this.date = DateTime.local();
+    }
   }
 
   /**
@@ -153,14 +153,15 @@ export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
     value: number | string | undefined,
     options: { keepLocalTime?: boolean } = {},
   ): this {
-    if (unit !== 'timezone') { return super.set(unit, value); }
+    if (unit !== 'timezone') {
+      return super.set(unit, value);
+    }
 
     if (value) {
       this.date = this.date.setZone(value as string, {
         keepLocalTime: options.keepLocalTime,
       });
-    }
-    else if (options.keepLocalTime) {
+    } else if (options.keepLocalTime) {
       this.date = DateTime.fromObject({
         year: this.get('year'),
         month: this.get('month'),

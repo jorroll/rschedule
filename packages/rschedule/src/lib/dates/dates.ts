@@ -34,7 +34,9 @@ export class Dates<T extends DateAdapterConstructor, D = any>
       this.dates.map(date => this.buildDateAdapter(date) as DateAdapter<T>),
     );
 
-    if (!dateTime) { return null; }
+    if (!dateTime) {
+      return null;
+    }
 
     return dateTime as DateAdapter<T>;
   }
@@ -52,6 +54,14 @@ export class Dates<T extends DateAdapterConstructor, D = any>
   public readonly isInfinite = false;
 
   public dates: Array<DateProp<T>> = [];
+
+  /**
+   * Convenience getter for returning the dates in DateAdapter format.
+   */
+  public get adapters() {
+    return this.dates.map(date => new this.dateAdapter(date));
+  }
+
   public data?: D;
 
   protected dateAdapter: IDateAdapterConstructor<T>;
@@ -68,11 +78,11 @@ export class Dates<T extends DateAdapterConstructor, D = any>
   ) {
     super();
 
-    if (args.dateAdapter) { this.dateAdapter = args.dateAdapter as any; }
-    else if (Dates.defaultDateAdapter) {
+    if (args.dateAdapter) {
+      this.dateAdapter = args.dateAdapter as any;
+    } else if (Dates.defaultDateAdapter) {
       this.dateAdapter = Dates.defaultDateAdapter as any;
-         }
-    else {
+    } else {
       this.dateAdapter = RScheduleConfig.defaultDateAdapter as any;
     }
 

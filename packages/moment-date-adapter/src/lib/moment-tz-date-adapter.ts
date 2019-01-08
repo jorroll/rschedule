@@ -1,6 +1,7 @@
 import {
   DateAdapterBase,
   IDateAdapter,
+  IDateAdapterJSON,
   ParsedDatetime,
   Utils,
 } from '@rschedule/rschedule';
@@ -22,29 +23,29 @@ export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
 
   public static readonly hasTimezoneSupport = true;
 
-  public static fromTimeObject(args: {
-    datetimes: ParsedDatetime[];
-    timezone: string | undefined;
-  }): MomentTZDateAdapter[] {
-    const dates = args.datetimes.map(datetime => {
-      // adjust for `Date`'s base-0 months
-      datetime[1] = datetime[1] - 1;
+  public static fromJSON(input: IDateAdapterJSON): MomentTZDateAdapter {
+    const args = [
+      input.year,
+      input.month - 1,
+      input.day,
+      input.hour,
+      input.minute,
+      input.second,
+      input.millisecond,
+    ];
 
-      switch (args.timezone) {
-        case 'UTC':
-          // TS doesn't like my use of the spread operator
+    switch (input.zone) {
+      case 'UTC':
+        // TS doesn't like my use of the spread operator
 
-          return new MomentTZDateAdapter(moment.tz(datetime, 'UTC'));
-        case undefined:
-        case 'DATE':
-          // TS doesn't like my use of the spread operator
-          return new MomentTZDateAdapter(moment(datetime));
-        default:
-          return new MomentTZDateAdapter(moment.tz(datetime, args.timezone));
-      }
-    });
-
-    return dates;
+        return new MomentTZDateAdapter(moment.tz(args, 'UTC'));
+      case undefined:
+      case 'DATE':
+        // TS doesn't like my use of the spread operator
+        return new MomentTZDateAdapter(moment(args));
+      default:
+        return new MomentTZDateAdapter(moment.tz(args, input.zone));
+    }
   }
 
   /**
@@ -58,6 +59,13 @@ export class MomentTZDateAdapter extends DateAdapterBase<moment.Moment> {
       object[MOMENT_TZ_DATE_ADAPTER_ID] &&
       super.isInstance(object)
     );
+  }
+
+  /**
+   * Checks if object is an instance of `Moment`
+   */
+  public static isDate(object: any): object is moment.Moment {
+    return moment.isMoment(object);
   }
 
   public date: moment.Moment;

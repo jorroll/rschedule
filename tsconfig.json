@@ -16,6 +16,8 @@
     "typeRoots": ["node_modules/@types"],
     "downlevelIteration": true,
     "paths": {
+      "@rschedule/serializers/ical": ["packages/serializers/src/lib/ical"],
+      "@rschedule/serializers/json": ["packages/serializers/src/lib/json"],
       "@rschedule/*": ["packages/*/src"]
     },
     "moduleResolution": "node",

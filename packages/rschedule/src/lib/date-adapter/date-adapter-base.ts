@@ -1,6 +1,6 @@
 import { DateTime } from '../date-time';
 import { Utils } from '../utilities';
-import { IDateAdapter } from './date-adapter';
+import { IDateAdapter, IDateAdapterConstructor } from './date-adapter';
 
 const DATE_ADAPTER_ID = Symbol.for('9d2c0b75-7a72-4f24-b57f-c27e131e37b2');
 
@@ -65,9 +65,7 @@ export abstract class DateAdapterBase<D = {}> implements IDateAdapter<D> {
 
     datetime.add(amount, unit);
 
-    this.date = (this.constructor as any).fromTimeObject(
-      datetime.toTimeObject(),
-    )[0].date;
+    this.date = (this.constructor as any).fromJSON(datetime.toJSON()).date;
 
     return this;
   }
@@ -77,9 +75,7 @@ export abstract class DateAdapterBase<D = {}> implements IDateAdapter<D> {
 
     datetime.subtract(amount, unit);
 
-    this.date = (this.constructor as any).fromTimeObject(
-      datetime.toTimeObject(),
-    )[0].date;
+    this.date = (this.constructor as any).fromJSON(datetime.toJSON()).date;
 
     return this;
   }
@@ -92,36 +88,25 @@ export abstract class DateAdapterBase<D = {}> implements IDateAdapter<D> {
 
     datetime.set(unit as DateTime.Unit, value as number);
 
-    this.date = (this.constructor as any).fromTimeObject(
-      datetime.toTimeObject(),
-    )[0].date;
+    this.date = (this.constructor as any).fromJSON(datetime.toJSON()).date;
 
     return this;
-  }
-
-  public toICal(options: { format?: string } = {}): string {
-    const format = options.format || this.get('timezone');
-
-    if (format === 'UTC') {
-      const date = this.clone().set('timezone', 'UTC');
-      return `${Utils.dateToStandardizedString(date)}Z`;
-    } else if (format === 'local') {
-      const date = this.clone().set('timezone', undefined);
-      return Utils.dateToStandardizedString(date);
-    } else if (format) {
-      const date = this.clone().set('timezone', undefined);
-      return `TZID=${format}:${Utils.dateToStandardizedString(date)}`;
-    } else {
-      const date = this.clone().set('timezone', undefined);
-      return Utils.dateToStandardizedString(date);
-    }
   }
 
   public toDateTime(): DateTime {
     return new DateTime(this);
   }
 
-  public toJSON(): string {
-    return this.toISOString();
+  public toJSON() {
+    return {
+      zone: this.get('timezone'),
+      year: this.get('year'),
+      month: this.get('month'),
+      day: this.get('day'),
+      hour: this.get('hour'),
+      minute: this.get('minute'),
+      second: this.get('second'),
+      millisecond: this.get('millisecond'),
+    };
   }
 }

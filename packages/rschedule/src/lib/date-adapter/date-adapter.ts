@@ -5,6 +5,17 @@ export type ParsedDatetime =
   | [number, number, number, number]
   | [number, number, number];
 
+export interface IDateAdapterJSON {
+  zone: string | undefined;
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  millisecond: number;
+}
+
 export interface IDateAdapter<D = {}> {
   /**
    * This property contains an ordered array of the generator objects
@@ -59,18 +70,10 @@ export interface IDateAdapter<D = {}> {
     options?: { keepLocalTime?: boolean },
   ): this;
 
-  /** same format as new Date().toISOString() */
+  /** same format as `new Date().toISOString()` */
   toISOString(): string;
 
-  toJSON(): string;
-
-  // date formatted for ical string
-  // if `format` option is present
-  // - if `"UTC"`: format as utc time
-  // - if `"local"`: format as local time
-  // - else the value will contain a timezone. Convert the time to that timezone
-  //   and format time in that timezone (don't mutate the IDateAdapter though).
-  toICal(options?: { format?: 'UTC' | 'local' | string }): string;
+  toJSON(): IDateAdapterJSON;
 
   // returns the underlying date ordinal. The value in milliseconds.
   valueOf(): number;
@@ -99,10 +102,8 @@ export interface IDateAdapterConstructor<T extends DateAdapterConstructor> {
   hasTimezoneSupport: boolean;
   new (date?: any, options?: any): DateAdapter<T>;
   isInstance(object?: any): object is DateAdapter<T>;
-  fromTimeObject(args: {
-    datetimes: ParsedDatetime[];
-    timezone?: string;
-  }): Array<DateAdapter<T>>;
+  isDate(object?: any): object is DateProp<T>;
+  fromJSON(args: IDateAdapterJSON): DateAdapter<T>;
 }
 
 export type DateAdapter<T extends DateAdapterConstructor> = T extends new (

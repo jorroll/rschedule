@@ -19,6 +19,7 @@
   "verbose": true,
   "testURL": "http://localhost/",
   "moduleNameMapper": {
+    "@rschedule/serializers/(.*)": "<rootDir>/packages/serializers/src/lib/$1",
     "@rschedule/(.*)": "<rootDir>/packages/$1/src"
   },
   "globals": {

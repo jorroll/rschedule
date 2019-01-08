@@ -1,6 +1,7 @@
 import {
   DateAdapterBase,
   IDateAdapter,
+  IDateAdapterJSON,
   ParsedDatetime,
   Utils,
 } from '@rschedule/rschedule';
@@ -22,33 +23,32 @@ const MOMENT_DATE_ADAPTER_ID = Symbol.for(
 export class MomentDateAdapter extends DateAdapterBase<moment.Moment> {
   public static date: moment.Moment;
 
-  public static fromTimeObject(args: {
-    datetimes: ParsedDatetime[];
-    timezone: string | undefined;
-  }): MomentDateAdapter[] {
-    const dates = args.datetimes.map(datetime => {
-      // adjust for `Date`'s base-0 months
-      datetime[1] = datetime[1] - 1;
+  public static fromJSON(input: IDateAdapterJSON): MomentDateAdapter {
+    const args = [
+      input.year,
+      input.month - 1,
+      input.day,
+      input.hour,
+      input.minute,
+      input.second,
+      input.millisecond,
+    ];
 
-      switch (args.timezone) {
-        case 'UTC':
-          return new MomentDateAdapter(moment.utc(datetime));
-        case undefined:
-        case 'DATE':
-          return new MomentDateAdapter(moment(datetime));
-        default:
-          throw new IDateAdapter.InvalidDateError(
-            'The `MomentDateAdapter` only supports datetimes in UTC or LOCAL time. ' +
-              `You attempted to parse an ICAL string with a "${
-                args.timezone
-              }" timezone. ` +
-              'Timezones are supported by the `MomentTZDateAdapter` with the ' +
-              '`moment-timezone` package installed.',
-          );
-      }
-    });
-
-    return dates;
+    switch (input.zone) {
+      case 'UTC':
+        return new MomentDateAdapter(moment.utc(args));
+      case undefined:
+      case 'DATE':
+        return new MomentDateAdapter(moment(args));
+      default:
+        throw new IDateAdapter.InvalidDateError(
+          'The `MomentDateAdapter` only supports datetimes in ' +
+            `UTC or LOCAL time. You attempted to parse an ICAL ` +
+            `string with a "${input.zone}" timezone. ` +
+            'Timezones are supported by the `MomentTZDateAdapter` ' +
+            'with the `moment-timezone` package installed.',
+        );
+    }
   }
 
   /**
@@ -62,6 +62,13 @@ export class MomentDateAdapter extends DateAdapterBase<moment.Moment> {
       object[MOMENT_DATE_ADAPTER_ID] &&
       super.isInstance(object)
     );
+  }
+
+  /**
+   * Checks if object is an instance of `Moment`
+   */
+  public static isDate(object: any): object is moment.Moment {
+    return moment.isMoment(object);
   }
 
   public date: moment.Moment;
@@ -79,7 +86,9 @@ export class MomentDateAdapter extends DateAdapterBase<moment.Moment> {
         'The `MomentDateAdapter` constructor only accepts `moment()` dates. ' +
           `Received: ${date}`,
       );
-    } else { this.date = moment(); }
+    } else {
+      this.date = moment();
+    }
 
     this.assertIsValid();
   }
@@ -141,7 +150,9 @@ export class MomentDateAdapter extends DateAdapterBase<moment.Moment> {
     value: number | 'UTC' | undefined,
     options: { keepLocalTime?: boolean } = {},
   ): this {
-    if (unit !== 'timezone') { return super.set(unit, value); }
+    if (unit !== 'timezone') {
+      return super.set(unit, value);
+    }
 
     if (!['UTC', undefined].includes(value as 'UTC' | undefined)) {
       throw new IDateAdapter.InvalidDateError(

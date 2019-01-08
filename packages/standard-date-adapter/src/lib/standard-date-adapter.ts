@@ -1,6 +1,7 @@
 import {
   DateAdapterBase,
   IDateAdapter,
+  IDateAdapterJSON,
   ParsedDatetime,
   Utils,
 } from '@rschedule/rschedule';
@@ -12,37 +13,36 @@ const STANDARD_DATE_ADAPTER_ID = Symbol.for(
 export class StandardDateAdapter extends DateAdapterBase<Date> {
   public static date: Date;
 
-  public static fromTimeObject(args: {
-    datetimes: ParsedDatetime[];
-    timezone: string | undefined;
-  }): StandardDateAdapter[] {
-    const dates = args.datetimes.map(datetime => {
-      // adjust for `Date`'s base-0 months
-      datetime[1] = datetime[1] - 1;
+  public static fromJSON(input: IDateAdapterJSON): StandardDateAdapter {
+    const args = [
+      input.year,
+      input.month - 1,
+      input.day,
+      input.hour,
+      input.minute,
+      input.second,
+      input.millisecond,
+    ];
 
-      switch (args.timezone) {
-        case 'UTC':
-          // TS doesn't like my use of the spread operator
-          // @ts-ignore
-          return new StandardDateAdapter(new Date(Date.UTC(...datetime)), {
-            timezone: 'UTC',
-          });
-        case undefined:
-        case 'DATE':
-          // TS doesn't like my use of the spread operator
-          // @ts-ignore
-          return new StandardDateAdapter(new Date(...datetime));
-        default:
-          throw new IDateAdapter.InvalidDateError(
-            'The `StandardDateAdapter` only supports datetimes in UTC or LOCAL time. ' +
-              `You attempted to parse an ICAL string with a "${
-                args.timezone
-              }" timezone.`,
-          );
-      }
-    });
-
-    return dates;
+    switch (input.zone) {
+      case 'UTC':
+        // TS doesn't like my use of the spread operator
+        // @ts-ignore
+        return new StandardDateAdapter(new Date(Date.UTC(...args)), {
+          timezone: 'UTC',
+        });
+      case undefined:
+      case 'DATE':
+        // TS doesn't like my use of the spread operator
+        // @ts-ignore
+        return new StandardDateAdapter(new Date(...args));
+      default:
+        throw new IDateAdapter.InvalidDateError(
+          'The `StandardDateAdapter` only supports datetimes in ' +
+            `UTC or LOCAL time. You attempted to parse an ICAL ` +
+            `string with a "${input.zone}" timezone.`,
+        );
+    }
   }
 
   /**
@@ -58,6 +58,10 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
     );
   }
 
+  public static isDate(object: any): object is Date {
+    return Object.prototype.toString.call(object) === '[object Date]';
+  }
+
   public date: Date;
 
   // @ts-ignore used by static method
@@ -68,8 +72,9 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
   constructor(date?: Date, options: { timezone?: 'UTC' } = {}) {
     super();
 
-    if (date) { this.date = new Date(date); }
-    else {
+    if (date) {
+      this.date = new Date(date);
+    } else {
       this.date = new Date();
     }
 
@@ -167,9 +172,13 @@ export class StandardDateAdapter extends DateAdapterBase<Date> {
     value: number | 'UTC' | undefined,
     options: { keepLocalTime?: boolean } = {},
   ): this {
-    if (unit !== 'timezone') { return super.set(unit, value); }
+    if (unit !== 'timezone') {
+      return super.set(unit, value);
+    }
 
-    if (value === this._timezone) { return this; }
+    if (value === this._timezone) {
+      return this;
+    }
 
     if (!['UTC', undefined].includes(value as 'UTC' | undefined)) {
       throw new IDateAdapter.InvalidDateError(

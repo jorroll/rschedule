@@ -14,8 +14,7 @@ import {
   Utils,
 } from '@rschedule/rschedule';
 import { stringify } from 'ical.js';
-
-export class ICalStringSerializeError extends Error {}
+import { SerializeError } from '../shared';
 
 /**
  * Serializes an array of date adapters into JCal format.
@@ -27,10 +26,10 @@ function datesToJCalProps<T extends DateAdapterConstructor>(
   dates: Dates<T>,
   type: 'RDATE' | 'EXDATE' = 'RDATE',
 ) {
+  const adapters = dates.adapters;
+
   // group dates by timezone
   const timezones = new Map<string, string[]>();
-  // @ts-ignore access protected method `buildDateAdapter()`
-  const adapters = dates.dates.map(date => dates.buildDateAdapter(date)!);
 
   adapters
     .slice()
@@ -161,28 +160,58 @@ function scheduleToJCal<T extends DateAdapterConstructor>(
 
   if (
     schedule.rrules.some(rule => !rule.startDate.isEqual(start)) ||
-    schedule.exrules.some(rule => !rule.startDate.isEqual(start))
+    schedule.exrules.some(rule => !rule.startDate.isEqual(start)) ||
+    schedule.rdates.adapters.some(adapter => adapter.isBefore(start)) ||
+    schedule.exdates.adapters.some(adapter => adapter.isBefore(start))
   ) {
     return [
       'vcalendar',
-      [['x-rschedule-type', {}, 'text', 'SCHEDULE']],
+      [['x-rschedule-type', {}, 'unknown', 'SCHEDULE']],
       [
-        ...schedule.rrules.map(rule => serializeRScheduleToJCal(rule)),
-        ...schedule.exrules.map(rule => serializeRScheduleToJCal(rule)),
-        ...serializeRScheduleToJCal(schedule.rdates),
-        ...serializeRScheduleToJCal(schedule.exdates),
+        ...schedule.rrules.map(rule =>
+          wrapInVEVENT(
+            dateToJCalDTSTART(rule.startDate!),
+            ruleOptionsToJCalProp(
+              rule['dateAdapter'],
+              rule.options as any,
+              'RRULE',
+            ),
+          ),
+        ),
+        ...schedule.exrules.map(rule =>
+          wrapInVEVENT(
+            dateToJCalDTSTART(rule.startDate!),
+            ruleOptionsToJCalProp(
+              rule['dateAdapter'],
+              rule.options as any,
+              'EXRULE',
+            ),
+          ),
+        ),
+        ...(schedule.rdates.dates.length > 0
+          ? serializeToJCal(schedule.rdates)
+          : []),
+        ...(schedule.exdates.dates.length > 0
+          ? serializeToJCal(schedule.exdates)
+          : []),
       ],
     ];
   } else {
     return wrapInVEVENT(
       dateToJCalDTSTART(start),
       ...schedule.rrules.map(rule =>
-        // @ts-ignore
-        ruleOptionsToJCalProp(rule.dateAdapter, rule.options, 'RRULE'),
+        ruleOptionsToJCalProp(
+          rule['dateAdapter'],
+          rule.options as any,
+          'RRULE',
+        ),
       ),
       ...schedule.exrules.map(rule =>
-        // @ts-ignore
-        ruleOptionsToJCalProp(rule.dateAdapter, rule.options, 'EXRULE'),
+        ruleOptionsToJCalProp(
+          rule['dateAdapter'],
+          rule.options as any,
+          'EXRULE',
+        ),
       ),
       ...datesToJCalProps(schedule.rdates, 'RDATE'),
       ...datesToJCalProps(schedule.exdates, 'EXDATE'),
@@ -194,7 +223,7 @@ function calendarToJCal<T extends DateAdapterConstructor>(
   calendar: Calendar<T, any>,
 ) {
   if (calendar.schedules.some(schedule => !Schedule.isSchedule(schedule))) {
-    throw new ICalStringSerializeError(
+    throw new SerializeError(
       `Cannot serialize complex Calendar objects. ` +
         `You can only serialize Calendar objects which are entirely made up ` +
         `of simple Schedule objects. This Calendar contains an OperatorObject ` +
@@ -211,7 +240,7 @@ function calendarToJCal<T extends DateAdapterConstructor>(
       (sched.rrules.some(rrule => rrule.startDate.isEqual(start)) ||
         sched.exrules.some(exrule => exrule.startDate.isEqual(start)))
     ) {
-      throw new ICalStringSerializeError(
+      throw new SerializeError(
         `Cannot serialize complex Calendar objects. ` +
           `You can only serialize Calendar objects which are entirely made up ` +
           `of simple Schedule objects. This Calendar contains a Schedule object ` +
@@ -228,7 +257,7 @@ function calendarToJCal<T extends DateAdapterConstructor>(
   ];
 }
 
-export function serializeRScheduleToJCal<T extends DateAdapterConstructor>(
+export function serializeToJCal<T extends DateAdapterConstructor>(
   ...inputs: Array<
     | Calendar<T, any>
     | Schedule<T>
@@ -252,15 +281,17 @@ export function serializeRScheduleToJCal<T extends DateAdapterConstructor>(
     } else if (RRule.isRRule(input)) {
       return wrapInVEVENT(
         dateToJCalDTSTART(input.startDate!),
-        // @ts-ignore
-        ruleOptionsToJCalProp(input.dateAdapter, input.options as any, 'RRULE'),
+        ruleOptionsToJCalProp(
+          input['dateAdapter'],
+          input.options as any,
+          'RRULE',
+        ),
       );
     } else if (EXRule.isEXRule(input)) {
       return wrapInVEVENT(
         dateToJCalDTSTART(input.startDate!),
         ruleOptionsToJCalProp(
-          // @ts-ignore
-          input.dateAdapter,
+          input['dateAdapter'],
           input.options as any,
           'EXRULE',
         ),
@@ -270,12 +301,12 @@ export function serializeRScheduleToJCal<T extends DateAdapterConstructor>(
     } else if (Calendar.isCalendar(input)) {
       return calendarToJCal(input);
     } else {
-      throw new Error(`Unsupported input type "${input}"`);
+      throw new SerializeError(`Unsupported input type "${input}"`);
     }
   });
 }
 
-export function serializeRScheduleToICal<T extends DateAdapterConstructor>(
+export function serializeToICal<T extends DateAdapterConstructor>(
   ...inputs: Array<
     | Calendar<T, any>
     | Schedule<T>
@@ -285,7 +316,7 @@ export function serializeRScheduleToICal<T extends DateAdapterConstructor>(
     | EXRule<T>
   >
 ): string[] {
-  return serializeRScheduleToJCal(...inputs).map((jcal: any) =>
+  return serializeToJCal(...inputs).map((jcal: any) =>
     // ical.js makes new lines with `\r\n` instead of just `\n`
     // `\r` is a "Carriage Return" character. We'll remove it.
     stringify(jcal).replace(/\r/g, ''),

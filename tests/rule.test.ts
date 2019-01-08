@@ -5,8 +5,7 @@
  */
 
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
-import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
-import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
+import { MomentDateAdapter, MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
 import {
   DateAdapterConstructor,
   IDateAdapter,

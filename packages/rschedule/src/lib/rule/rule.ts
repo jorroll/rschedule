@@ -362,7 +362,7 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
     while (date && (args.take === undefined || index < args.take)) {
       index++;
 
-      const adapter = this.dateAdapter.fromTimeObject(date.toTimeObject())[0];
+      const adapter = this.dateAdapter.fromJSON(date.toJSON());
 
       adapter.generators.push(this);
 

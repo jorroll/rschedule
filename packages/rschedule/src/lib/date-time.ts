@@ -289,24 +289,21 @@ export class DateTime implements IDateAdapter {
     };
   }
 
-  public toICal(): string {
-    const timezone = this.get('timezone');
-
-    if (timezone === 'UTC') {
-      return `${Utils.dateToStandardizedString(this)}Z`;
-    } else if (timezone) {
-      return `TZID=${timezone}:${Utils.dateToStandardizedString(this)}`;
-    } else {
-      return `${Utils.dateToStandardizedString(this)}`;
-    }
-  }
-
   public toISOString() {
     return this.date.toISOString();
   }
 
   public toJSON() {
-    return this.toISOString();
+    return {
+      zone: this.get('timezone'),
+      year: this.get('year'),
+      month: this.get('month'),
+      day: this.get('day'),
+      hour: this.get('hour'),
+      minute: this.get('minute'),
+      second: this.get('second'),
+      millisecond: this.get('millisecond'),
+    };
   }
 
   public toDateTime() {

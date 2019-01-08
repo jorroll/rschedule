@@ -154,13 +154,17 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         );
       });
 
-      it('#toICal()', () => {
-        expect(adapter.toICal({ format: 'local' })).toMatch(
-          /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/,
-        );
-        expect(adapter.toICal({ format: 'UTC' })).toMatch(
-          /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,
-        );
+      it('#toJSON()', () => {
+        expect(adapter.toJSON()).toEqual({
+          zone: undefined,
+          year: 1970,
+          month: 1,
+          day: 1,
+          hour: 1,
+          minute: 1,
+          second: 1,
+          millisecond: 0,
+        });
       });
 
       it('#clone()', () => {

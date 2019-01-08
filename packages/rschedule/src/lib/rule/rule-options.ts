@@ -5,6 +5,7 @@ import {
   DateProp,
   IDateAdapter,
   IDateAdapterConstructor,
+  IDateAdapterJSON,
 } from '../date-adapter';
 import { DateTime } from '../date-time';
 
@@ -19,16 +20,27 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
   // hack to trick typescript into inferring the correct types
   const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any;
 
-  const start = DateAdapterBase.isInstance(options.start)
-    ? options.start
-    : new dateAdapter(options.start);
+  const start =
+    // prettier-ignore
+    DateAdapterBase.isInstance(options.start) ? options.start :
+    dateAdapter.isDate(options.start) ? new dateAdapter(options.start) :
+    dateAdapter.fromJSON(options.start);
 
   let until: DateAdapter<T> | undefined;
 
   if (options.until) {
-    until = DateAdapterBase.isInstance(options.until)
-      ? options.until.set('timezone', start.get('timezone'))
-      : new dateAdapter(options.until).set('timezone', start.get('timezone'));
+    if (DateAdapterBase.isInstance(options.until)) {
+      until = options.until.set('timezone', start.get('timezone'));
+    } else if (dateAdapter.isDate(options.until)) {
+      until = new dateAdapter(options.until).set(
+        'timezone',
+        start.get('timezone'),
+      );
+    } else {
+      until = dateAdapter
+        .fromJSON(options.until)
+        .set('timezone', start.get('timezone'));
+    }
   }
 
   if (options.interval !== undefined && options.interval < 1) {
@@ -232,7 +244,7 @@ export namespace Options {
     | [IDateAdapter.Weekday, number];
 
   export interface ProvidedOptions<T extends DateAdapterConstructor> {
-    start: DateProp<T> | DateAdapter<T>;
+    start: DateProp<T> | DateAdapter<T> | IDateAdapterJSON;
     frequency: Frequency;
     interval?: number;
     bySecondOfMinute?: BySecondOfMinute[];
@@ -241,7 +253,7 @@ export namespace Options {
     byDayOfWeek?: ByDayOfWeek[];
     byDayOfMonth?: ByDayOfMonth[];
     byMonthOfYear?: ByMonthOfYear[];
-    until?: DateProp<T> | DateAdapter<T>;
+    until?: DateProp<T> | DateAdapter<T> | IDateAdapterJSON;
     count?: number;
     weekStart?: IDateAdapter.Weekday;
   }
