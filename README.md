@@ -1,6 +1,10 @@
 # rSchedule
 
+**Still pre-1.0 release**
+
 A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol.
+
+At this point, the library's core functionality is feature complete and *fairly* stable, though I'm still tweaking it in places ahead of a 1.0 release as I dog food it in my own app. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule). 
 
 **[See the wiki page for more info.](https://gitlab.com/john.carroll.p/rschedule/wikis/home#installation)**
 
