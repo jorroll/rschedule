@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/standard-date-adapter",
-  "version": "0.4.1",
+  "version": "0.7.0",
   "description": "An rSchedule DateAdapter for the standard javascript Date object.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
@@ -39,7 +39,7 @@
     "@rschedule/rschedule": "^0.6.0"
   },
   "devDependencies": {
-    "typescript": "^2.9.1",
-    "trash-cli": "^1.4.0"
+    "trash-cli": "^1.4.0",
+    "typescript": "^2.9.1"
   }
 }
