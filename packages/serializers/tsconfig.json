@@ -1,12 +1,11 @@
 {
   "extends": "../../tsconfig",
   "compilerOptions": {
-    "outDir": "build/main",
     "rootDir": "src",
-    "lib": ["es2017", "dom"],
+    "outDir": "build/main",
+    "declarationDir": "build/main",
     "paths": {},
-    "typeRoots": ["node_modules/@types", "src/types"]
+    "downlevelIteration": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules/**"]
+  "include": ["src/**/*.ts"]
 }

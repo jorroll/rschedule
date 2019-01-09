@@ -3,30 +3,22 @@
     "baseUrl": "./",
     "rootDir": ".",
     "target": "es5",
-    "module": "es2015",
-    "lib": ["es2015", "es2016", "es2017", "dom"],
+    "module": "commonjs",
+    "lib": ["es2017", "dom"],
     "strict": true,
-    "sourceMap": true,
     "declaration": true,
     "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "declarationDir": "dist/types",
-    "outDir": "dist/lib",
-    "typeRoots": ["node_modules/@types"],
-    "downlevelIteration": true,
+    "moduleResolution": "node",
+    "typeRoots": ["node_modules/@types", "src/types"],
     "paths": {
       "@rschedule/serializers/ical": ["packages/serializers/src/lib/ical"],
       "@rschedule/serializers/json": ["packages/serializers/src/lib/json"],
       "@rschedule/*": ["packages/*/src"]
     },
-    "moduleResolution": "node",
-    "traceResolution": false /* Report module resolution log messages. */,
-    "listEmittedFiles": false /* Print names of generated files part of the compilation. */,
-    "listFiles": false /* Print names of files part of the compilation. */,
-    "pretty": true /* Stylize errors and messages using color and context. */
+    "inlineSourceMap": true,
+    "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
   },
   "include": ["packages", "tests"],
-  "exclude": ["tmp"],
+  "exclude": ["node_modules/**", "tmp"],
   "compileOnSave": false
 }
