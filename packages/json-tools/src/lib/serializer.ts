@@ -17,7 +17,8 @@ import {
   Schedule,
   Utils,
 } from '@rschedule/rschedule';
-import { SerializeError } from '../shared';
+
+export class SerializeJSONError extends Error {}
 
 export interface IOptionsJSON {
   start: IDateAdapterJSON;
@@ -120,11 +121,11 @@ export function serializeToJSON<T extends DateAdapterConstructor>(
         type,
         options: serializeOptionsToJSON(
           input.options,
-          (input as any)['dateAdapter'],
+          (input as any).dateAdapter,
         ),
       };
     } else {
-      throw new SerializeError(`Unknown input type "${input}"`);
+      throw new SerializeJSONError(`Unknown input type "${input}"`);
     }
   });
 

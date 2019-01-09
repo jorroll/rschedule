@@ -1,4 +1,7 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["packages", "tests"]
+  "include": ["packages", "tests"],
+  "compilerOptions": {
+    "downlevelIteration": true
+  }
 }

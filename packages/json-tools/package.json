@@ -1,7 +1,7 @@
 {
-  "name": "@rschedule/serializers",
-  "version": "0.7.0",
-  "description": "Utility functions for parsing/serializing rSchedule objects in various formats.",
+  "name": "@rschedule/json-tools",
+  "version": "0.0.1",
+  "description": "Utility functions for parsing/serializing rSchedule objects in JSON format.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
   "bugs": "https://gitlab.com/john.carroll.p/rschedule/issues",

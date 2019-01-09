@@ -14,7 +14,8 @@ import {
   Utils,
 } from '@rschedule/rschedule';
 import { stringify } from 'ical.js';
-import { SerializeError } from '../shared';
+
+export class SerializeICalError extends Error {}
 
 /**
  * Serializes an array of date adapters into JCal format.
@@ -223,7 +224,7 @@ function calendarToJCal<T extends DateAdapterConstructor>(
   calendar: Calendar<T, any>,
 ) {
   if (calendar.schedules.some(schedule => !Schedule.isSchedule(schedule))) {
-    throw new SerializeError(
+    throw new SerializeICalError(
       `Cannot serialize complex Calendar objects. ` +
         `You can only serialize Calendar objects which are entirely made up ` +
         `of simple Schedule objects. This Calendar contains an OperatorObject ` +
@@ -240,7 +241,7 @@ function calendarToJCal<T extends DateAdapterConstructor>(
       (sched.rrules.some(rrule => rrule.startDate.isEqual(start)) ||
         sched.exrules.some(exrule => exrule.startDate.isEqual(start)))
     ) {
-      throw new SerializeError(
+      throw new SerializeICalError(
         `Cannot serialize complex Calendar objects. ` +
           `You can only serialize Calendar objects which are entirely made up ` +
           `of simple Schedule objects. This Calendar contains a Schedule object ` +
@@ -301,7 +302,7 @@ export function serializeToJCal<T extends DateAdapterConstructor>(
     } else if (Calendar.isCalendar(input)) {
       return calendarToJCal(input);
     } else {
-      throw new SerializeError(`Unsupported input type "${input}"`);
+      throw new SerializeICalError(`Unsupported input type "${input}"`);
     }
   });
 }

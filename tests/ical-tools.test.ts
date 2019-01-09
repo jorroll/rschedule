@@ -1,11 +1,11 @@
-import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
-import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
-import { Schedule, Utils } from '@rschedule/rschedule';
 import {
   parseICal,
   serializeToICal,
   serializeToJCal,
-} from '@rschedule/serializers/ical';
+} from '@rschedule/ical-tools';
+import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
+import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
+import { Schedule, Utils } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime } from 'luxon';
 import moment from 'moment-timezone';
@@ -21,7 +21,7 @@ import {
   parseINTERVAL,
   parseUNTIL,
   parseWKST,
-} from '../packages/serializers/src/lib/ical/parser';
+} from '../packages/ical-tools/src/lib/parser';
 import { test } from './utilities';
 
 const VCALENDAR_STRING = `BEGIN:VCALENDAR
@@ -578,7 +578,7 @@ describe('StandardDateAdapter()', () => {
     });
   });
 
-  describe('deserializes | serializes | deserializes', () => {
+  it('deserializes | serializes | deserializes', () => {
     const ical = [
       'BEGIN:VEVENT',
       'DTSTART:20101010T000000',
@@ -589,14 +589,12 @@ describe('StandardDateAdapter()', () => {
       .join('\n')
       .concat('\n');
 
-    it('works', () => {
-      const parsed = parseICal(ical, StandardDateAdapter)[0]
-        .events[0] as Schedule<typeof StandardDateAdapter>;
+    const parsed = parseICal(ical, StandardDateAdapter)[0]
+      .events[0] as Schedule<typeof StandardDateAdapter>;
 
-      const serialized = serializeToICal(parsed)[0];
+    const serialized = serializeToICal(parsed)[0];
 
-      expect(serialized).toBe(ical);
-    });
+    expect(serialized).toBe(ical);
   });
 });
 

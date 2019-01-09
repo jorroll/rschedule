@@ -10,7 +10,8 @@ import {
   Utils,
 } from '@rschedule/rschedule';
 import { parse } from 'ical.js';
-import { ParseError } from '../shared';
+
+export class ParseICalError extends Error {}
 
 const LINE_REGEX = /^.*\n?/;
 
@@ -81,7 +82,7 @@ export function parseICal<T extends DateAdapterConstructor>(
     try {
       parsedICal = parse(ical);
     } catch (e) {
-      throw new ParseError(e.message);
+      throw new ParseICalError(e.message);
     }
 
     const processedICal = processParsedICalString(
@@ -255,7 +256,7 @@ function processParsedVEvent<T extends DateAdapterConstructor>(
   );
 
   if (dtstartIndex === -1) {
-    throw new ParseError(
+    throw new ParseICalError(
       `Invalid VEVENT component: "DTSTART" property missing.`,
     );
   }
@@ -272,7 +273,7 @@ function processParsedVEvent<T extends DateAdapterConstructor>(
   input[1].forEach(property => {
     switch (property[0]) {
       case 'dtstart':
-        throw new ParseError(
+        throw new ParseICalError(
           `Invalid VEVENT component: must have exactly 1 "DTSTART" property.`,
         );
       case 'rrule':
@@ -318,9 +319,7 @@ function processParsedVEvent<T extends DateAdapterConstructor>(
   return params;
 }
 
-function parseJCalDateTime(
-  input: IParsedICalProperty,
-): IDateAdapterJSON[] {
+function parseJCalDateTime(input: IParsedICalProperty): IDateAdapterJSON[] {
   input = Utils.clone(input);
 
   input.shift();
@@ -338,14 +337,16 @@ function parseJCalDateTime(
   } else if (type === 'time') {
     regex = /^(\d{2}):(\d{2}):(\d{2})/;
   } else {
-    throw new ParseError(`Invalid date/time property value type "${type}".`);
+    throw new ParseICalError(
+      `Invalid date/time property value type "${type}".`,
+    );
   }
 
   input.forEach((value: string) => {
     const match = value.match(regex);
 
     if (!(match && match.shift())) {
-      throw new ParseError(`Invalid date/time value "${input}"`);
+      throw new ParseICalError(`Invalid date/time value "${input}"`);
     }
 
     const result = {
@@ -398,13 +399,13 @@ export function processDTSTART<T extends DateAdapterConstructor>(
   const type = input[2];
 
   if (!['date-time', 'date'].includes(type)) {
-    throw new ParseError(`Invalid DTSTART value type "${type}".`);
+    throw new ParseICalError(`Invalid DTSTART value type "${type}".`);
   }
 
   const dates = convertJCalDateTimeToDate(input, dateAdapterConstructor);
 
   if (dates.length !== 1) {
-    throw new ParseError(`Invalid DTSTART: must have exactly 1 value.`);
+    throw new ParseICalError(`Invalid DTSTART: must have exactly 1 value.`);
   }
 
   return dates[0];
@@ -416,7 +417,7 @@ export function processRRULE<T extends DateAdapterConstructor>(
   dtstart: IDtstartProperty<T>,
 ): Options.ProvidedOptions<T> {
   if (!(input[3] && input[3].freq)) {
-    throw new ParseError(
+    throw new ParseICalError(
       `Invalid RRULE property: must contain a "FREQ" value.`,
     );
   }
@@ -481,7 +482,7 @@ export function parseFrequency(text: string) {
       'YEARLY',
     ].includes(text)
   ) {
-    throw new ParseError(`Invalid FREQ value "${text}"`);
+    throw new ParseICalError(`Invalid FREQ value "${text}"`);
   } else {
     return text as Options.Frequency;
   }
@@ -501,14 +502,14 @@ export function parseUNTIL<T extends DateAdapterConstructor>(
   );
 
   if (until.length !== 1) {
-    throw new ParseError(
+    throw new ParseICalError(
       `Invalid RRULE "UNTIL" property. Must specify one value.`,
     );
   } else if (
     new dateAdapterConstructor(until[0]).valueOf() <
     new dateAdapterConstructor(dtstart.processedValue).valueOf()
   ) {
-    throw new ParseError(
+    throw new ParseICalError(
       `Invalid RRULE "UNTIL" property. ` +
         `"UNTIL" value cannot be less than "DTSTART" value.`,
     );
@@ -519,14 +520,14 @@ export function parseUNTIL<T extends DateAdapterConstructor>(
 
 export function parseCOUNT(int: number) {
   if (typeof int !== 'number' || isNaN(int) || int < 1) {
-    throw new ParseError(`Invalid COUNT value "${int}"`);
+    throw new ParseICalError(`Invalid COUNT value "${int}"`);
   }
   return int;
 }
 
 export function parseINTERVAL(int: number) {
   if (typeof int !== 'number' || isNaN(int) || int < 1) {
-    throw new ParseError(`Invalid INTERVAL value "${int}"`);
+    throw new ParseICalError(`Invalid INTERVAL value "${int}"`);
   }
   return int;
 }
@@ -538,7 +539,7 @@ export function parseBYSECOND(input: number | number[]) {
 
   input.forEach(int => {
     if (typeof int !== 'number' || isNaN(int) || int < 0 || int > 60) {
-      throw new ParseError(`Invalid BYSECOND value "${int}"`);
+      throw new ParseICalError(`Invalid BYSECOND value "${int}"`);
     }
   });
 
@@ -552,7 +553,7 @@ export function parseBYMINUTE(input: number | number[]) {
 
   input.forEach(int => {
     if (typeof int !== 'number' || isNaN(int) || int < 0 || int > 59) {
-      throw new ParseError(`Invalid BYMINUTE value "${int}"`);
+      throw new ParseICalError(`Invalid BYMINUTE value "${int}"`);
     }
   });
 
@@ -566,7 +567,7 @@ export function parseBYHOUR(input: number | number[]) {
 
   input.forEach(int => {
     if (typeof int !== 'number' || isNaN(int) || int < 0 || int > 23) {
-      throw new ParseError(`Invalid BYHOUR value "${int}"`);
+      throw new ParseICalError(`Invalid BYHOUR value "${int}"`);
     }
   });
 
@@ -592,12 +593,12 @@ export function parseBYDAY(input: string | string[]) {
       }
 
       if (!Utils.WEEKDAYS.includes(weekday as any)) {
-        throw new ParseError(`Invalid BYDAY value "${text}"`);
+        throw new ParseICalError(`Invalid BYDAY value "${text}"`);
       }
 
       return [weekday, int] as [IDateAdapter.Weekday, number];
     } else if (!Utils.WEEKDAYS.includes(text as any)) {
-      throw new ParseError(`Invalid BYDAY value "${text}"`);
+      throw new ParseICalError(`Invalid BYDAY value "${text}"`);
     } else {
       return text as IDateAdapter.Weekday;
     }
@@ -617,7 +618,7 @@ export function parseBYMONTHDAY(input: number | number[]) {
       int < -31 ||
       int > 31
     ) {
-      throw new ParseError(`Invalid BYMONTHDAY value "${int}"`);
+      throw new ParseICalError(`Invalid BYMONTHDAY value "${int}"`);
     }
   });
 
@@ -636,7 +637,7 @@ export function parseBYMONTH(input: number | number[]) {
 
   input.forEach(int => {
     if (typeof int !== 'number' || isNaN(int) || int < 1 || int > 12) {
-      throw new ParseError(`Invalid BYMONTH value "${int}"`);
+      throw new ParseICalError(`Invalid BYMONTH value "${int}"`);
     }
   });
 
@@ -655,7 +656,7 @@ export function parseBYSETPOS(input: any) {
 
 export function parseWKST(input: number) {
   if (typeof input !== 'number' || input > 7 || input < 1) {
-    throw new ParseError(`Invalid WKST value "${input}"`);
+    throw new ParseICalError(`Invalid WKST value "${input}"`);
   }
 
   return Utils.WEEKDAYS[input - 1];

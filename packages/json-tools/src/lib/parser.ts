@@ -4,12 +4,13 @@ import {
   EXDates,
   EXRule,
   IDateAdapterConstructor,
-  Options,
   RDates,
   RRule,
   Schedule,
 } from '@rschedule/rschedule';
-import { ParseError } from '../shared';
+
+export class ParseJSONError extends Error {}
+
 import { RScheduleObject, RScheduleObjectJSON } from './serializer';
 
 export function parseJSON<T extends DateAdapterConstructor>(
@@ -64,11 +65,13 @@ export function parseJSON<T extends DateAdapterConstructor>(
             dateAdapter: dateAdapterConstructor,
           });
         default:
-          throw new ParseError(`Unknown input type "${(json as any).type}"`);
+          throw new ParseJSONError(
+            `Unknown input type "${(json as any).type}"`,
+          );
       }
     });
   } catch (e) {
-    throw new ParseError(e);
+    throw new ParseJSONError(e);
   }
 
   if (result.length < 2) {

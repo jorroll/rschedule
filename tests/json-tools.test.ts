@@ -1,8 +1,6 @@
+import { parseJSON } from '@rschedule/json-tools';
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
-import {
-  MomentDateAdapter,
-  MomentTZDateAdapter,
-} from '@rschedule/moment-date-adapter';
+import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
 import {
   DateAdapterConstructor,
   EXDates,
@@ -12,16 +10,13 @@ import {
   RRule,
   Schedule,
 } from '@rschedule/rschedule';
-import { parseJSON } from '@rschedule/serializers/json';
-import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime } from 'luxon';
-import { buildValidatedRuleOptions } from '../packages/rschedule/src/lib/rule';
 import {
   IEXRuleJSON,
   IRRuleJSON,
   RScheduleObjectJSON,
   serializeToJSON,
-} from '../packages/serializers/src/lib/json/serializer';
+} from '../packages/json-tools/src/lib/serializer';
 import { environment, test } from './utilities';
 
 const rruleJSON1 = {
@@ -153,11 +148,6 @@ const scheduleJSON = {
   exrules: [],
   rdates: rdatesJSON,
   exdates: exdatesJSON,
-};
-
-const calendarJSON = {
-  type: 'Calendar',
-  schedules: [scheduleJSON],
 };
 
 describe('parseJSON()', () => {
