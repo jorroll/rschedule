@@ -2,7 +2,6 @@ import {
   DateAdapterBase,
   IDateAdapter,
   IDateAdapterJSON,
-  ParsedDatetime,
   Utils,
 } from '@rschedule/rschedule';
 import { DateTime } from 'luxon';

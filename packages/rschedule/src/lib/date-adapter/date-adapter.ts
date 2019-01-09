@@ -1,10 +1,3 @@
-export type ParsedDatetime =
-  | [number, number, number, number, number, number, number]
-  | [number, number, number, number, number, number]
-  | [number, number, number, number, number]
-  | [number, number, number, number]
-  | [number, number, number];
-
 export interface IDateAdapterJSON {
   zone: string | undefined;
   year: number;

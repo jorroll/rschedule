@@ -1,4 +1,4 @@
-import { IDateAdapter, ParsedDatetime } from './date-adapter';
+import { IDateAdapter } from './date-adapter';
 // import { Rule } from './rule'
 // import { Dates } from './dates'
 // import { Schedule } from './schedule'
@@ -267,26 +267,6 @@ export class DateTime implements IDateAdapter {
     this.assertIsValid(context);
 
     return this;
-  }
-
-  public toTimeObject(): {
-    datetimes: ParsedDatetime[];
-    timezone: string | undefined;
-  } {
-    return {
-      datetimes: [
-        [
-          this.get('year'),
-          this.get('month'),
-          this.get('day'),
-          this.get('hour'),
-          this.get('minute'),
-          this.get('second'),
-          this.get('millisecond'),
-        ],
-      ],
-      timezone: this.get('timezone'),
-    };
   }
 
   public toISOString() {
