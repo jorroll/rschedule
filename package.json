@@ -23,8 +23,7 @@
     "test:prod": "yarn lint && yarn test --coverage --no-cache",
     "format": "prettier-tslint fix packages/**/src/**/**/**/**/*.ts tests/**/**/**/**/**/*.ts",
     "clean:build": "trash packages/*/build",
-    "clean:modules": "trash yarn.lock node_modules packages/*/node_modules",
-    "publish": "lerna publish"
+    "clean:modules": "trash yarn.lock node_modules packages/*/node_modules"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
