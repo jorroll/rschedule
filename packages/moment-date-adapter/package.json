@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/moment-date-adapter",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "An rSchedule DateAdapter for \"moment\" date objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
@@ -43,7 +43,7 @@
     "moment-timezone": "^0.5.21"
   },
   "devDependencies": {
-    "@rschedule/rschedule": "^0.6.0",
+    "@rschedule/rschedule": "^0.6.4",
     "moment-timezone": "^0.5.21",
     "typescript": "^2.9.1"
   }
