@@ -7,7 +7,6 @@
     "packages/*"
   ],
   "scripts": {
-    "bootstrap": "lerna bootstrap --use-workspaces",
     "build": "yarn clean:build && run-p first:rschedule:* && run-p build:*:*",
     "first:rschedule:main": "tsc -p packages/rschedule/tsconfig.json",
     "first:rschedule:module": "tsc -p packages/rschedule/tsconfig.module.json",

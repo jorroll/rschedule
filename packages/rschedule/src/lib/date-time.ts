@@ -5,8 +5,6 @@ import { IDateAdapter, ParsedDatetime } from './date-adapter';
 // import { Calendar } from './calendar'
 import { Utils } from './utilities';
 
-import { addMilliseconds } from 'date-fns';
-
 export const DATETIME_ID = Symbol.for('b1231462-3560-4770-94f0-d16295d5965c');
 
 interface ComparisonObject {
@@ -348,6 +346,12 @@ export namespace DateTime {
  * These functions are basically lifted from `date-fns`, but changed
  * to use the UTC date methods, which `date-fns` doesn't support.
  */
+
+export function addMilliseconds(date: Date, input: number) {
+  const timestamp = date.getTime()
+  const amount = toInteger(input)
+  return new Date(timestamp + amount)
+}
 
 export function toInteger(input: any) {
   if (input === null || input === true || input === false) {

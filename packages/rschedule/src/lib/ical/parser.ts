@@ -1,4 +1,3 @@
-import { ICalStringParseError } from '@rschedule/ical-tools'
 import {
   DateAdapter,
   DateAdapterConstructor,
@@ -9,7 +8,7 @@ import {
 import { Options } from '../rule/rule-options'
 import { Utils } from '../utilities'
 
-export { ICalStringParseError }
+export class ICalStringParseError extends Error {}
 
 const UNIMPLEMENTED_RULE_OPTION =
   'rule option is unsupported by rSchedule ' +
