@@ -7,8 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "bootstrap": "lerna bootstrap --use-workspaces",
-    "build": "run-p build:*:*",
+    "build": "yarn clean:build && run-p first:rschedule:* && run-p build:*:*",
+    "first:rschedule:main": "tsc -p packages/rschedule/tsconfig.json",
+    "first:rschedule:module": "tsc -p packages/rschedule/tsconfig.module.json",
     "build:standard-date-adapter:main": "tsc -p packages/standard-date-adapter/tsconfig.json",
     "build:standard-date-adapter:module": "tsc -p packages/standard-date-adapter/tsconfig.module.json",
     "build:luxon-date-adapter:main": "tsc -p packages/luxon-date-adapter/tsconfig.json",
@@ -17,14 +18,13 @@
     "build:moment-date-adapter:module": "tsc -p packages/moment-date-adapter/tsconfig.module.json",
     "build:ical-tools:main": "tsc -p packages/ical-tools/tsconfig.json",
     "build:ical-tools:module": "tsc -p packages/ical-tools/tsconfig.module.json",
-    "build:rschedule:main": "tsc -p packages/rschedule/tsconfig.json",
-    "build:rschedule:module": "tsc -p packages/rschedule/tsconfig.module.json",
     "test": "jest --config './jest.config.json'",
     "test:watch": "jest --config './jest.config.json' --watch",
     "test:prod": "yarn lint && yarn test --coverage --no-cache",
     "format": "prettier-tslint fix packages/**/src/**/**/**/**/*.ts tests/**/**/**/**/**/*.ts",
     "clean:build": "trash packages/*/build",
-    "clean:modules": "trash yarn.lock node_modules packages/*/node_modules"
+    "clean:modules": "trash yarn.lock node_modules packages/*/node_modules",
+    "publish": "lerna publish"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
@@ -36,7 +36,6 @@
     "@types/moment": "^2.13.0",
     "@types/moment-timezone": "^0.5.7",
     "@types/node": "^10.0.3",
-    "date-fns": "^1.29.0",
     "jest": "^22.0.2",
     "lerna": "^3.0.1",
     "luxon": "^1.3.3",
