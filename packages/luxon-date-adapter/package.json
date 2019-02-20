@@ -40,6 +40,8 @@
     "luxon": "^1.3.3"
   },
   "devDependencies": {
+    "@rschedule/rschedule": "^0.6.0",
+    "luxon": "^1.3.3",
     "typescript": "^2.9.1"
   }
 }

@@ -38,6 +38,7 @@
     "@rschedule/rschedule": "^0.6.0"
   },
   "devDependencies": {
+    "@rschedule/rschedule": "^0.6.0",
     "typescript": "^2.9.1"
   }
 }
