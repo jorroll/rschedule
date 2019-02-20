@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/rschedule",
-  "version": "0.6.1",
+  "version": "0.5.6-alpha.23+af12c78",
   "description": "A typescript library for working with recurring dates and events.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
@@ -42,5 +42,6 @@
   },
   "devDependencies": {
     "typescript": "^2.9.1"
-  }
+  },
+  "gitHead": "af12c78b7f598ad0dfe8c366dfd6c7b45486c6f3"
 }
