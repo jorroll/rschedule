@@ -59,49 +59,6 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
       this.processedOptions.end === undefined && this.processedOptions.count === undefined;
   }
 
-  // /**
-  //  * Returns the `options.start` date.
-  //  */
-  // startDate(): ConstructorReturnType<T> | null;
-  // startDate<R extends boolean>(options?: {
-  //   datetime?: R;
-  // }): R extends true ? DateTime : ConstructorReturnType<T> | null;
-  // startDate(options: { datetime?: boolean } = {}): DateTime | ConstructorReturnType<T> | null {
-  //   if (options.datetime) {
-  //     return this.processedOptions.start;
-  //   }
-
-  //   return this.dateAdapter.fromJSON(this.processedOptions.start.toJSON()) as ConstructorReturnType<
-  //     T
-  //   >;
-  // }
-
-  // /**
-  //  * If generator is infinite, returns `undefined`.
-  //  * If an end date is set, returns the end date.
-  //  * If a count is set, returns the last date or null.
-  //  */
-
-  // endDate(): ConstructorReturnType<T> | undefined | null;
-  // endDate<R extends boolean>(options?: {
-  //   datetime?: R;
-  // }): R extends true ? DateTime | null : ConstructorReturnType<T> | undefined | null;
-  // endDate(
-  //   options: { datetime?: boolean } = {},
-  // ): DateTime | ConstructorReturnType<T> | undefined | null {
-  //   if (this.isInfinite) {
-  //     return;
-  //   } else if (this.processedOptions.end) {
-  //     return options.datetime
-  //       ? this.processedOptions.end
-  //       : (this.dateAdapter.fromJSON(this.processedOptions.end.toJSON()) as ConstructorReturnType<
-  //           T
-  //         >);
-  //   }
-
-  //   return this.lastDate(options);
-  // }
-
   /**
    * Allows you to change the timezone that dates are output in.
    *

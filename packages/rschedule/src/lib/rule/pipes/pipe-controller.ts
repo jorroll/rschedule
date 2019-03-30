@@ -27,36 +27,18 @@ export class PipeController implements IPipeController {
     return this.pipes[0] as FrequencyPipe | RevFrequencyPipe;
   }
 
-  // to conform to the `RunnableIterator` interface
-  get startDate() {
-    return this.start;
-  }
-
-  // to conform to the `RunnableIterator` interface
-  get endDate() {
-    if (this.isInfinite) {
-      return null;
-    }
-    if (this.end) {
-      return this.end;
-    }
-    return null;
-  }
-
-  get isInfinite() {
-    return !this.end && this.options.count === undefined;
-  }
-
   readonly start!: DateTime;
   readonly end?: DateTime;
   readonly reverse: boolean;
+  readonly isInfinite: boolean;
+  readonly hasDuration: boolean;
 
   private readonly reversePipes: boolean;
-  private pipes: IPipeRule[] = [];
+  private readonly pipes: IPipeRule[] = [];
 
   constructor(
     readonly options: INormalizedRuleOptions,
-    private args: { start?: DateTime; end?: DateTime; reverse?: boolean },
+    private readonly args: { start?: DateTime; end?: DateTime; reverse?: boolean },
   ) {
     this.reverse = !!args.reverse;
     this.reversePipes = (this.options.count === undefined && args.reverse) || false;
@@ -80,13 +62,14 @@ export class PipeController implements IPipeController {
     }
 
     if (this.reverse && !(options.count || this.end)) {
-      // Decided not to allow a `take` argument to fulfil the `count` requirement because
-      // `take` is handled upstream and dealing with it would be a hassel.
       throw new ArgumentError(
         'When iterating in reverse, the rule must have an `end` or `count` ' +
           'property or you must provide an `end` argument.',
       );
     }
+
+    this.isInfinite = !this.end && this.options.count === undefined;
+    this.hasDuration = !!this.options.duration;
 
     this.initialize();
   }
@@ -319,15 +302,6 @@ export class PipeController implements IPipeController {
   }
 
   private normalizeRunOutput(date: DateTime) {
-    const duration = this.options.duration;
-
-    if (duration) {
-      return DateTime.fromJSON({
-        ...date.toJSON(),
-        duration,
-      });
-    }
-
-    return date;
+    return this.hasDuration ? date.set('duration', this.options.duration!) : date;
   }
 }
