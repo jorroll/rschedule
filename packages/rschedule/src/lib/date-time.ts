@@ -17,6 +17,11 @@ export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24;
 export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
 
 export interface IDateAdapter<D = unknown> {
+  /** Returns the date object this DateAdapter is wrapping */
+  readonly date: unknown;
+  readonly timezone: string | undefined;
+  readonly duration: number | undefined;
+
   /**
    * This property contains an ordered array of the generator objects
    * responsible for producing this IDateAdapter.
@@ -30,14 +35,27 @@ export interface IDateAdapter<D = unknown> {
    *   array will contain, at minimum, the `Calendar`, `Schedule`, and
    *   `RRule`/`RDates` objects which generated it.
    */
-  generators: any[];
+  readonly generators: unknown[];
 
-  /** Returns the date object this IDateAdapter is wrapping */
-  date: D;
+  valueOf(): number;
 
-  timezone?: string;
+  toISOString(): string;
+
+  isEqual(object?: IDateAdapter | DateTime): boolean;
+
+  isBefore(object: IDateAdapter | DateTime): boolean;
+
+  isBeforeOrEqual(object: IDateAdapter | DateTime): boolean;
+
+  isAfter(object: IDateAdapter | DateTime): boolean;
+
+  isAfterOrEqual(object: IDateAdapter | DateTime): boolean;
 
   toDateTime(): DateTime;
+
+  toJSON(): IDateAdapter.JSON;
+
+  assertIsValid(): boolean;
 }
 
 export namespace IDateAdapter {
@@ -123,7 +141,7 @@ export class DateTime implements IDateAdapter<unknown> {
 
   // While we constrain the argument to be another DateAdapter in typescript
   // we handle the case of someone passing in another type of object in javascript
-  isEqual(object?: DateTime): boolean {
+  isEqual(object?: DateTime | IDateAdapter): boolean {
     if (!object) {
       return false;
     }
@@ -133,31 +151,31 @@ export class DateTime implements IDateAdapter<unknown> {
     return this.valueOf() === object.valueOf();
   }
 
-  isBefore(object: DateTime): boolean {
+  isBefore(object: DateTime | IDateAdapter): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() < object.valueOf();
   }
 
-  isBeforeOrEqual(object: DateTime): boolean {
+  isBeforeOrEqual(object: DateTime | IDateAdapter): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() <= object.valueOf();
   }
 
-  isAfter(object: DateTime): boolean {
+  isAfter(object: DateTime | IDateAdapter): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() > object.valueOf();
   }
 
-  isAfterOrEqual(object: DateTime): boolean {
+  isAfterOrEqual(object: DateTime | IDateAdapter): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() >= object.valueOf();
   }
 
-  isOccurring(object: DateTime) {
+  isOccurring(object: DateTime | IDateAdapter) {
     if (!this.duration) {
       throw new Error('DateTime#isOccurring() is only applicable to DateTimes with durations');
     }
@@ -391,10 +409,14 @@ export class DateTime implements IDateAdapter<unknown> {
   }
 }
 
-function assertSameTimeZone(x: DateTime, y: DateTime) {
+function assertSameTimeZone(x: DateTime | IDateAdapter, y: DateTime | IDateAdapter) {
   if (x.timezone !== y.timezone) {
-    console.log('timezone failed', x, y);
-    throw new ArgumentError();
+    throw new InvalidDateTimeError(
+      'Attempted to compare a datetime to another date in a different timezone: ' +
+        JSON.stringify(x) +
+        ' and ' +
+        JSON.stringify(y),
+    );
   }
 
   return true;

@@ -124,17 +124,114 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
     this.isInfinite = this.rrules.some(rule => rule.isInfinite);
   }
 
-  set(_: 'timezone', value: string | undefined) {
-    if (value === this.timezone) return this;
+  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
+  add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule<T, unknown> | DateInput<T>) {
+    const rrules = this.rrules.slice();
+    const exrules = this.exrules.slice();
+    let rdates = this.rdates;
+    let exdates = this.exdates;
+
+    switch (prop) {
+      case 'rrule':
+        rrules.push(value as Rule<T, unknown>);
+        break;
+      case 'exrule':
+        exrules.push(value as Rule<T, unknown>);
+        break;
+      case 'rdate':
+        rdates = this.rdates.add(value as DateInput<T>);
+        break;
+      case 'exdate':
+        exdates = this.exdates.add(value as DateInput<T>);
+        break;
+    }
 
     return new Schedule({
       dateAdapter: this.dateAdapter,
       timezone: this.timezone,
       data: this.data,
-      rrules: this.rrules,
-      exrules: this.exrules,
-      rdates: this.rdates,
-      exdates: this.exdates,
+      rrules,
+      exrules,
+      rdates,
+      exdates,
+    });
+  }
+
+  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
+  remove(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule<T, unknown> | DateInput<T>) {
+    let rrules = this.rrules;
+    let exrules = this.exrules;
+    let rdates = this.rdates;
+    let exdates = this.exdates;
+
+    switch (prop) {
+      case 'rrule':
+        rrules = rrules.filter(rule => rule !== value);
+        break;
+      case 'exrule':
+        exrules = exrules.filter(rule => rule !== value);
+        break;
+      case 'rdate':
+        rdates = this.rdates.remove(value as DateInput<T>);
+        break;
+      case 'exdate':
+        exdates = this.exdates.remove(value as DateInput<T>);
+        break;
+    }
+
+    return new Schedule({
+      dateAdapter: this.dateAdapter,
+      timezone: this.timezone,
+      data: this.data,
+      rrules,
+      exrules,
+      rdates,
+      exdates,
+    });
+  }
+
+  set(prop: 'timezone', value: string | undefined): Schedule<T, D>;
+  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): Schedule<T, D>;
+  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): Schedule<T, D>;
+  set(
+    prop: 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
+    value: string | undefined | Rule<T, unknown>[] | Dates<T, unknown>,
+  ) {
+    let timezone = this.timezone;
+    let rrules = this.rrules;
+    let exrules = this.exrules;
+    let rdates = this.rdates;
+    let exdates = this.exdates;
+
+    switch (prop) {
+      case 'timezone':
+        if (value === this.timezone) return this;
+        timezone = value as string | undefined;
+        break;
+      case 'rrules':
+        rrules = value as Rule<T, unknown>[];
+        break;
+      case 'exrules':
+        exrules = value as Rule<T, unknown>[];
+        break;
+      case 'rdates':
+        rdates = value as Dates<T, unknown>;
+        break;
+      case 'exdates':
+        exdates = value as Dates<T, unknown>;
+        break;
+    }
+
+    return new Schedule({
+      dateAdapter: this.dateAdapter,
+      timezone,
+      data: this.data,
+      rrules,
+      exrules,
+      rdates,
+      exdates,
     });
   }
 
@@ -206,7 +303,9 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
       const after = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
 
       // Filter to get relevant exdates
-      const excludeDates = this.exdates._dates.filter(date => {
+      const excludeDates = this.exdates.adapters.filter(adapter => {
+        const date = adapter.toDateTime();
+
         return (
           date.get('weekday') === args.weekday &&
           (!after || date.isAfterOrEqual(after)) &&
