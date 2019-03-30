@@ -29,6 +29,8 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
 
   readonly hasDuration: boolean;
 
+  readonly duration: number | undefined;
+
   readonly timezone: string | undefined;
 
   readonly options: IProvidedRuleOptions<T>;
@@ -50,6 +52,9 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
       : this.processedOptions.start.timezone;
     this.data = args.data!;
     this.hasDuration = !!options.duration;
+
+    if (this.hasDuration) this.duration = options.duration;
+
     this.isInfinite =
       this.processedOptions.end === undefined && this.processedOptions.count === undefined;
   }
@@ -153,7 +158,6 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
     before?: DateInput<T>;
     excludeEnds?: boolean;
     excludeDates?: DateInput<T>[];
-    duration?: RuleOption.Duration;
   }): boolean {
     const args = this.processOccursOnArgs(rawArgs);
 
@@ -161,8 +165,19 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
       return this.occursOnWeekday(args);
     }
 
-    for (const day of this._run({ start: args.date, end: args.date })) {
-      return !!day;
+    if (this.hasDuration) {
+      const duration = this.processedOptions.duration!;
+
+      for (const day of this._run({
+        start: args.date!.subtract(duration, 'millisecond'),
+        end: args.date,
+      })) {
+        return !!day;
+      }
+    } else {
+      for (const day of this._run({ start: args.date, end: args.date })) {
+        return !!day;
+      }
     }
 
     return false;

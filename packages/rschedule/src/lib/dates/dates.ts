@@ -2,6 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime, dateTimeSortComparer, IDateAdapter } from '../date-time';
 import { DateInput, HasOccurrences, IOccurrencesArgs, IRunArgs } from '../interfaces';
 import { OccurrenceIterator } from '../iterators';
+import { ConstructorReturnType } from '../utilities';
 
 const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac');
 
@@ -18,6 +19,16 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
    */
   get adapters() {
     return this._dates.map(date => this.dateAdapter.fromJSON(date.toJSON()));
+  }
+
+  /** Returns the first occurrence or, if there are no occurrences, null. */
+  get firstDate(): ConstructorReturnType<T> | null {
+    return (this.adapters[0] as ConstructorReturnType<T>) || null;
+  }
+
+  /** Returns the last occurrence or, if there are no occurrences, null. */
+  get lastDate(): ConstructorReturnType<T> | null {
+    return (this.adapters[this.length - 1] as ConstructorReturnType<T>) || null;
   }
 
   /**
@@ -44,11 +55,12 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
     super(args);
 
     this.data = args.data;
-    this.hasDuration = this._dates.every(date => !!date.duration);
 
     if (args.dates) {
       this._dates = args.dates.map(date => this.normalizeDateInput(date)!);
     }
+
+    this.hasDuration = this._dates.every(date => !!date.duration);
   }
 
   set(_: 'timezone', value: string | undefined) {
@@ -61,38 +73,6 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
       timezone: value,
     });
   }
-
-  // /** Returns the first occurrence or, if there are no occurrences, null. */
-  // firstDate(): ConstructorReturnType<T> | null;
-  // firstDate<R extends boolean>(options?: {
-  //   datetime?: R;
-  // }): R extends true ? DateTime : ConstructorReturnType<T> | null;
-  // firstDate(options: { datetime?: boolean } = {}): DateTime | ConstructorReturnType<T> | null {
-  //   const date = this.dates[0];
-
-  //   if (!date) return null;
-
-  //   return options.datetime
-  //     ? date
-  //     : (this.dateAdapter.fromJSON(date.toJSON()) as ConstructorReturnType<T>);
-  // }
-
-  // /** If generator is infinite, returns `null`. Otherwise returns the end date */
-  // lastDate(): ConstructorReturnType<T> | undefined | null;
-  // lastDate<R extends boolean>(options?: {
-  //   datetime?: R;
-  // }): R extends true ? DateTime | undefined | null : ConstructorReturnType<T> | undefined | null;
-  // lastDate(
-  //   options: { datetime?: boolean } = {},
-  // ): DateTime | ConstructorReturnType<T> | undefined | null {
-  //   const date = this.dates[this.length - 1];
-
-  //   if (!date) return null;
-
-  //   return options.datetime
-  //     ? date
-  //     : (this.dateAdapter.fromJSON(date.toJSON()) as ConstructorReturnType<T>);
-  // }
 
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
     return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
@@ -135,8 +115,12 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
       });
     }
 
-    for (const day of this._run({ start: args.date, end: args.date })) {
-      return !!day;
+    if (this.hasDuration) {
+      return this._dates.some(date => date.isOccurring(args.date!));
+    } else {
+      for (const day of this._run({ start: args.date, end: args.date })) {
+        return !!day;
+      }
     }
 
     return false;

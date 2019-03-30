@@ -157,6 +157,18 @@ export class DateTime implements IDateAdapter<unknown> {
     return this.valueOf() >= object.valueOf();
   }
 
+  isOccurring(object: DateTime) {
+    if (!this.duration) {
+      throw new Error('DateTime#isOccurring() is only applicable to DateTimes with durations');
+    }
+
+    assertSameTimeZone(this, object);
+
+    return (
+      object.isAfterOrEqual(this) && object.isBeforeOrEqual(this.add(this.duration!, 'millisecond'))
+    );
+  }
+
   add(amount: number, unit: IDateAdapter.TimeUnit | 'week'): DateTime {
     switch (unit) {
       case 'year':
@@ -230,7 +242,11 @@ export class DateTime implements IDateAdapter<unknown> {
     }
   }
 
-  set(unit: IDateAdapter.TimeUnit, value: number): DateTime {
+  set(unit: IDateAdapter.TimeUnit | 'duration', value: number): DateTime {
+    if (unit === 'duration') {
+      return new DateTime(this.date, this.timezone, value);
+    }
+
     const date = new Date(this.date);
 
     switch (unit) {

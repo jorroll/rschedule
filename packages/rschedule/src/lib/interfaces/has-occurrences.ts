@@ -2,6 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { OccurrenceIterator } from '../iterators/occurrence.iterator';
 import { RScheduleConfig } from '../rschedule-config';
+import { RuleOption } from '../rule';
 import { ConstructorReturnType } from '../utilities';
 import { IRunArgs, IRunnable } from './runnable';
 
@@ -162,6 +163,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
   protected processOccursOnArgs(
     rawArgs: {
       date?: DateInput<T>;
+      duration?: RuleOption.Duration;
       weekday?: IDateAdapter.Weekday;
       after?: DateInput<T>;
       before?: DateInput<T>;
@@ -170,6 +172,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     } = {},
   ): {
     date?: DateTime;
+    duration?: RuleOption.Duration;
     weekday?: IDateAdapter.Weekday;
     after?: DateTime;
     before?: DateTime;
