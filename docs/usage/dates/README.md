@@ -1,4 +1,4 @@
-_implements [IHasOccurrences](./README.md#shared-interfaces)_
+_implements [IHasOccurrences](../#shared-interfaces)_
 
 The `Dates` class (and `RDates` / `EXDates` subclasses) provides a `IHasOccurrences` wrapper for an array of dates.
 

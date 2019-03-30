@@ -1,10 +1,10 @@
-_implements [IHasOccurrences](./README.md#shared-interfaces)_
+_implements [IHasOccurrences](../#shared-interfaces)_
 
-At a high level, while [`Schedule`](./schedule.md) objects are intended to represent the schedule of a single complex event, `Calendar` object's exist to make it easier to iterate over a group (calendar) of events (though they are also useful in some other situations). `Calendar` objects support iterating through _the union_ of a group of object's implementing [`IHasOccurrences`](./README.md#shared-interfaces).
+At a high level, while [`Schedule`](../schedule) objects are intended to represent the schedule of a single complex event, `Calendar` object's exist to make it easier to iterate over a group (calendar) of events (though they are also useful in some other situations). `Calendar` objects support iterating through _the union_ of a group of object's implementing [`IHasOccurrences`](../#shared-interfaces).
 
 In addition to the standard `occurrences()` method, Calendar objects have `collections()` method which groups occurrences into a `Collection` by a specified `granularity` before yielding the `Collection`. [More on this method is below](#iterating-collections-with-calendarcollections). This method is useful when displaying dates on a calendar.
 
-Unlike Schedule or RRule objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different object). Because `Calendar` objects are constructed from objects which implement the [`IHasOccurrences` interface](./README.md#shared-interfaces), you can construct calendars out of other Calendars, out of Schedules, Rules, etc.
+Unlike Schedule or RRule objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different object). Because `Calendar` objects are constructed from objects which implement the [`IHasOccurrences` interface](../#shared-interfaces), you can construct calendars out of other Calendars, out of Schedules, Rules, etc.
 
 Example:
 

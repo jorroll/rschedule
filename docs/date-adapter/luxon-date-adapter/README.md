@@ -1,6 +1,6 @@
 ### `LuxonDateAdapter`
 
-**implements [`IDateAdapter<DateTime>`](./README.md)**
+**implements [`IDateAdapter<DateTime>`](../)**
 
 rSchedule DateAdapter for working with [luxon](https://moment.github.io/luxon/) `DateTime` objects. Has full timezone support.
 

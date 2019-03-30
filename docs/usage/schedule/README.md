@@ -1,8 +1,8 @@
-_implements [IHasOccurrences](./README.md#shared-interfaces)_
+_implements [IHasOccurrences](../#shared-interfaces)_
 
 Schedule objects allow iterating a occurrence schedule made up of RRULE, EXRULE, RDATE, and EXDATE components. Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event of arbitrary complexity, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
 
-Schedule objects can be serialized to/from ICAL format using `Schedule.fromICal()` and `Schedule#toICal()`. More info in the [ICal Serialization section](../serialization/ical.md).
+Schedule objects can be serialized to/from ICAL format using `Schedule.fromICal()` and `Schedule#toICal()`. More info in the [ICal Serialization section](../serialization/ical).
 
 Example usage:
 

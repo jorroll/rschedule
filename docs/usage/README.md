@@ -6,7 +6,7 @@ This library has five main classes:
 - [Dates](usage/dates-class)
 - [RScheduleConfig](#rscheduleconfig)
 
-It also has makes use of an [`IDateAdapter`](../date-adapter/README.md) interface which allows rSchedule to be used with the date library of your choosing. Be sure to look at the [`IDateAdapter` interface section](../date-adapter/README.md) as you must provide a date adapter for each `Schedule`, `Calendar`, `Rule`, or `Dates` object you create.
+It also has makes use of an [`IDateAdapter`](../date-adapter) interface which allows rSchedule to be used with the date library of your choosing. Be sure to look at the [`IDateAdapter` interface section](../date-adapter) as you must provide a date adapter for each `Schedule`, `Calendar`, `Rule`, or `Dates` object you create.
 
 I'll also call out here that all of the objects are generic and receive a `DateAdapterConstructor` type object. Type inference will often take care of this for you, but when it doesn't, remember that the type you need to pass is for the constructor.
 
@@ -20,11 +20,11 @@ new Schedule<typeof MomentTZDateAdapter>();
 new Schedule<MomentTZDateAdapter>();
 ```
 
-Finally, it has an assortment of [Occurrence stream operators](./operators.md) which allow combining multiple occurrence streams from different objects into a single occurrence stream. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. Internally, the iteration logic of both `Schedule` and `Calendar` is implemented using occurrence stream operators.
+Finally, it has an assortment of [Occurrence stream operators](./operators) which allow combining multiple occurrence streams from different objects into a single occurrence stream. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. Internally, the iteration logic of both `Schedule` and `Calendar` is implemented using occurrence stream operators.
 
 ## RScheduleConfig
 
-The `RScheduleConfig` object is a class with just one static property: `defaultDateAdapter`. It is a convenience property which allows you to define a global default `DateAdapter` constructor object which all rSchedule classes should use. See the [`IDateAdapter`](../date-adapter/README.md) section for more info.
+The `RScheduleConfig` object is a class with just one static property: `defaultDateAdapter`. It is a convenience property which allows you to define a global default `DateAdapter` constructor object which all rSchedule classes should use. See the [`IDateAdapter`](../date-adapter) section for more info.
 
 ```typescript
 import { RScheduleConfig } from '@rschedule/rschedule';
@@ -40,7 +40,7 @@ For example, when providing the start date for `occurrences()`, you could pass i
 
 ### IHasOccurrences
 
-See the inline comments for more info. Also note that the `occurrences()` method yields date adapter instances. To get the underlying date object, call `.date` on the date adapter. You can see the [`IDateAdapter` interface](../date-adapter/README.md) for all the methods/properties available on date adapters, but `.date` and `.generators` are probably the only two properties you'll care about (if it wasn't for the need to return the list of `generators`, I'd almost certainly just yield the underlying date objects instead of date adapter objects).
+See the inline comments for more info. Also note that the `occurrences()` method yields date adapter instances. To get the underlying date object, call `.date` on the date adapter. You can see the [`IDateAdapter` interface](../date-adapter) for all the methods/properties available on date adapters, but `.date` and `.generators` are probably the only two properties you'll care about (if it wasn't for the need to return the list of `generators`, I'd almost certainly just yield the underlying date objects instead of date adapter objects).
 
 ````typescript
 interface IHasOccurrences<T extends DateAdapterConstructor> {

@@ -1,6 +1,6 @@
 ### `StandardDateAdapter`
 
-**implements [`IDateAdapter<Date>`](./README.md)**
+**implements [`IDateAdapter<Date>`](../)**
 
 rSchedule DateAdapter for working with standard javascript `Date` objects. Only supports local and UTC timezones.
 

@@ -38,9 +38,9 @@ rule
   .map(date => date.toISOString());
 ```
 
-rSchedule makes use of a fairly simple [`IDateAdapter`](./date-adapter/README.md) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
+rSchedule makes use of a fairly simple [`IDateAdapter`](./date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
 
-[`StandardDateAdapter`](./date-adapter/standard-date-adapter.md), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter.md), [`MomentDateAdapter`](./date-adapter/moment-date-adapter.md), and [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter.md) packages currently exists which provide a [`IDateAdapter`](./date-adapter/date-adapter.md) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the [DateAdapter section](./date-adapter/README.md) for more info.
+[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), and [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter) packages currently exists which provide a [`IDateAdapter`](./date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
 
 The `MomentTZDateAdapter` and `LuxonDateAdapter` support different timezones. All `DateAdapter` packages support `local` and `UTC` timezones. As noted above, installing a specific `DateAdapter` package is a seperate step, so, if you wanted to use rSchedule with standard javascript `Date` objects, you might install with
 
@@ -65,7 +65,7 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 
 ## Brief Overview
 
-While [`RRule` objects](./usage/rule.md) contain the main recurrence logic, you probably won't use them directly. Instead, the friendly [`Schedule` object](./usage/schedule.md) exist which builds an occurrence schedule based off of an arbirary number of RRules, EXRules, RDates, and EXDates.
+While [`RRule` objects](./usage/rule) contain the main recurrence logic, you probably won't use them directly. Instead, the friendly [`Schedule` object](./usage/schedule) exist which builds an occurrence schedule based off of an arbirary number of RRules, EXRules, RDates, and EXDates.
 
 Example usage:
 
@@ -92,7 +92,7 @@ schedule.occurrences().toArray();
 
 Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event of arbitrary complexity, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
 
-To iterate over a collection of Schedule objects, e.g. for displaying on a calendar, you can use the [`Calendar` object](./usage/calendar.md). The Calendar object combines a collection of occurrence streams into a single iterable object (i.e. it displays the `union` of all the given occurrence streams).
+To iterate over a collection of Schedule objects, e.g. for displaying on a calendar, you can use the [`Calendar` object](./usage/calendar). The Calendar object combines a collection of occurrence streams into a single iterable object (i.e. it displays the `union` of all the given occurrence streams).
 
 Example usage:
 
@@ -111,7 +111,7 @@ for (const occurrence of calendar.occurrences({ start: new Date() })) {
 }
 ```
 
-Additionally, for iterating over an arbitrary collection of dates, you can make use of the [`Dates` object](./usage/dates.md) (or its subclasses `RDates` and `EXDates`, which are used by `Schedule`).
+Additionally, for iterating over an arbitrary collection of dates, you can make use of the [`Dates` object](./usage/dates) (or its subclasses `RDates` and `EXDates`, which are used by `Schedule`).
 
 Example usage:
 
@@ -127,7 +127,7 @@ for (const date of dates.occurrences({ start: new Date(2000, 5) })) {
 }
 ```
 
-For more complex scenerios, rSchedule offers a set of [occurrence stream operator](./usage/operators.md) functions which allow combining and manipulating a stream of occurrences. Usage is inspired the rxjs pipe operators.
+For more complex scenerios, rSchedule offers a set of [occurrence stream operator](./usage/operators) functions which allow combining and manipulating a stream of occurrences. Usage is inspired the rxjs pipe operators.
 
 Example usage:
 
@@ -150,14 +150,14 @@ new Calendar({
 });
 ```
 
-## [Usage Overview](./usage/README.md)
+## [Usage Overview](./usage)
 
-See [Usage Overview](./usage/README.md) for more info.
+See [Usage Overview](./usage) for more info.
 
 ## Other javascript recurring date libraries I'm aware of
 
 - [rrulejs](https://github.com/jakubroztocil/rrule)
-  - Supports time zones via luxon and supports iCal. This library is older and more mature than rSchedule and I used it before making rSchedule. For most projects, rrulejs will probably do everything you need and you may feel more comfortable using something older and with a larger install base. Other than rSchedule's date adapter support, it's [ical serialization](./serialization/ical.md) and [occurrence stream operators](./usage/operators.md) are probably the main reasons why you'd choose rSchedule over rrulejs (I also think rSchedule has a nicer API, but, if everything else was equal, rrulejs's maturity would probably beat out rSchedule's API improvements).
+  - Supports time zones via luxon and supports iCal. This library is older and more mature than rSchedule and I used it before making rSchedule. For most projects, rrulejs will probably do everything you need and you may feel more comfortable using something older and with a larger install base. Other than rSchedule's date adapter support, it's [ical serialization](./serialization/ical) and [occurrence stream operators](./usage/operators) are probably the main reasons why you'd choose rSchedule over rrulejs (I also think rSchedule has a nicer API, but, if everything else was equal, rrulejs's maturity would probably beat out rSchedule's API improvements).
 - [laterjs](https://github.com/bunkat/later) (currently unmaintained)
   - Simpler API. Not ICAL compatible, but has support for chron jobs.
 - [dayspan](https://github.com/ClickerMonkey/dayspan)
