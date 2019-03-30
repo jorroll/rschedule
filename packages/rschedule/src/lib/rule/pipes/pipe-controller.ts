@@ -1,8 +1,8 @@
-import { DateAdapterConstructor, IDateAdapter } from '../../date-adapter';
 import { DateTime } from '../../date-time';
-import { RunnableIterator } from '../../interfaces';
-import { Options } from '../rule-options';
+import { INormalizedRuleOptions, RuleOption } from '../rule-options';
 
+import { DateAdapter } from '../../date-adapter';
+import { ArgumentError } from '../../utilities';
 import { FrequencyPipe } from './01-frequency.pipe';
 import { ByMonthOfYearPipe } from './02-by-month-of-year.pipe';
 import { ByDayOfMonthPipe } from './05-by-day-of-month.pipe';
@@ -10,31 +10,22 @@ import { ByDayOfWeekPipe } from './06-by-day-of-week.pipe';
 import { ByHourOfDayPipe } from './07-by-hour-of-day.pipe';
 import { ByMinuteOfHourPipe } from './08-by-minute-of-hour.pipe';
 import { BySecondOfMinutePipe } from './09-by-second-of-minute.pipe';
+import { ByMillisecondOfSecondPipe } from './10-by-second-of-minute.pipe';
 import { ResultPipe } from './11-result.pipe';
-
-import { FrequencyReversePipe } from './rev-01-frequency.pipe';
-import { ByMonthOfYearReversePipe } from './rev-02-by-month-of-year.pipe';
-import { ByDayOfMonthReversePipe } from './rev-05-by-day-of-month.pipe';
-import { ByDayOfWeekReversePipe } from './rev-06-by-day-of-week.pipe';
-import { ByHourOfDayReversePipe } from './rev-07-by-hour-of-day.pipe';
-import { ByMinuteOfHourReversePipe } from './rev-08-by-minute-of-hour.pipe';
-import { BySecondOfMinuteReversePipe } from './rev-09-by-second-of-minute.pipe';
-import { ResultReversePipe } from './rev-11-result.pipe';
-
 import { IPipeController, IPipeRule } from './interfaces';
+import { RevFrequencyPipe } from './rev-01-frequency.pipe';
+import { RevByMonthOfYearPipe } from './rev-02-by-month-of-year.pipe';
+import { RevByDayOfMonthPipe } from './rev-05-by-day-of-month.pipe';
+import { RevByDayOfWeekPipe } from './rev-06-by-day-of-week.pipe';
+import { RevByHourOfDayPipe } from './rev-07-by-hour-of-day.pipe';
+import { RevByMinuteOfHourPipe } from './rev-08-by-minute-of-hour.pipe';
+import { RevBySecondOfMinutePipe } from './rev-09-by-second-of-minute.pipe';
+import { RevByMillisecondOfSecondPipe } from './rev-10-by-millisecond-of-second.pipe';
+import { RevResultPipe } from './rev-11-result.pipe';
 
-import cloneDeep from 'lodash.clonedeep';
-
-export interface PipeControllerOptions extends Options.ProcessedOptions<any> {
-  start: DateTime;
-  until?: DateTime;
-}
-
-export class PipeController<T extends DateAdapterConstructor>
-  implements IPipeController, RunnableIterator<any> {
-
-  get focusedPipe() {
-    return this.expandingPipes[this.expandingPipes.length - 1];
+export class PipeController implements IPipeController {
+  get firstPipe() {
+    return this.pipes[0] as FrequencyPipe | RevFrequencyPipe;
   }
 
   // to conform to the `RunnableIterator` interface
@@ -44,45 +35,59 @@ export class PipeController<T extends DateAdapterConstructor>
 
   // to conform to the `RunnableIterator` interface
   get endDate() {
-    if (this.isInfinite) { return null; }
-    if (this.end) { return this.end; }
+    if (this.isInfinite) {
+      return null;
+    }
+    if (this.end) {
+      return this.end;
+    }
     return null;
   }
 
   get isInfinite() {
     return !this.end && this.options.count === undefined;
   }
-  public start!: DateTime;
-  public end?: DateTime;
-  public reverse = false;
 
-  public expandingPipes: IPipeRule[] = [];
+  readonly start!: DateTime;
+  readonly end?: DateTime;
+  readonly reverse: boolean;
 
-  /**
-   * If the parent of this pipe controller (`Rule` object) changes the `options` object
-   * this pipe controller will be invalid. To prevent someone from accidently continuing
-   * to use an invalid iterator, we invalidate the old one so it will throw an error.
-   */
-  public invalid = false;
-
-  public options: PipeControllerOptions;
-
+  private readonly reversePipes: boolean;
   private pipes: IPipeRule[] = [];
 
   constructor(
-    options: Options.ProcessedOptions<T>,
+    readonly options: INormalizedRuleOptions,
     private args: { start?: DateTime; end?: DateTime; reverse?: boolean },
   ) {
-    const clonedOptions = cloneDeep(options);
+    this.reverse = !!args.reverse;
+    this.reversePipes = (this.options.count === undefined && args.reverse) || false;
 
-    this.options = {
-      ...clonedOptions,
-      start: options.start.toDateTime() as DateTime,
-      until: options.until && (options.until.toDateTime() as DateTime),
-    };
+    if (options.count !== undefined) {
+      this.start = options.start;
+    } else if (args.start && options.start) {
+      this.start = args.start.isAfterOrEqual(options.start) ? args.start : options.start;
+    } else if (args.start) {
+      this.start = args.start;
+    } else {
+      this.start = options.start;
+    }
 
-    // see `_run()` below for explaination of why `this.reverse` might !== `args.reverse`
-    this.reverse = this.options.count === undefined ? !!args.reverse : false;
+    if (args.end && options.end) {
+      this.end = args.end.isBeforeOrEqual(options.end) ? args.end : options.end;
+    } else if (args.end) {
+      this.end = args.end;
+    } else if (options.end) {
+      this.end = options.end;
+    }
+
+    if (this.reverse && !(options.count || this.end)) {
+      // Decided not to allow a `take` argument to fulfil the `count` requirement because
+      // `take` is handled upstream and dealing with it would be a hassel.
+      throw new ArgumentError(
+        'When iterating in reverse, the rule must have an `end` or `count` ' +
+          'property or you must provide an `end` argument.',
+      );
+    }
 
     this.initialize();
   }
@@ -111,130 +116,117 @@ export class PipeController<T extends DateAdapterConstructor>
    * count will definitely have a negative performance affect. I don't think
    * there's anything to be done about this.
    */
-  public *_run() {
+  get _run() {
+    if (this.options.count !== undefined) {
+      if (this.reverse) return this.iterateWithReverseCount;
+
+      return this.iterateWithCount;
+    }
+
+    return this.iterate;
+  }
+
+  private *iterateWithReverseCount() {
     const iterable = this.iterate();
 
-    if (this.options.count === undefined) {
-      let date = iterable.next().value;
-
-      while (date) {
-        const args = yield date;
-
-        date = iterable.next(this.processArgs(args)).value;
-      }
-
-      return;
-    }
-
-    if (this.options.count === 0) { return; }
-
-    let index = 0;
-
-    if (this.args.reverse) {
-      const dates: DateTime[] = [];
-
-      for (const date of iterable) {
-        if (index >= this.options.count) { break; }
-        index++;
-
-        if (this.args.start && date.isAfter(this.args.start)) { break; }
-        if (this.args.end && date.isBefore(this.args.end)) { continue; }
-
-        dates.push(date);
-      }
-
-      let dateCache = dates.reverse().slice();
-
-      let date = dateCache.shift();
-      let rawArgs: { skipToDate?: IDateAdapter } | undefined;
-      let args: { skipToDate?: DateTime } | undefined;
-
-      while (date) {
-        if (args) {
-          if (args.skipToDate && args.skipToDate.isBefore(date)) {
-            date = dateCache.shift();
-            continue;
-          }
-
-          args = undefined;
-        }
-
-        rawArgs = yield date;
-
-        args = this.processArgs(rawArgs);
-
-        if (args && args.skipToDate) {
-          // need to reset the date cache to allow the same date to be picked again.
-          // Also, I suppose it's possible someone might want to go back in time,
-          // which this allows.
-          dateCache = dates.slice();
-        }
-
-        date = dateCache.shift();
-      }
-
-      return;
-    }
-
-    let date = iterable.next().value;
-    let rawArgs: { skipToDate?: IDateAdapter } | undefined;
+    let date: DateTime | undefined = iterable.next().value;
     let args: { skipToDate?: DateTime } | undefined;
+    let index = 1;
+
+    const dates = [date];
+
+    for (date of iterable) {
+      if (index >= this.options.count!) break;
+
+      dates.push(date);
+
+      index++;
+    }
+
+    dates.reverse();
+
+    let dateCache = dates.slice();
+
+    date = dateCache.shift();
 
     while (date) {
-      if (index >= this.options.count) { break; }
-      index++;
+      if (args) {
+        if (args.skipToDate && args.skipToDate.isBefore(date)) {
+          date = dateCache.shift();
+          continue;
+        }
 
-      if (
-        date.isBefore(this.start) ||
-        (args && args.skipToDate && date.isBefore(args.skipToDate))
-      ) {
-        date = iterable.next().value;
-        continue;
+        args = undefined;
       }
 
-      rawArgs = yield date;
-
-      args = this.processArgs(rawArgs);
+      args = yield date;
 
       if (args && args.skipToDate) {
-        index = 0;
-        date = iterable.next({ reset: true }).value;
-      } else {
-        date = iterable.next().value;
+        // need to reset the date cache to allow the same date to be picked again.
+        // Also, I suppose it's possible someone might want to go back in time,
+        // which this allows.
+        dateCache = dates.slice();
       }
+
+      date = dateCache.shift();
     }
   }
 
-  public *iterate() {
-    let date = this.focusedPipe.run({
-      date: this.start, // <- just present to satisfy interface
-      skipToDate:
-        this.options.count === undefined
-          ? this.start
-          : this.options.start.clone(),
+  private *iterateWithCount() {
+    if (this.options.count === 0) return;
+
+    const iterable = this.iterate();
+
+    let date: DateTime | undefined = iterable.next().value;
+    let index = 1;
+
+    const start = this.args.start || this.start;
+
+    while (date && date.isBefore(start) && index < this.options.count!) {
+      date = iterable.next().value;
+      index++;
+    }
+
+    if (date && date.isBefore(start)) {
+      return;
+    }
+
+    let args: { skipToDate?: DateTime } | undefined;
+
+    while (date && index <= this.options.count!) {
+      args = yield date;
+
+      date = iterable.next(args).value;
+
+      index++;
+    }
+  }
+
+  private *iterate() {
+    let startingDate = this.start;
+
+    if (this.reversePipes) startingDate = this.end!;
+    else if (this.options.count) startingDate = this.options.start;
+
+    let date = this.firstPipe.run({
+      date: startingDate, // <- just present to satisfy interface
+      skipToDate: startingDate,
     });
 
     while (date) {
-      const args = yield date.clone();
+      const args = yield this.normalizeRunOutput(date);
 
-      if (args) {
-        // need to reinitialize to clear state. For example, a pipe could be expanding and have
-        // focus, which would prevent `skipToDate` from running.
+      if (args && args.skipToDate) {
+        date = this.firstPipe.run({ date, skipToDate: args.skipToDate });
+      } else if (args && args.reset) {
         this.initialize();
 
-        if (args.skipToDate) {
-          date = this.focusedPipe.run({ date, skipToDate: args.skipToDate });
-        } else if (args.reset) {
-          // reset requested because `options.count !== undefined`
-          date = this.focusedPipe.run({
-            date,
-            skipToDate: this.options.start.clone(),
-          });
-        } else {
-          throw new Error('yielded args contained unexpected value');
-        }
+        date = this.firstPipe.run({
+          date: startingDate, // <- just present to satisfy interface
+          skipToDate: startingDate,
+        });
       } else {
-        date = this.focusedPipe.run({ date });
+        date = this.firstPipe.run({ date });
       }
     }
   }
@@ -242,84 +234,79 @@ export class PipeController<T extends DateAdapterConstructor>
   private initialize() {
     // Pipe ordering is defined in the ICAL spec
     // https://tools.ietf.org/html/rfc5545#section-3.3.10
-    if (this.reverse) {
-      const frequencyPipe = new FrequencyReversePipe(this);
 
-      this.expandingPipes.push(frequencyPipe);
-      this.addPipe(frequencyPipe);
-
-      const reverseSort = (a: number, b: number) => {
-        if (a > b) { return -1; }
-        else if (b > a) { return 1; }
-        else { return 0; }
-      };
+    if (this.reversePipes) {
+      this.addPipe(new RevFrequencyPipe(this));
 
       if (this.options.byMonthOfYear !== undefined) {
-        this.addPipe(new ByMonthOfYearReversePipe(this));
-        this.options.byMonthOfYear.sort(reverseSort);
+        this.addPipe(new RevByMonthOfYearPipe(this));
+        this.options.byMonthOfYear.reverse();
       }
+
       if (this.options.byDayOfMonth !== undefined) {
-        this.addPipe(new ByDayOfMonthReversePipe(this));
+        this.addPipe(new RevByDayOfMonthPipe(this));
       }
+
       if (this.options.byDayOfWeek !== undefined) {
-        this.addPipe(new ByDayOfWeekReversePipe(this));
+        this.addPipe(new RevByDayOfWeekPipe(this));
       }
+
       if (this.options.byHourOfDay !== undefined) {
-        this.addPipe(new ByHourOfDayReversePipe(this));
-        this.options.byHourOfDay.sort(reverseSort);
+        this.addPipe(new RevByHourOfDayPipe(this));
+        this.options.byHourOfDay.reverse();
       }
+
       if (this.options.byMinuteOfHour !== undefined) {
-        this.addPipe(new ByMinuteOfHourReversePipe(this));
-        this.options.byMinuteOfHour.sort(reverseSort);
+        this.addPipe(new RevByMinuteOfHourPipe(this));
+        this.options.byMinuteOfHour.reverse();
       }
+
       if (this.options.bySecondOfMinute !== undefined) {
-        this.addPipe(new BySecondOfMinuteReversePipe(this));
-        this.options.bySecondOfMinute.sort(reverseSort);
+        this.addPipe(new RevBySecondOfMinutePipe(this));
+        this.options.bySecondOfMinute.reverse();
       }
 
-      this.addPipe(new ResultReversePipe(this));
-    } else {
-      const frequencyPipe = new FrequencyPipe(this);
-
-      this.expandingPipes.push(frequencyPipe);
-      this.addPipe(frequencyPipe);
-
-      if (this.options.byMonthOfYear !== undefined) {
-        this.addPipe(new ByMonthOfYearPipe(this));
-      }
-      if (this.options.byDayOfMonth !== undefined) {
-        this.addPipe(new ByDayOfMonthPipe(this));
-      }
-      if (this.options.byDayOfWeek !== undefined) {
-        this.addPipe(new ByDayOfWeekPipe(this));
-      }
-      if (this.options.byHourOfDay !== undefined) {
-        this.addPipe(new ByHourOfDayPipe(this));
-      }
-      if (this.options.byMinuteOfHour !== undefined) {
-        this.addPipe(new ByMinuteOfHourPipe(this));
-      }
-      if (this.options.bySecondOfMinute !== undefined) {
-        this.addPipe(new BySecondOfMinutePipe(this));
+      if (this.options.byMillisecondOfSecond !== undefined) {
+        this.addPipe(new RevByMillisecondOfSecondPipe(this));
+        this.options.byMillisecondOfSecond.reverse();
       }
 
-      this.addPipe(new ResultPipe(this));
+      this.addPipe(new RevResultPipe(this));
+
+      return;
     }
 
-    this.setStartDate(this.args.start);
-    this.setEndDate(this.args.end);
-  }
+    this.addPipe(new FrequencyPipe(this));
 
-  private processArgs(args?: { skipToDate?: IDateAdapter }) {
-    return args && args.skipToDate
-      ? {
-          skipToDate: new DateTime(
-            args.skipToDate
-              .clone()
-              .set('timezone', this.options.start.get('timezone')),
-          ),
-        }
-      : undefined;
+    if (this.options.byMonthOfYear !== undefined) {
+      this.addPipe(new ByMonthOfYearPipe(this));
+    }
+
+    if (this.options.byDayOfMonth !== undefined) {
+      this.addPipe(new ByDayOfMonthPipe(this));
+    }
+
+    if (this.options.byDayOfWeek !== undefined) {
+      this.addPipe(new ByDayOfWeekPipe(this));
+    }
+
+    if (this.options.byHourOfDay !== undefined) {
+      this.addPipe(new ByHourOfDayPipe(this));
+    }
+
+    if (this.options.byMinuteOfHour !== undefined) {
+      this.addPipe(new ByMinuteOfHourPipe(this));
+    }
+
+    if (this.options.bySecondOfMinute !== undefined) {
+      this.addPipe(new BySecondOfMinutePipe(this));
+    }
+
+    if (this.options.byMillisecondOfSecond !== undefined) {
+      this.addPipe(new ByMillisecondOfSecondPipe(this));
+    }
+
+    this.addPipe(new ResultPipe(this));
   }
 
   private addPipe(pipe: any) {
@@ -332,54 +319,16 @@ export class PipeController<T extends DateAdapterConstructor>
     }
   }
 
-  private setStartDate(date?: DateTime) {
-    if (this.reverse) {
-      if (date && this.options.until) {
-        this.start = date.isAfter(this.options.until)
-          ? this.options.until.clone()
-          : date.clone();
-      } else if (this.options.until) {
-        this.start = this.options.until!.clone();
-      } else if (date) {
-        this.start = date.clone();
-      } else {
-        throw new Error(
-          'When iterating in reverse, either the rule must have an `until` date or ' +
-            'you must supply a start date.',
-        );
-      }
+  private normalizeRunOutput(date: DateTime) {
+    const duration = this.options.duration;
 
-      // generally, the `FrequencyReversePipe` expects to always be pushing a given date
-      // backwards in time. On the first iteration only though, it needs to move forward to
-      // the starting interval, which is what we're doing here.
-      return (this.focusedPipe as FrequencyReversePipe).skipToStartInterval(
-        this.start.clone(),
-      );
+    if (duration) {
+      return DateTime.fromJSON({
+        ...date.toJSON(),
+        duration,
+      });
     }
 
-    return (this.start =
-      date && date.isAfterOrEqual(this.options.start)
-        ? date.clone()
-        : this.options.start.clone());
-  }
-
-  private setEndDate(date?: DateTime) {
-    if (this.reverse) {
-      if (date && date.isAfter(this.options.start)) {
-        return (this.end = date.clone());
-      } else {
-        return (this.end = this.options.start.clone());
-      }
-    }
-
-    if (date && this.options.until) {
-      return (this.end = date.isBefore(this.options.until)
-        ? date.clone()
-        : this.options.until.clone());
-    } else if (this.options.until) {
-      return (this.end = this.options.until!.clone());
-    } else if (date) {
-      return (this.end = date.clone());
-    }
+    return date;
   }
 }

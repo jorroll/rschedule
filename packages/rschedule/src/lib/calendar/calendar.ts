@@ -1,118 +1,84 @@
+import { DateAdapter } from '../date-adapter';
+import { DateTime, IDateAdapter } from '../date-time';
 import {
-  DateAdapter,
-  DateAdapterConstructor,
-  DateProp,
-  IDateAdapter,
-  IDateAdapterConstructor,
-} from '../date-adapter';
-import {
+  DateInput,
   HasOccurrences,
   IHasOccurrences,
-  OccurrenceIterator,
-  OccurrencesArgs,
+  IOccurrencesArgs,
+  IRunnable,
 } from '../interfaces';
-import { add, OccurrenceStream, OperatorObject } from '../operators';
-import { RScheduleConfig } from '../rschedule-config';
-import { Utils } from '../utilities';
 import {
   CollectionIterator,
-  CollectionsArgs,
-  CollectionsRunArgs,
-} from './collection';
+  ICollectionsArgs,
+  ICollectionsRunArgs,
+  OccurrenceIterator,
+} from '../iterators';
+import { add, OccurrenceStream, OperatorFnOutput } from '../operators';
+import { getDifferenceBetweenWeekdays } from '../rule/pipes/utilities';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246');
 
-export class Calendar<
-  T extends DateAdapterConstructor,
-  S extends OperatorObject<T> | OccurrenceStream<T>,
-  D = any
-> extends HasOccurrences<T> implements IHasOccurrences<T> {
-
-  get isInfinite() {
-    return this.schedules.some(schedule => schedule.isInfinite);
-  }
-
-  public static defaultDateAdapter?: DateAdapterConstructor;
-
+export class Calendar<T extends typeof DateAdapter, D = any> extends HasOccurrences<T> {
   /**
    * Similar to `Array.isArray()`, `isCalendar()` provides a surefire method
    * of determining if an object is a `Calendar` by checking against the
    * global symbol registry.
    */
-  public static isCalendar(object: any): object is Calendar<any, any> {
-    return !!(object && object[CALENDAR_ID]);
+  static isCalendar(object: any): object is Calendar<any, any> {
+    return !!(object && typeof object === 'object' && (object as any)[CALENDAR_ID]);
   }
-  public schedules: Array<OperatorObject<T>> = [];
+
+  readonly schedules: IHasOccurrences<T>[] = [];
 
   /** Convenience property for holding arbitrary data */
-  public data!: D;
+  data!: D;
 
-  protected dateAdapter: IDateAdapterConstructor<T>;
+  readonly isInfinite: boolean;
+  readonly hasDuration: boolean;
 
-  // @ts-ignore used by static method
-  private readonly [CALENDAR_ID] = true;
+  protected readonly [CALENDAR_ID] = true;
 
   constructor(
-    args: { schedules?: S[] | S; data?: D; dateAdapter?: T } = {},
+    args: {
+      schedules?: IHasOccurrences<T>[] | IHasOccurrences<T>;
+      data?: D;
+      dateAdapter?: T;
+      timezone?: string;
+    } = {},
   ) {
-    super();
+    super(args);
 
-    if (args.dateAdapter) { this.dateAdapter = args.dateAdapter as any; }
-    else if (Calendar.defaultDateAdapter) {
-      this.dateAdapter = Calendar.defaultDateAdapter as any;
-         }
-    else {
-      this.dateAdapter = RScheduleConfig.defaultDateAdapter as any;
+    this.data = args.data as D;
+
+    if (args.schedules) {
+      this.schedules = Array.isArray(args.schedules) ? args.schedules : [args.schedules];
+      this.schedules = this.schedules.map(schedule => schedule.set('timezone', this.timezone));
     }
 
-    if (!this.dateAdapter) {
-      throw new Error(
-        "Oops! You've initialized a Calendar object without a dateAdapter.",
-      );
-    }
-
-    if (args.data) { this.data = args.data; }
-    if (Array.isArray(args.schedules)) {
-      this.schedules = args.schedules.map(schedule =>
-        typeof schedule === 'function'
-          ? (schedule as OccurrenceStream<T>)(this.dateAdapter as any)
-          : (schedule as OperatorObject<T>),
-      );
-    } else if (args.schedules) {
-      this.schedules.push(
-        typeof args.schedules === 'function'
-          ? (args.schedules as OccurrenceStream<T>)(this.dateAdapter as any)
-          : (args.schedules as OperatorObject<T>),
-      );
-    }
+    this.isInfinite = this.schedules.some(schedule => schedule.isInfinite);
+    this.hasDuration = this.schedules.every(schedule => schedule.hasDuration);
   }
 
-  /**
-   * Returns a clone of the Calendar object and all properties except the data property
-   * (instead, the original data property is included as the data property of the
-   * new Calendar).
-   */
-  public clone() {
-    return new Calendar<T, S, D>({
-      dateAdapter: this.dateAdapter as any,
+  pipe(...operatorFns: OperatorFnOutput<T>[]) {
+    return new Calendar({
       data: this.data,
-      schedules: this.schedules.map(schedule => schedule.clone()) as S[],
+      dateAdapter: this.dateAdapter,
+      timezone: this.timezone,
+      schedules: new OccurrenceStream({
+        operators: [add<T>(this), ...operatorFns],
+        dateAdapter: this.dateAdapter,
+        timezone: this.timezone,
+      }),
     });
   }
 
-  /**
-   * Update all `schedules` of this calendar to use a
-   * new timezone. This mutates the calendar's schedules.
-   */
-  public setTimezone(
-    timezone: string | undefined,
-    options: { keepLocalTime?: boolean } = {},
-  ) {
-    this.schedules.forEach(schedule => {
-      schedule.setTimezone(timezone, options);
+  set(_: 'timezone', value: string | undefined) {
+    return new Calendar({
+      schedules: this.schedules.map(schedule => schedule.set('timezone', value)),
+      data: this.data,
+      dateAdapter: this.dateAdapter,
+      timezone: value,
     });
-
-    return this;
   }
 
   /**
@@ -191,7 +157,7 @@ export class Calendar<
    *
    * @param args CollectionsArgs
    */
-  public collections(args: CollectionsArgs<T> = {}) {
+  collections(args: ICollectionsArgs<T> = {}) {
     return new CollectionIterator(this, this.processOccurrencesArgs(args));
   }
 
@@ -208,14 +174,14 @@ export class Calendar<
    *
    * @param arg `OccurrencesArgs` options object
    */
-  public occurrences(args: OccurrencesArgs<T> = {}) {
+  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
     return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
   }
 
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(rawArgs: { date: DateProp<T> | DateAdapter<T> }): boolean;
+  occursOn(rawArgs: { date: DateInput<T> }): boolean;
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * By default, only checks dates in the first year.
@@ -228,41 +194,38 @@ export class Calendar<
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
-  public occursOn(rawArgs: {
+  // tslint:disable-next-line: unified-signatures
+  occursOn(rawArgs: {
     weekday: IDateAdapter.Weekday;
-    after?: DateProp<T> | DateAdapter<T>;
-    before?: DateProp<T> | DateAdapter<T>;
+    after?: DateInput<T>;
+    before?: DateInput<T>;
     excludeEnds?: boolean;
   }): boolean;
 
-  public occursOn(rawArgs: {
-    date?: DateProp<T> | DateAdapter<T>;
+  occursOn(rawArgs: {
+    date?: DateInput<T>;
     weekday?: IDateAdapter.Weekday;
-    after?: DateProp<T> | DateAdapter<T>;
-    before?: DateProp<T> | DateAdapter<T>;
+    after?: DateInput<T>;
+    before?: DateInput<T>;
     excludeEnds?: boolean;
   }): boolean {
     const args = this.processOccursOnArgs(rawArgs);
 
     if (args.weekday) {
-      const start =
-        args.after &&
-        (args.excludeEnds
-          ? (args.after.clone().add(1, 'day') as DateAdapter<T>)
-          : args.after);
-      let end =
-        args.before &&
-        (args.excludeEnds
-          ? (args.before.clone().subtract(1, 'day') as DateAdapter<T>)
-          : args.before);
+      const start = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
+      let end = args.before && (args.excludeEnds ? args.before.subtract(1, 'day') : args.before);
 
       const iterator = this._run({ start, end });
 
       let date = iterator.next().value;
 
-      if (!date) { return false; }
+      if (!date) {
+        return false;
+      }
 
-      if (!end) { end = date.clone().add(1, 'year') as DateAdapter<T>; }
+      if (!end) {
+        end = date.add(1, 'year');
+      }
 
       while (date && date.isBefore(end)) {
         if (date.get('weekday') === args.weekday) {
@@ -271,10 +234,7 @@ export class Calendar<
 
         date = iterator.next({
           skipToDate: date.add(
-            Utils.differenceInDaysBetweenTwoWeekdays(
-              date.get('weekday'),
-              args.weekday,
-            ),
+            getDifferenceBetweenWeekdays(date.get('weekday'), args.weekday),
             'day',
           ),
         }).value;
@@ -290,12 +250,12 @@ export class Calendar<
   }
 
   /**  @private use collections() instead */
-  public *_run(args: CollectionsRunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
+  *_run(args: ICollectionsRunArgs = {}): IterableIterator<DateTime> {
     const count = args.take;
 
     delete args.take;
 
-    let iterator: IterableIterator<DateAdapter<T>>;
+    let iterator: IterableIterator<DateTime>;
 
     switch (this.schedules.length) {
       case 0:
@@ -304,8 +264,10 @@ export class Calendar<
         iterator = this.schedules[0]._run(args);
         break;
       default:
-        iterator = add(...this.schedules)({
-          dateAdapter: this.dateAdapter as any,
+        iterator = new OccurrenceStream({
+          operators: [add<T>(...this.schedules)],
+          dateAdapter: this.dateAdapter,
+          timezone: this.timezone,
         })._run(args);
         break;
     }
@@ -316,7 +278,7 @@ export class Calendar<
     while (date && (count === undefined || count > index)) {
       date.generators.push(this);
 
-      const yieldArgs = yield date.clone() as DateAdapter<T>;
+      const yieldArgs = yield this.normalizeRunOutput(date);
 
       date = iterator.next(yieldArgs).value;
 

@@ -6,38 +6,33 @@
 
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
-import { MomentTZDateAdapter } from '@rschedule/moment-date-adapter';
-import {
-  DateAdapterConstructor,
-  IDateAdapter,
-  IDateAdapterConstructor,
-  RRule,
-  Utils,
-} from '@rschedule/rschedule';
+import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
+import { DateAdapter as DateAdapterConstructor, RScheduleConfig, Rule } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime } from 'luxon';
 import { Moment as MomentST } from 'moment';
 import { Moment as MomentTZ } from 'moment-timezone';
 import {
   context,
-  dateAdapter,
   DatetimeFn,
   environment,
   luxonDatetimeFn,
   momentDatetimeFn,
   momentTZDatetimeFn,
   standardDatetimeFn,
+  timezoneDateAdapterFn,
   TIMEZONES,
 } from './utilities';
 
 function testRecurring(
   testName: string,
-  rule: RRule<DateAdapterConstructor>,
-  expectedDates: Array<IDateAdapter<any>>,
+  rule: Rule<typeof DateAdapterConstructor>,
+  expectedDates: DateAdapterConstructor[],
 ) {
   describe(testName, () => {
     it('matches expected dates', () => {
       const expected = expectedDates.map(date => date.toISOString());
+
       const actual = rule
         .occurrences()
         .toArray()!
@@ -78,19 +73,10 @@ function testRecurring(
       expect(date.toISOString()).toBe(expectedDates[0].toISOString());
     });
 
-    /**
-     * Problem with start & count: because occurrence
-     * counting begins when start is, count also begins
-     * when the start is. The effect of this is that when a rule
-     * has a count of 3, say, you'll always take three occurrences,
-     * no matter where you start from. Intuitively, you'd probably
-     * only want to take the first 3 occurrences from the dtstart
-     */
-
     describe('w/args', () => {
       it('END', () => {
-        let newExpectedDates: Array<IDateAdapter<any>>;
-        let end: IDateAdapter<any> | undefined;
+        let newExpectedDates: DateAdapterConstructor[];
+        let end: DateAdapterConstructor | undefined;
 
         if (expectedDates.length > 2) {
           end = expectedDates[1];
@@ -103,8 +89,9 @@ function testRecurring(
         }
 
         const expected = newExpectedDates.map(date => date.toISOString());
+
         const actual = rule
-          .occurrences({ end: end && end.date })
+          .occurrences({ end })
           .toArray()!
           .map(date => date.toISOString());
 
@@ -118,10 +105,9 @@ function testRecurring(
         }
 
         const newExpectedDates = expectedDates.slice().reverse();
-
         const expected = newExpectedDates.map(date => date.toISOString());
         const actual = rule
-          .occurrences({ start: newExpectedDates[0].date, reverse: true })
+          .occurrences({ end: newExpectedDates[0], reverse: true })
           .toArray()!
           .map(date => date.toISOString());
 
@@ -130,53 +116,56 @@ function testRecurring(
     });
 
     describe('#occursOn()', () => {
-      expectedDates.forEach(adapter => {
-        describe(adapter.toISOString(), () => {
-          it('date', () =>
-            expect(rule.occursOn({ date: adapter.date })).toBeTruthy());
+      expectedDates
+        .map(date => date.toDateTime())
+        .forEach(date => {
+          describe(date.toISOString(), () => {
+            it('date', () => expect(rule.occursOn({ date })).toBeTruthy());
 
-          describe('weekday', () => {
-            it('no options', () =>
-              expect(
-                rule.occursOn({ weekday: adapter.get('weekday') }),
-              ).toBeTruthy());
-            it('excludeDates', () =>
-              expect(
-                rule.occursOn({
-                  weekday: adapter.get('weekday'),
-                  excludeDates: expectedDates.map(adapter => adapter.date),
-                }),
-              ).toBeFalsy());
+            describe('weekday', () => {
+              it('no options', () =>
+                expect(rule.occursOn({ weekday: date.get('weekday') })).toBeTruthy());
+
+              it('excludeDates', () =>
+                expect(
+                  rule.occursOn({
+                    weekday: date.get('weekday'),
+                    excludeDates: expectedDates,
+                  }),
+                ).toBeFalsy());
+            });
           });
         });
-      });
 
       if (expectedDates.length > 0) {
-        const first = expectedDates[0];
-        const last = expectedDates[expectedDates.length - 1];
+        const first = expectedDates[0].toDateTime();
+        const last = expectedDates[expectedDates.length - 1].toDateTime();
 
         describe(first.toISOString(), () => {
           describe('weekday', () => {
-            it('before first including', () =>
+            it('before first including', () => {
               expect(
                 rule.occursOn({
                   weekday: first.get('weekday'),
-                  before: first.date,
+                  before: first,
                 }),
-              ).toBeTruthy());
+              ).toBeTruthy();
+            });
+
             it('before first excluding', () =>
               expect(
                 rule.occursOn({
                   weekday: first.get('weekday'),
-                  before: first.date,
+                  before: first,
                   excludeEnds: true,
                 }),
               ).toBeFalsy());
+
             it('after first including', () =>
               expect(
                 rule.occursOn({
                   weekday: first.get('weekday'),
-                  after: first.date,
+                  after: first,
                 }),
               ).toBeTruthy());
             // don't think there's a generic way to know what the answer should be (e.g. take a `MINUTELY` rule of count 3 which only takes place
@@ -191,9 +180,10 @@ function testRecurring(
               expect(
                 rule.occursOn({
                   weekday: last.get('weekday'),
-                  before: last.date,
+                  before: last,
                 }),
               ).toBeTruthy());
+
             // don't think there's a generic way to know what the answer should be (e.g. take a `MINUTELY` rule of count 3 which only takes place
             // on one day, if you exclude that day it doesn't happen).
             // it('before last excluding', () => expect(rule.occursOn({weekday: last.get('weekday'), before: last, excludeEnds: true})).toBeTruthy())
@@ -201,14 +191,15 @@ function testRecurring(
               expect(
                 rule.occursOn({
                   weekday: last.get('weekday'),
-                  after: last.date,
+                  after: last,
                 }),
               ).toBeTruthy());
+
             it('after last excluding', () =>
               expect(
                 rule.occursOn({
                   weekday: last.get('weekday'),
-                  after: last.date,
+                  after: last,
                   excludeEnds: true,
                 }),
               ).toBeFalsy());
@@ -221,21 +212,23 @@ function testRecurring(
 
 function testRecurringBetween(
   testName: string,
-  rule: RRule<DateAdapterConstructor>,
-  start: IDateAdapter<any>,
-  end: IDateAdapter<any>,
+  rule: Rule<typeof DateAdapterConstructor>,
+  start: DateAdapterConstructor,
+  end: DateAdapterConstructor,
   inclusive: boolean,
-  expectedDates: Array<IDateAdapter<any>>,
+  expectedDates: DateAdapterConstructor[],
 ) {
   describe(testName, () => {
     it('matches expected dates', () => {
-      let occurrences = rule
-        .occurrences({ start: start.date, end: end.date })
-        .toArray()!;
+      let occurrences = rule.occurrences({ start, end }).toArray()!;
 
       if (!inclusive) {
         occurrences = occurrences.filter(
-          date => !(date.isEqual(start) || date.isEqual(end)),
+          date =>
+            !(
+              date.toDateTime().isEqual(start.toDateTime()) ||
+              date.toDateTime().isEqual(end.toDateTime())
+            ),
         );
       }
 
@@ -248,26 +241,24 @@ function testRecurringBetween(
 
 function testPreviousOccurrence(
   testName: string,
-  rule: RRule<DateAdapterConstructor>,
-  start: IDateAdapter<any>,
+  rule: Rule<typeof DateAdapterConstructor>,
+  end: DateAdapterConstructor,
   inclusive: boolean,
-  expectedDate: IDateAdapter<any>,
+  expectedDate: DateAdapterConstructor,
 ) {
   describe(testName, () => {
     it('matches expected dates', () => {
-      let occurrence: IDateAdapter<any>;
-
+      let occurrence: DateAdapterConstructor;
       for (const day of rule.occurrences({
-        start: start.date,
+        end,
         reverse: true,
       })) {
-        if (!inclusive && day.isEqual(start)) {
+        if (!inclusive && day.toDateTime().isEqual(end.toDateTime())) {
           continue;
         }
         occurrence = day;
         break;
       }
-
       expect(occurrence!.toISOString()).toEqual(expectedDate.toISOString());
     });
   });
@@ -275,23 +266,22 @@ function testPreviousOccurrence(
 
 function testNextOccurrence(
   testName: string,
-  rule: RRule<DateAdapterConstructor>,
-  start: IDateAdapter<any>,
+  rule: Rule<typeof DateAdapterConstructor>,
+  start: DateAdapterConstructor,
   inclusive: boolean,
-  expectedDate: IDateAdapter<any>,
+  expectedDate: DateAdapterConstructor,
 ) {
   describe(testName, () => {
     it('matches expected dates', () => {
-      let occurrence: IDateAdapter<any>;
-
-      for (const day of rule.occurrences({ start: start.date })) {
-        if (!inclusive && day.isEqual(start)) {
+      let occurrence: DateAdapterConstructor;
+      for (const day of rule.occurrences({ start })) {
+        if (!inclusive && day.toDateTime().isEqual(start.toDateTime())) {
           continue;
         }
         occurrence = day;
         break;
       }
-
+      expect(occurrence!).not.toBe(undefined);
       expect(occurrence!.toISOString()).toEqual(expectedDate.toISOString());
     });
   });
@@ -312,50 +302,38 @@ const DATE_ADAPTERS = [
 DATE_ADAPTERS.forEach(dateAdapterSet => {
   environment(dateAdapterSet, dateAdapterSet => {
     const [DateAdapter, datetime] = dateAdapterSet as [
-      IDateAdapterConstructor<DateAdapterConstructor>,
+      typeof DateAdapterConstructor,
       DatetimeFn<any>
     ];
 
-    const zones = !DateAdapter.hasTimezoneSupport
-      ? [undefined, 'UTC']
-      : TIMEZONES;
+    // const timezones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
+    const timezones = !DateAdapter.hasTimezoneSupport ? [undefined, 'UTC'] : TIMEZONES;
 
-    zones.forEach(zone => {
-      // function to create new dateAdapter instances
-      const dateAdapter: DatetimeFn<IDateAdapter<any>> = (
-        ...args: Array<number | string | undefined>
-      ) => {
-        let timezone: string | undefined;
+    timezones.forEach(timezone => {
+      RScheduleConfig.defaultDateAdapter = DateAdapter;
+      RScheduleConfig.defaultTimezone = timezone;
 
-        if (typeof args[args.length - 1] === 'string') {
-          timezone = args[args.length - 1] as string;
-        } else if (zone !== undefined) {
-          args.push(zone);
-          timezone = zone;
-        }
+      context(timezone, zone => {
+        const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, zone);
 
-        // @ts-ignore
-        return new DateAdapter(datetime(...args), { timezone });
-      };
+        // legacy function to create new dateAdapter instances
+        const parse = (str: string) => {
+          const parts: Array<number | string> = str
+            .match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)!
+            .map(part => Number(part));
 
-      const parse = (str: string) => {
-        const parts: Array<number | string> = str
-          .match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)!
-          .map(part => Number(part));
+          parts.shift();
 
-        parts.shift();
+          // @ts-ignore
+          return dateAdapter(...parts);
+        };
 
-        // @ts-ignore
-        return dateAdapter(...parts);
-      };
-
-      context(zone, zone => {
         describe('specific bugs', () => {
           if (DateAdapter.hasTimezoneSupport) {
             it('occursOn() arg is in a different timezone from rule start', () => {
-              const start = dateAdapter(2018, 8, 16, 0, 0, 0, 0, zone);
+              const start = dateAdapter(2018, 8, 16, 0, 0, 0, 0);
 
-              const rule = new RRule(
+              const rule = new Rule(
                 {
                   frequency: 'WEEKLY',
                   start,
@@ -364,134 +342,139 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 { dateAdapter: DateAdapter },
               );
 
-              const date = start.clone().set('timezone', 'America/Los_Angeles');
-              const first = rule.occurrences({ take: 1 }).toArray()![0];
+              const secondOccurrence = dateAdapter(2018, 8, 23, 0, 0, 0, 0).set(
+                'timezone',
+                'America/Los_Angeles',
+              );
 
-              expect(start.valueOf()).toBe(date.valueOf());
-              expect(first.valueOf()).toBe(start.valueOf());
+              const falseSecondOccurrence = dateAdapter(2018, 8, 22, 0, 0, 0, 0).set(
+                'timezone',
+                'America/Los_Angeles',
+              );
 
-              expect(rule.occursOn({ date: date.date })).toBeTruthy();
+              expect(rule.occursOn({ date: secondOccurrence })).toBeTruthy();
+              expect(rule.occursOn({ date: falseSecondOccurrence })).toBeFalsy();
             });
           }
         });
 
         testPreviousOccurrence(
           'testBefore',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
-              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
+              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
             { dateAdapter: DateAdapter },
           ),
-          dateAdapter(1997, 9, 5, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 5, 9, 0, 0, 0),
           false,
-          dateAdapter(1997, 9, 4, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 4, 9, 0, 0, 0),
         );
 
         testPreviousOccurrence(
           'testBeforeInc',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
-              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
+              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
             { dateAdapter: DateAdapter },
           ),
-          dateAdapter(1997, 9, 5, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 5, 9, 0, 0, 0),
           true,
-          dateAdapter(1997, 9, 5, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 5, 9, 0, 0, 0),
         );
 
         testNextOccurrence(
           'testAfter',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
-              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
+              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
             { dateAdapter: DateAdapter },
           ),
-          dateAdapter(1997, 9, 4, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 4, 9, 0, 0, 0),
           false,
-          dateAdapter(1997, 9, 5, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 5, 9, 0, 0, 0),
         );
 
         testNextOccurrence(
           'testAfterInc',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
-              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
+              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
             { dateAdapter: DateAdapter },
           ),
-          dateAdapter(1997, 9, 4, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 4, 9, 0, 0, 0),
           true,
-          dateAdapter(1997, 9, 4, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 4, 9, 0, 0, 0),
         );
 
         testRecurringBetween(
           'testBetween',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
-              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
+              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
             { dateAdapter: DateAdapter },
           ),
-          dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
-          dateAdapter(1997, 9, 6, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 2, 9, 0, 0, 0),
+          dateAdapter(1997, 9, 6, 9, 0, 0, 0),
           false,
           [
-            dateAdapter(1997, 9, 3, 9, 0, 0, 0, zone),
-            dateAdapter(1997, 9, 4, 9, 0, 0, 0, zone),
-            dateAdapter(1997, 9, 5, 9, 0, 0, 0, zone),
+            dateAdapter(1997, 9, 3, 9, 0, 0, 0),
+            dateAdapter(1997, 9, 4, 9, 0, 0, 0),
+            dateAdapter(1997, 9, 5, 9, 0, 0, 0),
           ],
         );
 
         testRecurringBetween(
           'testBetweenInc',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
-              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
+              start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
             { dateAdapter: DateAdapter },
           ),
-          dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
-          dateAdapter(1997, 9, 6, 9, 0, 0, 0, zone),
+          dateAdapter(1997, 9, 2, 9, 0, 0, 0),
+          dateAdapter(1997, 9, 6, 9, 0, 0, 0),
           true,
           [
-            dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
-            dateAdapter(1997, 9, 3, 9, 0, 0, 0, zone),
-            dateAdapter(1997, 9, 4, 9, 0, 0, 0, zone),
-            dateAdapter(1997, 9, 5, 9, 0, 0, 0, zone),
-            dateAdapter(1997, 9, 6, 9, 0, 0, 0, zone),
+            dateAdapter(1997, 9, 2, 9, 0, 0, 0),
+            dateAdapter(1997, 9, 3, 9, 0, 0, 0),
+            dateAdapter(1997, 9, 4, 9, 0, 0, 0),
+            dateAdapter(1997, 9, 5, 9, 0, 0, 0),
+            dateAdapter(1997, 9, 6, 9, 0, 0, 0),
           ],
         );
 
         describe('YEARLY', () => {
           testRecurring(
             'testYearly',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
-                start: dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
+                start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
               },
               { dateAdapter: DateAdapter },
             ),
             [
-              dateAdapter(1997, 9, 2, 9, 0, 0, 0, zone),
-              dateAdapter(1998, 9, 2, 9, 0, 0, 0, zone),
-              dateAdapter(1999, 9, 2, 9, 0, 0, 0, zone),
+              dateAdapter(1997, 9, 2, 9, 0, 0, 0),
+              dateAdapter(1998, 9, 2, 9, 0, 0, 0),
+              dateAdapter(1999, 9, 2, 9, 0, 0, 0),
             ],
           );
 
           testRecurring(
             'testYearlyInterval',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -509,7 +492,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyIntervalLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -527,7 +510,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonth',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -545,7 +528,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -563,7 +546,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonthAndMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -582,7 +565,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -605,7 +588,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByNWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -623,7 +606,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByNWeekDayLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -641,7 +624,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonthAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -660,7 +643,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonthAndNWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -679,7 +662,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonthAndNWeekDayLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -698,7 +681,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -717,7 +700,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMonthAndMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -737,7 +720,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByHour',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -755,7 +738,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -773,7 +756,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyBySecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -791,7 +774,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByHourAndMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -810,7 +793,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByHourAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -829,7 +812,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -848,7 +831,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testYearlyByHourAndMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -868,7 +851,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurringBetween(
             'testYearlyBetweenInc',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 start: parse('20150101T000000'),
@@ -883,7 +866,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurringBetween(
             'testYearlyBetweenIncLargeSpan',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 start: parse('19200101T000000'),
@@ -898,7 +881,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurringBetween(
             'testYearlyBetweenIncLargeSpan2',
-            new RRule(
+            new Rule(
               {
                 frequency: 'YEARLY',
                 start: parse('19200101T000000'),
@@ -915,7 +898,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('MONTHLY', () => {
           testRecurring(
             'testMonthly',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -932,7 +915,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyInterval',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -950,7 +933,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyIntervalLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -968,7 +951,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonth',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -986,7 +969,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1004,7 +987,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonthAndMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1023,7 +1006,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1041,7 +1024,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByNWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1059,7 +1042,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByNWeekDayLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1077,7 +1060,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonthAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1096,7 +1079,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonthAndNWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1115,7 +1098,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonthAndNWeekDayLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1134,7 +1117,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1153,7 +1136,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMonthAndMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1173,7 +1156,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByHour',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1191,7 +1174,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1209,7 +1192,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyBySecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1227,7 +1210,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByHourAndMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1246,7 +1229,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByHourAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1265,7 +1248,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1284,7 +1267,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyByHourAndMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 3,
@@ -1304,7 +1287,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyNegByMonthDayJanFebForNonLeapYear',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 4,
@@ -1323,7 +1306,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMonthlyNegByMonthDayJanFebForLeapYear',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MONTHLY',
                 count: 4,
@@ -1344,7 +1327,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('WEEKLY', () => {
           testRecurring(
             'testWeekly',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1361,7 +1344,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyInterval',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1379,7 +1362,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyIntervalLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1397,7 +1380,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByMonth',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1415,7 +1398,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1436,7 +1419,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             // This test is interesting, because it crosses the year
             // boundary in a weekly period to find day '1' as a
             // valid recurrence.
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1455,7 +1438,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByHour',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1473,7 +1456,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1491,7 +1474,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyBySecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1509,7 +1492,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByHourAndMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1528,7 +1511,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByHourAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1547,7 +1530,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1566,7 +1549,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWeeklyByHourAndMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -1586,11 +1569,11 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'calculates weekly recurrences correctly across DST boundaries',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 start: parse('20181031T180000'),
-                until: parse('20181115T050000'),
+                end: parse('20181115T050000'),
               },
               { dateAdapter: DateAdapter },
             ),
@@ -1601,31 +1584,48 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             ],
           );
 
-          // Grabbed these tests from a recent patch to rrulejs, but, at second glance,
-          // this one doesn't look valid. It is expecting a date before the start time...
-          // which, unless I'm too sleep deprived at the moment, shouldn't be possible.
-          // Don't have time to investigate to just commenting them out for later.
-
-          // testRecurring(
-          //   'calculates byweekday recurrences correctly across DST boundaries',
-          //   new RRule({
-          //     frequency: 'WEEKLY',
-          //     start: parse('20181000T000000'),
-          //     until: parse('20181009T000000'),
-          //     byDayOfWeek: ['SU', 'WE'],
-          //   }, {dateAdapter: DateAdapter}),
-          //   [
-          //     dateAdapter(2018, 9, 30),
-          //     dateAdapter(2018, 10, 3),
-          //     dateAdapter(2018, 10, 7),
-          //   ]
-          // )
+          testRecurring(
+            'calculates byweekday recurrences correctly across DST boundaries',
+            new Rule(
+              {
+                frequency: 'WEEKLY',
+                start: parse('20181001T000000'),
+                end: parse('20181009T000000'),
+                byDayOfWeek: ['SU', 'WE'],
+              },
+              { dateAdapter: DateAdapter },
+            ),
+            [
+              DateAdapter.fromJSON({
+                timezone: zone,
+                duration: undefined,
+                year: 2018,
+                month: 10,
+                day: 3,
+                hour: 0,
+                minute: 0,
+                second: 0,
+                millisecond: 0,
+              }),
+              DateAdapter.fromJSON({
+                timezone: zone,
+                duration: undefined,
+                year: 2018,
+                month: 10,
+                day: 7,
+                hour: 0,
+                minute: 0,
+                second: 0,
+                millisecond: 0,
+              }),
+            ],
+          );
         });
 
         describe('DAILY', () => {
           testRecurring(
             'testDaily',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1642,7 +1642,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyInterval',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1660,7 +1660,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyIntervalLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1678,7 +1678,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMonth',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1696,7 +1696,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1714,7 +1714,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMonthAndMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1733,7 +1733,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1751,7 +1751,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMonthAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1770,7 +1770,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1789,7 +1789,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMonthAndMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1809,7 +1809,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByHour',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1827,7 +1827,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1845,7 +1845,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyBySecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1863,7 +1863,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByHourAndMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1882,7 +1882,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByHourAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1901,7 +1901,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1920,7 +1920,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testDailyByHourAndMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 count: 3,
@@ -1940,11 +1940,11 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'calculates daily recurrences correctly across DST boundaries',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 start: parse('20181101T110000'),
-                until: parse('20181106T110000'),
+                end: parse('20181106T110000'),
               },
               { dateAdapter: DateAdapter },
             ),
@@ -1962,7 +1962,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('HOURLY', () => {
           testRecurring(
             'testHourly',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -1979,7 +1979,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyInterval',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -1997,7 +1997,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyIntervalLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2015,7 +2015,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMonth',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2033,7 +2033,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2051,7 +2051,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMonthAndMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2070,7 +2070,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2088,7 +2088,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMonthAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2107,7 +2107,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2126,7 +2126,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMonthAndMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2146,7 +2146,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByHour',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2164,7 +2164,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2182,7 +2182,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyBySecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2200,7 +2200,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByHourAndMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2219,7 +2219,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByHourAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2238,7 +2238,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2257,7 +2257,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testHourlyByHourAndMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'HOURLY',
                 count: 3,
@@ -2279,7 +2279,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('MINUTELY', () => {
           testRecurring(
             'testMinutely',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2296,7 +2296,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyInterval',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2314,7 +2314,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyIntervalLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2332,7 +2332,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMonth',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2350,7 +2350,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2368,7 +2368,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMonthAndMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2387,7 +2387,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2405,7 +2405,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMonthAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2424,7 +2424,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2443,7 +2443,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMonthAndMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2463,7 +2463,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByHour',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2481,7 +2481,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2499,7 +2499,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyBySecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2517,7 +2517,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByHourAndMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2536,7 +2536,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByHourAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2555,7 +2555,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2574,7 +2574,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testMinutelyByHourAndMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'MINUTELY',
                 count: 3,
@@ -2596,7 +2596,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('SECONDLY', () => {
           testRecurring(
             'testSecondly',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2613,7 +2613,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyInterval',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2631,7 +2631,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyIntervalLarge',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2649,7 +2649,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMonth',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2667,7 +2667,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2685,7 +2685,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMonthAndMonthDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2704,7 +2704,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2722,7 +2722,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMonthAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2741,7 +2741,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2760,7 +2760,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMonthAndMonthDayAndWeekDay',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2780,7 +2780,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByHour',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2798,7 +2798,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2816,7 +2816,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyBySecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2834,7 +2834,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByHourAndMinute',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2853,7 +2853,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByHourAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2872,7 +2872,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2891,7 +2891,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testSecondlyByHourAndMinuteAndSecond',
-            new RRule(
+            new Rule(
               {
                 frequency: 'SECONDLY',
                 count: 3,
@@ -2913,12 +2913,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('UNTIL', () => {
           testRecurring(
             'testUntilNotMatching',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 // count: 3,
                 start: parse('19970902T090000'),
-                until: parse('19970905T080000'),
+                end: parse('19970905T080000'),
               },
               { dateAdapter: DateAdapter },
             ),
@@ -2931,12 +2931,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testUntilMatching',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 // count: 3,
                 start: parse('19970902T090000'),
-                until: parse('19970904T090000'),
+                end: parse('19970904T090000'),
               },
               { dateAdapter: DateAdapter },
             ),
@@ -2949,12 +2949,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testUntilSingle',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 // count: 3,
                 start: parse('19970902T090000'),
-                until: parse('19970902T090000'),
+                end: parse('19970902T090000'),
               },
               { dateAdapter: DateAdapter },
             ),
@@ -2963,12 +2963,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testUntilEmpty',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 // count: 3,
                 start: parse('19970902T090000'),
-                until: parse('19970901T090000'),
+                end: parse('19970901T090000'),
               },
               { dateAdapter: DateAdapter },
             ),
@@ -2977,12 +2977,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testUntilWithDate',
-            new RRule(
+            new Rule(
               {
                 frequency: 'DAILY',
                 // count: 3,
                 start: parse('19970902T090000'),
-                until: dateAdapter(1997, 9, 5),
+                end: dateAdapter(1997, 9, 5),
               },
               { dateAdapter: DateAdapter },
             ),
@@ -2997,7 +2997,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('WKST', () => {
           testRecurring(
             'testWkStIntervalMO',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -3017,7 +3017,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           testRecurring(
             'testWkStIntervalSU',
-            new RRule(
+            new Rule(
               {
                 frequency: 'WEEKLY',
                 count: 3,
@@ -3038,7 +3038,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
         testRecurring(
           'testDTStartIsDate',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
               count: 3,
@@ -3055,7 +3055,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
         testRecurring(
           'testDTStartWithMicroseconds',
-          new RRule(
+          new Rule(
             {
               frequency: 'DAILY',
               count: 3,
@@ -3072,7 +3072,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
         describe('testMaxYear', () => {
           it('throws error', () => {
-            const rule = new RRule(
+            const rule = new Rule(
               {
                 frequency: 'YEARLY',
                 count: 3,
@@ -3091,7 +3091,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
         testRecurring(
           'testSubsecondStartYearly',
-          new RRule(
+          new Rule(
             {
               frequency: 'YEARLY',
               count: 1,

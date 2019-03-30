@@ -1,5 +1,14 @@
-import { DateTime } from '../../date-time';
-import { Utils } from '../../utilities';
+import {
+  DateTime,
+  IDateAdapter,
+  MILLISECONDS_IN_DAY,
+  MILLISECONDS_IN_HOUR,
+  MILLISECONDS_IN_MINUTE,
+  MILLISECONDS_IN_SECOND,
+  MILLISECONDS_IN_WEEK,
+} from '../../date-time';
+import { RuleOption } from '../rule-options';
+// import { Utils } from '../../utilities';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**
@@ -8,86 +17,171 @@ import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
  * account the `RRULE` frequency and interval.
  */
 export class FrequencyPipe extends PipeRule implements IPipeRule {
-  private intervalStartDate: DateTime = this.normalizeDate(
-    this.options.start.clone(),
-  );
+  private readonly intervalUnit = unitForFrequency(this.options.frequency);
 
-  public run(args: IPipeRunFn) {
-    let date: DateTime;
+  private intervalStartDate = this.normalizedStartDate(this.start);
+  private intervalEndDate = this.normalizedEndDate(this.intervalStartDate);
 
-    if (args.skipToDate) {
+  /**
+   * The problem is that DateTime is ignoring daylight savings time.
+   *
+   * When you pass in a new "skip to date" that date has been adjusted for
+   * daylight savings and the pipe thinks it is invalid
+   */
+
+  run(args: IPipeRunFn) {
+    let date: DateTime = args.date;
+
+    if (args.invalidDate) {
+      date = args.skipToDate!;
+
+      this.skipToIntervalOnOrAfter(date);
+
+      if (!this.dateIsWithinInterval(date)) {
+        date = this.intervalStartDate;
+      }
+    } else if (args.skipToDate) {
       this.skipToIntervalOnOrAfter(args.skipToDate);
 
-      date = args.skipToDate.isAfterOrEqual(this.intervalStartDate)
-        ? args.skipToDate
-        : this.intervalStartDate.clone();
+      date = this.dateIsWithinInterval(args.skipToDate) ? args.skipToDate : this.intervalStartDate;
+    } else if (
+      this.dateIsWithinInterval(date) &&
+      this.dateIsWithinInterval(date.add(1, 'second'))
+    ) {
+      date = date.add(1, 'second');
     } else {
-      this.incrementInterval();
-      date = this.intervalStartDate.clone();
+      this.incrementInterval(this.options.interval);
+
+      date = this.intervalStartDate;
     }
 
     return this.nextPipe.run({ date });
   }
 
-  public normalizeDate(date: DateTime) {
-    switch (this.options.frequency) {
-      case 'YEARLY':
-        Utils.setDateToStartOfYear(date);
-        break;
-      case 'MONTHLY':
-        date.set('day', 1);
-        break;
-      case 'WEEKLY':
-        Utils.setDateToStartOfWeek(date, this.options.weekStart);
-        break;
+  private normalizedStartDate(date: DateTime) {
+    if (this.options.frequency === 'WEEKLY') {
+      return date.granularity('week', { weekStart: this.options.weekStart });
     }
 
+    return date.granularity(this.intervalUnit as IDateAdapter.TimeUnit);
+  }
+
+  private normalizedEndDate(start: DateTime) {
     switch (this.options.frequency) {
       case 'YEARLY':
+        return start.add(1, 'year');
       case 'MONTHLY':
+        return start.add(1, 'month');
       case 'WEEKLY':
+        return start.add(1, 'week');
       case 'DAILY':
-        date.set('hour', 0);
+        return start.add(1, 'day');
       case 'HOURLY':
-        date.set('minute', 0);
+        return start.add(1, 'hour');
       case 'MINUTELY':
-        date.set('second', 0);
+        return start.add(1, 'minute');
+      case 'SECONDLY':
+        return start.add(1, 'second');
     }
-
-    return date;
   }
 
-  private incrementInterval() {
-    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency);
-
-    this.intervalStartDate.add(this.options.interval, unit);
+  private incrementInterval(amount: number) {
+    this.intervalStartDate = this.intervalStartDate.add(amount, this.intervalUnit);
+    this.intervalEndDate = this.normalizedEndDate(this.intervalStartDate);
   }
 
-  /**
-   * This method might be buggy when presented with intervals other than one.
-   * In such a case, skipping forward should *skip* seconds of dates, and I'm
-   * not sure if this will account for that. Don't have time to test at the moment.
-   *
-   * Tests are passing
-   */
   private skipToIntervalOnOrAfter(date: DateTime) {
-    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency);
-
-    const difference = Utils.unitDifferenceBetweenDates(
-      this.intervalStartDate,
-      date,
-      unit,
+    this.incrementInterval(
+      intervalDifferenceBetweenDates({
+        first: this.intervalStartDate,
+        second: date,
+        unit: this.intervalUnit,
+        interval: this.options.interval,
+      }),
     );
-
-    this.intervalStartDate.add(difference, unit);
-
-    // This is sort of a quick/hacky solution to a problem experienced with test
-    // "testYearlyBetweenIncLargeSpan2" which has a start date of 1920.
-    // Not sure why `difference` isn't resolved to whole number in that test,
-    // but the first call to this method turns up an iteration exactly 1 year
-    // before the iteration it should return.
-    while (!date.isBefore(this.intervalStartDate.clone().add(1, unit))) {
-      this.intervalStartDate.add(this.options.interval, unit);
-    }
   }
+
+  private dateIsWithinInterval(date: DateTime) {
+    return this.intervalStartDate.isBeforeOrEqual(date) && this.intervalEndDate.isAfter(date);
+  }
+}
+
+export function unitForFrequency(frequency: RuleOption.Frequency) {
+  switch (frequency) {
+    case 'YEARLY':
+      return 'year';
+    case 'MONTHLY':
+      return 'month';
+    case 'WEEKLY':
+      return 'week';
+    case 'DAILY':
+      return 'day';
+    case 'HOURLY':
+      return 'hour';
+    case 'MINUTELY':
+      return 'minute';
+    case 'SECONDLY':
+      return 'second';
+  }
+}
+
+export function intervalDifferenceBetweenDates({
+  first,
+  second,
+  unit,
+  interval,
+}: {
+  first: DateTime;
+  second: DateTime;
+  unit: IDateAdapter.TimeUnit | 'week';
+  interval: number;
+}) {
+  let difference = (() => {
+    let intervalDuration: number;
+
+    switch (unit) {
+      case 'year':
+        let years = (second.get('year') - first.get('year')) * 12;
+        years = years + second.get('month') - first.get('month');
+        return Math.floor(years / 12);
+      case 'month':
+        let months = (second.get('year') - first.get('year')) * 12;
+        months = months + second.get('month') - first.get('month');
+        return months;
+      case 'week':
+        intervalDuration = MILLISECONDS_IN_WEEK;
+        break;
+      case 'day':
+        intervalDuration = MILLISECONDS_IN_DAY;
+        break;
+      case 'hour':
+        intervalDuration = MILLISECONDS_IN_HOUR;
+        break;
+      case 'minute':
+        intervalDuration = MILLISECONDS_IN_MINUTE;
+        break;
+      case 'second':
+        intervalDuration = MILLISECONDS_IN_SECOND;
+        break;
+      case 'millisecond':
+        intervalDuration = 1;
+        break;
+      default:
+        throw new Error('Unexpected `unit` value');
+    }
+
+    const diff = second.valueOf() - first.valueOf();
+
+    const sign = Math.sign(diff);
+
+    return Math.floor(Math.abs(diff) / intervalDuration) * sign;
+  })();
+
+  if (difference > 0 && difference < interval) {
+    difference = interval;
+  } else if (difference > interval) {
+    difference = Math.ceil(difference / interval) * interval;
+  }
+
+  return difference;
 }

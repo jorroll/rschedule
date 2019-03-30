@@ -3,27 +3,16 @@
     ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
   },
   "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
-  "moduleDirectories": [
-    "node_modules"
-  ],
-  "moduleFileExtensions": [
-    "ts",
-    "tsx",
-    "js"
-  ],
-  "modulePathIgnorePatterns": [
-    "tmp"
-  ],
-  "coveragePathIgnorePatterns": [
-    "/node_modules/",
-    "/tests/"
-  ],
+  "moduleDirectories": ["node_modules"],
+  "moduleFileExtensions": ["ts", "tsx", "js"],
+  "modulePathIgnorePatterns": ["tmp"],
+  "coveragePathIgnorePatterns": ["/node_modules/", "/tests/"],
   "coverageThreshold": {
     "global": {
-      "branches": 90,
-      "functions": 95,
-      "lines": 95,
-      "statements": 95
+      "branches": 66,
+      "functions": 77,
+      "lines": 78,
+      "statements": 78
     }
   },
   "collectCoverage": true,

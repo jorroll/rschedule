@@ -1,5 +1,7 @@
-import { DateAdapterConstructor } from './date-adapter';
+import { DateAdapter } from './date-adapter';
 
 export class RScheduleConfig {
-  public static defaultDateAdapter?: DateAdapterConstructor;
+  static defaultDateAdapter: typeof DateAdapter | undefined;
+  static defaultTimezone: string | undefined;
+  static defaultMaxFailedIterations: number | undefined;
 }

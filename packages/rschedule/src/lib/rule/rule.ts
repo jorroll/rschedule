@@ -1,138 +1,140 @@
+import { DateAdapter } from '../date-adapter';
+import { DateTime, IDateAdapter } from '../date-time';
 import {
-  DateAdapter,
-  DateAdapterBase,
-  DateAdapterConstructor,
-  DateProp,
-  IDateAdapterConstructor,
-} from '../date-adapter';
-import { DateTime } from '../date-time';
-import {
+  DateInput,
   HasOccurrences,
   IHasOccurrences,
-  OccurrenceIterator,
-  OccurrencesArgs,
-  RunArgs,
-  RunnableIterator,
+  IOccurrencesArgs,
+  IRunArgs,
+  IRunnable,
 } from '../interfaces';
+import { OccurrenceIterator } from '../iterators';
 import { RScheduleConfig } from '../rschedule-config';
-import { Utils } from '../utilities';
 import { PipeController } from './pipes';
-import { buildValidatedRuleOptions, Options } from './rule-options';
+import { getDifferenceBetweenWeekdays } from './pipes/utilities';
+import {
+  INormalizedRuleOptions,
+  IProvidedRuleOptions,
+  normalizeRuleOptions,
+  RuleOption,
+} from './rule-options';
 
 const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45');
 
-export abstract class Rule<T extends DateAdapterConstructor, D = any>
-  extends HasOccurrences<T>
-  implements RunnableIterator<T>, IHasOccurrences<T> {
-  /**
-   * NOTE: The options object is frozen. To make changes you must assign a new options object.
-   */
-  get options() {
-    return this._options;
-  }
-  set options(value: Options.ProvidedOptions<T>) {
-    // the old pipe controllers become invalid when the options change.
-    // just to make sure someone isn't still using an old iterator function,
-    // we mark the old controllers as invalid.
-    // Yay for forseeing/preventing possible SUPER annoying bugs!!!
-    this.usedPipeControllers.forEach(controller => (controller.invalid = true));
-    this.usedPipeControllers = [];
-    this.processedOptions = buildValidatedRuleOptions(
-      this.dateAdapter as any,
-      value as any,
-    );
-
-    this._options = Object.freeze({ ...value });
-  }
-
-  get isInfinite(): boolean {
-    return this.options.until === undefined && this.options.count === undefined;
-  }
-
-  /** From `options.start`. Note: you should not mutate the start date directly */
-  get startDate() {
-    return DateAdapterBase.isInstance(this.options.start)
-      ? this.options.start
-      : new this.dateAdapter(this.options.start);
-  }
-
-  public static defaultDateAdapter?: DateAdapterConstructor;
-
+export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurrences<T> {
   /**
    * Similar to `Array.isArray()`, `isRule()` provides a surefire method
    * of determining if an object is a `Rule` by checking against the
    * global symbol registry.
    */
-  public static isRule(object: any): object is Rule<any> {
-    return !!(object && object[RULE_ID]);
+  static isRule(object: unknown): object is Rule<any> {
+    return !!(object && typeof object === 'object' && (object as any)[RULE_ID]);
   }
 
   /** Convenience property for holding arbitrary data */
-  public data!: D;
+  data: D;
 
-  protected dateAdapter: IDateAdapterConstructor<T>;
+  readonly isInfinite: boolean;
 
-  // @ts-ignore used by static method
-  private readonly [RULE_ID] = true;
+  readonly hasDuration: boolean;
 
-  private _options!: Options.ProvidedOptions<T>;
+  readonly timezone: string | undefined;
 
-  private usedPipeControllers: Array<PipeController<T>> = []; // only so that we can invalidate them, if necessary
-  private processedOptions!: Options.ProcessedOptions<T>;
+  readonly options: IProvidedRuleOptions<T>;
+
+  protected readonly [RULE_ID] = true;
+
+  private readonly processedOptions!: INormalizedRuleOptions;
 
   constructor(
-    options: Options.ProvidedOptions<T>,
-    args: { data?: D; dateAdapter?: T } = {},
+    options: IProvidedRuleOptions<T>,
+    args: { data?: D; dateAdapter?: T; timezone?: string } = {},
   ) {
-    super();
+    super(args);
 
-    if (args.dateAdapter) { this.dateAdapter = args.dateAdapter as any; }
-    else if (Rule.defaultDateAdapter) {
-      this.dateAdapter = Rule.defaultDateAdapter as any;
-         }
-    else {
-      this.dateAdapter = RScheduleConfig.defaultDateAdapter as any;
-    }
-
-    if (!this.dateAdapter) {
-      throw new Error(
-        "Oops! You've initialized a Rule object without a dateAdapter.",
-      );
-    }
-
-    this.options = options;
-    if (args.data) { this.data = args.data; }
+    this.options = Object.freeze({ ...options });
+    this.processedOptions = normalizeRuleOptions(this.dateAdapter, this.options);
+    this.timezone = args.hasOwnProperty('timezone')
+      ? args.timezone
+      : this.processedOptions.start.timezone;
+    this.data = args.data!;
+    this.hasDuration = !!options.duration;
+    this.isInfinite =
+      this.processedOptions.end === undefined && this.processedOptions.count === undefined;
   }
+
+  // /**
+  //  * Returns the `options.start` date.
+  //  */
+  // startDate(): ConstructorReturnType<T> | null;
+  // startDate<R extends boolean>(options?: {
+  //   datetime?: R;
+  // }): R extends true ? DateTime : ConstructorReturnType<T> | null;
+  // startDate(options: { datetime?: boolean } = {}): DateTime | ConstructorReturnType<T> | null {
+  //   if (options.datetime) {
+  //     return this.processedOptions.start;
+  //   }
+
+  //   return this.dateAdapter.fromJSON(this.processedOptions.start.toJSON()) as ConstructorReturnType<
+  //     T
+  //   >;
+  // }
+
+  // /**
+  //  * If generator is infinite, returns `undefined`.
+  //  * If an end date is set, returns the end date.
+  //  * If a count is set, returns the last date or null.
+  //  */
+
+  // endDate(): ConstructorReturnType<T> | undefined | null;
+  // endDate<R extends boolean>(options?: {
+  //   datetime?: R;
+  // }): R extends true ? DateTime | null : ConstructorReturnType<T> | undefined | null;
+  // endDate(
+  //   options: { datetime?: boolean } = {},
+  // ): DateTime | ConstructorReturnType<T> | undefined | null {
+  //   if (this.isInfinite) {
+  //     return;
+  //   } else if (this.processedOptions.end) {
+  //     return options.datetime
+  //       ? this.processedOptions.end
+  //       : (this.dateAdapter.fromJSON(this.processedOptions.end.toJSON()) as ConstructorReturnType<
+  //           T
+  //         >);
+  //   }
+
+  //   return this.lastDate(options);
+  // }
 
   /**
-   * Updates the timezone associated with this rule.
+   * Allows you to change the timezone that dates are output in.
+   *
+   * ### Important!
+   * This does not change the *options* associated with this
+   * `Rule`, so the rule is still processed using whatever timezone is
+   * associated with the rule's `start` time. When the rule is run, and
+   * a date is found to be valid, that date is only then converted to
+   * the timezone you specify here and returned to you. If you want to actually change
+   * the rule options, you must create a new rule manually.
    */
-  public setTimezone(
-    timezone: string | undefined,
-    options: { keepLocalTime?: boolean } = {},
-  ) {
-    const start = DateAdapterBase.isInstance(this.options.start)
-      ? this.options.start.clone()
-      : new this.dateAdapter(this.options.start);
+  set(_: 'timezone', value: string | undefined) {
+    if (value === this.timezone) return this;
 
-    start.set('timezone', timezone, options);
-
-    this.options = {
-      ...this.options,
-      start,
-    };
-
-    return this;
+    return new Rule(this.options, {
+      data: this.data,
+      dateAdapter: this.dateAdapter,
+      timezone: value,
+    });
   }
 
-  public occurrences(args: OccurrencesArgs<T> = {}): OccurrenceIterator<T> {
+  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
     return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
   }
 
   /**
    *   Checks to see if an occurrence exists which equals the given date.
    */
-  public occursOn(rawArgs: { date: DateProp<T> | DateAdapter<T> }): boolean;
+  occursOn(rawArgs: { date: DateInput<T> }): boolean;
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    *
@@ -145,199 +147,42 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
    * - `excludeDates` argument can be provided which limits the possible occurrences
    *   to ones not equal to a date in the `excludeDates` array.
    */
-  public occursOn(rawArgs: {
-    weekday: DateTime.Weekday;
-    after?: DateProp<T> | DateAdapter<T>;
-    before?: DateProp<T> | DateAdapter<T>;
+  // tslint:disable-next-line: unified-signatures
+  occursOn(rawArgs: {
+    weekday: IDateAdapter.Weekday;
+    after?: DateInput<T>;
+    before?: DateInput<T>;
     excludeEnds?: boolean;
-    excludeDates?: Array<DateProp<T> | DateAdapter<T>>;
+    excludeDates?: DateInput<T>[];
   }): boolean;
-  public occursOn(rawArgs: {
-    date?: DateProp<T> | DateAdapter<T>;
-    weekday?: DateTime.Weekday;
-    after?: DateProp<T> | DateAdapter<T>;
-    before?: DateProp<T> | DateAdapter<T>;
+  occursOn(rawArgs: {
+    date?: DateInput<T>;
+    weekday?: IDateAdapter.Weekday;
+    after?: DateInput<T>;
+    before?: DateInput<T>;
     excludeEnds?: boolean;
-    excludeDates?: Array<DateProp<T> | DateAdapter<T>>;
+    excludeDates?: DateInput<T>[];
+    duration?: RuleOption.Duration;
   }): boolean {
     const args = this.processOccursOnArgs(rawArgs);
 
     if (args.weekday) {
-      if (
-        this.processedOptions.byDayOfWeek &&
-        !this.processedOptions.byDayOfWeek.some(day =>
-          typeof day === 'string'
-            ? day === args.weekday
-            : day[0] === args.weekday,
-        )
-      ) {
-        // The rule specificly does not occur on the given day
-        return false;
-      }
-
-      let until: DateAdapter<T> | undefined;
-      const before =
-        args.before &&
-        ((args.excludeEnds
-          ? args.before.clone().subtract(1, 'day')
-          : args.before) as DateAdapter<T>);
-      const after =
-        args.after &&
-        ((args.excludeEnds
-          ? args.after.clone().add(1, 'day')
-          : args.after) as DateAdapter<T>);
-
-      if (this.processedOptions.until && before) {
-        until = before.isBefore(this.processedOptions.until)
-          ? before
-          : this.processedOptions.until;
-      }
-      else if (this.processedOptions.until) { until = this.processedOptions.until; }
-      else if (before) {
-        until = before;
-      }
-
-      if (until && until.isBefore(this.processedOptions.start)) { return false; }
-
-      // This function allows for an "intelligent" brute forcing of occurrences.
-      // For rules with a frequency less than a day, it only checks one
-      // iteration on any given day.
-      const bruteForceCheck = () => {
-        let date = getNextDateNotInExdates(args.excludeDates, after, until);
-
-        if (date && date.get('weekday') === args.weekday) { return true; }
-
-        while (date) {
-          Utils.setDateToStartOfDay(date).add(24, 'hour');
-
-          date = getNextDateNotInExdates(args.excludeDates, date, until);
-
-          if (date && date.get('weekday') === args.weekday) { return true; }
-        }
-
-        return false;
-      };
-
-      const getNextDateNotInExdates = (
-        exdates?: Array<DateAdapter<T>>,
-        start?: DateAdapter<T>,
-        end?: DateAdapter<T>,
-      ) => {
-        let date = this._run({ start, end }).next().value;
-
-        if (!exdates || exdates.length === 0) { return date; }
-
-        while (date && exdates.some(exdate => exdate.isEqual(date))) {
-          Utils.setDateToStartOfDay(date).add(24, 'hour');
-
-          date = this._run({ start: date, end }).next().value;
-        }
-
-        return date;
-      };
-
-      if (this.processedOptions.count) {
-        return bruteForceCheck();
-      }
-
-      if (until) {
-        let difference: number;
-
-        switch (this.processedOptions.frequency) {
-          case 'YEARLY':
-          case 'MONTHLY':
-            difference =
-              until.get('year') - this.processedOptions.start.get('year');
-
-            // A particular day of the month will cycle through weekdays in an 11 year cycle.
-            // If our timespan is 11 years or above, we can ignore the timestap. Otherwise, we just assume
-            // there aren't that many occurrences and brute force it.
-            if (args.excludeDates || difference < 11) { return bruteForceCheck(); }
-
-            break;
-          case 'WEEKLY':
-          case 'DAILY':
-          case 'HOURLY':
-          case 'MINUTELY':
-          case 'SECONDLY':
-          default:
-            difference =
-              until.get('yearday') - this.processedOptions.start.get('yearday');
-
-            // If our timespan is less then a week, we simply test to see if it occurs on the day we're interested in.
-            if (!args.excludeDates && difference < 6) {
-              const date = this.processedOptions.start.clone();
-
-              date.add(
-                Utils.differenceInDaysBetweenTwoWeekdays(
-                  date.get('weekday'),
-                  args.weekday!,
-                ),
-                'day',
-              );
-
-              if (after && date.isBefore(after)) { return false; }
-
-              return this.occursOn({ date });
-            }
-
-            // If we have `excludeDates` or our timespan is less than a year,
-            // we need to worry about `byMonthOfYear` and `byDayOfMonth` rules
-            if (
-              (difference < 366 &&
-                (this.options.byMonthOfYear || this.options.byDayOfMonth)) ||
-              args.excludeDates
-            ) {
-              return bruteForceCheck();
-            }
-
-            // If the timespan is more than a year, or more than a week without `byMonthOfYear`
-            // or `byDayOfMonth` rules, and there are no `excludeDates`, we can ignore the end date.
-            break;
-        }
-      }
-
-      // The following assumes no end date to the rule.
-      // Also note that we are using the `ProcessedOptions`, so we can count on `byDayOfWeek`
-      // being present, if appropriate.
-      if (this.processedOptions.byDayOfWeek) {
-        return this.processedOptions.byDayOfWeek.some(day =>
-          typeof day === 'string'
-            ? day === args.weekday
-            : day[0] === args.weekday,
-        );
-      }
-      else { return true; }
-    } else {
-      for (const day of this._run({ start: args.date, end: args.date })) {
-        return !!day;
-      }
-      return false;
+      return this.occursOnWeekday(args);
     }
+
+    for (const day of this._run({ start: args.date, end: args.date })) {
+      return !!day;
+    }
+
+    return false;
   }
 
-  /**  @private use occurrences() instead */
-  public *_run(args: RunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
-    const pipeArgs = {
-      ...args,
-      start:
-        args.start &&
-        new DateTime(
-          args.start
-            .clone()
-            .set('timezone', this.processedOptions.start.get('timezone')),
-        ),
-      end:
-        args.end &&
-        new DateTime(
-          args.end
-            .clone()
-            .set('timezone', this.processedOptions.start.get('timezone')),
-        ),
-    };
+  /**  @private use `occurrences()` instead */
+  *_run(rawArgs: IRunArgs = {}): IterableIterator<DateTime> {
+    const args = this.normalizeRunArgs(rawArgs);
 
-    const controller = new PipeController(this.processedOptions, pipeArgs);
-    this.usedPipeControllers.push(controller);
+    const controller = new PipeController(this.processedOptions, args);
+
     const iterator = controller._run();
 
     let date = iterator.next().value;
@@ -347,18 +192,112 @@ export abstract class Rule<T extends DateAdapterConstructor, D = any>
     while (date && (args.take === undefined || index < args.take)) {
       index++;
 
-      const adapter = this.dateAdapter.fromTimeObject(date.toTimeObject())[0];
+      date.generators.push(this);
 
-      adapter.generators.push(this);
-
-      const yieldArgs = yield adapter;
+      const yieldArgs = yield this.normalizeRunOutput(date);
 
       date = iterator.next(yieldArgs).value;
     }
   }
 
-  // just exists to satisfy interface
-  public abstract clone(): Rule<T, D>;
+  private occursOnWeekday(args: {
+    weekday?: IDateAdapter.Weekday;
+    after?: DateTime;
+    before?: DateTime;
+    excludeEnds?: boolean;
+    excludeDates?: DateTime[];
+  }) {
+    const weekday = args.weekday!;
 
-  public abstract toICal(): string;
+    if (
+      this.processedOptions.byDayOfWeek &&
+      !this.processedOptions.byDayOfWeek.some(day =>
+        typeof day === 'string' ? day === weekday : day[0] === weekday,
+      )
+    ) {
+      // The rule specificly does not occur on the given day
+      return false;
+    }
+
+    let end: DateTime | undefined;
+
+    const before = args.before && (args.excludeEnds ? args.before.subtract(1, 'day') : args.before);
+
+    const after = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
+
+    if (this.processedOptions.end && before) {
+      end = before.isBefore(this.processedOptions.end) ? before : this.processedOptions.end;
+    } else if (this.processedOptions.end) {
+      end = this.processedOptions.end;
+    } else if (before) {
+      end = before;
+    }
+
+    if (
+      end &&
+      (end.isBefore(this.processedOptions.start) || end.isBefore(this.processedOptions.start))
+    ) {
+      return false;
+    }
+
+    if (!end) {
+      end = this.processedOptions.start.add(
+        this.processedOptions.frequency === 'YEARLY' ? this.processedOptions.interval * 11 : 11,
+        'year',
+      );
+    }
+
+    // This function allows for an "intelligent" brute forcing of occurrences.
+    // For rules with a frequency less than a day, it only checks one
+    // iteration on any given day.
+    const bruteForceCheck = () => {
+      let date = getNextDateNotInExdates(args.excludeDates, after, end);
+
+      if (date && date.get('weekday') === weekday) {
+        return true;
+      }
+
+      while (date) {
+        date = date.granularity('day').add(24, 'hour');
+
+        date = getNextDateNotInExdates(args.excludeDates, date, end);
+
+        if (date && date.get('weekday') === weekday) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const getNextDateNotInExdates = (
+      exdates?: Array<DateTime>,
+      start?: DateTime,
+      end?: DateTime,
+    ) => {
+      let date = this._run({ start, end }).next().value;
+
+      if (!exdates || exdates.length === 0) {
+        return date;
+      }
+
+      while (date && exdates.some(exdate => exdate.isEqual(date))) {
+        date = date.granularity('day').add(24, 'hour');
+
+        date = this._run({ start: date, end }).next().value;
+      }
+
+      return date;
+    };
+
+    return bruteForceCheck();
+  }
+
+  private normalizeRunArgs(args: IRunArgs) {
+    return {
+      ...args,
+      start: this.normalizeDateInput(args.start),
+      end: this.normalizeDateInput(args.end),
+    };
+  }
 }

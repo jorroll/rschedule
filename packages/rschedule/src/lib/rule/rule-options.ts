@@ -1,61 +1,57 @@
-import {
-  DateAdapter,
-  DateAdapterBase,
-  DateAdapterConstructor,
-  DateProp,
-  IDateAdapter,
-  IDateAdapterConstructor,
-} from '../date-adapter';
-import { DateTime } from '../date-time';
+import { DateAdapter } from '../date-adapter';
+import { DateTime, IDateAdapter } from '../date-time';
+import { ArgumentError, numberSortComparer } from '../utilities';
 
 /**
  * This function performs validation checks on the provided rule options and retuns
  * a cloned validated options object.
  */
-export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
+export function normalizeRuleOptions<T extends typeof DateAdapter>(
   dateAdapterConstructor: T,
-  options: Options.ProvidedOptions<T>,
-): Options.ProcessedOptions<T> {
-  // hack to trick typescript into inferring the correct types
-  const dateAdapter: IDateAdapterConstructor<T> = dateAdapterConstructor as any;
+  options: IProvidedRuleOptions<T>,
+): INormalizedRuleOptions {
+  const start = DateAdapter.isInstance(options.start)
+    ? options.start.toDateTime()
+    : dateAdapterConstructor.isDate(options.start)
+    ? new dateAdapterConstructor(options.start).toDateTime()
+    : dateAdapterConstructor.fromJSON(options.start as IDateAdapter.JSON).toDateTime();
 
-  const start = DateAdapterBase.isInstance(options.start)
-    ? options.start
-    : new dateAdapter(options.start);
+  let end: DateTime | undefined;
 
-  let until: DateAdapter<T> | undefined;
-
-  if (options.until) {
-    until = DateAdapterBase.isInstance(options.until)
-      ? options.until.set('timezone', start.get('timezone'))
-      : new dateAdapter(options.until).set('timezone', start.get('timezone'));
+  if (options.end) {
+    end = DateAdapter.isInstance(options.end)
+      ? options.end.toDateTime()
+      : dateAdapterConstructor.isDate(options.end)
+      ? new dateAdapterConstructor(options.end).toDateTime()
+      : dateAdapterConstructor.fromJSON(options.end as IDateAdapter.JSON).toDateTime();
   }
 
   if (options.interval !== undefined && options.interval < 1) {
     throw new RuleValidationError('"interval" cannot be less than 1');
   }
+
+  if (options.duration !== undefined && options.duration === 0) {
+    throw new RuleValidationError('"duration" cannot be 0');
+  }
+
   if (
     options.bySecondOfMinute !== undefined &&
     options.bySecondOfMinute.some(num => num < 0 || num > 60)
   ) {
-    throw new RuleValidationError(
-      '"bySecondOfMinute" values must be >= 0 && <= 60',
-    );
+    throw new RuleValidationError('"bySecondOfMinute" values must be >= 0 && <= 60');
   }
+
   if (
     options.byMinuteOfHour !== undefined &&
     options.byMinuteOfHour.some(num => num < 0 || num > 59)
   ) {
-    throw new RuleValidationError(
-      '"byMinuteOfHour" values must be >= 0 && <= 59',
-    );
+    throw new RuleValidationError('"byMinuteOfHour" values must be >= 0 && <= 59');
   }
-  if (
-    options.byHourOfDay !== undefined &&
-    options.byHourOfDay.some(num => num < 0 || num > 23)
-  ) {
+
+  if (options.byHourOfDay !== undefined && options.byHourOfDay.some(num => num < 0 || num > 23)) {
     throw new RuleValidationError('"byHourOfDay" values must be >= 0 && <= 23');
   }
+
   if (
     !['YEARLY', 'MONTHLY'].includes(options.frequency) &&
     options.byDayOfWeek !== undefined &&
@@ -66,13 +62,13 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
         'either "MONTHLY" or "YEARLY"',
     );
   }
+
   if (
     options.frequency === 'MONTHLY' &&
     options.byDayOfWeek !== undefined &&
     options.byDayOfWeek.some(
       weekday =>
-        Array.isArray(weekday) &&
-        (weekday[1] < -31 || weekday[1] === 0 || weekday[1] > 31),
+        Array.isArray(weekday) && (weekday[1] < -31 || weekday[1] === 0 || weekday[1] > 31),
     )
   ) {
     throw new RuleValidationError(
@@ -80,13 +76,13 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
         ' have a numeric value >= -31 and <= 31 and !== 0',
     );
   }
+
   if (
     options.frequency === 'YEARLY' &&
     options.byDayOfWeek !== undefined &&
     options.byDayOfWeek.some(
       weekday =>
-        Array.isArray(weekday) &&
-        (weekday[1] < -366 || weekday[1] === 0 || weekday[1] > 366),
+        Array.isArray(weekday) && (weekday[1] < -366 || weekday[1] === 0 || weekday[1] > 366),
     )
   ) {
     throw new RuleValidationError(
@@ -94,90 +90,67 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
         ' have a numeric value >= -366 and <= 366 and !== 0',
     );
   }
+
   if (options.frequency === 'WEEKLY' && options.byDayOfMonth !== undefined) {
-    throw new RuleValidationError(
-      'when "frequency" is "WEEKLY", "byDayOfMonth" cannot be present',
-    );
+    throw new RuleValidationError('when "frequency" is "WEEKLY", "byDayOfMonth" cannot be present');
   }
-  if (options.until !== undefined && options.count !== undefined) {
-    throw new RuleValidationError('"until" and "count" cannot both be present');
+
+  if (options.end !== undefined && options.count !== undefined) {
+    throw new RuleValidationError('"end" and "count" cannot both be present');
   }
-  // if (options.until !== undefined && !options.until!.isSameClass(start)) {
-  //   throw new RuleValidationError(
-  //     '"until" and "start" must both be of the same class'
-  //   )
-  // }
 
   if (options.byMonthOfYear) {
-    options.byMonthOfYear.sort((a, b) => {
-      if (a > b) {
-        return 1;
-      } else if (b > a) {
-        return -1;
-      } else {
-        return 0;
-      }
-    });
+    options.byMonthOfYear.sort(numberSortComparer);
   }
 
   if (options.byHourOfDay) {
-    options.byHourOfDay.sort((a, b) => {
-      if (a > b) {
-        return 1;
-      } else if (b > a) {
-        return -1;
-      } else {
-        return 0;
-      }
-    });
+    options.byHourOfDay.sort(numberSortComparer);
   }
 
   if (options.byMinuteOfHour) {
-    options.byMinuteOfHour.sort((a, b) => {
-      if (a > b) {
-        return 1;
-      } else if (b > a) {
-        return -1;
-      } else {
-        return 0;
-      }
-    });
+    options.byMinuteOfHour.sort(numberSortComparer);
   }
 
   if (options.bySecondOfMinute) {
-    options.bySecondOfMinute.sort((a, b) => {
-      if (a > b) {
-        return 1;
-      } else if (b > a) {
-        return -1;
-      } else {
-        return 0;
-      }
-    });
+    options.bySecondOfMinute.sort(numberSortComparer);
   }
 
-  const defaultOptions: any = {
-    timezone: start.get('timezone'),
+  const normalizedOptions: INormalizedRuleOptions = {
+    ...options,
+    start,
+    end,
+    count: options.count,
     frequency: options.frequency,
-    interval: 1,
-    weekStart: 'MO',
+    interval: options.interval || 1,
+    weekStart: options.weekStart || 'MO',
   };
+
+  // if (options.hasOwnProperty('timezone')) {
+  //   normalizedOptions.start = dateAdapterConstructor
+  //     .fromJSON(start.toJSON())
+  //     .set('timezone', options.timezone)
+  //     .toDateTime();
+
+  //   normalizedOptions.end =
+  //     end &&
+  //     dateAdapterConstructor
+  //       .fromJSON(end.toJSON())
+  //       .set('timezone', options.timezone)
+  //       .toDateTime();
+  // }
 
   if (!(options.byDayOfMonth || options.byDayOfWeek)) {
     switch (options.frequency) {
-      case 'YEARLY':
-        defaultOptions.byMonthOfYear = [
-          start.get('month'),
-        ] as Options.ByMonthOfYear[];
+      case 'YEARLY': {
+        if (!options.byMonthOfYear) {
+          normalizedOptions.byMonthOfYear = [start.get('month')] as RuleOption.ByMonthOfYear[];
+        }
+      }
       case 'MONTHLY':
-        defaultOptions.byDayOfMonth = [
-          start.get('day'),
-        ] as Options.ByDayOfMonth[];
+        normalizedOptions.byDayOfMonth = [start.get('day')] as RuleOption.ByDayOfMonth[];
         break;
       case 'WEEKLY':
-        defaultOptions.byDayOfWeek = [
-          start.get('weekday'),
-        ] as Options.ByDayOfWeek[];
+        normalizedOptions.byDayOfWeek = [start.get('weekday')] as RuleOption.ByDayOfWeek[];
         break;
     }
   }
@@ -186,29 +159,96 @@ export function buildValidatedRuleOptions<T extends DateAdapterConstructor>(
     case 'YEARLY':
     case 'MONTHLY':
     case 'WEEKLY':
-    case 'DAILY':
-      defaultOptions.byHourOfDay = [start.get('hour')] as Options.ByHourOfDay[];
-    case 'HOURLY':
-      defaultOptions.byMinuteOfHour = [
-        start.get('minute'),
-      ] as Options.ByMinuteOfHour[];
-    case 'MINUTELY':
-      defaultOptions.bySecondOfMinute = [
-        start.get('second'),
-      ] as Options.BySecondOfMinute[];
+    case 'DAILY': {
+      if (!options.byHourOfDay) {
+        normalizedOptions.byHourOfDay = [start.get('hour')] as RuleOption.ByHourOfDay[];
+      }
+    }
+    case 'HOURLY': {
+      if (!options.byMinuteOfHour) {
+        normalizedOptions.byMinuteOfHour = [start.get('minute')] as RuleOption.ByMinuteOfHour[];
+      }
+    }
+    case 'MINUTELY': {
+      if (!options.bySecondOfMinute) {
+        normalizedOptions.bySecondOfMinute = [start.get('second')] as RuleOption.BySecondOfMinute[];
+      }
+    }
+    case 'SECONDLY': {
+      normalizedOptions.byMillisecondOfSecond = [
+        start.get('millisecond'),
+      ] as RuleOption.ByMillisecondOfSecond[];
+    }
   }
 
-  return {
-    ...defaultOptions,
-    ...options,
-    start,
-    until,
-  };
+  return normalizedOptions;
 }
 
-class RuleValidationError extends Error {}
+export function normalizeDateInput<T extends typeof DateAdapter>(
+  input: T['date'] | ConstructorReturnType<T> | IDateAdapter.JSON,
+  dateAdapter: T,
+) {
+  return DateAdapter.isInstance(input)
+    ? input.toDateTime()
+    : dateAdapter.isDate(input)
+    ? new dateAdapter(input).toDateTime()
+    : dateAdapter.fromJSON(input as IDateAdapter.JSON).toDateTime();
+}
 
-export namespace Options {
+export class RuleValidationError extends Error {}
+
+export interface IProvidedRuleOptions<T extends typeof DateAdapter> {
+  start: RuleOption.Start<T>;
+  end?: RuleOption.End<T>;
+  duration?: RuleOption.Duration;
+  frequency: RuleOption.Frequency;
+  interval?: RuleOption.Interval;
+  count?: RuleOption.Count;
+  weekStart?: RuleOption.WeekStart;
+  bySecondOfMinute?: RuleOption.BySecondOfMinute[];
+  byMinuteOfHour?: RuleOption.ByMinuteOfHour[];
+  byHourOfDay?: RuleOption.ByHourOfDay[];
+  byDayOfWeek?: RuleOption.ByDayOfWeek[];
+  byDayOfMonth?: RuleOption.ByDayOfMonth[];
+  byMonthOfYear?: RuleOption.ByMonthOfYear[];
+}
+
+export interface INormalizedRuleOptions {
+  start: DateTime;
+  end?: DateTime;
+  duration?: number;
+  frequency: RuleOption.Frequency;
+  interval: RuleOption.Interval;
+  count?: RuleOption.Count;
+  weekStart: RuleOption.WeekStart;
+  byMillisecondOfSecond?: RuleOption.ByMillisecondOfSecond[];
+  bySecondOfMinute?: RuleOption.BySecondOfMinute[];
+  byMinuteOfHour?: RuleOption.ByMinuteOfHour[];
+  byHourOfDay?: RuleOption.ByHourOfDay[];
+  byDayOfWeek?: RuleOption.ByDayOfWeek[];
+  byDayOfMonth?: RuleOption.ByDayOfMonth[];
+  byMonthOfYear?: RuleOption.ByMonthOfYear[];
+}
+
+export namespace RuleOption {
+  export type Start<T extends typeof DateAdapter> =
+    | T['date']
+    | ConstructorReturnType<T>
+    | IDateAdapter.JSON;
+
+  export type End<T extends typeof DateAdapter> =
+    | T['date']
+    | ConstructorReturnType<T>
+    | IDateAdapter.JSON;
+
+  export type Duration = number;
+
+  export type Interval = number;
+
+  export type Count = number;
+
+  export type WeekStart = IDateAdapter.Weekday;
+
   export type Frequency =
     | 'SECONDLY'
     | 'MINUTELY'
@@ -227,43 +267,13 @@ export namespace Options {
    * If the number is negative, it is calculated from the end of
    * the month / year.
    */
-  export type ByDayOfWeek =
-    | IDateAdapter.Weekday
-    | [IDateAdapter.Weekday, number];
+  export type ByDayOfWeek = IDateAdapter.Weekday | [IDateAdapter.Weekday, number];
 
-  export interface ProvidedOptions<T extends DateAdapterConstructor> {
-    start: DateProp<T> | DateAdapter<T>;
-    frequency: Frequency;
-    interval?: number;
-    bySecondOfMinute?: BySecondOfMinute[];
-    byMinuteOfHour?: ByMinuteOfHour[];
-    byHourOfDay?: ByHourOfDay[];
-    byDayOfWeek?: ByDayOfWeek[];
-    byDayOfMonth?: ByDayOfMonth[];
-    byMonthOfYear?: ByMonthOfYear[];
-    until?: DateProp<T> | DateAdapter<T>;
-    count?: number;
-    weekStart?: IDateAdapter.Weekday;
-  }
-
-  export interface ProcessedOptions<T extends DateAdapterConstructor> {
-    frequency: Frequency;
-    interval: number;
-    start: DateAdapter<T>;
-    until?: DateAdapter<T>;
-    count?: number;
-    weekStart: DateTime.Weekday;
-    byMonthOfYear?: ByMonthOfYear[];
-    byDayOfMonth?: ByDayOfMonth[];
-    byDayOfWeek?: ByDayOfWeek[];
-    byHourOfDay: ByHourOfDay[];
-    byMinuteOfHour: ByMinuteOfHour[];
-    bySecondOfMinute: BySecondOfMinute[];
-  }
+  export type ByMillisecondOfSecond = number;
 
   export type BySecondOfMinute = ByMinuteOfHour | 60;
 
-  export type ByMonthOfYear = IDateAdapter.IMonth;
+  export type ByMonthOfYear = IDateAdapter.Month;
 
   // >= 0 && <= 59
   export type ByMinuteOfHour =
