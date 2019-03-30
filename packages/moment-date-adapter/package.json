@@ -23,23 +23,23 @@
     "icalendar",
     "rfc"
   ],
-  "main": "build/main/index.js",
-  "typings": "build/main/index.d.ts",
-  "module": "build/module/index.js",
+  "main": "build/main.js",
+  "typings": "build/packages/moment-date-adapter/index.d.ts",
+  "module": "build/module.js",
   "engines": {
     "node": ">=8.9"
   },
   "scripts": {
-    "build": "yarn clean:build && yarn build:main && yarn build:module",
-    "build:main": "tsc -p tsconfig.json",
-    "build:module": "tsc -p tsconfig.module.json",
-    "clean:build": "trash build"
+    "build": "yarn clean:build && rollup -c",
+    "clean:build": "trash build .rpt2_cache"
   },
   "peerDependencies": {
     "@rschedule/rschedule": "^0.6.0",
     "moment": "^2.0.0"
   },
   "devDependencies": {
+    "rollup": "^1.7.4",
+    "rollup-plugin-typescript2": "^0.20.1",
     "trash-cli": "^1.4.0",
     "typescript": "3.4.1"
   }
