@@ -1,5 +1,6 @@
 import { DateTime, IDateAdapter } from '../../date-time';
-import { intervalDifferenceBetweenDates, unitForFrequency } from './01-frequency.pipe';
+import { freqToGranularity } from '../../utilities';
+import { intervalDifferenceBetweenDates } from './01-frequency.pipe';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**
@@ -8,7 +9,7 @@ import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
  * account the `RRULE` frequency and interval.
  */
 export class RevFrequencyPipe extends PipeRule implements IPipeRule {
-  private readonly intervalUnit = unitForFrequency(this.options.frequency);
+  private readonly intervalUnit = freqToGranularity(this.options.frequency);
 
   private intervalEndDate = this.normalizedEndDate(this.end!);
   private intervalStartDate = this.normalizedStartDate(this.intervalEndDate);

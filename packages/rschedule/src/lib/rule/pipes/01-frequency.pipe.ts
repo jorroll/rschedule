@@ -7,7 +7,7 @@ import {
   MILLISECONDS_IN_SECOND,
   MILLISECONDS_IN_WEEK,
 } from '../../date-time';
-import { RuleOption } from '../rule-options';
+import { freqToGranularity } from '../../utilities';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**
@@ -16,7 +16,7 @@ import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
  * account the `RRULE` frequency and interval.
  */
 export class FrequencyPipe extends PipeRule implements IPipeRule {
-  private readonly intervalUnit = unitForFrequency(this.options.frequency);
+  private readonly intervalUnit = freqToGranularity(this.options.frequency);
 
   private intervalStartDate = this.normalizedStartDate(this.start);
   private intervalEndDate = this.normalizedEndDate(this.intervalStartDate);
@@ -102,25 +102,6 @@ export class FrequencyPipe extends PipeRule implements IPipeRule {
 
   private dateIsWithinInterval(date: DateTime) {
     return this.intervalStartDate.isBeforeOrEqual(date) && this.intervalEndDate.isAfter(date);
-  }
-}
-
-export function unitForFrequency(frequency: RuleOption.Frequency) {
-  switch (frequency) {
-    case 'YEARLY':
-      return 'year';
-    case 'MONTHLY':
-      return 'month';
-    case 'WEEKLY':
-      return 'week';
-    case 'DAILY':
-      return 'day';
-    case 'HOURLY':
-      return 'hour';
-    case 'MINUTELY':
-      return 'minute';
-    case 'SECONDLY':
-      return 'second';
   }
 }
 
