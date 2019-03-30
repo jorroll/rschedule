@@ -15,7 +15,7 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
   }
 
   /**
-   * Convenience getter for returning the dates in DateAdapter format.
+   * Convenience getter for returning the wrapped dates in DateAdapter format.
    */
   get adapters(): ConstructorReturnType<T>[] {
     return this.datetimes.map(date =>
@@ -114,6 +114,21 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
       data: this.data,
       dateAdapter: this.dateAdapter,
       timezone,
+    });
+  }
+
+  filter(
+    fn: (
+      date: ConstructorReturnType<T>,
+      index: number,
+      array: ConstructorReturnType<T>[],
+    ) => boolean,
+  ) {
+    return new Dates({
+      dates: this.adapters.filter(fn),
+      data: this.data,
+      dateAdapter: this.dateAdapter,
+      timezone: this.timezone,
     });
   }
 
