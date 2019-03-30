@@ -34,8 +34,7 @@
     "build": "yarn clean:build && yarn build:main && yarn build:module",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
-    "clean:build": "trash build",
-    "prepublish": "yarn build"
+    "clean:build": "trash build"
   },
   "peerDependencies": {
     "@rschedule/rschedule": "^0.6.0",
