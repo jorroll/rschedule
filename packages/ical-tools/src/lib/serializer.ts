@@ -144,8 +144,8 @@ function scheduleToJCal<T extends typeof DateAdapter>(schedule: Schedule<T>) {
   if (!start) return [];
 
   if (
-    schedule.rrules.some(rule => !rule.firstDate.isEqual(start)) ||
-    schedule.exrules.some(rule => !rule.firstDate.isEqual(start)) ||
+    schedule.rrules.some(rule => !rule.firstDate || !rule.firstDate.isEqual(start)) ||
+    schedule.exrules.some(rule => !rule.firstDate || !rule.firstDate.isEqual(start)) ||
     schedule.rdates.adapters.some(adapter => adapter.isBefore(start)) ||
     schedule.exdates.adapters.some(adapter => adapter.isBefore(start))
   ) {

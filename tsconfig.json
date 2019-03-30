@@ -3,7 +3,7 @@
     "baseUrl": "./",
     "rootDir": ".",
     "target": "es5",
-    "module": "commonjs",
+    "module": "es2015",
     "lib": ["es2017", "dom"],
     "strict": true,
     "declaration": true,
@@ -14,6 +14,7 @@
       "@rschedule/*": ["packages/*/src"]
     },
     "inlineSourceMap": true,
+    "removeComments": true,
     "downlevelIteration": true,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
   },

@@ -21,7 +21,7 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
 
   toArray() {
     if (this.args.end || this.args.take || !this.isInfinite) {
-      return Array.from(this._run());
+      return Array.from(this._run()) as ConstructorReturnType<T>[];
     }
   }
 
