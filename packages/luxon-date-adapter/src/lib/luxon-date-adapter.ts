@@ -1,17 +1,7 @@
-import {
-  DateAdapterBase,
-  IDateAdapter,
-  ParsedDatetime,
-  Utils,
-} from '@rschedule/rschedule';
-import { DateTime } from 'luxon';
+import { DateAdapter, DateTime, IDateAdapter, InvalidDateAdapterError } from '@rschedule/rschedule';
+import { DateTime as LuxonDateTime, LocalZone } from 'luxon';
 
-const LUXON_DATE_ADAPTER_ID = Symbol.for(
-  '9689fd66-841f-4a75-8ee0-f0515571779b',
-);
-
-// Luxon has a different weekday order
-const WEEKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+const LUXON_DATE_ADAPTER_ID = Symbol.for('9689fd66-841f-4a75-8ee0-f0515571779b');
 
 /**
  * The `LuxonDateAdapter` is a DateAdapter for `luxon` DateTime
@@ -26,174 +16,100 @@ const WEEKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
  * you want). If this is a problem for you, you can try opening
  * an issue in the rSchedule monorepo.
  */
-export class LuxonDateAdapter extends DateAdapterBase<DateTime> {
-  public static date: DateTime;
-
-  public static readonly hasTimezoneSupport = true;
+export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonDateTime> {
+  static readonly date: LuxonDateTime;
+  static readonly hasTimezoneSupport = true;
 
   /**
    * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
    * of determining if an object is a `LuxonDateAdapter` by checking against the
    * global symbol registry.
    */
-  public static isInstance(object: any): object is LuxonDateAdapter {
-    return !!(
-      object &&
-      object[LUXON_DATE_ADAPTER_ID] &&
-      super.isInstance(object)
-    );
-  }
-
-  public static fromTimeObject(args: {
-    datetimes: ParsedDatetime[];
-    timezone: string | undefined;
-  }): LuxonDateAdapter[] {
-    const dates = args.datetimes.map(datetime => {
-      switch (args.timezone) {
-        case 'UTC':
-          return new LuxonDateAdapter(DateTime.utc(...datetime));
-        case undefined:
-        case 'DATE':
-          return new LuxonDateAdapter(DateTime.local(...datetime));
-        default:
-          return new LuxonDateAdapter(
-            DateTime.fromObject({
-              year: datetime[0],
-              month: datetime[1],
-              day: datetime[2],
-              hour: datetime[3],
-              minute: datetime[4],
-              second: datetime[5],
-              millisecond: datetime[6],
-              zone: args.timezone,
-            }),
-          );
-      }
-    });
-
-    return dates;
-  }
-
-  public date: DateTime;
-
-  // @ts-ignore used by static method
-  private readonly [LUXON_DATE_ADAPTER_ID] = true;
-
-  constructor(date?: DateTime, args: {} = {}) {
-    super();
-
-    if (date) {
-      this.assertIsValid(date);
-
-      const obj = {
-        ...date.toObject(),
-        zone: date.zoneName,
-      };
-
-      // I realize that luxon is immutable, but the tests assume that a date is mutable
-      // and check object identity
-      this.date = DateTime.fromObject(obj);
-    } else { this.date = DateTime.local(); }
+  static isInstance(object: any): object is LuxonDateAdapter {
+    return !!(super.isInstance(object) && (object as any)[LUXON_DATE_ADAPTER_ID]);
   }
 
   /**
-   * Returns a clone of the date adapter including a cloned
-   * date property. Does not clone the `rule`, `schedule`,
-   * or `calendar` properties, but does copy them over to the
-   * new object.
+   * Checks if object is an instance of `LuxonDateTime`
    */
-  public clone(): LuxonDateAdapter {
-    const adapter = new LuxonDateAdapter(this.date);
-    adapter.generators = this.generators.slice();
-    return adapter;
+  static isDate(object: any): object is LuxonDateTime {
+    return LuxonDateTime.isDateTime(object);
   }
 
-  public get(unit: IDateAdapter.Unit | 'yearday'): number;
-  public get(unit: 'weekday'): IDateAdapter.Weekday;
-  public get(unit: 'timezone'): 'UTC' | undefined;
-  public get(unit: IDateAdapter.Unit | 'yearday' | 'weekday' | 'timezone') {
-    switch (unit) {
-      case 'year':
-        return this.date.get('year');
-      case 'month':
-        return this.date.get('month');
-      case 'yearday':
-        return Utils.getYearDay(
-          this.get('year'),
-          this.get('month'),
-          this.get('day'),
-        );
-      case 'weekday':
-        return WEEKDAYS[this.date.get('weekday') - 1];
-      case 'day':
-        return this.date.get('day');
-      case 'hour':
-        return this.date.get('hour');
-      case 'minute':
-        return this.date.get('minute');
-      case 'second':
-        return this.date.get('second');
-      case 'millisecond':
-        return this.date.get('millisecond');
-      case 'timezone':
-        return this.date.zoneName as string | undefined;
-      default:
-        throw new Error('Invalid unit provided to `LuxonDateAdapter#set`');
-    }
+  static fromJSON(json: IDateAdapter.JSON): LuxonDateAdapter {
+    const zone =
+      json.timezone === undefined ? 'local' : json.timezone === 'UTC' ? 'utc' : json.timezone;
+
+    return new LuxonDateAdapter(
+      LuxonDateTime.fromObject({
+        zone,
+        year: json.year,
+        month: json.month,
+        day: json.day,
+        hour: json.hour,
+        minute: json.minute,
+        second: json.second,
+        millisecond: json.millisecond,
+      }),
+      { duration: json.duration },
+    );
   }
 
-  public set(unit: IDateAdapter.Unit, value: number): this;
-  public set(
-    unit: 'timezone',
-    value: string | undefined,
-    options?: { keepLocalTime?: boolean },
-  ): this;
-  public set(
-    unit: IDateAdapter.Unit | 'timezone',
-    value: number | string | undefined,
-    options: { keepLocalTime?: boolean } = {},
-  ): this {
-    if (unit !== 'timezone') { return super.set(unit, value); }
+  readonly timezone: string | undefined;
+  readonly duration: number | undefined;
 
-    if (value) {
-      this.date = this.date.setZone(value as string, {
-        keepLocalTime: options.keepLocalTime,
-      });
-    }
-    else if (options.keepLocalTime) {
-      this.date = DateTime.fromObject({
-        year: this.get('year'),
-        month: this.get('month'),
-        day: this.get('day'),
-        hour: this.get('hour'),
-        minute: this.get('minute'),
-        second: this.get('second'),
-        millisecond: this.get('millisecond'),
-      });
-    } else {
-      this.date = this.date.toLocal();
-    }
+  protected readonly [LUXON_DATE_ADAPTER_ID] = true;
 
-    if (value !== undefined && this.date.zoneName !== value) {
-      throw new IDateAdapter.InvalidDateError(
-        `LuxonDateAdapter provided invalid timezone "${value}".`,
-      );
-    }
+  constructor(readonly date: LuxonDateTime, options: { duration?: number } = {}) {
+    super(undefined);
+
+    this.timezone = this.date.zone instanceof LocalZone ? undefined : this.date.zoneName;
+    this.duration = options.duration;
 
     this.assertIsValid();
-
-    return this;
   }
 
-  public valueOf() {
+  set(_: 'timezone', value: string | undefined) {
+    if (this.timezone === value) return this;
+
+    if (value === undefined) {
+      return new LuxonDateAdapter(this.date.toLocal(), { duration: this.duration });
+    }
+
+    return new LuxonDateAdapter(this.date.setZone(value), { duration: this.duration });
+  }
+
+  valueOf() {
     return this.date.valueOf();
   }
 
-  public assertIsValid(date?: DateTime) {
-    date = date || this.date;
+  toISOString() {
+    return this.date.toUTC().toISO();
+  }
 
-    if (!date.isValid) {
-      throw new IDateAdapter.InvalidDateError();
+  toDateTime(): DateTime {
+    return DateTime.fromJSON(this.toJSON());
+  }
+
+  toJSON(): IDateAdapter.JSON {
+    return {
+      timezone: this.timezone,
+      duration: this.duration,
+      year: this.date.get('year'),
+      month: this.date.get('month'),
+      day: this.date.get('day'),
+      hour: this.date.get('hour'),
+      minute: this.date.get('minute'),
+      second: this.date.get('second'),
+      millisecond: this.date.get('millisecond'),
+    };
+  }
+
+  assertIsValid() {
+    if (!this.date.isValid) {
+      throw new InvalidDateAdapterError();
+    } else if (this.duration && this.duration <= 0) {
+      throw new InvalidDateAdapterError('If provided, duration must be greater than 0.');
     }
 
     return true;

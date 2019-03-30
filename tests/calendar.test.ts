@@ -1,1865 +1,520 @@
+import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
+import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
+import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
 import {
   Calendar,
-  CollectionsArgs,
   CollectionsGranularity,
-  OccurrencesArgs,
-  RRule,
+  DateAdapter,
+  DateAdapter as DateAdapterConstructor,
+  Dates,
+  HasOccurrences,
+  ICollectionsArgs,
+  IOccurrencesArgs,
+  IProvidedRuleOptions,
+  RScheduleConfig,
   Schedule,
 } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
-import { context, dateAdapter, isoString } from './utilities';
+import { DateTime as LuxonDateTime } from 'luxon';
+import { Moment as MomentST } from 'moment';
+import { Moment as MomentTZ } from 'moment-timezone';
+import {
+  context,
+  DatetimeFn,
+  dateTimeFn,
+  environment,
+  luxonDatetimeFn,
+  momentDatetimeFn,
+  momentTZDatetimeFn,
+  standardDatetimeFn,
+  timezoneDateAdapterFn,
+  timezoneIsoStringFn,
+  TIMEZONES,
+  toISOStrings,
+} from './utilities';
 
-RRule.defaultDateAdapter = StandardDateAdapter;
-Schedule.defaultDateAdapter = StandardDateAdapter;
-Calendar.defaultDateAdapter = StandardDateAdapter;
-
-function toISOStringsOCC(
-  calendar: Calendar<typeof StandardDateAdapter, any>,
-  args?: OccurrencesArgs<typeof StandardDateAdapter>,
+export function toISOStringsCol<T extends typeof DateAdapter>(
+  calendar: Calendar<T> | DateAdapter[][],
+  args: ICollectionsArgs<T> = {},
 ) {
-  return calendar
-    .occurrences(args)
-    .toArray()!
-    .map(occ => occ.toISOString());
-}
+  if (Array.isArray(calendar)) {
+    return calendar.map(dates => dates.map(date => date.toISOString()));
+  }
 
-function toISOStringsCOL(
-  calendar: Calendar<typeof StandardDateAdapter, any>,
-  args?: CollectionsArgs<typeof StandardDateAdapter>,
-) {
   return calendar
     .collections(args)
     .toArray()!
-    .map(col =>
-      // {start: col.periodStart.toISOString(), end: col.periodEnd.toISOString()},
-      col.dates.map(date => date.toISOString()),
-    );
+    .map(occ => occ.dates.map(date => date.toISOString()));
 }
 
-describe('CalendarClass', () => {
-  it('is instantiable', () => expect(new Calendar()).toBeInstanceOf(Calendar));
-});
+function testOccurrences(
+  name: string,
+  calendar: Calendar<typeof DateAdapterConstructor>,
+  expectation: DateAdapterConstructor[],
+  collections: {
+    instantaniously: DateAdapterConstructor[][];
+    yearly: DateAdapterConstructor[][];
+    monthly: { no: DateAdapterConstructor[][]; week: DateAdapterConstructor[][] };
+  },
+) {
+  describe(name, () => {
+    describe('occurrences', () => {
+      const index = expectation.length < 4 ? 1 : Math.ceil(expectation.length / 2);
 
-describe('Calendar', () => {
-  describe('#occurrences()', () => {
-    describe('NO args', () => {
-      it('with a single schedule', () => {
-        // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
-          rrules: [
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({ schedules: schedule });
-
-        expect(toISOStringsOCC(calendar)).toEqual([
-          isoString(1998, 1, 5, 9, 0),
-          isoString(1998, 1, 7, 9, 0),
-          isoString(1998, 3, 5, 9, 0),
-        ]);
-
-        let iterator = calendar.occurrences();
-
-        let date = iterator.next().value;
-        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0));
-
-        date = iterator.next({ skipToDate: dateAdapter(1998, 3, 5, 9, 0) })
-          .value;
-        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0));
-
-        iterator = calendar.occurrences({ reverse: true });
-
-        date = iterator.next().value;
-        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0));
-
-        date = iterator.next({ skipToDate: dateAdapter(1998, 1, 5, 9, 0) })
-          .value;
-        expect(date.toISOString()).toBe(isoString(1998, 1, 5, 9, 0));
+      it('no args', () => {
+        expect(toISOStrings(calendar)).toEqual(toISOStrings(expectation));
       });
 
-      it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
+      if (expectation.length > 1) {
+        it('start', () => {
+          expect(toISOStrings(calendar, { start: expectation[index] })).toEqual(
+            toISOStrings(expectation.slice(index)),
+          );
         });
 
-        const scheduleTwo = new Schedule({
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
+        it('end', () => {
+          expect(toISOStrings(calendar, { end: expectation[index] })).toEqual(
+            toISOStrings(expectation.slice(0, index + 1)),
+          );
         });
+      }
 
-        const calendar = new Calendar({
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsOCC(calendar)).toEqual([
-          isoString(1997, 9, 2, 9, 0),
-          isoString(1998, 1, 1, 9, 0),
-          isoString(1998, 1, 5, 9, 0),
-          isoString(1998, 1, 7, 9, 0),
-          isoString(1998, 1, 20, 9, 0),
-          isoString(1998, 2, 3, 9, 0),
-          isoString(1998, 3, 3, 9, 0),
-          isoString(1998, 3, 5, 9, 0),
-        ]);
-
-        let iterator = calendar.occurrences();
-
-        let date = iterator.next().value;
-        expect(date.toISOString()).toBe(isoString(1997, 9, 2, 9, 0));
-
-        date = iterator.next({ skipToDate: dateAdapter(1998, 1, 20, 9, 0) })
-          .value;
-        expect(date.toISOString()).toBe(isoString(1998, 1, 20, 9, 0));
-
-        iterator = calendar.occurrences({ reverse: true });
-
-        date = iterator.next().value;
-        expect(date.toISOString()).toBe(isoString(1998, 3, 5, 9, 0));
-
-        date = iterator.next({ skipToDate: dateAdapter(1998, 1, 7, 9, 0) })
-          .value;
-        expect(date.toISOString()).toBe(isoString(1998, 1, 7, 9, 0));
-      });
-
-      it('with RDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsOCC(calendar)).toEqual([
-          isoString(1998, 1, 1, 9, 0),
-          isoString(1998, 1, 1, 9, 0),
-          isoString(2000, 1, 1, 9, 0),
-          isoString(2017, 1, 1, 9, 0),
-        ]);
-      });
-
-      it('with EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsOCC(calendar)).toEqual([]);
-      });
-
-      it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsOCC(calendar)).toEqual([
-          isoString(2000, 1, 1, 9, 0),
-          isoString(2017, 1, 1, 9, 0),
-        ]);
-      });
-
-      it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(toISOStringsOCC(calendar)).toEqual([]);
-      });
-
-      it('with multiple rules & RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleThree = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo, scheduleThree],
-        });
-
-        expect(toISOStringsOCC(calendar)).toEqual([
-          isoString(1997, 9, 2, 9, 0),
-          isoString(1998, 1, 1, 9, 0),
-          isoString(1998, 1, 5, 9, 0),
-          isoString(1998, 1, 7, 9, 0),
-          isoString(1998, 1, 20, 9, 0),
-          isoString(1998, 2, 3, 9, 0),
-          isoString(1998, 3, 3, 9, 0),
-          isoString(1998, 3, 5, 9, 0),
-          isoString(2000, 1, 1, 9, 0),
-        ]);
+      it('reverse', () => {
+        expect(toISOStrings(calendar, { reverse: true })).toEqual(
+          toISOStrings(expectation.reverse()),
+        );
       });
     });
 
-    describe('args: REVERSE', () => {
-      it('with a single schedule', () => {
-        // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
+    describe('collections', () => {
+      [
+        ['INSTANTANIOUSLY', collections.instantaniously],
+        ['YEARLY', collections.yearly],
+        ['MONTHLY', collections.monthly.no],
+      ].forEach(pair => {
+        context(pair[0] as CollectionsGranularity, granularity => {
+          const expectations = pair[1] as DateAdapter[][];
 
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
+          const collectionIndex = expectations.length < 4 ? 1 : Math.ceil(expectations.length / 2);
 
-        expect(
-          toISOStringsOCC(calendar, {
-            start: dateAdapter(1998, 3, 5, 9, 0).date,
-            reverse: true,
-          }),
-        ).toEqual(
-          [
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 3, 5, 9, 0),
-          ].reverse(),
-        );
+          it('no args', () => {
+            expect(toISOStringsCol(calendar, { granularity })).toEqual(
+              toISOStringsCol(expectations),
+            );
+          });
+
+          if (expectations.length > 1) {
+            it('start', () => {
+              expect(
+                toISOStringsCol(calendar, {
+                  granularity,
+                  start: expectations[collectionIndex][0],
+                }),
+              ).toEqual(toISOStringsCol(expectations.slice(collectionIndex)));
+            });
+
+            it('end', () => {
+              expect(
+                toISOStringsCol(calendar, {
+                  granularity,
+                  end: expectations[collectionIndex][0],
+                }),
+              ).toEqual(toISOStringsCol(expectations.slice(0, collectionIndex + 1)));
+            });
+          }
+        });
       });
 
-      it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
+      describe('MONTHLY', () => {
+        describe('w/ weekStart', () => {
+          const expectations = collections.monthly.week;
+
+          if (expectations.length === 0) return;
+
+          const index = expectations.length < 4 ? 1 : Math.ceil(expectations.length / 2);
+
+          it('basic args', () => {
+            expect(
+              toISOStringsCol(calendar, {
+                granularity: 'MONTHLY',
+                weekStart: 'MO',
+                start: expectations[0][0],
+                end:
+                  expectations[expectations.length - 1][
+                    expectations[expectations.length - 1].length - 1
+                  ],
+              }),
+            ).toEqual(toISOStringsCol(expectations));
+          });
+
+          if (expectations.length > 1) {
+            it('start', () => {
+              expect(
+                toISOStringsCol(calendar, {
+                  granularity: 'MONTHLY',
+                  weekStart: 'MO',
+                  start: expectations[index][0],
+                  end:
+                    expectations[expectations.length - 1][
+                      expectations[expectations.length - 1].length - 1
+                    ],
+                }),
+              ).toEqual(toISOStringsCol(expectations.slice(index)));
+            });
+          }
         });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(
-          toISOStringsOCC(calendar, {
-            start: dateAdapter(1998, 3, 5, 9, 0).date,
-            reverse: true,
-          }),
-        ).toEqual(
-          [
-            isoString(1997, 9, 2, 9, 0),
-            isoString(1998, 1, 1, 9, 0),
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 1, 20, 9, 0),
-            isoString(1998, 2, 3, 9, 0),
-            isoString(1998, 3, 3, 9, 0),
-            isoString(1998, 3, 5, 9, 0),
-          ].reverse(),
-        );
-      });
-
-      it('with RDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(
-          toISOStringsOCC(calendar, {
-            start: dateAdapter(2017, 1, 1, 9, 0).date,
-            reverse: true,
-          }),
-        ).toEqual(
-          [
-            isoString(1998, 1, 1, 9, 0),
-            isoString(1998, 1, 1, 9, 0),
-            isoString(2000, 1, 1, 9, 0),
-            isoString(2017, 1, 1, 9, 0),
-          ].reverse(),
-        );
-      });
-
-      it('with EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(
-          toISOStringsOCC(calendar, {
-            start: dateAdapter(1998, 1, 20, 9, 0).date,
-            reverse: true,
-          }),
-        ).toEqual([]);
-      });
-
-      it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(
-          toISOStringsOCC(calendar, {
-            start: dateAdapter(2017, 1, 1, 9, 0).date,
-            reverse: true,
-          }),
-        ).toEqual(
-          [isoString(2000, 1, 1, 9, 0), isoString(2017, 1, 1, 9, 0)].reverse(),
-        );
-      });
-
-      it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(
-          toISOStringsOCC(calendar, {
-            start: dateAdapter(1998, 1, 1, 9, 0).date,
-            reverse: true,
-          }),
-        ).toEqual([]);
-      });
-
-      it('with multiple rules & RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleThree = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo, scheduleThree],
-        });
-
-        expect(
-          toISOStringsOCC(calendar, {
-            start: dateAdapter(2000, 1, 1, 9, 0).date,
-            reverse: true,
-          }),
-        ).toEqual(
-          [
-            isoString(1997, 9, 2, 9, 0),
-            isoString(1998, 1, 1, 9, 0),
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 1, 20, 9, 0),
-            isoString(1998, 2, 3, 9, 0),
-            isoString(1998, 3, 3, 9, 0),
-            isoString(1998, 3, 5, 9, 0),
-            isoString(2000, 1, 1, 9, 0),
-          ].reverse(),
-        );
       });
     });
   });
-
-  describe('#collections()', () => {
-    context('INSTANTANIOUSLY', (granularity: CollectionsGranularity) => {
-      it('with a single schedule', () => {
-        // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1998, 1, 5, 9, 0)],
-          [isoString(1998, 1, 7, 9, 0)],
-          [isoString(1998, 3, 5, 9, 0)],
-        ]);
-      });
-
-      it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1997, 9, 2, 9, 0)],
-          [isoString(1998, 1, 1, 9, 0)],
-          [isoString(1998, 1, 5, 9, 0)],
-          [isoString(1998, 1, 7, 9, 0)],
-          [isoString(1998, 1, 20, 9, 0)],
-          [isoString(1998, 2, 3, 9, 0)],
-          [isoString(1998, 3, 3, 9, 0)],
-          [isoString(1998, 3, 5, 9, 0)],
-        ]);
-      });
-
-      it('with RDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
-          [isoString(2000, 1, 1, 9, 0)],
-          [isoString(2017, 1, 1, 9, 0)],
-        ]);
-      });
-
-      it('with EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([]);
-      });
-
-      it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(2000, 1, 1, 9, 0)],
-          [isoString(2017, 1, 1, 9, 0)],
-        ]);
-      });
-
-      it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([]);
-      });
-
-      it('with multiple rules & RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleThree = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo, scheduleThree],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1997, 9, 2, 9, 0)],
-          [isoString(1998, 1, 1, 9, 0)],
-          [isoString(1998, 1, 5, 9, 0)],
-          [isoString(1998, 1, 7, 9, 0)],
-          [isoString(1998, 1, 20, 9, 0)],
-          [isoString(1998, 2, 3, 9, 0)],
-          [isoString(1998, 3, 3, 9, 0)],
-          [isoString(1998, 3, 5, 9, 0)],
-          [isoString(2000, 1, 1, 9, 0)],
-        ]);
-      });
-    });
-
-    context('YEARLY', (granularity: CollectionsGranularity) => {
-      it('with a single schedule', () => {
-        // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 3, 5, 9, 0),
-          ],
-        ]);
-      });
-
-      it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1997, 9, 2, 9, 0)],
-          [
-            isoString(1998, 1, 1, 9, 0),
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 1, 20, 9, 0),
-            isoString(1998, 2, 3, 9, 0),
-            isoString(1998, 3, 3, 9, 0),
-            isoString(1998, 3, 5, 9, 0),
-          ],
-        ]);
-      });
-
-      it('with RDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
-          [isoString(2000, 1, 1, 9, 0)],
-          [isoString(2017, 1, 1, 9, 0)],
-        ]);
-      });
-
-      it('with EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([]);
-      });
-
-      it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(2000, 1, 1, 9, 0)],
-          [isoString(2017, 1, 1, 9, 0)],
-        ]);
-      });
-
-      it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([]);
-      });
-
-      it('with multiple rules & RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleThree = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo, scheduleThree],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1997, 9, 2, 9, 0)],
-          [
-            isoString(1998, 1, 1, 9, 0),
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 1, 20, 9, 0),
-            isoString(1998, 2, 3, 9, 0),
-            isoString(1998, 3, 3, 9, 0),
-            isoString(1998, 3, 5, 9, 0),
-          ],
-          [isoString(2000, 1, 1, 9, 0)],
-        ]);
-      });
-    });
-
-    context('MONTHLY', (granularity: CollectionsGranularity) => {
-      it('next month', () => {
-        // This tests a specific bug encountered
-        const date = new Date(2018, 7, 14);
-
-        const rule = new RRule(
-          {
-            start: new StandardDateAdapter(date),
-            frequency: 'WEEKLY',
-            byDayOfWeek: ['TU'],
-          },
-          {
-            dateAdapter: StandardDateAdapter,
-          },
-        );
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [rule],
-          }),
-        });
-
-        const collection = calendar
-          .collections({
-            start: new Date(2018, 8, 1),
-            end: new Date(2018, 8, 30),
-            granularity,
-            weekStart: 'MO',
-          })
-          .next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([
-          new Date(2018, 7, 28).toISOString(),
-          new Date(2018, 8, 4).toISOString(),
-          new Date(2018, 8, 11).toISOString(),
-          new Date(2018, 8, 18).toISOString(),
-          new Date(2018, 8, 25).toISOString(),
-        ]);
-      });
-
-      it('this month linearly', () => {
-        // This tests a specific bug encountered
-        const date = new Date(2018, 7, 14);
-
-        const rule = new RRule(
-          {
-            start: date,
-            frequency: 'WEEKLY',
-            byDayOfWeek: ['TU'],
-          },
-          {
-            dateAdapter: StandardDateAdapter,
-          },
-        );
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [rule],
-          }),
-        });
-
-        const iterator = calendar.collections({
-          start: new Date(2018, 6, 1),
-          end: new Date(2018, 7, 30),
-          granularity,
-          weekStart: 'MO',
-          incrementLinearly: true,
-        });
-
-        let collection = iterator.next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([]);
-
-        collection = iterator.next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([
-          new Date(2018, 7, 14).toISOString(),
-          new Date(2018, 7, 21).toISOString(),
-          new Date(2018, 7, 28).toISOString(),
-        ]);
-      });
-
-      it('this month linearly 2', () => {
-        // This tests a specific bug encountered
-        const date = new Date(2018, 7, 14);
-
-        const rule = new RRule(
-          {
-            start: date,
-            frequency: 'WEEKLY',
-            byDayOfWeek: ['TU'],
-            weekStart: 'MO',
-          },
-          {
-            dateAdapter: StandardDateAdapter,
-          },
-        );
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [rule],
-          }),
-        });
-
-        const iterator = calendar.collections({
-          start: new Date(2018, 10, 10),
-          granularity,
-          weekStart: 'MO',
-          incrementLinearly: true,
-        });
-
-        let collection = iterator.next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([
-          new Date(2018, 9, 30).toISOString(),
-          new Date(2018, 10, 6).toISOString(),
-          new Date(2018, 10, 13).toISOString(),
-          new Date(2018, 10, 20).toISOString(),
-          new Date(2018, 10, 27).toISOString(),
-        ]);
-
-        collection = iterator.next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([
-          new Date(2018, 10, 27).toISOString(),
-          new Date(2018, 11, 4).toISOString(),
-          new Date(2018, 11, 11).toISOString(),
-          new Date(2018, 11, 18).toISOString(),
-          new Date(2018, 11, 25).toISOString(),
-          new Date(2019, 0, 1).toISOString(),
-        ]);
-      });
-
-      it('next month linearly', () => {
-        // This tests a specific bug encountered
-        const date = new Date(2018, 7, 14);
-
-        const rule = new RRule(
-          {
-            start: new StandardDateAdapter(date),
-            frequency: 'WEEKLY',
-            byDayOfWeek: ['TU'],
-          },
-          {
-            dateAdapter: StandardDateAdapter,
-          },
-        );
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [rule],
-          }),
-        });
-
-        const iterator = calendar.collections({
-          start: new StandardDateAdapter(new Date(2018, 8, 1)).date,
-          end: new StandardDateAdapter(new Date(2018, 8, 30)).date,
-          granularity,
-          weekStart: 'MO',
-          incrementLinearly: true,
-        });
-
-        const collection = iterator.next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([
-          new Date(2018, 7, 28).toISOString(),
-          new Date(2018, 8, 4).toISOString(),
-          new Date(2018, 8, 11).toISOString(),
-          new Date(2018, 8, 18).toISOString(),
-          new Date(2018, 8, 25).toISOString(),
-        ]);
-      });
-
-      it('this next & next month linearly', () => {
-        // This tests a specific bug encountered
-        const date = new Date(2018, 7, 14);
-
-        const rule = new RRule(
-          {
-            start: new StandardDateAdapter(date),
-            frequency: 'WEEKLY',
-            byDayOfWeek: ['TU'],
-          },
-          {
-            dateAdapter: StandardDateAdapter,
-          },
-        );
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [rule],
-          }),
-        });
-
-        const iterator = calendar.collections({
-          start: new StandardDateAdapter(new Date(2018, 7, 1)).date,
-          end: new StandardDateAdapter(new Date(2018, 8, 30)).date,
-          granularity,
-          weekStart: 'MO',
-          incrementLinearly: true,
-        });
-
-        let collection = iterator.next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([
-          new Date(2018, 7, 14).toISOString(),
-          new Date(2018, 7, 21).toISOString(),
-          new Date(2018, 7, 28).toISOString(),
-        ]);
-
-        collection = iterator.next().value;
-
-        expect(collection.dates.map(date => date.toISOString())).toEqual([
-          new Date(2018, 7, 28).toISOString(),
-          new Date(2018, 8, 4).toISOString(),
-          new Date(2018, 8, 11).toISOString(),
-          new Date(2018, 8, 18).toISOString(),
-          new Date(2018, 8, 25).toISOString(),
-        ]);
-      });
-
-      it('with a single schedule', () => {
-        // YearlyByMonthAndMonthDay
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1998, 1, 5, 9, 0), isoString(1998, 1, 7, 9, 0)],
-          [isoString(1998, 3, 5, 9, 0)],
-        ]);
-      });
-
-      it('with multiple schedules', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1997, 9, 2, 9, 0)],
-          [
-            isoString(1998, 1, 1, 9, 0),
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 1, 20, 9, 0),
-          ],
-          [isoString(1998, 2, 3, 9, 0)],
-          [isoString(1998, 3, 3, 9, 0), isoString(1998, 3, 5, 9, 0)],
-        ]);
-      });
-
-      it('with RDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
-          [isoString(2000, 1, 1, 9, 0)],
-          [isoString(2017, 1, 1, 9, 0)],
-        ]);
-      });
-
-      it('with EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([]);
-      });
-
-      it('with RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2017, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(2000, 1, 1, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(2000, 1, 1, 9, 0)],
-          [isoString(2017, 1, 1, 9, 0)],
-        ]);
-      });
-
-      it('with RDates & EXDates cancelling out', () => {
-        const schedule = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: schedule,
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([]);
-      });
-
-      it('with multiple rules & RDates & EXDates', () => {
-        const scheduleOne = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // YearlyByMonthAndMonthDay
-            {
-              frequency: 'YEARLY',
-              count: 3,
-              byMonthOfYear: [1, 3],
-              byDayOfMonth: [5, 7],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-            // WeeklyIntervalLarge
-            {
-              frequency: 'WEEKLY',
-              count: 2,
-              interval: 20,
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleTwo = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rrules: [
-            // DailyByMonthDayAndWeekDay
-            {
-              frequency: 'DAILY',
-              count: 3,
-              byDayOfMonth: [1, 3],
-              byDayOfWeek: ['TU', 'TH'],
-              start: dateAdapter(1997, 9, 2, 9),
-            },
-          ],
-        });
-
-        const scheduleThree = new Schedule({
-          dateAdapter: StandardDateAdapter,
-          rdates: [
-            dateAdapter(1998, 1, 1, 9, 0).date,
-            dateAdapter(2000, 1, 1, 9, 0).date,
-          ],
-          exdates: [
-            dateAdapter(1998, 1, 20, 9, 0).date,
-            dateAdapter(1998, 1, 1, 9, 0).date,
-          ],
-        });
-
-        const calendar = new Calendar({
-          dateAdapter: StandardDateAdapter,
-          schedules: [scheduleOne, scheduleTwo, scheduleThree],
-        });
-
-        expect(toISOStringsCOL(calendar, { granularity })).toEqual([
-          [isoString(1997, 9, 2, 9, 0)],
-          [
-            isoString(1998, 1, 1, 9, 0),
-            isoString(1998, 1, 5, 9, 0),
-            isoString(1998, 1, 7, 9, 0),
-            isoString(1998, 1, 20, 9, 0),
-          ],
-          [isoString(1998, 2, 3, 9, 0)],
-          [isoString(1998, 3, 3, 9, 0), isoString(1998, 3, 5, 9, 0)],
-          [isoString(2000, 1, 1, 9, 0)],
-        ]);
-      });
-
-      describe('and `weekStart`, `start`, `end`', () => {
-        const weekStart = 'MO';
-
-        it('with a single schedule', () => {
-          // YearlyByMonthAndMonthDay
-          const schedule = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [
-              {
-                frequency: 'YEARLY',
-                count: 3,
-                byMonthOfYear: [1, 3],
-                byDayOfMonth: [5, 7],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
+}
+
+const DATE_ADAPTERS = [
+  [StandardDateAdapter, standardDatetimeFn],
+  [MomentDateAdapter, momentDatetimeFn],
+  [MomentTZDateAdapter, momentTZDatetimeFn],
+  [LuxonDateAdapter, luxonDatetimeFn],
+] as [
+  [typeof StandardDateAdapter, DatetimeFn<Date>],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
+  [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>]
+];
+
+describe('Calendar', () => {
+  DATE_ADAPTERS.forEach(dateAdapterSet => {
+    environment(dateAdapterSet, dateAdapterSet => {
+      const [DateAdapter, datetime] = dateAdapterSet as [
+        typeof DateAdapterConstructor,
+        DatetimeFn<any>
+      ];
+
+      const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
+
+      // const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport
+      //   ? [undefined, 'UTC']
+      //   : TIMEZONES;
+
+      timezones.forEach(zone => {
+        context(zone, timezone => {
+          RScheduleConfig.defaultDateAdapter = DateAdapter;
+          RScheduleConfig.defaultTimezone = timezone;
+
+          const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, timezone);
+
+          describe('CalendarClass', () => {
+            it('is instantiable', () =>
+              expect(new Calendar({ dateAdapter: DateAdapter })).toBeInstanceOf(Calendar));
           });
 
-          const calendar = new Calendar({
-            dateAdapter: StandardDateAdapter,
-            schedules: schedule,
-          });
-
-          expect(
-            toISOStringsCOL(calendar, {
-              granularity,
-              weekStart,
-              start: dateAdapter(1998, 1, 1, 9, 0).date,
-              end: dateAdapter(1998, 1, 5, 9, 0).date,
+          testOccurrences(
+            '1 schedule & 1 rule',
+            new Calendar({
+              schedules: new Schedule({
+                rrules: [
+                  // YearlyByMonthAndMonthDay
+                  {
+                    frequency: 'YEARLY',
+                    count: 3,
+                    byMonthOfYear: [1, 3],
+                    byDayOfMonth: [5, 7],
+                    start: dateAdapter(1997, 9, 2, 9),
+                  },
+                ],
+              }),
             }),
-          ).toEqual([
-            [isoString(1998, 1, 5, 9, 0), isoString(1998, 1, 7, 9, 0)],
-          ]);
-        });
-
-        it('with multiple schedules', () => {
-          const scheduleOne = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [
-              // YearlyByMonthAndMonthDay
-              {
-                frequency: 'YEARLY',
-                count: 3,
-                byMonthOfYear: [1, 3],
-                byDayOfMonth: [5, 7],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-              // WeeklyIntervalLarge
-              {
-                frequency: 'WEEKLY',
-                count: 2,
-                interval: 20,
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          });
-
-          const scheduleTwo = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [
-              // DailyByMonthDayAndWeekDay
-              {
-                frequency: 'DAILY',
-                count: 3,
-                byDayOfMonth: [1, 3],
-                byDayOfWeek: ['TU', 'TH'],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          });
-
-          const calendar = new Calendar({
-            dateAdapter: StandardDateAdapter,
-            schedules: [scheduleOne, scheduleTwo],
-          });
-
-          expect(
-            toISOStringsCOL(calendar, {
-              granularity,
-              weekStart,
-              start: dateAdapter(1998, 1, 1, 9, 0).date,
-              end: dateAdapter(1998, 1, 5, 9, 0).date,
-            }),
-          ).toEqual([
             [
-              isoString(1998, 1, 1, 9, 0),
-              isoString(1998, 1, 5, 9, 0),
-              isoString(1998, 1, 7, 9, 0),
-              isoString(1998, 1, 20, 9, 0),
+              dateAdapter(1998, 1, 5, 9, 0),
+              dateAdapter(1998, 1, 7, 9, 0),
+              dateAdapter(1998, 3, 5, 9, 0),
             ],
-          ]);
-        });
-
-        it('with RDates', () => {
-          const scheduleOne = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          });
-
-          const scheduleTwo = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rdates: [
-              dateAdapter(1998, 1, 1, 9, 0).date,
-              dateAdapter(2000, 1, 1, 9, 0).date,
-              dateAdapter(2017, 1, 1, 9, 0).date,
-            ],
-          });
-
-          const calendar = new Calendar({
-            dateAdapter: StandardDateAdapter,
-            schedules: [scheduleOne, scheduleTwo],
-          });
-
-          expect(
-            toISOStringsCOL(calendar, {
-              granularity,
-              weekStart,
-              start: dateAdapter(1998, 1, 1, 9, 0).date,
-              end: dateAdapter(1998, 1, 5, 9, 0).date,
-            }),
-          ).toEqual([
-            [isoString(1998, 1, 1, 9, 0), isoString(1998, 1, 1, 9, 0)],
-          ]);
-        });
-
-        it('with EXDates', () => {
-          const scheduleOne = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            exdates: [dateAdapter(1998, 1, 20, 9, 0).date],
-          });
-
-          const scheduleTwo = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          });
-
-          const calendar = new Calendar({
-            dateAdapter: StandardDateAdapter,
-            schedules: [scheduleOne, scheduleTwo],
-          });
-
-          expect(
-            toISOStringsCOL(calendar, {
-              granularity,
-              weekStart,
-              start: dateAdapter(1998, 1, 1, 9, 0).date,
-              end: dateAdapter(1998, 1, 5, 9, 0).date,
-            }),
-          ).toEqual([]);
-        });
-
-        it('with RDates & EXDates', () => {
-          const scheduleOne = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rdates: [
-              dateAdapter(1998, 1, 1, 9, 0).date,
-              dateAdapter(2000, 1, 1, 9, 0).date,
-            ],
-            exdates: [
-              dateAdapter(1998, 1, 20, 9, 0).date,
-              dateAdapter(1998, 1, 1, 9, 0).date,
-            ],
-          });
-
-          const scheduleTwo = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rdates: [
-              dateAdapter(1998, 1, 1, 9, 0).date,
-              dateAdapter(2017, 1, 1, 9, 0).date,
-            ],
-            exdates: [
-              dateAdapter(2000, 1, 1, 9, 0).date,
-              dateAdapter(1998, 1, 1, 9, 0).date,
-            ],
-          });
-
-          const calendar = new Calendar({
-            dateAdapter: StandardDateAdapter,
-            schedules: [scheduleOne, scheduleTwo],
-          });
-
-          expect(
-            toISOStringsCOL(calendar, {
-              granularity,
-              weekStart,
-              start: dateAdapter(1998, 1, 1, 9, 0).date,
-              end: dateAdapter(1998, 1, 5, 9, 0).date,
-            }),
-          ).toEqual([]);
-        });
-
-        it('with RDates & EXDates cancelling out', () => {
-          const schedule = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-            exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
-          });
-
-          const calendar = new Calendar({
-            dateAdapter: StandardDateAdapter,
-            schedules: schedule,
-          });
-
-          expect(
-            toISOStringsCOL(calendar, {
-              granularity,
-              weekStart,
-              start: dateAdapter(1998, 1, 1, 9, 0).date,
-              end: dateAdapter(1998, 1, 5, 9, 0).date,
-            }),
-          ).toEqual([]);
-        });
-
-        it('with multiple rules & RDates & EXDates', () => {
-          const scheduleOne = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [
-              // YearlyByMonthAndMonthDay
-              {
-                frequency: 'YEARLY',
-                count: 3,
-                byMonthOfYear: [1, 3],
-                byDayOfMonth: [5, 7],
-                start: dateAdapter(1997, 9, 2, 9),
+            {
+              instantaniously: [
+                [dateAdapter(1998, 1, 5, 9, 0)],
+                [dateAdapter(1998, 1, 7, 9, 0)],
+                [dateAdapter(1998, 3, 5, 9, 0)],
+              ],
+              yearly: [
+                [
+                  dateAdapter(1998, 1, 5, 9, 0),
+                  dateAdapter(1998, 1, 7, 9, 0),
+                  dateAdapter(1998, 3, 5, 9, 0),
+                ],
+              ],
+              monthly: {
+                no: [
+                  [dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0)],
+                  [dateAdapter(1998, 3, 5, 9, 0)],
+                ],
+                week: [[dateAdapter(1998, 1, 5, 9, 0), dateAdapter(1998, 1, 7, 9, 0)]],
               },
-              // WeeklyIntervalLarge
-              {
-                frequency: 'WEEKLY',
-                count: 2,
-                interval: 20,
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          });
+            },
+          );
 
-          const scheduleTwo = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rrules: [
-              // DailyByMonthDayAndWeekDay
-              {
-                frequency: 'DAILY',
-                count: 3,
-                byDayOfMonth: [1, 3],
-                byDayOfWeek: ['TU', 'TH'],
-                start: dateAdapter(1997, 9, 2, 9),
-              },
-            ],
-          });
-
-          const scheduleThree = new Schedule({
-            dateAdapter: StandardDateAdapter,
-            rdates: [
-              dateAdapter(1998, 1, 1, 9, 0).date,
-              dateAdapter(2000, 1, 1, 9, 0).date,
-            ],
-            exdates: [
-              dateAdapter(1998, 1, 20, 9, 0).date,
-              dateAdapter(1998, 1, 1, 9, 0).date,
-            ],
-          });
-
-          const calendar = new Calendar({
-            dateAdapter: StandardDateAdapter,
-            schedules: [scheduleOne, scheduleTwo, scheduleThree],
-          });
-
-          expect(
-            toISOStringsCOL(calendar, {
-              granularity,
-              weekStart,
-              start: dateAdapter(1998, 1, 1, 9, 0).date,
-              end: dateAdapter(1998, 2, 5, 9, 0).date,
+          testOccurrences(
+            '2 schedules w/ rrules',
+            new Calendar({
+              schedules: [
+                new Schedule({
+                  rrules: [
+                    // YearlyByMonthAndMonthDay
+                    {
+                      frequency: 'YEARLY',
+                      count: 3,
+                      byMonthOfYear: [1, 3],
+                      byDayOfMonth: [5, 7],
+                      start: dateAdapter(1997, 9, 2, 9),
+                    },
+                    // WeeklyIntervalLarge
+                    {
+                      frequency: 'WEEKLY',
+                      count: 2,
+                      interval: 20,
+                      start: dateAdapter(1997, 9, 2, 9),
+                    },
+                  ],
+                }),
+                new Schedule({
+                  rrules: [
+                    // DailyByMonthDayAndWeekDay
+                    {
+                      frequency: 'DAILY',
+                      count: 3,
+                      byDayOfMonth: [1, 3],
+                      byDayOfWeek: ['TU', 'TH'],
+                      start: dateAdapter(1997, 9, 2, 9),
+                    },
+                  ],
+                }),
+              ],
             }),
-          ).toEqual([
             [
-              isoString(1998, 1, 1, 9, 0),
-              isoString(1998, 1, 5, 9, 0),
-              isoString(1998, 1, 7, 9, 0),
-              isoString(1998, 1, 20, 9, 0),
+              dateAdapter(1997, 9, 2, 9, 0),
+              dateAdapter(1998, 1, 1, 9, 0),
+              dateAdapter(1998, 1, 5, 9, 0),
+              dateAdapter(1998, 1, 7, 9, 0),
+              dateAdapter(1998, 1, 20, 9, 0),
+              dateAdapter(1998, 2, 3, 9, 0),
+              dateAdapter(1998, 3, 3, 9, 0),
+              dateAdapter(1998, 3, 5, 9, 0),
             ],
-            [isoString(1998, 2, 3, 9, 0)],
-          ]);
+            {
+              instantaniously: [
+                [dateAdapter(1997, 9, 2, 9, 0)],
+                [dateAdapter(1998, 1, 1, 9, 0)],
+                [dateAdapter(1998, 1, 5, 9, 0)],
+                [dateAdapter(1998, 1, 7, 9, 0)],
+                [dateAdapter(1998, 1, 20, 9, 0)],
+                [dateAdapter(1998, 2, 3, 9, 0)],
+                [dateAdapter(1998, 3, 3, 9, 0)],
+                [dateAdapter(1998, 3, 5, 9, 0)],
+              ],
+              yearly: [
+                [dateAdapter(1997, 9, 2, 9, 0)],
+                [
+                  dateAdapter(1998, 1, 1, 9, 0),
+                  dateAdapter(1998, 1, 5, 9, 0),
+                  dateAdapter(1998, 1, 7, 9, 0),
+                  dateAdapter(1998, 1, 20, 9, 0),
+                  dateAdapter(1998, 2, 3, 9, 0),
+                  dateAdapter(1998, 3, 3, 9, 0),
+                  dateAdapter(1998, 3, 5, 9, 0),
+                ],
+              ],
+              monthly: {
+                no: [
+                  [dateAdapter(1997, 9, 2, 9, 0)],
+                  [
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 5, 9, 0),
+                    dateAdapter(1998, 1, 7, 9, 0),
+                    dateAdapter(1998, 1, 20, 9, 0),
+                  ],
+                  [dateAdapter(1998, 2, 3, 9, 0)],
+                  [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)],
+                ],
+                week: [
+                  [
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 5, 9, 0),
+                    dateAdapter(1998, 1, 7, 9, 0),
+                    dateAdapter(1998, 1, 20, 9, 0),
+                  ],
+                ],
+              },
+            },
+          );
+
+          testOccurrences(
+            '1 schedule & 1 dates',
+            new Calendar({
+              schedules: [
+                new Schedule({
+                  rdates: [dateAdapter(1998, 1, 1, 9, 0)],
+                }),
+                new Dates({
+                  dates: [
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(2000, 1, 1, 9, 0),
+                    dateAdapter(2017, 1, 1, 9, 0),
+                  ],
+                }),
+              ],
+            }),
+            [
+              dateAdapter(1998, 1, 1, 9, 0),
+              dateAdapter(1998, 1, 1, 9, 0),
+              dateAdapter(2000, 1, 1, 9, 0),
+              dateAdapter(2017, 1, 1, 9, 0),
+            ],
+            {
+              instantaniously: [
+                [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                [dateAdapter(2000, 1, 1, 9, 0)],
+                [dateAdapter(2017, 1, 1, 9, 0)],
+              ],
+              yearly: [
+                [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                [dateAdapter(2000, 1, 1, 9, 0)],
+                [dateAdapter(2017, 1, 1, 9, 0)],
+              ],
+              monthly: {
+                no: [
+                  [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                  [dateAdapter(2000, 1, 1, 9, 0)],
+                  [dateAdapter(2017, 1, 1, 9, 0)],
+                ],
+                week: [[dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)]],
+              },
+            },
+          );
+
+          testOccurrences(
+            '2 schedules w/ rdates & exdates',
+            new Calendar({
+              schedules: [
+                new Schedule({
+                  rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
+                  exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                }),
+                new Schedule({
+                  rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
+                  exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                }),
+              ],
+            }),
+            [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
+            {
+              instantaniously: [[dateAdapter(2000, 1, 1, 9, 0)], [dateAdapter(2017, 1, 1, 9, 0)]],
+              yearly: [[dateAdapter(2000, 1, 1, 9, 0)], [dateAdapter(2017, 1, 1, 9, 0)]],
+              monthly: {
+                no: [[dateAdapter(2000, 1, 1, 9, 0)], [dateAdapter(2017, 1, 1, 9, 0)]],
+                week: [],
+              },
+            },
+          );
+
+          testOccurrences(
+            '3 schedules',
+            new Calendar({
+              schedules: [
+                new Schedule({
+                  rrules: [
+                    // YearlyByMonthAndMonthDay
+                    {
+                      frequency: 'YEARLY',
+                      count: 3,
+                      byMonthOfYear: [1, 3],
+                      byDayOfMonth: [5, 7],
+                      start: dateAdapter(1997, 9, 2, 9),
+                    },
+                    // WeeklyIntervalLarge
+                    {
+                      frequency: 'WEEKLY',
+                      count: 2,
+                      interval: 20,
+                      start: dateAdapter(1997, 9, 2, 9),
+                    },
+                  ],
+                }),
+                new Schedule({
+                  rrules: [
+                    // DailyByMonthDayAndWeekDay
+                    {
+                      frequency: 'DAILY',
+                      count: 3,
+                      byDayOfMonth: [1, 3],
+                      byDayOfWeek: ['TU', 'TH'],
+                      start: dateAdapter(1997, 9, 2, 9),
+                    },
+                  ],
+                }),
+                new Schedule({
+                  rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
+                  exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                }),
+              ],
+            }),
+            [
+              dateAdapter(1997, 9, 2, 9, 0),
+              dateAdapter(1998, 1, 1, 9, 0),
+              dateAdapter(1998, 1, 5, 9, 0),
+              dateAdapter(1998, 1, 7, 9, 0),
+              dateAdapter(1998, 1, 20, 9, 0),
+              dateAdapter(1998, 2, 3, 9, 0),
+              dateAdapter(1998, 3, 3, 9, 0),
+              dateAdapter(1998, 3, 5, 9, 0),
+              dateAdapter(2000, 1, 1, 9, 0),
+            ],
+            {
+              instantaniously: [
+                [dateAdapter(1997, 9, 2, 9, 0)],
+                [dateAdapter(1998, 1, 1, 9, 0)],
+                [dateAdapter(1998, 1, 5, 9, 0)],
+                [dateAdapter(1998, 1, 7, 9, 0)],
+                [dateAdapter(1998, 1, 20, 9, 0)],
+                [dateAdapter(1998, 2, 3, 9, 0)],
+                [dateAdapter(1998, 3, 3, 9, 0)],
+                [dateAdapter(1998, 3, 5, 9, 0)],
+                [dateAdapter(2000, 1, 1, 9, 0)],
+              ],
+              yearly: [
+                [dateAdapter(1997, 9, 2, 9, 0)],
+                [
+                  dateAdapter(1998, 1, 1, 9, 0),
+                  dateAdapter(1998, 1, 5, 9, 0),
+                  dateAdapter(1998, 1, 7, 9, 0),
+                  dateAdapter(1998, 1, 20, 9, 0),
+                  dateAdapter(1998, 2, 3, 9, 0),
+                  dateAdapter(1998, 3, 3, 9, 0),
+                  dateAdapter(1998, 3, 5, 9, 0),
+                ],
+                [dateAdapter(2000, 1, 1, 9, 0)],
+              ],
+              monthly: {
+                no: [
+                  [dateAdapter(1997, 9, 2, 9, 0)],
+                  [
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 5, 9, 0),
+                    dateAdapter(1998, 1, 7, 9, 0),
+                    dateAdapter(1998, 1, 20, 9, 0),
+                  ],
+                  [dateAdapter(1998, 2, 3, 9, 0)],
+                  [dateAdapter(1998, 3, 3, 9, 0), dateAdapter(1998, 3, 5, 9, 0)],
+                  [dateAdapter(2000, 1, 1, 9, 0)],
+                ],
+                week: [
+                  [
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 5, 9, 0),
+                    dateAdapter(1998, 1, 7, 9, 0),
+                    dateAdapter(1998, 1, 20, 9, 0),
+                  ],
+                  [dateAdapter(1998, 2, 3, 9, 0)],
+                ],
+              },
+            },
+          );
         });
       });
     });

@@ -1,15 +1,18 @@
+import { DateAdapter } from '../date-adapter';
+import { DateTime } from '../date-time';
+import { DateInput, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { RScheduleConfig } from '../rschedule-config';
+import { ArgumentError } from '../utilities';
+import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
 import {
-  DateAdapter,
-  DateAdapterBase,
-  DateAdapterConstructor,
-  DateProp,
-} from '../date-adapter';
-import { RunArgs } from '../interfaces';
-import {
-  OperatorInput,
-  OperatorOutput,
-  OperatorOutputOptions,
-} from './interface';
+  IterableWrapper,
+  selectLastIterable,
+  selectNextIterable,
+  streamPastEnd,
+  streamPastSkipToDate,
+} from './utilities';
+
+const INTERSECTION_OPERATOR_ID = Symbol.for('a978cd71-e379-4a0e-b4da-cbc14ce473dc');
 
 /**
  * An operator function, intended as an argument for
@@ -37,246 +40,166 @@ import {
  * @param inputs a spread of occurrence streams
  */
 
-export function intersection<T extends DateAdapterConstructor>(
-  options: {
-    defaultEndDate: DateProp<T> | DateAdapter<T>;
-    maxFailedIterations?: number;
-  },
-  ...inputs: Array<OperatorInput<T>>
-): OperatorOutput<T>;
+export function intersection<T extends typeof DateAdapter>(args: {
+  maxFailedIterations?: number;
+  streams: IHasOccurrences<T>[];
+}): OperatorFnOutput<T> {
+  return (options: IOperatorConfig<T>) => new IntersectionOperator(args, options);
+}
 
-export function intersection<T extends DateAdapterConstructor>(
-  options: {
-    defaultEndDate?: DateProp<T> | DateAdapter<T>;
-    maxFailedIterations: number;
-  },
-  ...inputs: Array<OperatorInput<T>>
-): OperatorOutput<T>;
+export class IntersectionOperator<T extends typeof DateAdapter> extends Operator<T> {
+  static isIntersectionOperator(object: unknown): object is IntersectionOperator<any> {
+    return !!(object && typeof object === 'object' && (object as any)[INTERSECTION_OPERATOR_ID]);
+  }
 
-export function intersection<T extends DateAdapterConstructor>(
-  intersectionOptions: {
-    defaultEndDate?: DateProp<T> | DateAdapter<T>;
-    maxFailedIterations?: number;
-  },
-  ...inputs: Array<OperatorInput<T>>
-): OperatorOutput<T> {
-  return (options: OperatorOutputOptions<T>) => {
-    let defaultEndDate: DateAdapter<T> | undefined;
+  readonly isInfinite: boolean;
 
-    if (DateAdapterBase.isInstance(intersectionOptions.defaultEndDate)) {
-      defaultEndDate = intersectionOptions.defaultEndDate;
-    } else if (intersectionOptions.defaultEndDate) {
-      defaultEndDate = new options.dateAdapter(
-        intersectionOptions.defaultEndDate,
-      ) as DateAdapter<T>;
+  private maxFailedIterations: number;
+
+  constructor(
+    args: {
+      maxFailedIterations?: number;
+      streams: IHasOccurrences<T>[];
+    },
+    config: IOperatorConfig<T>,
+  ) {
+    super(args.streams, config);
+
+    this.isInfinite =
+      this.config.base && this.config.base.isInfinite === false
+        ? false
+        : !this._streams.some(stream => !stream.isInfinite);
+
+    this.maxFailedIterations =
+      args.maxFailedIterations || (RScheduleConfig.defaultMaxFailedIterations as number);
+
+    if (this.maxFailedIterations === undefined) {
+      throw new ArgumentError(
+        'The IntersectionOperator must be provided ' +
+          'a `maxFailedIterations` argument. This argument is ' +
+          'used when input streams are of infinite length in order ' +
+          'to ensure that the IntersectionOperator does not enter ' +
+          'an infinite loop because the underlying schedules never intersect. ' +
+          'If the `maxFailedIterations` count is reached it will be assumed that ' +
+          'all valid occurrences have been found and iteration will end.' +
+          'Without additional information, "50" is probably a good ' +
+          '`maxFailedIterations` value. ' +
+          'Note also that you can provide a `defaultMaxFailedIterations` number to `RScheduleConfig`',
+      );
+    }
+  }
+
+  /** Not actually used but necessary for IRunnable interface */
+  set(_: 'timezone', value: string | undefined) {
+    return new IntersectionOperator(
+      {
+        maxFailedIterations: this.maxFailedIterations,
+        streams: this._streams.map(stream => stream.set('timezone', value)),
+      },
+      {
+        ...this.config,
+        base: this.config.base && this.config.base.set('timezone', value),
+        timezone: value,
+      },
+    );
+  }
+
+  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+    const streams = this._streams.map(stream => new IterableWrapper(stream._run(args)));
+
+    if (this.config.base) {
+      streams.push(new IterableWrapper(this.config.base._run(args)));
     }
 
-    return {
-      get isInfinite() {
-        if (options.baseIsInfinite === false) { return false; }
+    if (streams.length === 0) return;
 
-        return !inputs.some(input => !input.isInfinite);
-      },
+    const hasEndDate = !!(!this.isInfinite || args.reverse || args.end);
 
-      setTimezone(
-        timezone: string | undefined,
-        options?: { keepLocalTime?: boolean },
-      ) {
-        inputs.forEach(input => input.setTimezone(timezone, options));
-      },
-
-      clone() {
-        return intersection(
-          {
-            defaultEndDate: defaultEndDate && defaultEndDate.clone(),
-            maxFailedIterations: intersectionOptions.maxFailedIterations!,
-          },
-          ...inputs.map(input => input.clone()),
-        )(options);
-      },
-
-      *_run(args: RunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
-        if (!args.end) { args.end = defaultEndDate; }
-
-        const streams = inputs.map(input => input._run(args));
-
-        if (options.base) { streams.push(options.base); }
-
-        const cache = streams.map(iterator => ({
-          iterator,
-          date: iterator.next().value as DateAdapter<T> | undefined,
-        }));
-
-        if (cache.some(item => !item.date)) { return; }
-
-        let next:
-          | {
-              iterator: IterableIterator<DateAdapter<T>>;
-              date?: DateAdapter<T>;
-            }
-          | undefined;
-
-        if (cache.length === 0) {
-          return;
-        }
-
-        if (allCacheObjectsHaveEqualDates(cache)) {
-          // if yes, arbitrarily select the first cache object
-          next = cache[0];
-        } else {
-          // if no, select the first itersecting date
-          next = getNextIntersectingIterator(
-            cache,
-            args.reverse,
-            intersectionOptions.maxFailedIterations,
-          );
-        }
-
-        while (next && next.date) {
-          const yieldArgs = yield next.date.clone() as DateAdapter<T>;
-
-          if (yieldArgs && yieldArgs.skipToDate) {
-            cache.forEach(obj => {
-              obj.date = obj.iterator.next(yieldArgs).value;
-            });
-          } else {
-            cache.forEach(obj => {
-              obj.date = obj.iterator.next().value;
-            });
-          }
-
-          if (cache.some(item => !item.date)) { return; }
-
-          if (allCacheObjectsHaveEqualDates(cache)) {
-            next = cache[0];
-          } else {
-            next = getNextIntersectingIterator(
-              cache,
-              args.reverse,
-              intersectionOptions.maxFailedIterations,
-            );
-          }
-        }
-      },
-    };
-  };
-}
-
-/**
- * General strategy:
- *
- * First off, check to see if the internal schedules intersect
- * at all. If no, return void. If yes:
- *
- * Check to see if all cache objects have equal dates.
- *
- * #### If Yes
- * Emit that date and iterate all cache objects
- *
- * #### If no
- * Find the cache object with the date farthest away. We then
- * know that all the other cache objects are invalid, so we tell
- * them to skip forward to the farthest date away. We then check
- * if all cache objects are equal again, and the cycle repeats.
- * Until a match is found.
- */
-
-/**
- * @param cache the cache
- */
-function allCacheObjectsHaveEqualDates<T extends DateAdapterConstructor>(
-  cache: Array<{
-    iterator: IterableIterator<DateAdapter<T>>;
-    date?: DateAdapter<T>;
-  }>,
-) {
-  if (cache.length === 1) {
-    return true;
-  }
-
-  const date = cache[0].date;
-
-  if (!date) { throw new Error('unexpected `undefined` date'); }
-
-  return !cache.some(obj => !date.isEqual(obj.date));
-}
-
-function getNextIntersectingIterator<T extends DateAdapterConstructor>(
-  cache: Array<{
-    iterator: IterableIterator<DateAdapter<T>>;
-    date?: DateAdapter<T>;
-  }>,
-  reverse?: boolean,
-  maxFailedIterations?: number,
-  currentIteration = 0,
-):
-  | { iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> }
-  | undefined {
-  if (cache.length < 2) {
-    return cache[0];
-  }
-  if (maxFailedIterations && currentIteration > maxFailedIterations) { return; }
-
-  const farthest = selectFarthestUpcomingCacheObj(cache, reverse);
-
-  if (!farthest) { return; }
-
-  cache.forEach(obj => {
     if (
-      reverse
-        ? obj.date!.isBeforeOrEqual(farthest.date!)
-        : obj.date!.isAfterOrEqual(farthest.date!)
+      !cycleStreams(streams, undefined, {
+        ...args,
+        hasEndDate,
+        iteration: 0,
+        maxIterations: this.maxFailedIterations,
+      })
     ) {
       return;
     }
-    // skip to the farthest ahead date
-    obj.date = obj.iterator.next({
-      skipToDate: farthest.date,
-    }).value;
-  });
 
-  if (cache.some(item => !item.date)) { return; }
+    let stream = selectNextIterable(streams, args);
 
-  if (allCacheObjectsHaveEqualDates(cache)) {
-    return cache[0];
-  } else {
-    currentIteration++;
-    return getNextIntersectingIterator(
-      cache,
-      reverse,
-      maxFailedIterations,
-      currentIteration,
-    );
+    while (!streams.some(stream => stream.done)) {
+      const yieldArgs = yield this.normalizeRunOutput(stream.value);
+
+      const lastValidDate = stream.value;
+
+      stream.picked();
+
+      if (
+        !cycleStreams(streams, lastValidDate, {
+          ...args,
+          hasEndDate,
+          iteration: 0,
+          maxIterations: this.maxFailedIterations,
+        })
+      ) {
+        return;
+      }
+
+      stream = selectNextIterable(streams, args);
+
+      if (yieldArgs && yieldArgs.skipToDate) {
+        while (!streamPastSkipToDate(stream, yieldArgs.skipToDate, args)) {
+          stream.picked();
+
+          if (
+            !cycleStreams(streams, lastValidDate, {
+              ...args,
+              hasEndDate,
+              iteration: 0,
+              maxIterations: this.maxFailedIterations,
+            })
+          ) {
+            return;
+          }
+
+          stream = selectNextIterable(streams, args);
+        }
+      }
+    }
   }
 }
 
-/**
- *
- * @param cache the cache
- * @param reverse whether we're iterating in reverse or not
- */
-function selectFarthestUpcomingCacheObj<T extends DateAdapterConstructor>(
-  cache: Array<{
-    iterator: IterableIterator<DateAdapter<T>>;
-    date?: DateAdapter<T>;
-  }>,
-  reverse?: boolean,
-):
-  | { iterator: IterableIterator<DateAdapter<T>>; date?: DateAdapter<T> }
-  | undefined {
-  if (cache.length < 2) {
-    return cache[0];
+function cycleStreams(
+  streams: IterableWrapper[],
+  lastValidDate: DateTime | undefined,
+  options: {
+    maxIterations: number;
+    hasEndDate: boolean;
+    iteration: number;
+    end?: DateTime;
+    reverse?: boolean;
+  },
+): boolean {
+  const next = selectNextIterable(streams, options);
+
+  if (streams.some(stream => stream.done) || streamPastEnd(next, options)) return false;
+
+  if (streams.every(stream => stream.value.isEqual(next.value))) return true;
+
+  if (lastValidDate && next.value.isEqual(lastValidDate)) return true;
+
+  options.iteration++;
+
+  if (!options.hasEndDate && options.iteration > options.maxIterations) {
+    return false;
   }
 
-  return cache.reduce((prev, curr) => {
-    if (!curr.date) {
-      return prev;
-    } else if (
-      reverse ? curr.date.isBefore(prev.date!) : curr.date.isAfter(prev.date!)
-    ) {
-      return curr;
-    } else {
-      return prev;
-    }
-  }, cache[0]);
+  const last = selectLastIterable(streams, options);
+
+  streams.forEach(stream => {
+    stream.skipToDate(last.value, options);
+  });
+
+  return cycleStreams(streams, lastValidDate, options);
 }

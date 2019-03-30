@@ -1,10 +1,15 @@
-import { DateAdapter, DateAdapterConstructor } from '../date-adapter';
-import { RunArgs } from '../interfaces';
+import { DateAdapter } from '../date-adapter';
+import { DateTime } from '../date-time';
+import { HasOccurrences, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
 import {
-  OperatorInput,
-  OperatorOutput,
-  OperatorOutputOptions,
-} from './interface';
+  IterableWrapper,
+  selectNextIterable,
+  streamPastEnd,
+  streamPastSkipToDate,
+} from './utilities';
+
+const ADD_OPERATOR_ID = Symbol.for('2898c208-e9a8-41a2-8627-2bc993ab376f');
 
 /**
  * An operator function, intended as an argument for
@@ -12,105 +17,59 @@ import {
  * schedule's occurrences in the `occurrenceStream` pipe as well as the occurrences
  * of any input arguments.
  *
- * @param inputs a spread of scheduling objects
+ * @param streams a spread of scheduling objects
  */
-export function add<T extends DateAdapterConstructor>(
-  ...inputs: Array<OperatorInput<T>>
-): OperatorOutput<T> {
-  return (options: OperatorOutputOptions<T>) => {
-    return {
-      get isInfinite() {
-        return inputs.some(input => input.isInfinite);
-      },
-
-      setTimezone(
-        timezone: string | undefined,
-        options?: { keepLocalTime?: boolean },
-      ) {
-        inputs.forEach(input => input.setTimezone(timezone, options));
-      },
-
-      clone() {
-        return add(...inputs.map(input => input.clone()))(options);
-      },
-
-      *_run(args: RunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
-        const streams = inputs.map(input => input._run(args));
-
-        if (options.base) { streams.push(options.base); }
-
-        let cache = streams
-          .map(iterator => {
-            return {
-              iterator,
-              date: iterator.next().value,
-            };
-          })
-          .filter(item => !!item.date);
-
-        if (cache.length === 0) {
-          return;
-        }
-
-        let next = selectNextUpcomingCacheObj(cache[0], cache, args.reverse);
-
-        while (next.date) {
-          const yieldArgs = yield next.date.clone() as DateAdapter<T>;
-
-          if (yieldArgs && yieldArgs.skipToDate) {
-            cache.forEach(obj => {
-              obj.date = obj.iterator.next(yieldArgs).value;
-            });
-
-            cache = cache.filter(obj => !!obj.date);
-
-            if (cache.length === 0) { return; }
-
-            next = selectNextUpcomingCacheObj(cache[0], cache, args.reverse);
-          } else {
-            next.date = next.iterator.next().value;
-
-            if (!next.date) {
-              cache = cache.filter(item => item !== next);
-              next = cache[0];
-
-              if (cache.length === 0) {
-                break;
-              }
-            }
-
-            next = selectNextUpcomingCacheObj(next, cache, args.reverse);
-          }
-        }
-      },
-    };
-  };
+export function add<T extends typeof DateAdapter>(
+  ...streams: IHasOccurrences<T>[]
+): OperatorFnOutput<T> {
+  return (options: IOperatorConfig<T>) => new AddOperator(streams, options);
 }
 
-function selectNextUpcomingCacheObj<T extends DateAdapterConstructor>(
-  current: {
-    iterator: IterableIterator<DateAdapter<T>>;
-    date?: DateAdapter<T>;
-  },
-  cache: Array<{
-    iterator: IterableIterator<DateAdapter<T>>;
-    date?: DateAdapter<T>;
-  }>,
-  reverse?: boolean,
-) {
-  if (cache.length === 1) {
-    return cache[0];
+export class AddOperator<T extends typeof DateAdapter> extends Operator<T> {
+  static isAddOperator(object: unknown): object is AddOperator<any> {
+    return !!(object && typeof object === 'object' && (object as any)[ADD_OPERATOR_ID]);
   }
 
-  return cache.reduce((prev, curr) => {
-    if (!curr.date) {
-      return prev;
-    } else if (
-      reverse ? curr.date.isAfter(prev.date!) : curr.date.isBefore(prev.date!)
-    ) {
-      return curr;
-    } else {
-      return prev;
+  /** Not actually used but necessary for IRunnable interface */
+  set(_: 'timezone', value: string | undefined) {
+    return new AddOperator(this._streams.map(stream => stream.set('timezone', value)), {
+      ...this.config,
+      base: this.config.base && this.config.base.set('timezone', value),
+      timezone: value,
+    });
+  }
+
+  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+    const streams = this._streams.map(input => new IterableWrapper(input._run(args)));
+
+    if (this.config.base) {
+      streams.push(new IterableWrapper(this.config.base._run(args)));
     }
-  }, current);
+
+    if (streams.length === 0) return;
+
+    let stream = selectNextIterable(streams, args);
+
+    if (streamPastEnd(stream, args)) return;
+
+    while (!stream.done) {
+      const yieldArgs = yield this.normalizeRunOutput(stream.value);
+
+      stream.picked();
+
+      stream = selectNextIterable(streams, args);
+
+      if (yieldArgs && yieldArgs.skipToDate) {
+        while (
+          !streamPastEnd(stream, args) &&
+          !streamPastSkipToDate(stream, yieldArgs.skipToDate, args)
+        ) {
+          stream.picked();
+          stream = selectNextIterable(streams, args);
+        }
+      }
+
+      if (streamPastEnd(stream, args)) return;
+    }
+  }
 }

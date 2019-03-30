@@ -1,200 +1,96 @@
-import uniq from 'lodash.uniq';
-import { DateTime } from '../../date-time';
-import { Utils } from '../../utilities';
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
-import { PipeControllerOptions } from './pipe-controller';
+import { DateTime, monthLength } from '../../date-time';
+import { RuleOption } from '../rule-options';
+import { IPipeRule, IPipeRunFn, PipeError, PipeRule } from './interfaces';
+import { getNthWeekdayOfMonth } from './utilities';
 
 export class ByDayOfMonthPipe extends PipeRule implements IPipeRule {
-  private upcomingMonthDays: Array<[number, number]> = [];
-
-  private upcomingDays: number[] = [];
-  public run(args: IPipeRunFn) {
+  run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);
     }
 
-    if (
-      this.options.frequency === 'YEARLY' &&
-      this.options.byMonthOfYear === undefined
-    ) {
-      return this.yearlyExpand(args);
-    } else if (['YEARLY', 'MONTHLY'].includes(this.options.frequency)) {
-      return this.expand(args);
-    } else {
-      return this.filter(args);
-    }
-  }
-  public yearlyExpand(args: IPipeRunFn) {
-    const date = args.date;
+    let { date } = args;
 
-    if (this.upcomingMonthDays.length === 0) {
-      this.upcomingMonthDays = getUpcomingMonthDays(date, this.options);
-
-      if (this.upcomingMonthDays.length === 0) {
-        const next = Utils.setDateToStartOfYear(
-          date.clone().add(1, 'year'),
-        ) as DateTime;
-
-        return this.nextPipe.run({
-          invalidDate: true,
-          date,
-          skipToDate: next,
-        });
-      }
-
-      this.expandingPipes.push(this);
-    } else {
-      if (this.options.byHourOfDay) {
-        date.set('hour', 0);
-      }
-      if (this.options.byMinuteOfHour) {
-        date.set('minute', 0);
-      }
-      if (this.options.bySecondOfMinute) {
-        date.set('second', 0);
-      }
-    }
-
-    const nextDay = this.upcomingMonthDays.shift()!;
-    date.set('month', nextDay[0]).set('day', nextDay[1]);
-
-    if (this.upcomingMonthDays.length === 0) {
-      this.expandingPipes.pop();
-    }
-
-    return this.nextPipe.run({ date });
-  }
-  public expand(args: IPipeRunFn) {
-    const date = args.date;
-
-    if (this.upcomingDays.length === 0) {
-      this.upcomingDays = getUpcomingDays(date, this.options);
-
-      if (this.upcomingDays.length === 0) {
-        const next = date
-          .clone()
-          .add(1, 'month')
-          .set('day', 1);
-
-        return this.nextPipe.run({
-          invalidDate: true,
-          date,
-          skipToDate: next,
-        });
-      }
-
-      this.expandingPipes.push(this);
-    } else {
-      if (this.options.byHourOfDay) {
-        date.set('hour', 0);
-      }
-      if (this.options.byMinuteOfHour) {
-        date.set('minute', 0);
-      }
-      if (this.options.bySecondOfMinute) {
-        date.set('second', 0);
-      }
-    }
-
-    const nextDay = this.upcomingDays.shift()!;
-    date.set('day', nextDay);
-
-    if (this.upcomingDays.length === 0) {
-      this.expandingPipes.pop();
-    }
-
-    return this.nextPipe.run({ date });
-  }
-
-  public filter(args: IPipeRunFn) {
-    const upcomingDays = getUpcomingDays(args.date, this.options);
-
-    let validDay = false;
-    let nextValidDayThisMonth: number | null = null;
-
-    for (const day of upcomingDays) {
-      if (args.date.get('day') === day) {
-        validDay = true;
-        break;
-      } else if (args.date.get('day') < day) {
-        nextValidDayThisMonth = day;
-        break;
-      }
-    }
-
-    if (validDay) {
-      return this.nextPipe.run({ date: args.date });
-    }
-    let next: DateTime;
-
-    // if the current date does not pass this filter,
-    // is it possible for a date to pass this filter for the remainder of the month?
-    //
-    // Note:
-    // We know the current `options.frequency` is not yearly or monthly or weekly
-
-    if (nextValidDayThisMonth !== null) {
-      // if yes, advance the current date forward to the next month which would pass
-      // this filter
-      next = this.cloneDateWithGranularity(args.date, 'day');
-      next.add(nextValidDayThisMonth - args.date.get('day'), 'day');
-    } else {
-      // if no, advance the current date forward one year &
-      // and set the date to whatever month would pass this filter
-      next = this.cloneDateWithGranularity(args.date, 'month');
-      next.add(1, 'month');
-      const nextDay = getUpcomingDays(next, this.options)[0];
-      next.set('day', nextDay);
-    }
-
-    return this.nextPipe.run({
-      invalidDate: true,
-      date: args.date,
-      skipToDate: next,
-    });
-  }
-}
-
-function getUpcomingMonthDays(
-  date: DateTime,
-  options: PipeControllerOptions,
-): Array<[number, number]> {
-  const next = date.clone();
-  const monthDays: Array<[number, number]> = [];
-
-  for (let i = next.get('month'); i <= 12; i++) {
-    const days = getUpcomingDays(next, options);
-
-    monthDays.push(
-      ...days.map(day => [next.get('month'), day] as [number, number]),
+    const normalizedByDayOfMonth = normalizeByDayOfMonth(
+      date,
+      this.options.byDayOfMonth!,
+      this.options.byDayOfWeek,
     );
 
-    next.add(1, 'month').set('day', 1);
+    const currentDay = date.get('day');
 
-    i++;
+    for (const day of normalizedByDayOfMonth) {
+      if (currentDay > day) continue;
+
+      if (currentDay === day) return this.nextPipe.run({ date });
+
+      return this.nextValidDate(args, date.granularity('month').set('day', day));
+    }
+
+    let next: number | undefined;
+    let nextMonth = date;
+    let index = 0;
+
+    while (!next && index < 30) {
+      nextMonth = nextMonth.granularity('month').add(1, 'month');
+
+      next = normalizeByDayOfMonth(
+        nextMonth,
+        this.options.byDayOfMonth!,
+        this.options.byDayOfWeek,
+      )[0];
+
+      index++;
+    }
+
+    if (index >= 13) {
+      throw new PipeError('byDayOfMonth Infinite while loop');
+    }
+
+    date = nextMonth.set('day', next!);
+
+    return this.nextValidDate(args, date);
   }
-
-  return monthDays;
 }
 
-function getUpcomingDays(date: DateTime, options: PipeControllerOptions) {
-  const daysInMonth = Utils.getDaysInMonth(date.get('month'), date.get('year'));
+export function normalizeByDayOfMonth(
+  date: DateTime,
+  byDayOfMonth: RuleOption.ByDayOfMonth[],
+  byDayOfWeek?: RuleOption.ByDayOfWeek[],
+) {
+  const lengthOfMonth = monthLength(date.get('month'), date.get('year'));
 
-  return uniq(
-    options
-      .byDayOfMonth!.filter(day => {
-        return daysInMonth >= Math.abs(day);
-      })
-      .map(day => (day > 0 ? day : daysInMonth + day + 1))
-      .sort((a, b) => {
-        if (a > b) {
-          return 1;
-        }
-        if (a < b) {
-          return -1;
-        } else {
-          return 0;
-        }
-      }),
-  ).filter(day => date.get('day') <= day);
+  let normalizedByDayOfMonth = byDayOfMonth
+    .filter(day => lengthOfMonth >= Math.abs(day))
+    .map(day => (day > 0 ? day : lengthOfMonth + day + 1));
+
+  if (byDayOfWeek) {
+    const base = date.granularity('month');
+
+    const filteredByDayOfMonth: number[] = [];
+
+    byDayOfWeek.forEach(entry => {
+      if (typeof entry === 'string') {
+        filteredByDayOfMonth.push(
+          ...normalizedByDayOfMonth.filter(day => base.set('day', day).get('weekday') === entry),
+        );
+
+        return;
+      }
+
+      const nthWeekdayOfMonth = getNthWeekdayOfMonth(date, ...entry).get('day');
+
+      if (normalizedByDayOfMonth.includes(nthWeekdayOfMonth)) {
+        filteredByDayOfMonth.push(nthWeekdayOfMonth);
+      }
+    });
+
+    normalizedByDayOfMonth = Array.from(new Set(filteredByDayOfMonth));
+  }
+
+  return normalizedByDayOfMonth.sort((a, b) => {
+    if (a > b) return 1;
+    if (a < b) return -1;
+    else return 0;
+  });
 }

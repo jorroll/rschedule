@@ -1,33 +1,23 @@
 {
   "compilerOptions": {
     "baseUrl": "./",
+    "rootDir": ".",
     "target": "es5",
-    "module":"es2015",
-    "lib": ["es2015", "es2016", "es2017", "dom"],
+    "module": "commonjs",
+    "lib": ["es2017", "dom"],
     "strict": true,
-    "sourceMap": true,
     "declaration": true,
     "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "declarationDir": "dist/types",
-    "outDir": "dist/lib",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "downlevelIteration": true,
+    "moduleResolution": "node",
+    "typeRoots": ["node_modules/@types", "src/types"],
     "paths": {
-      "@rschedule/*": [
-        "packages/*/src"
-      ]
+      "@rschedule/*": ["packages/*/src"]
     },
-    "moduleResolution": "node"
+    "inlineSourceMap": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
   },
-  "include": [
-    "packages",
-    "tests"
-  ],
-  "exclude": [
-    "tmp"
-  ]
+  "include": ["packages", "tests"],
+  "exclude": ["node_modules/**", "tmp"],
+  "compileOnSave": false
 }

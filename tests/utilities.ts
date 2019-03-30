@@ -1,14 +1,16 @@
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
+
 import { Moment as MomentST } from 'moment';
 const momentST = require('moment');
 import { Moment as MomentTZ } from 'moment-timezone';
 const momentTZ = require('moment-timezone');
-import { DateTime } from 'luxon';
+import { DateAdapter, DateTime, HasOccurrences, IOccurrencesArgs } from '@rschedule/rschedule';
+import { DateTime as LuxonDateTime } from 'luxon';
 
 // This function allows me to use the test's name as a
 // variable inside the test
-export function test<T extends string>(name: T, fn: (name: T) => any) {
-  return it(name, () => fn(name));
+export function test<T extends any>(name: T, fn: (name: T) => any) {
+  return it(`${name}`, () => fn(name));
 }
 
 // This function allows me to use the describe block's name as a
@@ -29,9 +31,7 @@ export function environment<T>(object: T, fn: (object: T) => any) {
   } else if (Array.isArray(object)) {
     return describe(object[0].name, () => fn(object));
   } else {
-    throw new Error(
-      '"environment()" utility function received unexpected value',
-    );
+    throw new Error('"environment()" utility function received unexpected value');
   }
 }
 
@@ -55,14 +55,7 @@ export interface DatetimeFn<R> {
   (year: number, month: number, day: number): R;
   (year: number, month: number, day: number, hour: number): R;
   (year: number, month: number, day: number, hour: number, minute: number): R;
-  (
-    year: number,
-    month: number,
-    day: number,
-    hour: number,
-    minute: number,
-    second: number,
-  ): R;
+  (year: number, month: number, day: number, hour: number, minute: number, second: number): R;
   (
     year: number,
     month: number,
@@ -134,10 +127,8 @@ export function momentDatetimeFn(...args: Array<number | string>): MomentST {
   }
 
   if (timezone === 'UTC') {
-    // @ts-ignore
     return momentST.utc(numbers);
   } else {
-    // @ts-ignore
     return momentST(numbers);
   }
 }
@@ -163,17 +154,15 @@ export function momentTZDatetimeFn(...args: Array<number | string>): MomentTZ {
   }
 
   if (timezone) {
-    // @ts-ignore
     return momentTZ.tz(numbers, timezone);
   } else {
-    // @ts-ignore
     return momentTZ(numbers);
   }
 }
 
-export function luxonDatetimeFn(...args: Array<number | string>): DateTime {
+export function luxonDatetimeFn(...args: Array<number | string>): LuxonDateTime {
   if (args.length === 0) {
-    return DateTime.local();
+    return LuxonDateTime.local();
   }
 
   const numbers: number[] = [];
@@ -188,13 +177,11 @@ export function luxonDatetimeFn(...args: Array<number | string>): DateTime {
   });
 
   if (timezone) {
-    // @ts-ignore
-    return DateTime.local(...numbers).setZone(timezone, {
+    return LuxonDateTime.local(...numbers).setZone(timezone, {
       keepLocalTime: true,
     });
   } else {
-    // @ts-ignore
-    return DateTime.local(...numbers);
+    return LuxonDateTime.local(...numbers);
   }
 }
 
@@ -203,21 +190,8 @@ export function datetime(a: number): Date;
 export function datetime(a: number, b: number): Date;
 export function datetime(a: number, b: number, c: number): Date;
 export function datetime(a: number, b: number, c: number, d: number): Date;
-export function datetime(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-): Date;
-export function datetime(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-): Date;
+export function datetime(a: number, b: number, c: number, d: number, e: number): Date;
+export function datetime(a: number, b: number, c: number, d: number, e: number, f: number): Date;
 export function datetime(
   a: number,
   b: number,
@@ -242,16 +216,13 @@ export function datetime(...args: Array<number | string | undefined>) {
     args[1] = (args[1] as number) - 1;
   }
 
-  if (args.length === 8) {
-    // @ts-ignore
+  if (typeof args[args.length - 1] === 'string') {
     return args.pop() === 'UTC'
-      ? new Date(Date.UTC(...args))
-      : new Date(...args);
+      ? new Date(Date.UTC(...(args as [number, number, number])))
+      : new Date(...(args as [number, number, number]));
   }
-  // @ts-ignore
-  else {
-    return new Date(...args);
-  }
+
+  return new Date(...(args as [number, number, number]));
 }
 
 export function isoString(): string;
@@ -259,21 +230,8 @@ export function isoString(a: number): string;
 export function isoString(a: number, b: number): string;
 export function isoString(a: number, b: number, c: number): string;
 export function isoString(a: number, b: number, c: number, d: number): string;
-export function isoString(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-): string;
-export function isoString(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-): string;
+export function isoString(a: number, b: number, c: number, d: number, e: number): string;
+export function isoString(a: number, b: number, c: number, d: number, e: number, f: number): string;
 export function isoString(
   a: number,
   b: number,
@@ -301,17 +259,8 @@ export function isoString(...args: Array<number | string | undefined>) {
 export function dateAdapter(): StandardDateAdapter;
 export function dateAdapter(a: number): StandardDateAdapter;
 export function dateAdapter(a: number, b: number): StandardDateAdapter;
-export function dateAdapter(
-  a: number,
-  b: number,
-  c: number,
-): StandardDateAdapter;
-export function dateAdapter(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-): StandardDateAdapter;
+export function dateAdapter(a: number, b: number, c: number): StandardDateAdapter;
+export function dateAdapter(a: number, b: number, c: number, d: number): StandardDateAdapter;
 export function dateAdapter(
   a: number,
   b: number,
@@ -349,4 +298,74 @@ export function dateAdapter(
 export function dateAdapter(...args: Array<number | string | undefined>) {
   // @ts-ignore
   return new StandardDateAdapter(datetime(...args));
+}
+
+// function to create new dateAdapter instances
+export function timezoneDateAdapterFn(
+  dateAdapterConstructor: typeof DateAdapter,
+  datetimeFn: (...args: any[]) => any,
+  timezone: string | undefined,
+): (...args: number[]) => DateAdapter {
+  return (...args: number[]) => {
+    const dateAdapterArgs: (string | number)[] = args;
+
+    if (timezone !== undefined) {
+      dateAdapterArgs.push(timezone);
+    }
+
+    return new dateAdapterConstructor(datetimeFn(...dateAdapterArgs), { timezone });
+  };
+}
+
+// function to get the given time array as an ISO string
+export function timezoneIsoStringFn(
+  dateAdapterFn: (...args: number[]) => DateAdapter,
+): (...args: number[]) => string {
+  return (...args: number[]) => dateAdapterFn(...args).toISOString();
+}
+
+// function to get the given time array as an ISO string
+export function occurrencesToIsoStrings(...args: HasOccurrences<any>[]): string[] {
+  const strings: string[] = [];
+
+  args.forEach(arg =>
+    strings.push(
+      ...arg
+        .occurrences()
+        .toArray()!
+        .map(date => date.toISOString()),
+    ),
+  );
+
+  strings.sort();
+
+  return strings;
+}
+
+export function dateTimeToAdapterFn(
+  dateAdapterConstructor: typeof DateAdapter,
+  timezone: string | undefined,
+) {
+  return (date: DateTime, options: { keepZone?: boolean } = {}) =>
+    options.keepZone
+      ? dateAdapterConstructor.fromJSON(date.toJSON())
+      : dateAdapterConstructor.fromJSON(date.toJSON()).set('timezone', timezone);
+}
+
+export function dateTimeFn(dateAdapter: (...args: number[]) => DateAdapter) {
+  return (...args: number[]) => DateTime.fromJSON(dateAdapter(...args).toJSON());
+}
+
+export function toISOStrings<T extends typeof DateAdapter>(
+  schedule: HasOccurrences<T> | DateAdapter[],
+  args: IOccurrencesArgs<T> = {},
+) {
+  if (Array.isArray(schedule)) {
+    return schedule.map(date => date.toISOString());
+  }
+
+  return schedule
+    .occurrences(args)
+    .toArray()!
+    .map(occ => occ.toISOString());
 }

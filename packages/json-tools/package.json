@@ -1,0 +1,39 @@
+{
+  "name": "@rschedule/json-tools",
+  "version": "0.7.1-beta.0",
+  "description": "Utility functions for parsing/serializing rSchedule objects in JSON format.",
+  "author": "John Carroll <john.carroll.p@gmail.com>",
+  "homepage": "https://gitlab.com/john.carroll.p/rschedule",
+  "bugs": "https://gitlab.com/john.carroll.p/rschedule/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/john.carroll.p/rschedule.git"
+  },
+  "license": "Unlicense",
+  "keywords": [
+    "javascript",
+    "typescript",
+    "icalendar",
+    "rfc"
+  ],
+  "main": "build/main/index.js",
+  "typings": "build/main/index.d.ts",
+  "module": "build/module/index.js",
+  "engines": {
+    "node": ">=8.9"
+  },
+  "scripts": {
+    "build": "yarn clean:build && yarn build:main && yarn build:module",
+    "build:main": "tsc -p tsconfig.json",
+    "build:module": "tsc -p tsconfig.module.json",
+    "clean:build": "trash build",
+    "prepublish": "yarn build"
+  },
+  "peerDependencies": {
+    "@rschedule/rschedule": "^0.6.1"
+  },
+  "devDependencies": {
+    "trash-cli": "^1.4.0",
+    "typescript": "3.4.1"
+  }
+}

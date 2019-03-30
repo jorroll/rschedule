@@ -1,11 +1,16 @@
-import { DateAdapter, DateAdapterConstructor } from '../date-adapter';
-import { RunArgs } from '../interfaces';
+import { DateAdapter } from '../date-adapter';
+import { DateTime } from '../date-time';
+import { IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
 import { add } from './add.operator';
+import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
 import {
-  OperatorInput,
-  OperatorOutput,
-  OperatorOutputOptions,
-} from './interface';
+  IterableWrapper,
+  selectNextIterable,
+  streamPastEnd,
+  streamPastSkipToDate,
+} from './utilities';
+
+const SUBTRACT_OPERATOR_ID = Symbol.for('66b1962f-32c5-4c16-9a9d-e69f52812ab8');
 
 /**
  * An operator function, intended as an argument for
@@ -14,92 +19,90 @@ import {
  *
  * @param inputs a spread of scheduling objects
  */
-export function subtract<T extends DateAdapterConstructor>(
-  ...inputs: Array<OperatorInput<T>>
-): OperatorOutput<T> {
-  return (options: OperatorOutputOptions<T>) => {
-    return {
-      get isInfinite() {
-        return inputs.some(input => input.isInfinite);
-      },
-
-      setTimezone(
-        timezone: string | undefined,
-        options?: { keepLocalTime?: boolean },
-      ) {
-        inputs.forEach(input => input.setTimezone(timezone, options));
-      },
-
-      clone() {
-        return subtract(...inputs.map(input => input.clone()))(options);
-      },
-
-      *_run(args: RunArgs<T> = {}): IterableIterator<DateAdapter<T>> {
-        if (!options.base) { return; }
-
-        const forInclusion = options.base;
-        const forExclusion = add(...inputs)({
-          dateAdapter: options.dateAdapter,
-        })._run(args);
-
-        const positiveCache = {
-          iterator: forInclusion,
-          date: forInclusion.next().value as DateAdapter<T> | undefined,
-        };
-
-        if (!positiveCache.date) { return; }
-
-        const negativeCache = {
-          iterator: forExclusion,
-          date: forExclusion.next().value as DateAdapter<T> | undefined,
-        };
-
-        let date = selectValidDate(positiveCache, negativeCache, args.reverse);
-
-        while (date) {
-          const yieldArgs = yield date.clone() as DateAdapter<T>;
-
-          positiveCache.date = positiveCache.iterator.next(yieldArgs).value;
-
-          date = selectValidDate(positiveCache, negativeCache, args.reverse);
-        }
-      },
-    };
-  };
+export function subtract<T extends typeof DateAdapter>(
+  ...streams: IHasOccurrences<T>[]
+): OperatorFnOutput<T> {
+  return (options: IOperatorConfig<T>) => new SubtractOperator(streams, options);
 }
 
-function selectValidDate<T extends DateAdapterConstructor>(
-  positiveCache: {
-    iterator: IterableIterator<DateAdapter<T>>;
-    date?: DateAdapter<T>;
-  },
-  negativeCache: {
-    iterator: IterableIterator<DateAdapter<T>>;
-    date?: DateAdapter<T>;
-  },
-  reverse?: boolean,
-): DateAdapter<T> | undefined {
-  if (!positiveCache.date) { return; }
-
-  if (!negativeCache.date) { return positiveCache.date; }
-
-  if (
-    reverse
-      ? negativeCache.date.isAfter(positiveCache.date)
-      : negativeCache.date.isBefore(positiveCache.date)
-  ) {
-    negativeCache.date = negativeCache.iterator.next({
-      skipToDate: positiveCache.date,
-    }).value;
-
-    if (!negativeCache.date) { return positiveCache.date; }
+export class SubtractOperator<T extends typeof DateAdapter> extends Operator<T> {
+  static isSubtractOperator(object: unknown): object is SubtractOperator<any> {
+    return !!(object && typeof object === 'object' && (object as any)[SUBTRACT_OPERATOR_ID]);
   }
 
-  if (negativeCache.date.isEqual(positiveCache.date)) {
-    positiveCache.date = positiveCache.iterator.next().value;
-
-    return selectValidDate(positiveCache, negativeCache, reverse);
+  /** Not actually used but necessary for IRunnable interface */
+  set(_: 'timezone', value: string | undefined) {
+    return new SubtractOperator(this._streams.map(stream => stream.set('timezone', value)), {
+      ...this.config,
+      base: this.config.base && this.config.base.set('timezone', value),
+      timezone: value,
+    });
   }
 
-  return positiveCache.date;
+  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+    if (!this.config.base) return;
+
+    const inclusion = new IterableWrapper(this.config.base._run(args));
+    const exclusion = new IterableWrapper(
+      add(...this._streams)({
+        dateAdapter: this.config.dateAdapter,
+        timezone: this.config.timezone,
+      })._run(args),
+    );
+
+    cycleStreams(inclusion, exclusion, args);
+
+    if (streamPastEnd(inclusion, args)) return;
+
+    while (!inclusion.done) {
+      const yieldArgs = yield this.normalizeRunOutput(inclusion.value);
+
+      inclusion.picked();
+
+      cycleStreams(inclusion, exclusion, args);
+
+      if (yieldArgs && yieldArgs.skipToDate) {
+        while (
+          !streamPastEnd(inclusion, args) &&
+          !streamPastSkipToDate(inclusion, yieldArgs.skipToDate, args)
+        ) {
+          inclusion.picked();
+          cycleStreams(inclusion, exclusion, args);
+        }
+      }
+
+      if (streamPastEnd(inclusion, args)) return;
+    }
+  }
+}
+
+function cycleStreams(
+  inclusion: IterableWrapper,
+  exclusion: IterableWrapper,
+  options: { reverse?: boolean } = {},
+) {
+  iterateExclusion(inclusion, exclusion, options);
+
+  while (!inclusion.done && !exclusion.done && inclusion.value.isEqual(exclusion.value)) {
+    inclusion.picked();
+    iterateExclusion(inclusion, exclusion, options);
+  }
+}
+
+function iterateExclusion(
+  inclusion: IterableWrapper,
+  exclusion: IterableWrapper,
+  options: { reverse?: boolean } = {},
+) {
+  if (options.reverse) {
+    while (!exclusion.done && !inclusion.done && exclusion.value.isAfter(inclusion.value)) {
+      exclusion.picked();
+    }
+
+    return;
+  }
+
+  while (!exclusion.done && !inclusion.done && exclusion.value.isBefore(inclusion.value)) {
+    exclusion.picked();
+  }
 }

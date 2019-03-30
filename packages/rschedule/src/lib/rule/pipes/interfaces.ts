@@ -1,6 +1,6 @@
 import { DateTime } from '../../date-time';
-import { Utils } from '../../utilities';
-import { PipeControllerOptions } from './pipe-controller';
+import { INormalizedRuleOptions } from '../rule-options';
+// import { Utils } from '../../utilities';
 
 export class PipeError extends Error {}
 
@@ -43,15 +43,13 @@ export interface IPipeController {
   end?: DateTime;
   count?: number;
   reverse: boolean;
-  options: PipeControllerOptions;
-  invalid: boolean;
+  options: INormalizedRuleOptions;
 
-  expandingPipes: IPipeRule[];
-  focusedPipe: IPipeRule;
+  firstPipe: IPipeRule;
 }
 
 export abstract class PipeRuleBase {
-  public nextPipe!: IPipeRule;
+  nextPipe!: IPipeRule;
 
   constructor(public controller: IPipeController) {}
 
@@ -67,66 +65,17 @@ export abstract class PipeRuleBase {
   get count() {
     return this.controller.count;
   }
-  get expandingPipes() {
-    return this.controller.expandingPipes;
-  }
-  get focusedPipe() {
-    return this.controller.focusedPipe;
+  get firstPipe() {
+    return this.controller.firstPipe;
   }
 }
 
 export abstract class PipeRule extends PipeRuleBase {
-  protected cloneDateWithGranularity(
-    date: DateTime,
-    granularity: 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second',
-  ) {
-    date = date.clone();
-
-    switch (granularity) {
-      case 'year':
-        date.set('month', 1);
-      case 'month':
-        date.set('day', 1);
-      case 'day':
-        date.set('hour', 0);
-      case 'hour':
-        date.set('minute', 0);
-      case 'minute':
-        date.set('second', 0);
-      case 'second':
-        return date;
-      default:
-        throw new Error(
-          'Woops! the PipeController somehow has invalid options...',
-        );
-    }
-  }
-}
-
-export abstract class ReversePipeRule extends PipeRuleBase {
-  protected cloneDateWithGranularity(
-    date: DateTime,
-    granularity: 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second',
-  ) {
-    date = date.clone();
-
-    switch (granularity) {
-      case 'year':
-        date.set('month', 12);
-      case 'month':
-        Utils.setDateToEndOfMonth(date);
-      case 'day':
-        date.set('hour', 23);
-      case 'hour':
-        date.set('minute', 59);
-      case 'minute':
-        date.set('second', 59);
-      case 'second':
-        return date;
-      default:
-        throw new Error(
-          'Woops! the PipeController somehow has invalid options...',
-        );
-    }
+  protected nextValidDate(args: IPipeRunFn, skipToDate: DateTime) {
+    return this.nextPipe.run({
+      date: args.date,
+      invalidDate: true,
+      skipToDate,
+    });
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/rschedule",
-  "version": "0.6.4",
+  "version": "0.7.1-beta.0",
   "description": "A typescript library for working with recurring dates and events.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
@@ -29,18 +29,14 @@
     "node": ">=8.9"
   },
   "scripts": {
-    "build": "yarn build:main && yarn build:module",
+    "build": "yarn clean:build && yarn build:main && yarn build:module",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
+    "clean:build": "trash build",
     "prepublish": "yarn build"
   },
-  "dependencies": {
-    "lodash.clonedeep": "^4.5.0",
-    "lodash.sorteduniq": "^4.2.0",
-    "lodash.uniq": "^4.5.0",
-    "lodash.uniqwith": "^4.5.0"
-  },
   "devDependencies": {
-    "typescript": "^2.9.1"
+    "trash-cli": "^1.4.0",
+    "typescript": "3.4.1"
   }
 }

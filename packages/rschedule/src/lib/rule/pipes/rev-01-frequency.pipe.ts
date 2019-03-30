@@ -1,122 +1,108 @@
-import { DateTime } from '../../date-time';
-import { Utils } from '../../utilities';
-import { IPipeRule, IPipeRunFn, ReversePipeRule } from './interfaces';
+import {
+  DateTime,
+  IDateAdapter,
+  MILLISECONDS_IN_DAY,
+  MILLISECONDS_IN_HOUR,
+  MILLISECONDS_IN_MINUTE,
+  MILLISECONDS_IN_SECOND,
+  MILLISECONDS_IN_WEEK,
+} from '../../date-time';
+import { RuleOption } from '../rule-options';
+import { intervalDifferenceBetweenDates, unitForFrequency } from './01-frequency.pipe';
+// import { Utils } from '../../utilities';
+import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**
- * Same as `FrequencyPipe`, but iterates in reverse order.
+ * The `FrequencyPipe` is the first pipe in the chain of rule pipes. It is
+ * responsible for incrementing the date, as appropriate, while taking into
+ * account the `RRULE` frequency and interval.
  */
-export class FrequencyReversePipe extends ReversePipeRule implements IPipeRule {
-  public intervalStartDate: DateTime = this.normalizeDate(
-    this.options.start.clone(),
-  );
+export class RevFrequencyPipe extends PipeRule implements IPipeRule {
+  private readonly intervalUnit = unitForFrequency(this.options.frequency);
 
-  public run(args: IPipeRunFn) {
-    let date: DateTime;
+  private intervalEndDate = this.normalizedEndDate(this.end!);
+  private intervalStartDate = this.normalizedStartDate(this.intervalEndDate);
 
-    if (args.skipToDate) {
+  /**
+   * The problem is that DateTime is ignoring daylight savings time.
+   *
+   * When you pass in a new "skip to date" that date has been adjusted for
+   * daylight savings and the pipe thinks it is invalid
+   */
+
+  run(args: IPipeRunFn) {
+    let date: DateTime = args.date;
+
+    if (args.invalidDate) {
+      date = args.skipToDate!;
+
+      this.skipToIntervalOnOrBefore(date);
+
+      if (!this.dateIsWithinInterval(date)) {
+        date = this.intervalEndDate;
+      }
+    } else if (args.skipToDate) {
       this.skipToIntervalOnOrBefore(args.skipToDate);
 
-      date = args.skipToDate.isBeforeOrEqual(this.intervalStartDate)
-        ? args.skipToDate
-        : this.intervalStartDate.clone();
+      date = this.dateIsWithinInterval(args.skipToDate) ? args.skipToDate : this.intervalEndDate;
+    } else if (
+      this.dateIsWithinInterval(date) &&
+      this.dateIsWithinInterval(date.subtract(1, 'second'))
+    ) {
+      date = date.subtract(1, 'second');
     } else {
-      this.decrementInterval();
-      date = this.intervalStartDate.clone();
+      this.decrementInterval(this.options.interval);
+
+      date = this.intervalEndDate;
     }
 
     return this.nextPipe.run({ date });
   }
 
-  public normalizeDate(date: DateTime) {
-    switch (this.options.frequency) {
-      case 'YEARLY':
-        Utils.setDateToEndOfYear(date);
-        break;
-      case 'MONTHLY':
-        Utils.setDateToEndOfMonth(date);
-        break;
-      case 'WEEKLY':
-        Utils.setDateToEndOfWeek(date, this.options.weekStart);
-        break;
+  private normalizedEndDate(date: DateTime) {
+    if (this.options.frequency === 'WEEKLY') {
+      return date.endGranularity('week', { weekStart: this.options.weekStart });
     }
 
+    return date.endGranularity(this.intervalUnit as IDateAdapter.TimeUnit);
+  }
+
+  private normalizedStartDate(start: DateTime) {
     switch (this.options.frequency) {
       case 'YEARLY':
+        return start.subtract(1, 'year');
       case 'MONTHLY':
+        return start.subtract(1, 'month');
       case 'WEEKLY':
+        return start.subtract(1, 'week');
       case 'DAILY':
-        date.set('hour', 23);
+        return start.subtract(1, 'day');
       case 'HOURLY':
-        date.set('minute', 59);
+        return start.subtract(1, 'hour');
       case 'MINUTELY':
-        date.set('second', 59);
-    }
-
-    return date;
-  }
-
-  /**
-   * This method is only used by the `PipeController` to set the first
-   * `intervalStartDate`.
-   */
-  public skipToStartInterval(date: DateTime) {
-    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency);
-
-    const difference = Utils.unitDifferenceBetweenDates(
-      this.intervalStartDate,
-      date,
-      unit,
-    );
-
-    // not sure why the `+1` is needed, but it is
-    this.normalizeDate(this.intervalStartDate.add(difference + 1, unit));
-
-    // make sure the date is before the `intervalStartDate`
-    while (date.isAfter(this.intervalStartDate)) {
-      this.normalizeDate(
-        this.intervalStartDate.add(this.options.interval, unit),
-      );
+        return start.subtract(1, 'minute');
+      case 'SECONDLY':
+        return start.subtract(1, 'second');
     }
   }
 
-  // need to account for possible daylight savings time shift
-  private decrementInterval() {
-    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency);
-
-    this.intervalStartDate.subtract(this.options.interval, unit);
-
-    // it's necessary to normalize the date because, for example, if we're iterating
-    // `MONTLY` and we're on the last day of February and we subtract 1 month, we will
-    // not be on the last day of January (which is what we would want). Normalizing
-    // ensures we're on the last day of January, in that scenerio.
-    this.normalizeDate(this.intervalStartDate);
+  private decrementInterval(amount: number) {
+    this.intervalEndDate = this.intervalEndDate.subtract(amount, this.intervalUnit);
+    this.intervalStartDate = this.normalizedStartDate(this.intervalEndDate);
   }
 
   private skipToIntervalOnOrBefore(date: DateTime) {
-    const unit = Utils.ruleFrequencyToDateAdapterUnit(this.options.frequency);
-
-    const difference = Utils.unitDifferenceBetweenDates(
-      this.intervalStartDate,
-      date,
-      unit,
+    this.decrementInterval(
+      intervalDifferenceBetweenDates({
+        second: this.intervalEndDate,
+        first: date,
+        unit: this.intervalUnit,
+        interval: this.options.interval,
+      }),
     );
+  }
 
-    // if we're jumping to a new interval, then we should normalize the date.
-    if (Math.abs(difference) !== 0) {
-      // difference is negative
-      this.normalizeDate(this.intervalStartDate.add(difference, unit));
-    }
-
-    // This `while` statement is needed in the reverse pipe more than the normal
-    // requency pipe.
-    while (
-      date.isBeforeOrEqual(
-        this.normalizeDate(this.intervalStartDate.clone().subtract(1, unit)),
-      )
-    ) {
-      this.normalizeDate(
-        this.intervalStartDate.subtract(this.options.interval, unit),
-      );
-    }
+  private dateIsWithinInterval(date: DateTime) {
+    return this.intervalEndDate.isAfterOrEqual(date) && this.intervalStartDate.isBefore(date);
   }
 }

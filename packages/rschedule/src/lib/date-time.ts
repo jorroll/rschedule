@@ -1,30 +1,96 @@
-import { IDateAdapter, ParsedDatetime } from './date-adapter';
-// import { Rule } from './rule'
-// import { Dates } from './dates'
-// import { Schedule } from './schedule'
-// import { Calendar } from './calendar'
-import { Utils } from './utilities';
+import { ArgumentError } from './utilities';
 
-export const DATETIME_ID = Symbol.for('b1231462-3560-4770-94f0-d16295d5965c');
+export const WEEKDAYS: Array<'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'> = [
+  'SU',
+  'MO',
+  'TU',
+  'WE',
+  'TH',
+  'FR',
+  'SA',
+];
 
-interface ComparisonObject {
-  valueOf: () => number;
-  get: (unit: 'timezone') => string | undefined;
+export const MILLISECONDS_IN_SECOND = 1000;
+export const MILLISECONDS_IN_MINUTE = MILLISECONDS_IN_SECOND * 60;
+export const MILLISECONDS_IN_HOUR = MILLISECONDS_IN_MINUTE * 60;
+export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24;
+export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
+
+export interface IDateAdapter<D = unknown> {
+  /**
+   * This property contains an ordered array of the generator objects
+   * responsible for producing this IDateAdapter.
+   *
+   * - If this IDateAdapter was produced by a `RRule` object, this array
+   *   will just contain the `RRule` object.
+   * - If this IDateAdapter was produced by a `Schedule` object, this
+   *   array will contain the `Schedule` object as well as the `RRule`
+   *   or `RDates` object which generated it.
+   * - If this IDateAdapter was produced by a `Calendar` object, this
+   *   array will contain, at minimum, the `Calendar`, `Schedule`, and
+   *   `RRule`/`RDates` objects which generated it.
+   */
+  generators: any[];
+
+  /** Returns the date object this IDateAdapter is wrapping */
+  date: D;
+
+  timezone?: string;
+
+  toDateTime(): DateTime;
 }
 
-export class DateTime implements IDateAdapter {
+export namespace IDateAdapter {
+  export type Weekday = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
 
+  export type TimeUnit = 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond';
+
+  export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
+  export interface JSON {
+    timezone: string | undefined;
+    duration?: number;
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+    millisecond: number;
+  }
+}
+
+export class InvalidDateTimeError extends Error {}
+
+const DATETIME_ID = Symbol.for('b1231462-3560-4770-94f0-d16295d5965c');
+
+export class DateTime implements IDateAdapter<unknown> {
   /**
    * Similar to `Array.isArray()`, `isInstance()` provides a surefire method
    * of determining if an object is a `DateTime` by checking against the
    * global symbol registry.
    */
-  public static isInstance(object: any): object is DateTime {
-    return !!(
-      object && object[Symbol.for('b1231462-3560-4770-94f0-d16295d5965c')]
-    );
+  static isInstance(object: any): object is DateTime {
+    return !!(object && object[DATETIME_ID]);
   }
-  public date: Date;
+
+  static fromJSON(json: IDateAdapter.JSON) {
+    const date = new Date(
+      Date.UTC(
+        json.year,
+        json.month - 1,
+        json.day,
+        json.hour,
+        json.minute,
+        json.second,
+        json.millisecond,
+      ),
+    );
+
+    return new DateTime(date, json.timezone, json.duration);
+  }
+
+  readonly date: Date;
 
   /**
    * This property contains an ordered array of the generator objects
@@ -39,175 +105,116 @@ export class DateTime implements IDateAdapter {
    *   array will contain, at minimum, the `Calendar`, `Schedule`, and
    *   `RRule`/`RDates` objects which generated it.
    */
-  public generators: any[] = [];
+  readonly generators: unknown[] = [];
 
-  public readonly [DATETIME_ID] = true;
-  private timezone: string | undefined;
+  readonly [DATETIME_ID] = true;
 
-  constructor(adapter: IDateAdapter | DateTime) {
-    if (DateTime.isInstance(adapter)) {
-      this.date = new Date(adapter.valueOf());
-      this.generators = adapter.generators.slice();
-      this.timezone = adapter.timezone;
-      return;
-    }
+  readonly timezone: string | undefined;
 
-    this.date = new Date(
-      Date.UTC(
-        adapter.get('year'),
-        adapter.get('month') - 1,
-        adapter.get('day'),
-        adapter.get('hour'),
-        adapter.get('minute'),
-        adapter.get('second'),
-        adapter.get('millisecond'),
-      ),
-    );
+  readonly duration: number | undefined;
 
-    this.timezone = adapter.get('timezone');
-  }
+  private constructor(date: Date, timezone?: string, duration?: number) {
+    this.date = new Date(date);
+    this.timezone = timezone;
+    this.duration = duration;
 
-  /**
-   * Returns a clone of the date adapter including a cloned
-   * date property. Does not clone the `rule`, `schedule`,
-   * or `calendar` properties, but does copy them over to the
-   * new object.
-   */
-  public clone(): DateTime {
-    return new DateTime(this);
+    this.assertIsValid();
   }
 
   // While we constrain the argument to be another DateAdapter in typescript
   // we handle the case of someone passing in another type of object in javascript
-  public isEqual(object?: ComparisonObject): boolean {
-    if (!object) { return false; }
-
-    if (object.get('timezone') !== this.get('timezone')) {
-      throw new DateTime.ComparisonError();
+  isEqual(object?: DateTime): boolean {
+    if (!object) {
+      return false;
     }
 
-    return object.valueOf() === this.valueOf();
+    assertSameTimeZone(this, object);
+
+    return this.valueOf() === object.valueOf();
   }
-  public isBefore(object: ComparisonObject): boolean {
-    if (object.get('timezone') !== this.get('timezone')) {
-      throw new DateTime.ComparisonError();
-    }
+
+  isBefore(object: DateTime): boolean {
+    assertSameTimeZone(this, object);
 
     return this.valueOf() < object.valueOf();
   }
-  public isBeforeOrEqual(object: ComparisonObject): boolean {
-    if (object.get('timezone') !== this.get('timezone')) {
-      throw new DateTime.ComparisonError();
-    }
+
+  isBeforeOrEqual(object: DateTime): boolean {
+    assertSameTimeZone(this, object);
 
     return this.valueOf() <= object.valueOf();
   }
-  public isAfter(object: ComparisonObject): boolean {
-    if (object.get('timezone') !== this.get('timezone')) {
-      throw new DateTime.ComparisonError();
-    }
+
+  isAfter(object: DateTime): boolean {
+    assertSameTimeZone(this, object);
 
     return this.valueOf() > object.valueOf();
   }
-  public isAfterOrEqual(object: ComparisonObject): boolean {
-    if (object.get('timezone') !== this.get('timezone')) {
-      throw new DateTime.ComparisonError();
-    }
+
+  isAfterOrEqual(object: DateTime): boolean {
+    assertSameTimeZone(this, object);
 
     return this.valueOf() >= object.valueOf();
   }
 
-  public add(amount: number, unit: DateTime.Unit | 'week'): this {
-    const context = [this.date.toISOString(), 'add', amount, unit];
-
+  add(amount: number, unit: IDateAdapter.TimeUnit | 'week'): DateTime {
     switch (unit) {
       case 'year':
-        this.date = addUTCYears(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCYears(this.date, amount));
       case 'month':
-        this.date = addUTCMonths(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCMonths(this.date, amount));
       case 'week':
-        this.date = addUTCWeeks(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCWeeks(this.date, amount));
       case 'day':
-        this.date = addUTCDays(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCDays(this.date, amount));
       case 'hour':
-        this.date = addUTCHours(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCHours(this.date, amount));
       case 'minute':
-        this.date = addUTCMinutes(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCMinutes(this.date, amount));
       case 'second':
-        this.date = addUTCSeconds(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCSeconds(this.date, amount));
       case 'millisecond':
-        this.date = addUTCMilliseconds(this.date, amount);
-        break;
+        return this.forkDateTime(addUTCMilliseconds(this.date, amount));
       default:
-        throw new Error('Invalid unit provided to `DateTime#add`');
+        throw new ArgumentError('Invalid unit provided to `DateTime#add`');
     }
-
-    this.assertIsValid(context);
-
-    return this;
   }
 
-  public subtract(amount: number, unit: DateTime.Unit | 'week'): this {
-    const context = [this.date.toISOString(), 'subtract', amount, unit];
-
+  subtract(amount: number, unit: IDateAdapter.TimeUnit | 'week'): DateTime {
     switch (unit) {
       case 'year':
-        this.date = subUTCYears(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCYears(this.date, amount));
       case 'month':
-        this.date = subUTCMonths(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCMonths(this.date, amount));
       case 'week':
-        this.date = subUTCWeeks(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCWeeks(this.date, amount));
       case 'day':
-        this.date = subUTCDays(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCDays(this.date, amount));
       case 'hour':
-        this.date = subUTCHours(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCHours(this.date, amount));
       case 'minute':
-        this.date = subUTCMinutes(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCMinutes(this.date, amount));
       case 'second':
-        this.date = subUTCSeconds(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCSeconds(this.date, amount));
       case 'millisecond':
-        this.date = subUTCMilliseconds(this.date, amount);
-        break;
+        return this.forkDateTime(subUTCMilliseconds(this.date, amount));
       default:
-        throw new Error('Invalid unit provided to `DateTime#subtract`');
+        throw new ArgumentError('Invalid unit provided to `DateTime#subtract`');
     }
-
-    this.assertIsValid(context);
-
-    return this;
   }
 
-  public get(unit: 'weekday'): DateTime.Weekday;
-  public get(unit: 'timezone'): string | undefined;
-  public get(unit: DateTime.Unit | 'yearday'): number;
-  public get(unit: DateTime.Unit | 'yearday' | 'weekday' | 'timezone'): any {
+  get(unit: 'weekday'): IDateAdapter.Weekday;
+  get(unit: IDateAdapter.TimeUnit | 'yearday'): number;
+  get(unit: IDateAdapter.TimeUnit | 'yearday' | 'weekday'): any {
     switch (unit) {
       case 'year':
         return this.date.getUTCFullYear();
       case 'month':
         return this.date.getUTCMonth() + 1;
       case 'yearday':
-        return Utils.getYearDay(
-          this.get('year'),
-          this.get('month'),
-          this.get('day'),
-        );
+        return getUTCYearDay(this.date);
       case 'weekday':
-        return Utils.WEEKDAYS[this.date.getUTCDay()];
+        return WEEKDAYS[this.date.getUTCDay()];
       case 'day':
         return this.date.getUTCDate();
       case 'hour':
@@ -218,128 +225,255 @@ export class DateTime implements IDateAdapter {
         return this.date.getUTCSeconds();
       case 'millisecond':
         return this.date.getUTCMilliseconds();
-      case 'timezone':
-        return this.timezone;
       default:
-        throw new Error('Invalid unit provided to `DateTime#set`');
+        throw new ArgumentError('Invalid unit provided to `DateTime#set`');
     }
   }
 
-  public set(
-    unit: 'timezone',
-    value: string | undefined,
-    options?: { keepLocalTime?: boolean },
-  ): this;
-  public set(unit: DateTime.Unit, value: number): this;
-  public set(
-    unit: DateTime.Unit | 'timezone',
-    value: number | string | undefined,
-  ): this {
-    const context = [this.date.toISOString(), 'set', value, unit];
+  set(unit: IDateAdapter.TimeUnit, value: number): DateTime {
+    const date = new Date(this.date);
 
     switch (unit) {
       case 'year':
-        this.date.setUTCFullYear(value as number);
+        date.setUTCFullYear(value as number);
         break;
       case 'month':
-        this.date.setUTCMonth((value as number) - 1);
+        date.setUTCMonth((value as number) - 1);
         break;
       case 'day':
-        this.date.setUTCDate(value as number);
+        date.setUTCDate(value as number);
         break;
       case 'hour':
-        this.date.setUTCHours(value as number);
+        date.setUTCHours(value as number);
         break;
       case 'minute':
-        this.date.setUTCMinutes(value as number);
+        date.setUTCMinutes(value as number);
         break;
       case 'second':
-        this.date.setUTCSeconds(value as number);
+        date.setUTCSeconds(value as number);
         break;
       case 'millisecond':
-        this.date.setUTCMilliseconds(value as number);
+        date.setUTCMilliseconds(value as number);
         break;
       default:
-        throw new Error('Invalid unit provided to `DateTime#set`');
+        throw new ArgumentError('Invalid unit provided to `DateTime#set`');
     }
 
-    this.assertIsValid(context);
-
-    return this;
+    return this.forkDateTime(date);
   }
 
-  public toTimeObject(): {
-    datetimes: ParsedDatetime[];
-    timezone: string | undefined;
-  } {
-    return {
-      datetimes: [
-        [
-          this.get('year'),
-          this.get('month'),
-          this.get('day'),
-          this.get('hour'),
-          this.get('minute'),
-          this.get('second'),
-          this.get('millisecond'),
-        ],
-      ],
-      timezone: this.get('timezone'),
-    };
+  granularity(
+    granularity: IDateAdapter.TimeUnit | 'week',
+    opt: { weekStart?: IDateAdapter.Weekday } = {},
+  ) {
+    let date = this.forkDateTime(this.date);
+
+    switch (granularity) {
+      case 'year':
+        date = date.set('month', 1);
+      case 'month':
+        date = date.set('day', 1);
+        break;
+      case 'week':
+        date = setDateToStartOfWeek(date, opt.weekStart!);
+    }
+
+    switch (granularity) {
+      case 'year':
+      case 'month':
+      case 'week':
+      case 'day':
+        date = date.set('hour', 0);
+      case 'hour':
+        date = date.set('minute', 0);
+      case 'minute':
+        date = date.set('second', 0);
+      case 'second':
+        date = date.set('millisecond', 0);
+      case 'millisecond':
+        return date;
+      default:
+        throw new ArgumentError(
+          'Invalid granularity provided to `DateTime#granularity`: ' + granularity,
+        );
+    }
   }
 
-  public toICal(): string {
-    const timezone = this.get('timezone');
+  endGranularity(
+    granularity: IDateAdapter.TimeUnit | 'week',
+    opt: { weekStart?: IDateAdapter.Weekday } = {},
+  ) {
+    let date = this.forkDateTime(this.date);
 
-    if (timezone === 'UTC') { return `${Utils.dateToStandardizedString(this)}Z`; }
-    else if (timezone) {
-      return `TZID=${timezone}:${Utils.dateToStandardizedString(this)}`;
-         }
-    else { return `${Utils.dateToStandardizedString(this)}`; }
+    switch (granularity) {
+      case 'year':
+        date = date.set('month', 12);
+      case 'month':
+        date = date.set('day', monthLength(date.get('month'), date.get('year')));
+        break;
+      case 'week':
+        date = setDateToEndOfWeek(date, opt.weekStart!);
+    }
+
+    switch (granularity) {
+      case 'year':
+      case 'month':
+      case 'week':
+      case 'day':
+        date = date.set('hour', 23);
+      case 'hour':
+        date = date.set('minute', 59);
+      case 'minute':
+        date = date.set('second', 59);
+      case 'second':
+        date = date.set('millisecond', 999);
+      case 'millisecond':
+        return date;
+      default:
+        throw new ArgumentError(
+          'Invalid granularity provided to `DateTime#granularity`: ' + granularity,
+        );
+    }
   }
 
-  public toISOString() {
+  toISOString() {
     return this.date.toISOString();
   }
 
-  public toDateTime() {
+  toDateTime() {
     return this;
   }
 
-  public valueOf() {
+  toJSON(): IDateAdapter.JSON {
+    return {
+      timezone: this.timezone,
+      duration: this.duration,
+      year: this.get('year'),
+      month: this.get('month'),
+      day: this.get('day'),
+      hour: this.get('hour'),
+      minute: this.get('minute'),
+      second: this.get('second'),
+      millisecond: this.get('millisecond'),
+    };
+  }
+
+  valueOf() {
     return this.date.valueOf();
   }
 
-  public assertIsValid(context?: any) {
+  assertIsValid() {
     if (isNaN(this.valueOf())) {
-      const was = context.shift();
-      const change = context.map((val: any) => `"${val}"`).join(' ');
-
-      throw new Error(
-        'DateTime has invalid date. ' +
-          `Was "${was}". ` +
-          (change ? `Change ${change}.` : ''),
-      );
+      throw new InvalidDateTimeError('DateTime has invalid date.');
     }
 
     return true;
   }
+
+  private forkDateTime(date: Date) {
+    return new DateTime(date, this.timezone, this.duration);
+  }
 }
 
-export namespace DateTime {
-  export class ComparisonError extends Error {
-    constructor(message = "Cannot compare DateTime's in different timezones") {
-      super(message);
-    }
+function assertSameTimeZone(x: DateTime, y: DateTime) {
+  if (x.timezone !== y.timezone) {
+    console.log('timezone failed', x, y);
+    throw new ArgumentError();
   }
 
-  export type Unit = IDateAdapter.Unit;
+  return true;
+}
 
-  export type Weekday = IDateAdapter.Weekday;
+function setDateToStartOfWeek(date: DateTime, wkst: IDateAdapter.Weekday) {
+  const index = orderedWeekdays(wkst).indexOf(date.get('weekday'));
+  return date.subtract(index, 'day');
+}
 
-  export type Month = IDateAdapter.Month;
+function setDateToEndOfWeek(date: DateTime, wkst: IDateAdapter.Weekday) {
+  const index = orderedWeekdays(wkst).indexOf(date.get('weekday'));
+  return date.add(6 - index, 'day');
+}
 
-  export type IMonth = IDateAdapter.IMonth;
+export function dateTimeSortComparer(a: DateTime, b: DateTime) {
+  if (a.isAfter(b)) return 1;
+  if (a.isBefore(b)) return -1;
+  return 0;
+}
+
+export function uniqDateTimes(dates: DateTime[]) {
+  return Array.from(
+    new Map(dates.map(date => [date.toISOString(), date]) as Array<[string, DateTime]>).values(),
+  );
+}
+
+export function orderedWeekdays(wkst: IDateAdapter.Weekday = 'SU') {
+  const wkdays = WEEKDAYS.slice();
+  let index = wkdays.indexOf(wkst);
+
+  while (index !== 0) {
+    shiftArray(wkdays);
+    index--;
+  }
+
+  return wkdays;
+}
+
+function shiftArray(array: any[], from: 'first' | 'last' = 'first') {
+  if (array.length === 0) {
+    return array;
+  } else if (from === 'first') {
+    array.push(array.shift());
+  } else {
+    array.unshift(array.pop());
+  }
+
+  return array;
+}
+
+/**
+ * Returns the days in the given month.
+ *
+ * @param month base-1
+ * @param year
+ */
+export function monthLength(month: number, year: number) {
+  const block = {
+    1: 31,
+    2: getDaysInFebruary(year),
+    3: 31,
+    4: 30,
+    5: 31,
+    6: 30,
+    7: 31,
+    8: 31,
+    9: 30,
+    10: 31,
+    11: 30,
+    12: 31,
+  };
+
+  return (block as { [key: number]: number })[month];
+}
+
+function getDaysInFebruary(year: number) {
+  return isLeapYear(year) ? 29 : 28;
+}
+
+// taken from date-fn
+export function isLeapYear(year: number) {
+  return year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0);
+}
+
+export function getDaysInYear(year: number) {
+  return isLeapYear(year) ? 366 : 365;
+}
+
+function getUTCYearDay(now: Date) {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+
+  const diff = now.valueOf() - start.valueOf();
+
+  return 1 + Math.floor(diff / MILLISECONDS_IN_DAY);
 }
 
 /**
@@ -347,39 +481,43 @@ export namespace DateTime {
  * to use the UTC date methods, which `date-fns` doesn't support.
  */
 
-export function addMilliseconds(date: Date, input: number) {
-  const timestamp = date.getTime()
-  const amount = toInteger(input)
-  return new Date(timestamp + amount)
-}
-
-export function toInteger(input: any) {
+function toInteger(input: any) {
   if (input === null || input === true || input === false) {
     return NaN;
   }
 
-  let number = Number(input);
+  const int = Number(input);
 
-  if (isNaN(number)) {
-    return number;
+  if (isNaN(int)) {
+    return int;
   }
 
-  return number < 0 ? Math.ceil(number) : Math.floor(number);
+  return int < 0 ? Math.ceil(int) : Math.floor(int);
 }
 
-export function addUTCYears(date: Date, input: number) {
+function addMilliseconds(dirtyDate: Date, dirtyAmount: number) {
+  if (arguments.length < 2) {
+    throw new TypeError('2 arguments required, but only ' + arguments.length + ' present');
+  }
+
+  const timestamp = dirtyDate.valueOf();
+  const amount = toInteger(dirtyAmount);
+  return new Date(timestamp + amount);
+}
+
+function addUTCYears(date: Date, input: number) {
   const amount = toInteger(input);
   return addUTCMonths(date, amount * 12);
 }
 
-export function addUTCMonths(date: Date, input: number) {
+function addUTCMonths(date: Date, input: number) {
   const amount = toInteger(input);
   date = new Date(date);
   const desiredMonth = date.getUTCMonth() + amount;
   const dateWithDesiredMonth = new Date(0);
   dateWithDesiredMonth.setUTCFullYear(date.getUTCFullYear(), desiredMonth, 1);
   dateWithDesiredMonth.setUTCHours(0, 0, 0, 0);
-  const daysInMonth = Utils.getDaysInMonth(
+  const daysInMonth = monthLength(
     dateWithDesiredMonth.getUTCMonth() + 1,
     dateWithDesiredMonth.getUTCFullYear(),
   );
@@ -389,67 +527,67 @@ export function addUTCMonths(date: Date, input: number) {
   return date;
 }
 
-export function addUTCWeeks(date: Date, input: number) {
+function addUTCWeeks(date: Date, input: number) {
   const amount = toInteger(input);
   const days = amount * 7;
   return addUTCDays(date, days);
 }
 
-export function addUTCDays(date: Date, input: number) {
+function addUTCDays(date: Date, input: number) {
   // by adding milliseconds rather than days, we supress the native Date object's automatic
   // daylight savings time conversions which we don't want in UTC mode
-  return addUTCMilliseconds(date, toInteger(input) * Utils.MILLISECONDS_IN_DAY);
+  return addUTCMilliseconds(date, toInteger(input) * MILLISECONDS_IN_DAY);
 }
 
-export function addUTCHours(date: Date, input: number) {
+function addUTCHours(date: Date, input: number) {
   const amount = toInteger(input);
-  return addMilliseconds(date, amount * Utils.MILLISECONDS_IN_HOUR);
+  return addMilliseconds(date, amount * MILLISECONDS_IN_HOUR);
 }
 
-export function addUTCMinutes(date: Date, input: number) {
+function addUTCMinutes(date: Date, input: number) {
   const amount = toInteger(input);
-  return addMilliseconds(date, amount * Utils.MILLISECONDS_IN_MINUTE);
+  return addMilliseconds(date, amount * MILLISECONDS_IN_MINUTE);
 }
 
-export function addUTCSeconds(date: Date, input: number) {
+function addUTCSeconds(date: Date, input: number) {
   const amount = toInteger(input);
-  return addMilliseconds(date, amount * Utils.MILLISECONDS_IN_SECOND);
+  return addMilliseconds(date, amount * MILLISECONDS_IN_SECOND);
 }
 
-export function addUTCMilliseconds(date: Date, input: number) {
+function addUTCMilliseconds(date: Date, input: number) {
   const amount = toInteger(input);
-  let timestamp = date.getTime();
+  const timestamp = date.getTime();
   return new Date(timestamp + amount);
 }
 
-export function subUTCYears(date: Date, amount: number) {
+function subUTCYears(date: Date, amount: number) {
   return addUTCYears(date, -amount);
 }
 
-export function subUTCMonths(date: Date, amount: number) {
+function subUTCMonths(date: Date, amount: number) {
   return addUTCMonths(date, -amount);
 }
 
-export function subUTCWeeks(date: Date, amount: number) {
+function subUTCWeeks(date: Date, amount: number) {
   return addUTCWeeks(date, -amount);
 }
 
-export function subUTCDays(date: Date, amount: number) {
+function subUTCDays(date: Date, amount: number) {
   return addUTCDays(date, -amount);
 }
 
-export function subUTCHours(date: Date, amount: number) {
+function subUTCHours(date: Date, amount: number) {
   return addUTCHours(date, -amount);
 }
 
-export function subUTCMinutes(date: Date, amount: number) {
+function subUTCMinutes(date: Date, amount: number) {
   return addUTCMinutes(date, -amount);
 }
 
-export function subUTCSeconds(date: Date, amount: number) {
+function subUTCSeconds(date: Date, amount: number) {
   return addUTCSeconds(date, -amount);
 }
 
-export function subUTCMilliseconds(date: Date, amount: number) {
+function subUTCMilliseconds(date: Date, amount: number) {
   return addUTCMilliseconds(date, -amount);
 }

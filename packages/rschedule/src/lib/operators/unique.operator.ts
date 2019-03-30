@@ -1,5 +1,10 @@
-import { DateAdapter, DateAdapterConstructor } from '../date-adapter';
-import { OperatorOutput, OperatorOutputOptions } from './interface';
+import { DateAdapter } from '../date-adapter';
+import { DateTime } from '../date-time';
+import { IRunArgs } from '../interfaces';
+import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
+import { IterableWrapper, streamPastEnd, streamPastSkipToDate } from './utilities';
+
+const UNIQUE_OPERATOR_ID = Symbol.for('cba869a4-13bf-407a-9648-18cc66261231');
 
 /**
  * An operator function, intended as an argument for `occurrenceStream()`,
@@ -8,69 +13,48 @@ import { OperatorOutput, OperatorOutputOptions } from './interface';
  *
  * @param inputs a spread of scheduling objects
  */
-export function unique<T extends DateAdapterConstructor>(): OperatorOutput<T> {
-  return (options: OperatorOutputOptions<T>) => {
-    return {
-      get isInfinite() {
-        return !!options.baseIsInfinite;
-      },
-
-      setTimezone() {},
-
-      clone() {
-        return unique()(options);
-      },
-
-      *_run(): IterableIterator<DateAdapter<T>> {
-        let iterable: IterableIterator<DateAdapter<T>>;
-
-        if (options.base) {
-          iterable = options.base;
-        } else {
-          return;
-        }
-
-        const firstDate = iterable.next().value as DateAdapter<T> | undefined;
-
-        if (!firstDate) { return; }
-
-        const cache = {
-          iterator: iterable,
-          date: firstDate,
-          mostRecentlyYieldedDate: firstDate.clone() as DateAdapter<T>,
-        };
-
-        // iterate over the cache objects until we run out of dates or hit our max count
-        while (cache.date) {
-          const yieldArgs = yield cache.date.clone() as DateAdapter<T>;
-
-          cache.mostRecentlyYieldedDate = cache.date.clone() as DateAdapter<T>;
-
-          cache.date = cache.iterator.next(yieldArgs).value;
-
-          if (!iterateCacheToNextUniqueDate(cache)) { return; }
-        }
-      },
-    };
-  };
+export function unique<T extends typeof DateAdapter>(): OperatorFnOutput<T> {
+  return (options: IOperatorConfig<T>) => new UniqueOperator([], options);
 }
 
-/**
- * Mutates the cache object by iterating its date until a new (unyielded) one is found.
- * Returns a boolean indicating if there are any more valid dates.
- */
-function iterateCacheToNextUniqueDate<T extends DateAdapterConstructor>(cache: {
-  iterator: IterableIterator<DateAdapter<T>>;
-  date?: DateAdapter<T>;
-  mostRecentlyYieldedDate: DateAdapter<T>;
-}): boolean {
-  if (!cache.date) { return false; }
-
-  if (cache.date.isEqual(cache.mostRecentlyYieldedDate)) {
-    cache.date = cache.iterator.next().value;
-
-    return iterateCacheToNextUniqueDate(cache);
+export class UniqueOperator<T extends typeof DateAdapter> extends Operator<T> {
+  static isUniqueOperator(object: unknown): object is UniqueOperator<any> {
+    return !!(object && typeof object === 'object' && (object as any)[UNIQUE_OPERATOR_ID]);
   }
 
-  return true;
+  /** Not actually used but necessary for IRunnable interface */
+  set(_: 'timezone', value: string | undefined) {
+    return new UniqueOperator([], {
+      ...this.config,
+      base: this.config.base && this.config.base.set('timezone', value),
+      timezone: value,
+    });
+  }
+
+  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+    if (!this.config.base) return;
+
+    const stream = new IterableWrapper(this.config.base._run(args));
+
+    while (!stream.done) {
+      const yieldArgs = yield this.normalizeRunOutput(stream.value);
+
+      const lastValue = stream.value;
+
+      stream.picked();
+
+      if (yieldArgs && yieldArgs.skipToDate) {
+        while (
+          !streamPastEnd(stream, args) &&
+          !streamPastSkipToDate(stream, yieldArgs.skipToDate, args)
+        ) {
+          stream.picked();
+        }
+      }
+
+      while (!streamPastEnd(stream, args) && stream.value.isEqual(lastValue)) {
+        stream.picked();
+      }
+    }
+  }
 }
