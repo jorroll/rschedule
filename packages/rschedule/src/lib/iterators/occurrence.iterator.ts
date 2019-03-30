@@ -1,7 +1,8 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { DateInput, IHasOccurrences } from '../interfaces';
-import { IRunArgs, IRunnable } from '../interfaces/runnable';
+import { IRunArgs } from '../interfaces/runnable';
+import { ConstructorReturnType } from '../utilities';
 
 export class OccurrenceIterator<T extends typeof DateAdapter> {
   private readonly iterator: IterableIterator<DateTime>;

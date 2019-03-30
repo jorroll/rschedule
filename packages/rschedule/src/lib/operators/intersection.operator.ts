@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { DateInput, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { IHasOccurrences, IRunArgs } from '../interfaces';
 import { RScheduleConfig } from '../rschedule-config';
 import { ArgumentError } from '../utilities';
 import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';

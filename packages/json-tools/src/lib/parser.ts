@@ -1,6 +1,5 @@
 import {
   add,
-  AddOperator,
   Calendar,
   DateAdapter,
   Dates,
@@ -12,6 +11,7 @@ import {
   subtract,
   unique,
 } from '@rschedule/rschedule';
+
 import {
   IOperatorJSON,
   RScheduleObject,
@@ -72,7 +72,7 @@ export function parseJSON<T extends typeof DateAdapter>(
           return new OccurrenceStream({
             ...json,
             operators: json.operators.map(operator =>
-              parseOperatorJSON(operator, dateAdapter, json.timezone, options),
+              parseOperatorJSON(operator, dateAdapter, options),
             ),
             dateAdapter,
           });
@@ -100,7 +100,6 @@ export function parseJSON<T extends typeof DateAdapter>(
 function parseOperatorJSON<T extends typeof DateAdapter>(
   json: IOperatorJSON,
   dateAdapter: T,
-  timezone: string | undefined,
   options: {
     maxFailedIterations?: number;
   } = {},

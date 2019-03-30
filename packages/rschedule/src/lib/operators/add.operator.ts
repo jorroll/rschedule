@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { HasOccurrences, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { IHasOccurrences, IRunArgs } from '../interfaces';
 import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
 import {
   IterableWrapper,

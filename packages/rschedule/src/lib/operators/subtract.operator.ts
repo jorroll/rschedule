@@ -1,14 +1,9 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { IHasOccurrences, IRunArgs } from '../interfaces';
 import { add } from './add.operator';
 import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
-import {
-  IterableWrapper,
-  selectNextIterable,
-  streamPastEnd,
-  streamPastSkipToDate,
-} from './utilities';
+import { IterableWrapper, streamPastEnd, streamPastSkipToDate } from './utilities';
 
 const SUBTRACT_OPERATOR_ID = Symbol.for('66b1962f-32c5-4c16-9a9d-e69f52812ab8');
 

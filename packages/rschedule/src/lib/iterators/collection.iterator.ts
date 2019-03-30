@@ -2,7 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { DateInput, IHasOccurrences, IOccurrencesArgs, IRunArgs, IRunnable } from '../interfaces';
 import { RuleOption } from '../rule';
-import { ArgumentError, freqToGranularity } from '../utilities';
+import { ArgumentError, ConstructorReturnType, freqToGranularity } from '../utilities';
 
 export class CollectionIterator<T extends typeof DateAdapter> {
   readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY';

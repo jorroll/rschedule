@@ -2,6 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { OccurrenceIterator } from '../iterators/occurrence.iterator';
 import { RScheduleConfig } from '../rschedule-config';
+import { ConstructorReturnType } from '../utilities';
 import { IRunArgs, IRunnable } from './runnable';
 
 export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable<T> {

@@ -1,12 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import {
-  DateInput,
-  HasOccurrences,
-  IHasOccurrences,
-  IOccurrencesArgs,
-  IRunnable,
-} from '../interfaces';
+import { DateInput, HasOccurrences, IHasOccurrences, IOccurrencesArgs } from '../interfaces';
 import {
   CollectionIterator,
   ICollectionsArgs,

@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { ArgumentError, numberSortComparer } from '../utilities';
+import { ConstructorReturnType, numberSortComparer } from '../utilities';
 
 /**
  * This function performs validation checks on the provided rule options and retuns

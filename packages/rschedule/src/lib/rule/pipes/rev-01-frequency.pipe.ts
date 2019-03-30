@@ -1,15 +1,5 @@
-import {
-  DateTime,
-  IDateAdapter,
-  MILLISECONDS_IN_DAY,
-  MILLISECONDS_IN_HOUR,
-  MILLISECONDS_IN_MINUTE,
-  MILLISECONDS_IN_SECOND,
-  MILLISECONDS_IN_WEEK,
-} from '../../date-time';
-import { RuleOption } from '../rule-options';
+import { DateTime, IDateAdapter } from '../../date-time';
 import { intervalDifferenceBetweenDates, unitForFrequency } from './01-frequency.pipe';
-// import { Utils } from '../../utilities';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**

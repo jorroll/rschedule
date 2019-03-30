@@ -8,7 +8,6 @@ import {
   MILLISECONDS_IN_WEEK,
 } from '../../date-time';
 import { RuleOption } from '../rule-options';
-// import { Utils } from '../../utilities';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**

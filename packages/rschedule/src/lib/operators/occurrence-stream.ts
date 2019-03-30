@@ -1,7 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, HasOccurrences, IRunArgs, IRunnable } from '../interfaces';
-import { RuleOption } from '../rule';
+import { DateInput, HasOccurrences, IRunArgs } from '../interfaces';
 import { ArgumentError } from '../utilities';
 import { Operator, OperatorFnOutput } from './interface';
 
@@ -181,8 +180,8 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends HasOccurrenc
       );
     }
 
-    let end: DateTime | null = DateTime.fromJSON(this.lastDate.toJSON());
-    let start: DateTime = DateTime.fromJSON(this.firstDate.toJSON());
+    let end: DateTime | null = this.lastDate && DateTime.fromJSON(this.lastDate.toJSON());
+    let start: DateTime | null = this.firstDate && DateTime.fromJSON(this.firstDate.toJSON());
 
     if (!start) return false;
 

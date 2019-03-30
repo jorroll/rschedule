@@ -1,4 +1,3 @@
-import { DateTime } from '../../date-time';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 export class RevByMinuteOfHourPipe extends PipeRule implements IPipeRule {

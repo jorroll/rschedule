@@ -1,5 +1,3 @@
-import { DateTime } from '../../date-time';
-// import { Options } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 export class RevByMillisecondOfSecondPipe extends PipeRule implements IPipeRule {

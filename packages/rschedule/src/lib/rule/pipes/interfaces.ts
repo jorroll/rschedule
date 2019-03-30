@@ -1,6 +1,5 @@
 import { DateTime } from '../../date-time';
 import { INormalizedRuleOptions } from '../rule-options';
-// import { Utils } from '../../utilities';
 
 export class PipeError extends Error {}
 

@@ -1,6 +1,7 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { DateInput, HasOccurrences, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { DateInput, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { ConstructorReturnType } from '../utilities';
 
 export abstract class Operator<T extends typeof DateAdapter> implements IRunnable<T> {
   readonly isInfinite: boolean;

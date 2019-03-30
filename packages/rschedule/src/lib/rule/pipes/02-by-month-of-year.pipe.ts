@@ -1,4 +1,3 @@
-import { DateTime, IDateAdapter } from '../../date-time';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 export class ByMonthOfYearPipe extends PipeRule implements IPipeRule {

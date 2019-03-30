@@ -13,3 +13,5 @@ export * from './calendar/public_api';
 export * from './dates/public_api';
 export * from './rule/public_api';
 export * from './schedule/public_api';
+
+export { ArgumentError, ConstructorReturnType } from './utilities';

@@ -1,17 +1,8 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import {
-  DateInput,
-  HasOccurrences,
-  IHasOccurrences,
-  IOccurrencesArgs,
-  IRunArgs,
-  IRunnable,
-} from '../interfaces';
+import { DateInput, HasOccurrences, IOccurrencesArgs, IRunArgs } from '../interfaces';
 import { OccurrenceIterator } from '../iterators';
-import { RScheduleConfig } from '../rschedule-config';
 import { PipeController } from './pipes';
-import { getDifferenceBetweenWeekdays } from './pipes/utilities';
 import {
   INormalizedRuleOptions,
   IProvidedRuleOptions,

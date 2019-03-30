@@ -1,5 +1,11 @@
 export class ArgumentError extends Error {}
 
+export type ConstructorReturnType<T extends new (...args: any[]) => any> = T extends new (
+  ...args: any[]
+) => infer R
+  ? R
+  : any;
+
 export function numberSortComparer(a: number, b: number) {
   if (a > b) {
     return 1;
