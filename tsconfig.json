@@ -14,7 +14,7 @@
       "@rschedule/*": ["packages/*/src"]
     },
     "inlineSourceMap": true,
-    "removeComments": true,
+    "removeComments": false,
     "downlevelIteration": true,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
   },
