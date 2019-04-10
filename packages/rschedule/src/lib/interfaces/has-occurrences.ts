@@ -72,6 +72,30 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     this.timezone = args.timezone !== undefined ? args.timezone : RScheduleConfig.defaultTimezone;
   }
 
+  /**
+   * Processes object and returns an iterable for the occurrences.
+   *
+   * Options object:
+   * - `start` the date to begin iteration on
+   * - `end` the date to end iteration on
+   * - `take` the max number of dates to take before ending iteration
+   * - `reverse` whether to iterate in reverse or not
+   * 
+   * Examples:
+   * 
+   ```
+   const iterator = schedule.occurrences()
+   
+   for (const date of iterator) {
+     // do stuff
+   }
+
+   iterator.toArray()
+   iterator.next().value
+   ```
+   *
+   * @param arg `OccurrencesArgs` options object
+   */
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
     return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
   }

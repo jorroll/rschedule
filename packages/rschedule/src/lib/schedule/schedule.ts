@@ -36,6 +36,8 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
 
   protected readonly [SCHEDULE_ID] = true;
 
+  private occurrenceStream: OccurrenceStream<T>;
+
   constructor(
     args: {
       dateAdapter?: T;
@@ -122,6 +124,18 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
       this.exdates.hasDuration;
 
     this.isInfinite = this.rrules.some(rule => rule.isInfinite);
+
+    this.occurrenceStream = new OccurrenceStream({
+      operators: [
+        add<T>(...this.rrules),
+        subtract<T>(...this.exrules),
+        add<T>(this.rdates),
+        subtract<T>(this.exdates),
+        unique<T>(),
+      ],
+      dateAdapter: this.dateAdapter,
+      timezone: this.timezone,
+    });
   }
 
   add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
@@ -236,35 +250,6 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
   }
 
   /**
-   * Processed the internal rrules, exrules, rdates, and exdates and
-   * iterates over the resulting occurrences. Occurrences are deduplicated.
-   *
-   * Options object:
-   * - `start` the date to begin iteration on
-   * - `end` the date to end iteration on
-   * - `take` the max number of dates to take before ending iteration
-   * - `reverse` whether to iterate in reverse or not
-   * 
-   * Examples:
-   * 
-   ```
-   const iterator = schedule.occurrences()
-   
-   for (const date of iterator) {
-     // do stuff
-   }
-
-   iterator.toArray()
-   iterator.next().value
-   ```
-   *
-   * @param arg `OccurrencesArgs` options object
-   */
-  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
-    return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
-  }
-
-  /**
    * Checks to see if an occurrence exists which equals the given date.
    */
   occursOn(rawArgs: { date: DateInput<T> }): boolean;
@@ -338,17 +323,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
 
     delete args.take;
 
-    const iterator = new OccurrenceStream({
-      operators: [
-        add<T>(...this.rrules),
-        subtract<T>(...this.exrules),
-        add<T>(this.rdates),
-        subtract<T>(this.exdates),
-        unique<T>(),
-      ],
-      dateAdapter: this.dateAdapter,
-      timezone: this.timezone,
-    })._run(args);
+    const iterator = this.occurrenceStream._run(args);
 
     let date = iterator.next().value;
     let index = 0;

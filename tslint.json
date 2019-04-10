@@ -18,6 +18,7 @@
     "member-access": [true, "no-public"],
     "curly": [true, "ignore-same-line"],
     "array-type": false,
-    "variable-name": false
+    "variable-name": false,
+    "jsdoc-format": false
   }
 }
