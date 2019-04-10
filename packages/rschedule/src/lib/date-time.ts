@@ -19,7 +19,7 @@ export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
 export interface IDateAdapter<D = unknown> {
   /** Returns the date object this DateAdapter is wrapping */
   readonly date: unknown;
-  readonly timezone: string | undefined;
+  readonly timezone: string | null;
   readonly duration: number | undefined;
 
   /**
@@ -66,7 +66,7 @@ export namespace IDateAdapter {
   export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
   export interface JSON {
-    timezone: string | undefined;
+    timezone: string | null;
     duration?: number;
     year: number;
     month: number;
@@ -108,6 +108,10 @@ export class DateTime implements IDateAdapter<unknown> {
     return new DateTime(date, json.timezone, json.duration);
   }
 
+  static fromDateAdapter(adapter: IDateAdapter) {
+    return DateTime.fromJSON(adapter.toJSON());
+  }
+
   readonly date: Date;
 
   /**
@@ -127,13 +131,13 @@ export class DateTime implements IDateAdapter<unknown> {
 
   readonly [DATETIME_ID] = true;
 
-  readonly timezone: string | undefined;
+  readonly timezone: string | null;
 
   readonly duration: number | undefined;
 
-  private constructor(date: Date, timezone?: string, duration?: number) {
+  private constructor(date: Date, timezone?: string | null, duration?: number) {
     this.date = new Date(date);
-    this.timezone = timezone;
+    this.timezone = timezone || null;
     this.duration = duration;
 
     this.assertIsValid();

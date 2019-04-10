@@ -58,7 +58,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends HasOccurrenc
 
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
-  readonly timezone: string | undefined;
+  readonly timezone!: string | null;
 
   /** @private do not use */
   readonly _operators: Operator<T>[] = [];
@@ -72,7 +72,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends HasOccurrenc
   constructor(args: {
     operators: OperatorFnOutput<T>[] | Operator<T>[];
     dateAdapter?: T;
-    timezone?: string;
+    timezone?: string | null;
   }) {
     super(args);
 
@@ -108,7 +108,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends HasOccurrenc
     this.hasDuration = (this.lastOperator && this.lastOperator.hasDuration) || false;
   }
 
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     return new OccurrenceStream({
       operators: this._operators.map(operator => operator.set('timezone', value)),
       dateAdapter: this.dateAdapter,

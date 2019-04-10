@@ -26,7 +26,7 @@ export class SubtractOperator<T extends typeof DateAdapter> extends Operator<T> 
   }
 
   /** Not actually used but necessary for IRunnable interface */
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     return new SubtractOperator(this._streams.map(stream => stream.set('timezone', value)), {
       ...this.config,
       base: this.config.base && this.config.base.set('timezone', value),

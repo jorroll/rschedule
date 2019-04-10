@@ -55,13 +55,11 @@ describe('Operators', () => {
         DatetimeFn<any>
       ];
 
-      // const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport
-      //   ? [undefined]
+      // const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport
+      //   ? [null]
       //   : ['UTC'];
 
-      const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport
-        ? [undefined, 'UTC']
-        : TIMEZONES;
+      const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
 
       timezones.forEach(zone => {
         context(zone, timezone => {
@@ -116,7 +114,7 @@ describe('Operators', () => {
 
                 // The CI runners have local as UTC so need to work around this
                 const doTest =
-                  offset === 0 ? ![undefined, 'UTC'].includes(timezone) : timezone !== 'UTC';
+                  offset === 0 ? ![null, 'UTC'].includes(timezone) : timezone !== 'UTC';
 
                 if (doTest) {
                   it('timezone', () => {

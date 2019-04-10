@@ -53,13 +53,11 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       DatetimeFn<any>
     ];
 
-    // const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport
-    //   ? [undefined]
+    // const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport
+    //   ? [null]
     //   : ['UTC'];
 
-    const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport
-      ? [undefined, 'UTC']
-      : TIMEZONES;
+    const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
 
     timezones.forEach(zone => {
       context(zone, timezone => {

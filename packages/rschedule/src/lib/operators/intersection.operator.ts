@@ -90,7 +90,7 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
   }
 
   /** Not actually used but necessary for IRunnable interface */
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     return new IntersectionOperator(
       {
         maxFailedIterations: this.maxFailedIterations,

@@ -147,8 +147,8 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       DatetimeFn<any>
     ];
 
-    // const zones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : [undefined];
-    const zones = !DateAdapter.hasTimezoneSupport ? [undefined, 'UTC'] : TIMEZONES;
+    // const zones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : [null];
+    const zones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
 
     zones.forEach(zone => {
       // function to create new dateAdapter instances

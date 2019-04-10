@@ -41,6 +41,6 @@
     "rollup": "^1.7.4",
     "rollup-plugin-typescript2": "^0.20.1",
     "trash-cli": "^1.4.0",
-    "typescript": "3.4.1"
+    "typescript": "3.4.3"
   }
 }

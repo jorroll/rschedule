@@ -36,7 +36,7 @@ export function environment<T>(object: T, fn: (object: T) => any) {
 }
 
 export const TIMEZONES = [
-  undefined,
+  null,
   'UTC',
   'Africa/Johannesburg',
   'America/Los_Angeles',
@@ -46,7 +46,7 @@ export const TIMEZONES = [
   'Asia/Shanghai',
   'Asia/Jakarta',
   'Australia/Melbourne',
-];
+] as const;
 
 export interface DatetimeFn<R> {
   (): R;
@@ -83,10 +83,10 @@ export function standardDatetimeFn(...args: Array<number | string>) {
   }
 
   const numbers: number[] = [];
-  let timezone: string | undefined;
+  let timezone: string | null = null;
 
   args.forEach(arg => {
-    if (typeof arg === 'string') {
+    if (typeof arg === 'string' || arg === null) {
       timezone = arg;
     } else {
       numbers.push(arg);
@@ -112,10 +112,10 @@ export function momentDatetimeFn(...args: Array<number | string>): MomentST {
   }
 
   const numbers: number[] = [];
-  let timezone: string | undefined;
+  let timezone: string | null = null;
 
   args.forEach(arg => {
-    if (typeof arg === 'string') {
+    if (typeof arg === 'string' || arg === null) {
       timezone = arg;
     } else {
       numbers.push(arg);
@@ -139,10 +139,10 @@ export function momentTZDatetimeFn(...args: Array<number | string>): MomentTZ {
   }
 
   const numbers: number[] = [];
-  let timezone: string | undefined;
+  let timezone: string | null = null;
 
   args.forEach(arg => {
-    if (typeof arg === 'string') {
+    if (typeof arg === 'string' || arg === null) {
       timezone = arg;
     } else {
       numbers.push(arg);
@@ -166,10 +166,10 @@ export function luxonDatetimeFn(...args: Array<number | string>): LuxonDateTime 
   }
 
   const numbers: number[] = [];
-  let timezone: string | undefined;
+  let timezone: string | null = null;
 
   args.forEach(arg => {
-    if (typeof arg === 'string') {
+    if (typeof arg === 'string' || arg === null) {
       timezone = arg;
     } else {
       numbers.push(arg);
@@ -216,10 +216,13 @@ export function datetime(...args: Array<number | string | undefined>) {
     args[1] = (args[1] as number) - 1;
   }
 
-  if (typeof args[args.length - 1] === 'string') {
-    return args.pop() === 'UTC'
-      ? new Date(Date.UTC(...(args as [number, number, number])))
-      : new Date(...(args as [number, number, number]));
+  const lastArg = args[args.length - 1];
+
+  if (typeof lastArg === 'string') {
+    args.pop();
+    return new Date(Date.UTC(...(args as [number, number, number])));
+  } else if (lastArg === null) {
+    args.pop();
   }
 
   return new Date(...(args as [number, number, number]));
@@ -304,12 +307,12 @@ export function dateAdapter(...args: Array<number | string | undefined>) {
 export function timezoneDateAdapterFn(
   dateAdapterConstructor: typeof DateAdapter,
   datetimeFn: (...args: any[]) => any,
-  timezone: string | undefined,
+  timezone: string | null,
 ): (...args: number[]) => DateAdapter {
   return (...args: number[]) => {
     const dateAdapterArgs: (string | number)[] = args;
 
-    if (timezone !== undefined) {
+    if (timezone !== null) {
       dateAdapterArgs.push(timezone);
     }
 
@@ -344,16 +347,16 @@ export function occurrencesToIsoStrings(...args: HasOccurrences<any>[]): string[
 
 export function dateTimeToAdapterFn(
   dateAdapterConstructor: typeof DateAdapter,
-  timezone: string | undefined,
+  timezone: string | null,
 ) {
   return (date: DateTime, options: { keepZone?: boolean } = {}) =>
     options.keepZone
-      ? dateAdapterConstructor.fromJSON(date.toJSON())
-      : dateAdapterConstructor.fromJSON(date.toJSON()).set('timezone', timezone);
+      ? dateAdapterConstructor.fromDateTime(date)
+      : dateAdapterConstructor.fromDateTime(date).set('timezone', timezone);
 }
 
 export function dateTimeFn(dateAdapter: (...args: number[]) => DateAdapter) {
-  return (...args: number[]) => DateTime.fromJSON(dateAdapter(...args).toJSON());
+  return (...args: number[]) => DateTime.fromDateAdapter(dateAdapter(...args));
 }
 
 export function toISOStrings<T extends typeof DateAdapter>(

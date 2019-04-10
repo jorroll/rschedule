@@ -18,15 +18,19 @@ export class DateAdapter implements IDateAdapter<unknown> {
   }
 
   static isDate(_: unknown): boolean {
-    throw new Error('DateAdapter is an abstract class');
+    throw unimplementedError('isDate()');
   }
 
   static fromJSON(_: IDateAdapter.JSON): DateAdapter {
-    throw new Error('DateAdapter is an abstract class');
+    throw unimplementedError('fromJSON()');
+  }
+
+  static fromDateTime(_: DateTime): DateAdapter {
+    throw unimplementedError('fromDateTime()');
   }
 
   readonly date!: unknown;
-  readonly timezone: string | undefined;
+  readonly timezone!: string | null;
   readonly duration: number | undefined;
 
   readonly generators: unknown[] = [];
@@ -35,16 +39,16 @@ export class DateAdapter implements IDateAdapter<unknown> {
 
   constructor(_: unknown, options?: unknown) {}
 
-  set(prop: 'timezone', value: string | undefined): DateAdapter {
-    throw new Error('DateAdapter is an abstract class');
+  set(prop: 'timezone', value: string | null): DateAdapter {
+    throw unimplementedError('set()');
   }
 
   valueOf(): number {
-    throw new Error('DateAdapter is an abstract class');
+    throw unimplementedError('valueOf()');
   }
 
   toISOString(): string {
-    throw new Error('DateAdapter is an abstract class');
+    throw unimplementedError('toISOString()');
   }
 
   isEqual(object?: DateAdapter): boolean {
@@ -68,14 +72,18 @@ export class DateAdapter implements IDateAdapter<unknown> {
   }
 
   toDateTime(): DateTime {
-    throw new Error('DateAdapter is an abstract class');
+    throw unimplementedError('toDateTime()');
   }
 
   toJSON(): IDateAdapter.JSON {
-    throw new Error('DateAdapter is an abstract class');
+    throw unimplementedError('toJSON()');
   }
 
   assertIsValid(): boolean {
-    throw new Error('DateAdapter is an abstract class');
+    throw unimplementedError('assertIsValid()');
   }
+}
+
+export function unimplementedError(name: string) {
+  return new Error(`You must implement the "${name}" method for this DateAdapter class`);
 }

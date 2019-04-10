@@ -82,11 +82,9 @@ describe('Schedule', () => {
         DatetimeFn<any>
       ];
 
-      // const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
+      // const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
 
-      const timezones: (string | undefined)[] = !DateAdapter.hasTimezoneSupport
-        ? [undefined, 'UTC']
-        : TIMEZONES;
+      const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
 
       timezones.forEach(zone => {
         context(zone, timezone => {

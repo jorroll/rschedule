@@ -1,12 +1,13 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { DateInput, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { RScheduleConfig } from '../rschedule-config';
 import { ConstructorReturnType } from '../utilities';
 
 export abstract class Operator<T extends typeof DateAdapter> implements IRunnable<T> {
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
-  readonly timezone: string | undefined;
+  readonly timezone: string | null;
 
   /** Returns the first occurrence or, if there are no occurrences, null. */
   get firstDate(): ConstructorReturnType<T> | null {
@@ -29,8 +30,10 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
   }
 
   constructor(readonly _streams: IHasOccurrences<T>[], protected config: IOperatorConfig<T>) {
+    this.timezone = config.timezone;
+
     this._streams = _streams.map(stream =>
-      stream instanceof Operator ? stream : stream.set('timezone', config.timezone),
+      stream instanceof Operator ? stream : stream.set('timezone', this.timezone),
     );
 
     this.isInfinite =
@@ -42,7 +45,7 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
       this._streams.every(stream => stream.hasDuration);
   }
 
-  abstract set(_: 'timezone', value: string | undefined): Operator<T>;
+  abstract set(_: 'timezone', value: string | null): Operator<T>;
 
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 
@@ -54,15 +57,15 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
     }
 
     return DateAdapter.isInstance(date)
-      ? date.set('timezone', this.config.timezone).toDateTime()
-      : new this.config.dateAdapter(date).set('timezone', this.config.timezone).toDateTime();
+      ? date.set('timezone', this.timezone).toDateTime()
+      : new this.config.dateAdapter(date).set('timezone', this.timezone).toDateTime();
   }
 
   protected normalizeRunOutput(date: DateTime) {
-    if (date.timezone !== this.config.timezone) {
+    if (date.timezone !== this.timezone) {
       return this.config.dateAdapter
-        .fromJSON(date.toJSON())
-        .set('timezone', this.config.timezone)
+        .fromDateTime(date)
+        .set('timezone', this.timezone)
         .toDateTime();
     }
 
@@ -78,6 +81,6 @@ export type OperatorFnOutput<T extends typeof DateAdapter> = (
 
 export interface IOperatorConfig<T extends typeof DateAdapter> {
   dateAdapter: T;
-  timezone: string | undefined;
+  timezone: string | null;
   base?: IRunnable<T>;
 }

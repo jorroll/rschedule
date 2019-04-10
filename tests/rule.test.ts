@@ -307,7 +307,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
     ];
 
     // const timezones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
-    const timezones = !DateAdapter.hasTimezoneSupport ? [undefined, 'UTC'] : TIMEZONES;
+    const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
 
     timezones.forEach(timezone => {
       RScheduleConfig.defaultDateAdapter = DateAdapter;

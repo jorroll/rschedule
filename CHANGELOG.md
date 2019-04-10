@@ -16,3 +16,4 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 - Renamed `until` rule option to `end`.
 - Added immutable `add()`, `remove()`, and `set()` CRUD methods to `Schedule` and `Dates`.
 - Added immutable `filter()` method to `Dates` which filters the `Dates` object's associated dates and returns a new `Dates` object.
+- Changed rSchedule's representation of the "local" timezone from `undefined` to `null`.

@@ -44,7 +44,7 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
 
   readonly isInfinite = false;
   readonly hasDuration: boolean;
-  readonly timezone: string | undefined;
+  readonly timezone!: string | null; // set by `HasOccurrences`
 
   data?: D;
 
@@ -53,7 +53,12 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
   /** @private - use `adapters` instead */
   private readonly datetimes: DateTime[] = [];
 
-  constructor(args: { timezone?: string; dates?: DateInput<T>[]; data?: D; dateAdapter?: T }) {
+  constructor(args: {
+    timezone?: string | null;
+    dates?: DateInput<T>[];
+    data?: D;
+    dateAdapter?: T;
+  }) {
     super(args);
 
     this.data = args.data;
@@ -91,15 +96,15 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
     });
   }
 
-  set(prop: 'timezone', value: string | undefined): Dates<T, D>;
+  set(prop: 'timezone', value: string | null): Dates<T, D>;
   set(prop: 'dates', value: DateInput<T>[]): Dates<T, D>;
-  set(prop: 'timezone' | 'dates', value: DateInput<T>[] | string | undefined) {
+  set(prop: 'timezone' | 'dates', value: DateInput<T>[] | string | null) {
     let timezone = this.timezone;
     let dates: DateAdapter[] | DateTime[] = this.datetimes;
 
     if (prop === 'timezone') {
       if (value === this.timezone) return this;
-      timezone = value as string | undefined;
+      timezone = value as string | null;
       dates = this.adapters.map(adapter => adapter.set('timezone', timezone));
     } else if (prop === 'dates') {
       dates = (value as DateInput<T>[]).map(date => this.normalizeDateInput(date)!);
