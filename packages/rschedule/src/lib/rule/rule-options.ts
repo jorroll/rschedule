@@ -30,8 +30,8 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
     throw new RuleValidationError('"interval" cannot be less than 1');
   }
 
-  if (options.duration !== undefined && options.duration === 0) {
-    throw new RuleValidationError('"duration" cannot be 0');
+  if (options.duration !== undefined && options.duration <= 0) {
+    throw new RuleValidationError('"duration" must be greater than 0');
   }
 
   if (
