@@ -49,18 +49,19 @@ export interface IRuleOptionsJSON {
 
 export interface IRuleJSON {
   type: 'Rule';
+  timezone?: string | null;
   options: IRuleOptionsJSON;
 }
 
 export interface IDatesJSON {
   type: 'Dates';
-  timezone?: string | undefined;
+  timezone?: string | null;
   dates: IDateAdapter.JSON[];
 }
 
 export interface IScheduleJSON {
   type: 'Schedule';
-  timezone?: string | undefined;
+  timezone?: string | null;
   rrules: IRuleJSON[];
   exrules: IRuleJSON[];
   rdates: IDatesJSON;
@@ -69,8 +70,14 @@ export interface IScheduleJSON {
 
 export interface ICalendarJSON {
   type: 'Calendar';
-  timezone?: string | undefined;
+  timezone?: string | null;
   schedules: (RScheduleObjectJSON)[];
+}
+
+export interface IOccurrenceStreamJSON {
+  type: 'OccurrenceStream';
+  timezone?: string | null;
+  operators: IOperatorJSON[];
 }
 
 export type IOperatorJSON =
@@ -78,12 +85,6 @@ export type IOperatorJSON =
   | ISubtractOperatorJSON
   | IIntersectionOperator
   | IUniqueOperator;
-
-export interface IOccurrenceStreamJSON {
-  type: 'OccurrenceStream';
-  timezone?: string | undefined;
-  operators: IOperatorJSON[];
-}
 
 export interface IAddOperatorJSON {
   type: 'AddOperator';
@@ -129,65 +130,47 @@ function _serializeToJSON<T extends typeof DateAdapter>(
   ...input: RScheduleObject<T>[]
 ): RScheduleObjectJSON | RScheduleObjectJSON[] {
   const result = input.map(input => {
+    let json: RScheduleObjectJSON;
+
     if (Schedule.isSchedule(input)) {
-      const json: IScheduleJSON = {
+      json = {
         type: 'Schedule',
         rrules: input.rrules.map(rule => _serializeToJSON(false, rule)) as IRuleJSON[],
         exrules: input.exrules.map(rule => _serializeToJSON(false, rule)) as IRuleJSON[],
         rdates: _serializeToJSON(false, input.rdates) as IDatesJSON,
         exdates: _serializeToJSON(false, input.exdates) as IDatesJSON,
       };
-
-      if (withTimezone) {
-        json.timezone = input.timezone;
-      }
-
-      return json;
     } else if (Dates.isDates(input)) {
-      const json: IDatesJSON = {
+      json = {
         type: 'Dates',
         dates: input.adapters.map(adapter => adapter.toJSON()),
       };
-
-      if (withTimezone) {
-        json.timezone = input.timezone;
-      }
-
-      return json;
     } else if (Rule.isRule(input)) {
-      const json: IRuleJSON = {
+      json = {
         type: 'Rule',
         options: serializeOptionsToJSON(input.options, input.dateAdapter),
       };
-
-      return json;
     } else if (OccurrenceStream.isOccurrenceStream(input)) {
-      const json: IOccurrenceStreamJSON = {
+      json = {
         type: 'OccurrenceStream',
         operators: input._operators.map(operator => serializeOperatorToJSON(operator)),
       };
-
-      if (withTimezone) {
-        json.timezone = input.timezone;
-      }
-
-      return json;
     } else if (Calendar.isCalendar(input)) {
-      const json: ICalendarJSON = {
+      json = {
         type: 'Calendar',
         schedules: input.schedules.map(schedule =>
           _serializeToJSON(false, schedule as RScheduleObject<T>),
         ),
       };
-
-      if (withTimezone) {
-        json.timezone = input.timezone;
-      }
-
-      return json;
     } else {
       throw new SerializeJSONError(`Unsupported input type "${input}"`);
     }
+
+    if (withTimezone) {
+      json.timezone = input.timezone;
+    }
+
+    return json;
   });
 
   if (result.length < 2) {

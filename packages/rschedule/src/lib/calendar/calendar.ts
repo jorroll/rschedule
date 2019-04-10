@@ -37,7 +37,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends HasOccurren
       schedules?: IHasOccurrences<T>[] | IHasOccurrences<T>;
       data?: D;
       dateAdapter?: T;
-      timezone?: string;
+      timezone?: string | null;
     } = {},
   ) {
     super(args);
@@ -66,7 +66,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends HasOccurren
     });
   }
 
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     return new Calendar({
       schedules: this.schedules.map(schedule => schedule.set('timezone', value)),
       data: this.data,

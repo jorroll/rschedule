@@ -86,7 +86,7 @@ describe(`DateTimeClass`, () => {
 
     it('local', () => {
       const datetime = DateTime.fromJSON({
-        timezone: undefined,
+        timezone: null,
         year: 1970,
         month: 1,
         day: 1,
@@ -99,7 +99,7 @@ describe(`DateTimeClass`, () => {
       expect(datetime.toISOString()).toBe('1970-01-01T01:01:01.001Z');
 
       expect(datetime.toJSON()).toEqual({
-        timezone: undefined,
+        timezone: null,
         year: 1970,
         month: 1,
         day: 1,

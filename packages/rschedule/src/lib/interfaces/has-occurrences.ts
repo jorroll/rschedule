@@ -8,7 +8,7 @@ import { IRunArgs, IRunnable } from './runnable';
 
 export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable<T> {
   readonly dateAdapter: T;
-  readonly timezone: string | undefined;
+  readonly timezone: string | null;
 
   occurrences(args: IOccurrencesArgs<T>): OccurrenceIterator<T>;
   occursBetween(
@@ -17,6 +17,7 @@ export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable
     options: { excludeEnds?: boolean },
   ): boolean;
   occursOn(args: { date: DateInput<T> }): boolean;
+  // tslint:disable-next-line: unified-signatures
   occursOn(args: {
     weekday: IDateAdapter.Weekday;
     after?: DateInput<T>;
@@ -26,7 +27,7 @@ export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable
   occursAfter(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
   occursBefore(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
 
-  set(prop: 'timezone', value: string | undefined): IHasOccurrences<T>;
+  set(prop: 'timezone', value: string | null): IHasOccurrences<T>;
 }
 
 export abstract class HasOccurrences<T extends typeof DateAdapter>
@@ -34,7 +35,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
   abstract readonly isInfinite: boolean;
   abstract readonly hasDuration: boolean;
 
-  readonly timezone: string | undefined;
+  readonly timezone: string | null;
   readonly dateAdapter: T;
 
   /** Returns the first occurrence or, if there are no occurrences, null. */
@@ -57,7 +58,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     return this.dateAdapter.fromJSON(end.toJSON()) as ConstructorReturnType<T>;
   }
 
-  constructor(args: { dateAdapter?: T; timezone?: string }) {
+  constructor(args: { dateAdapter?: T; timezone?: string | null }) {
     if (args.dateAdapter) {
       this.dateAdapter = args.dateAdapter as any;
     } else {
@@ -68,9 +69,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
       throw new Error("Oops! You've initialized an occurrences object without a dateAdapter.");
     }
 
-    this.timezone = args.hasOwnProperty('timezone')
-      ? args.timezone
-      : RScheduleConfig.defaultTimezone;
+    this.timezone = args.timezone !== undefined ? args.timezone : RScheduleConfig.defaultTimezone;
   }
 
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
@@ -101,7 +100,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     return false;
   }
 
-  abstract set(prop: 'timezone', value: string | undefined): HasOccurrences<T>;
+  abstract set(prop: 'timezone', value: string | null): HasOccurrences<T>;
 
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 

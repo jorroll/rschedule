@@ -125,20 +125,6 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
     weekStart: options.weekStart || 'MO',
   };
 
-  // if (options.hasOwnProperty('timezone')) {
-  //   normalizedOptions.start = dateAdapterConstructor
-  //     .fromJSON(start.toJSON())
-  //     .set('timezone', options.timezone)
-  //     .toDateTime();
-
-  //   normalizedOptions.end =
-  //     end &&
-  //     dateAdapterConstructor
-  //       .fromJSON(end.toJSON())
-  //       .set('timezone', options.timezone)
-  //       .toDateTime();
-  // }
-
   if (!(options.byDayOfMonth || options.byDayOfWeek)) {
     switch (options.frequency) {
       case 'YEARLY': {

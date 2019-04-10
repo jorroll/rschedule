@@ -45,12 +45,12 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
     switch (json.timezone) {
       case 'UTC':
         return new MomentDateAdapter(moment.utc(args), { duration: json.duration });
-      case undefined:
+      case null:
         return new MomentDateAdapter(moment(args), { duration: json.duration });
       default:
         throw new InvalidDateAdapterError(
           'The `MomentDateAdapter` only supports datetimes in ' +
-            `UTC or LOCAL time. You attempted to parse an ICAL ` +
+            `'UTC' or local (null) time. You attempted to parse an ICAL ` +
             `string with a "${json.timezone}" timezone. ` +
             'Timezones are supported by the `MomentTZDateAdapter` ' +
             'with the `moment-timezone` package installed.',
@@ -58,7 +58,11 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
     }
   }
 
-  readonly timezone: string | undefined;
+  static fromDateTime(datetime: DateTime) {
+    return MomentDateAdapter.fromJSON(datetime.toJSON());
+  }
+
+  readonly timezone: string | null;
   readonly duration: number | undefined;
 
   protected readonly [MOMENT_DATE_ADAPTER_ID] = true;
@@ -67,18 +71,18 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
     super(undefined);
 
     this.date = date.clone();
-    this.timezone = this.date.isUTC() ? 'UTC' : undefined;
+    this.timezone = this.date.isUTC() ? 'UTC' : null;
     this.duration = options.duration;
 
     this.assertIsValid();
   }
 
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     if (this.timezone === value) return this;
 
     if (value === 'UTC') {
       return new MomentDateAdapter(this.date.clone().utc(), { duration: this.duration });
-    } else if (value === undefined) {
+    } else if (value === null) {
       return new MomentDateAdapter(this.date.clone().local(), { duration: this.duration });
     }
 
@@ -118,9 +122,9 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
   assertIsValid() {
     if (!this.date.isValid()) {
       throw new InvalidDateAdapterError();
-    } else if (![undefined, 'UTC'].includes(this.timezone)) {
+    } else if (![null, 'UTC'].includes(this.timezone)) {
       throw new InvalidDateAdapterError(
-        'MomentDateAdapter only supports local and UTC timezones but ' +
+        `MomentDateAdapter only supports 'UTC' and local (null) timezones but ` +
           `"${this.timezone}" was specified.`,
       );
     } else if (this.duration && this.duration <= 0) {

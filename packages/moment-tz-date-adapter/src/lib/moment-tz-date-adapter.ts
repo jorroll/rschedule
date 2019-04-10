@@ -42,14 +42,18 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
     ];
 
     switch (json.timezone) {
-      case undefined:
+      case null:
         return new MomentTZDateAdapter(moment(args), { duration: json.duration });
       default:
         return new MomentTZDateAdapter(moment.tz(args, json.timezone), { duration: json.duration });
     }
   }
 
-  readonly timezone: string | undefined;
+  static fromDateTime(datetime: DateTime) {
+    return MomentTZDateAdapter.fromJSON(datetime.toJSON());
+  }
+
+  readonly timezone: string | null;
   readonly duration: number | undefined;
 
   protected readonly [MOMENT_TZ_DATE_ADAPTER_ID] = true;
@@ -58,18 +62,18 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
     super(undefined);
 
     this.date = date.clone();
-    this.timezone = this.date.tz();
+    this.timezone = this.date.tz() || null;
     this.duration = options.duration;
 
     this.assertIsValid();
   }
 
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     if (this.timezone === value) return this;
 
     const date = this.date.clone();
 
-    if (value === undefined) {
+    if (value === null) {
       // work around for https://github.com/moment/moment-timezone/issues/738
       date.utc().local();
     } else {

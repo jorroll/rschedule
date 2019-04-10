@@ -31,7 +31,7 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
 
   readonly duration: number | undefined;
 
-  readonly timezone: string | undefined;
+  readonly timezone: string | null;
 
   readonly options: IProvidedRuleOptions<T>;
 
@@ -41,15 +41,14 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
 
   constructor(
     options: IProvidedRuleOptions<T>,
-    args: { data?: D; dateAdapter?: T; timezone?: string } = {},
+    args: { data?: D; dateAdapter?: T; timezone?: string | null } = {},
   ) {
     super(args);
 
     this.options = Object.freeze({ ...options });
     this.processedOptions = normalizeRuleOptions(this.dateAdapter, this.options);
-    this.timezone = args.hasOwnProperty('timezone')
-      ? args.timezone
-      : this.processedOptions.start.timezone;
+    this.timezone =
+      args.timezone !== undefined ? args.timezone : this.processedOptions.start.timezone;
     this.data = args.data!;
     this.hasDuration = !!options.duration;
 
@@ -67,10 +66,9 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
    * `Rule`, so the rule is still processed using whatever timezone is
    * associated with the rule's `start` time. When the rule is run, and
    * a date is found to be valid, that date is only then converted to
-   * the timezone you specify here and returned to you. If you want to actually change
-   * the rule options, you must create a new rule manually.
+   * the timezone you specify here and returned to you.
    */
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     if (value === this.timezone) return this;
 
     return new Rule(this.options, {

@@ -37,8 +37,7 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
   }
 
   static fromJSON(json: IDateAdapter.JSON): LuxonDateAdapter {
-    const zone =
-      json.timezone === undefined ? 'local' : json.timezone === 'UTC' ? 'utc' : json.timezone;
+    const zone = json.timezone === null ? 'local' : json.timezone === 'UTC' ? 'utc' : json.timezone;
 
     return new LuxonDateAdapter(
       LuxonDateTime.fromObject({
@@ -55,7 +54,20 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
     );
   }
 
-  readonly timezone: string | undefined;
+  /**
+   * ### Important!!!
+   *
+   * This method expects an *rSchedule* `DateTime` object which bares
+   * *no relation* to a luxon `DateTime` object. This method is largely
+   * meant for private, internal rSchedule use.
+   *
+   * @param datetime rSchedule DateTime object
+   */
+  static fromDateTime(datetime: DateTime) {
+    return LuxonDateAdapter.fromJSON(datetime.toJSON());
+  }
+
+  readonly timezone: string | null;
   readonly duration: number | undefined;
 
   protected readonly [LUXON_DATE_ADAPTER_ID] = true;
@@ -63,16 +75,16 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
   constructor(readonly date: LuxonDateTime, options: { duration?: number } = {}) {
     super(undefined);
 
-    this.timezone = this.date.zone instanceof LocalZone ? undefined : this.date.zoneName;
+    this.timezone = this.date.zone instanceof LocalZone ? null : this.date.zoneName;
     this.duration = options.duration;
 
     this.assertIsValid();
   }
 
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     if (this.timezone === value) return this;
 
-    if (value === undefined) {
+    if (value === null) {
       return new LuxonDateAdapter(this.date.toLocal(), { duration: this.duration });
     }
 

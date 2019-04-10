@@ -20,7 +20,7 @@
     "test:prod": "yarn lint && yarn test --coverage --no-cache",
     "format": "prettier-tslint fix packages/**/src/**/**/**/**/*.ts tests/**/**/**/**/**/*.ts",
     "clean": "yarn clean:build && yarn clean:modules",
-    "clean:build": "trash packages/*/build node_modules/@rschedule",
+    "clean:build": "trash packages/*/build packages/*/.rpt2_cache node_modules/@rschedule",
     "clean:modules": "trash yarn.lock node_modules packages/*/node_modules"
   },
   "devDependencies": {
@@ -46,6 +46,6 @@
     "ts-node": "^6.0.0",
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.13.0",
-    "typescript": "3.4.1"
+    "typescript": "3.4.3"
   }
 }

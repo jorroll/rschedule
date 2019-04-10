@@ -39,7 +39,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
   constructor(
     args: {
       dateAdapter?: T;
-      timezone?: string;
+      timezone?: string | null;
       data?: D;
       rrules?: Array<ScheduleRuleArgs<T> | IProvidedRuleOptions<T> | Rule<T>>;
       exrules?: Array<ScheduleRuleArgs<T> | IProvidedRuleOptions<T> | Rule<T>>;
@@ -192,12 +192,12 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
     });
   }
 
-  set(prop: 'timezone', value: string | undefined): Schedule<T, D>;
+  set(prop: 'timezone', value: string | null): Schedule<T, D>;
   set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): Schedule<T, D>;
   set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): Schedule<T, D>;
   set(
     prop: 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
-    value: string | undefined | Rule<T, unknown>[] | Dates<T, unknown>,
+    value: string | null | Rule<T, unknown>[] | Dates<T, unknown>,
   ) {
     let timezone = this.timezone;
     let rrules = this.rrules;
@@ -208,7 +208,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
     switch (prop) {
       case 'timezone':
         if (value === this.timezone) return this;
-        timezone = value as string | undefined;
+        timezone = value as string | null;
         break;
       case 'rrules':
         rrules = value as Rule<T, unknown>[];

@@ -55,7 +55,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
     ];
 
     // const zones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
-    const zones = !DateAdapter.hasTimezoneSupport ? [undefined, 'UTC'] : TIMEZONES;
+    const zones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
     zones.forEach(zone => {
       // function to create new dateAdapter instances
@@ -66,7 +66,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       RScheduleConfig.defaultTimezone = zone;
 
       context(zone, timezone => {
-        const rruleJSON1: IRuleJSON = {
+        const nestedRRuleJSON1: IRuleJSON = {
           type: 'Rule',
           options: {
             start: {
@@ -97,7 +97,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           },
         };
 
-        const rruleJSON2: IRuleJSON = {
+        const rruleJSON1 = {
+          timezone,
+          ...nestedRRuleJSON1,
+        };
+
+        const nestedRRuleJSON2: IRuleJSON = {
           type: 'Rule',
           options: {
             start: {
@@ -116,7 +121,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           },
         };
 
-        const rruleJSON3: IRuleJSON = {
+        const rruleJSON2 = {
+          timezone,
+          ...nestedRRuleJSON2,
+        };
+
+        const nestedRRuleJSON3: IRuleJSON = {
           type: 'Rule',
           options: {
             start: {
@@ -135,7 +145,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           },
         };
 
-        const rruleJSON4: IRuleJSON = {
+        const rruleJSON3 = {
+          timezone,
+          ...nestedRRuleJSON3,
+        };
+
+        const nestedRRuleJSON4: IRuleJSON = {
           type: 'Rule',
           options: {
             start: {
@@ -151,6 +166,11 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             },
             frequency: 'DAILY',
           },
+        };
+
+        const rruleJSON4 = {
+          timezone,
+          ...nestedRRuleJSON4,
         };
 
         const nestedRDatesJSON: IDatesJSON = {
@@ -209,7 +229,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
         const nestedScheduleJSON: IScheduleJSON = {
           type: 'Schedule',
-          rrules: [rruleJSON1, rruleJSON2, rruleJSON3, rruleJSON4],
+          rrules: [nestedRRuleJSON1, nestedRRuleJSON2, nestedRRuleJSON3, nestedRRuleJSON4],
           exrules: [],
           rdates: nestedRDatesJSON,
           exdates: nestedEXDatesJSON,

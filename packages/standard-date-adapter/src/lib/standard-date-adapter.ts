@@ -1,4 +1,10 @@
-import { DateAdapter, DateTime, IDateAdapter, InvalidDateAdapterError } from '@rschedule/rschedule';
+import {
+  DateAdapter,
+  DateTime,
+  IDateAdapter,
+  InvalidDateAdapterError,
+  RScheduleConfig,
+} from '@rschedule/rschedule';
 
 const STANDARD_DATE_ADAPTER_ID = Symbol.for('09e206a9-a8b2-4c85-b2c6-6442bb895153');
 
@@ -37,9 +43,9 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
           duration: json.duration,
         });
       }
-      case undefined: {
+      case null: {
         return new StandardDateAdapter(new Date(...args), {
-          timezone: undefined,
+          timezone: null,
           duration: json.duration,
         });
       }
@@ -52,37 +58,42 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
     }
   }
 
+  static fromDateTime(datetime: DateTime) {
+    return StandardDateAdapter.fromJSON(datetime.toJSON());
+  }
+
   readonly generators: any[] = [];
 
   /** Returns the date object this DateAdapter is wrapping */
   readonly date: Date;
-  readonly timezone: string | undefined;
+  readonly timezone: string | null;
   readonly duration: number | undefined;
 
   protected readonly [STANDARD_DATE_ADAPTER_ID] = true;
 
-  constructor(date: Date, options: { timezone?: string | undefined; duration?: number } = {}) {
+  constructor(date: Date, options: { timezone?: string | null; duration?: number } = {}) {
     super(undefined);
 
     this.date = new Date(date);
-    this.timezone = options.timezone;
+    this.timezone =
+      options.timezone !== undefined ? options.timezone : RScheduleConfig.defaultTimezone;
     this.duration = options.duration;
 
     this.assertIsValid();
   }
 
-  set(_: 'timezone', value: string | undefined) {
+  set(_: 'timezone', value: string | null) {
     if (this.timezone === value) return this;
 
     if (value === 'UTC') {
       return new StandardDateAdapter(this.date, { timezone: 'UTC', duration: this.duration });
-    } else if (value === undefined) {
-      return new StandardDateAdapter(this.date, { timezone: undefined, duration: this.duration });
+    } else if (value === null) {
+      return new StandardDateAdapter(this.date, { timezone: null, duration: this.duration });
     }
 
     throw new InvalidDateAdapterError(
-      `StandardDateAdapter only supports "UTC" and undefined ` +
-        `(local) timezones but "${value}" was provided.`,
+      `StandardDateAdapter only supports "UTC" and local ` +
+        `(null) timezones but "${value}" was provided.`,
     );
   }
 
@@ -129,9 +140,9 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   assertIsValid() {
     if (!StandardDateAdapter.isDate(this.date) || isNaN(this.date.valueOf())) {
       throw new InvalidDateAdapterError('StandardDateAdapter has invalid date.');
-    } else if (![undefined, 'UTC'].includes(this.timezone)) {
+    } else if (![null, 'UTC'].includes(this.timezone)) {
       throw new InvalidDateAdapterError(
-        'StandardDateAdapter only supports local and UTC timezones but ' +
+        'StandardDateAdapter only supports local (null) and UTC timezones but ' +
           `"${this.timezone}" was specified.`,
       );
     } else if (this.duration && this.duration <= 0) {
