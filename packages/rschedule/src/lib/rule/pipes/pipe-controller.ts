@@ -9,7 +9,7 @@ import { ByDayOfWeekPipe } from './06-by-day-of-week.pipe';
 import { ByHourOfDayPipe } from './07-by-hour-of-day.pipe';
 import { ByMinuteOfHourPipe } from './08-by-minute-of-hour.pipe';
 import { BySecondOfMinutePipe } from './09-by-second-of-minute.pipe';
-import { ByMillisecondOfSecondPipe } from './10-by-second-of-minute.pipe';
+import { ByMillisecondOfSecondPipe } from './10-by-millisecond-of-second.pipe';
 import { ResultPipe } from './11-result.pipe';
 import { IPipeController, IPipeRule } from './interfaces';
 import { RevFrequencyPipe } from './rev-01-frequency.pipe';
