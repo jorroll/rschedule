@@ -198,7 +198,7 @@ function serializeOptionsToJSON<T extends typeof DateAdapter>(
 }
 
 function serializeDateToJSON<T extends typeof DateAdapter>(
-  input: DateAdapter | T['date'] | IDateAdapter.JSON,
+  input: DateAdapter | T['date'],
   dateAdapterConstructor: T,
 ): IDateAdapter.JSON {
   if (DateAdapter.isInstance(input)) {
@@ -206,7 +206,10 @@ function serializeDateToJSON<T extends typeof DateAdapter>(
   } else if (dateAdapterConstructor.isDate(input)) {
     return new dateAdapterConstructor(input).toJSON();
   } else {
-    return input as IDateAdapter.JSON;
+    throw new SerializeJSONError(
+      'date must be either a `DateAdapter` instance ' +
+        'or an instance of the date class a DateAdapter is wrapping',
+    );
   }
 }
 

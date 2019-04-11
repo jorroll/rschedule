@@ -8,11 +8,6 @@ import { IProvidedRuleOptions, Rule } from '../rule';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500');
 
-export type ScheduleRuleArgs<T extends typeof DateAdapter> = [
-  IProvidedRuleOptions<T>,
-  { data?: any; dateAdapter?: T }
-];
-
 export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurrences<T> {
   /**
    * Similar to `Array.isArray`, `isSchedule` provides a surefire method
@@ -43,8 +38,8 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
       dateAdapter?: T;
       timezone?: string | null;
       data?: D;
-      rrules?: Array<ScheduleRuleArgs<T> | IProvidedRuleOptions<T> | Rule<T>>;
-      exrules?: Array<ScheduleRuleArgs<T> | IProvidedRuleOptions<T> | Rule<T>>;
+      rrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
+      exrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
       rdates?: DateInput<T>[] | Dates<T>;
       exdates?: DateInput<T>[] | Dates<T>;
     } = {},
@@ -57,13 +52,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
 
     if (args.rrules) {
       this.rrules = args.rrules.map(ruleArgs => {
-        if (Array.isArray(ruleArgs)) {
-          return new Rule(ruleArgs[0], {
-            ...ruleArgs[1],
-            dateAdapter: this.dateAdapter as any,
-            timezone: this.timezone,
-          });
-        } else if (Rule.isRule(ruleArgs)) {
+        if (Rule.isRule(ruleArgs)) {
           return ruleArgs.set('timezone', this.timezone);
         } else {
           return new Rule(ruleArgs, {
@@ -76,13 +65,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
 
     if (args.exrules) {
       this.exrules = args.exrules.map(ruleArgs => {
-        if (Array.isArray(ruleArgs)) {
-          return new Rule(ruleArgs[0], {
-            ...ruleArgs[1],
-            dateAdapter: this.dateAdapter as any,
-            timezone: this.timezone,
-          });
-        } else if (Rule.isRule(ruleArgs)) {
+        if (Rule.isRule(ruleArgs)) {
           return ruleArgs.set('timezone', this.timezone);
         } else {
           return new Rule(ruleArgs, {

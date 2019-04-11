@@ -10,20 +10,32 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
   dateAdapterConstructor: T,
   options: IProvidedRuleOptions<T>,
 ): INormalizedRuleOptions {
-  const start = DateAdapter.isInstance(options.start)
-    ? options.start.toDateTime()
-    : dateAdapterConstructor.isDate(options.start)
-    ? new dateAdapterConstructor(options.start).toDateTime()
-    : dateAdapterConstructor.fromJSON(options.start as IDateAdapter.JSON).toDateTime();
+  let start: DateTime;
+
+  if (dateAdapterConstructor.isInstance(options.start)) {
+    start = options.start.toDateTime();
+  } else if (dateAdapterConstructor.isDate(options.start)) {
+    start = new dateAdapterConstructor(options.start).toDateTime();
+  } else {
+    throw new RuleValidationError(
+      '"start" must be either a `DateAdapter` instance or an instance of the ' +
+        'date a DateAdapter is wrapping (e.g. `StandardDateAdapter` wraps a `Date`)',
+    );
+  }
 
   let end: DateTime | undefined;
 
   if (options.end) {
-    end = DateAdapter.isInstance(options.end)
-      ? options.end.toDateTime()
-      : dateAdapterConstructor.isDate(options.end)
-      ? new dateAdapterConstructor(options.end).toDateTime()
-      : dateAdapterConstructor.fromJSON(options.end as IDateAdapter.JSON).toDateTime();
+    if (dateAdapterConstructor.isInstance(options.end)) {
+      end = options.end.toDateTime();
+    } else if (dateAdapterConstructor.isDate(options.end)) {
+      end = new dateAdapterConstructor(options.end).toDateTime();
+    } else {
+      throw new RuleValidationError(
+        '"end" must be either be `undefined`, a `DateAdapter` instance, or an instance of the ' +
+          'date a DateAdapter is wrapping (e.g. `StandardDateAdapter` wraps a `Date`)',
+      );
+    }
   }
 
   if (options.interval !== undefined && options.interval < 1) {
@@ -217,15 +229,9 @@ export interface INormalizedRuleOptions {
 }
 
 export namespace RuleOption {
-  export type Start<T extends typeof DateAdapter> =
-    | T['date']
-    | ConstructorReturnType<T>
-    | IDateAdapter.JSON;
+  export type Start<T extends typeof DateAdapter> = T['date'] | ConstructorReturnType<T>;
 
-  export type End<T extends typeof DateAdapter> =
-    | T['date']
-    | ConstructorReturnType<T>
-    | IDateAdapter.JSON;
+  export type End<T extends typeof DateAdapter> = Start<T>;
 
   export type Duration = number;
 
