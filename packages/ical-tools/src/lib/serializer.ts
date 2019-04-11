@@ -1,11 +1,9 @@
 import {
-  Calendar,
   DateAdapter,
   Dates,
   DateTime,
   IProvidedRuleOptions,
   normalizeDateInput,
-  Rule,
   RuleOption,
   Schedule,
   WEEKDAYS,
