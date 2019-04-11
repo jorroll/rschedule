@@ -18,8 +18,9 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
     return !!(object && typeof object === 'object' && (object as any)[SCHEDULE_ID]);
   }
 
-  readonly rrules: readonly Rule<T>[] = [];
-  readonly exrules: readonly Rule<T>[] = [];
+  // For some reason, error is thrown if typed as `readonly Rule<T>[]`
+  readonly rrules: ReadonlyArray<Rule<T>> = [];
+  readonly exrules: ReadonlyArray<Rule<T>> = [];
   readonly rdates: Dates<T>;
   readonly exdates: Dates<T>;
 
