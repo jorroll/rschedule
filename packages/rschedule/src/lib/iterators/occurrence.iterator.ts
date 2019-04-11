@@ -15,13 +15,13 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
 
   [Symbol.iterator] = () => this._run();
 
-  next(args?: { skipToDate?: DateInput<T> }): IteratorResult<ConstructorReturnType<T>> {
-    return this._run(args).next() as any;
+  next(args?: { skipToDate?: DateInput<T> }) {
+    return this._run(args).next();
   }
 
   toArray() {
     if (this.args.end || this.args.take || !this.isInfinite) {
-      return Array.from(this._run()) as ConstructorReturnType<T>[];
+      return Array.from(this._run());
     }
   }
 
@@ -31,7 +31,7 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
     let date = this.iterator.next(args).value;
 
     while (date) {
-      const yieldArgs = yield this.normalizeDateOutput(date)!;
+      const yieldArgs = yield this.normalizeDateOutput(date);
 
       args = this.normalizeRunArgs(yieldArgs);
 
@@ -55,11 +55,13 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
       : new this.iterable.dateAdapter(date).set('timezone', this.iterable.timezone).toDateTime();
   }
 
+  private normalizeDateOutput(date: DateTime): ConstructorReturnType<T>;
+  private normalizeDateOutput(date?: DateTime): undefined;
   private normalizeDateOutput(date?: DateTime) {
     if (!date) {
       return;
     }
 
-    return this.iterable.dateAdapter.fromJSON(date.toJSON());
+    return this.iterable.dateAdapter.fromJSON(date.toJSON()) as ConstructorReturnType<T>;
   }
 }

@@ -213,6 +213,8 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     };
   }
 
+  protected normalizeDateInput(date: DateInput<T>): DateTime;
+  protected normalizeDateInput(date?: DateInput<T>): undefined;
   protected normalizeDateInput(date?: DateInput<T>) {
     if (!date) {
       return;

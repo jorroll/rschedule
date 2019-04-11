@@ -18,10 +18,10 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
     return !!(object && typeof object === 'object' && (object as any)[SCHEDULE_ID]);
   }
 
-  rrules: Rule<T>[] = [];
-  exrules: Rule<T>[] = [];
-  rdates: Dates<T>;
-  exdates: Dates<T>;
+  readonly rrules: readonly Rule<T>[] = [];
+  readonly exrules: readonly Rule<T>[] = [];
+  readonly rdates: Dates<T>;
+  readonly exdates: Dates<T>;
 
   /** Convenience property for holding arbitrary data */
   data!: D;
@@ -31,15 +31,15 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
 
   protected readonly [SCHEDULE_ID] = true;
 
-  private occurrenceStream: OccurrenceStream<T>;
+  private readonly occurrenceStream: OccurrenceStream<T>;
 
   constructor(
     args: {
       dateAdapter?: T;
       timezone?: string | null;
       data?: D;
-      rrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
-      exrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
+      rrules?: ReadonlyArray<IProvidedRuleOptions<T> | Rule<T>>;
+      exrules?: ReadonlyArray<IProvidedRuleOptions<T> | Rule<T>>;
       rdates?: DateInput<T>[] | Dates<T>;
       exdates?: DateInput<T>[] | Dates<T>;
     } = {},
