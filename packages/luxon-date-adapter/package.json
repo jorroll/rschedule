@@ -30,8 +30,8 @@
     "node": ">=8.9"
   },
   "scripts": {
-    "build": "yarn clean:build && rollup -c",
-    "clean:build": "trash build .rpt2_cache"
+    "build": "yarn clean:build && rollup -c && rm -rf .rpt2_cache",
+    "clean:build": "rm -rf build && rm -rf .rpt2_cache"
   },
   "peerDependencies": {
     "@rschedule/rschedule": "^0.8.4-next.0",
@@ -40,7 +40,6 @@
   "devDependencies": {
     "rollup": "^1.7.4",
     "rollup-plugin-typescript2": "^0.20.1",
-    "trash-cli": "^1.4.0",
     "typescript": "3.4.3"
   }
 }
