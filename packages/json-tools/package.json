@@ -27,7 +27,7 @@
     "clean:build": "rm -rf build && rm -rf .rpt2_cache"
   },
   "peerDependencies": {
-    "@rschedule/rschedule": "^0.8.4-next.0"
+    "@rschedule/rschedule": "^0.8.5-next.0"
   },
   "devDependencies": {
     "rollup": "^1.7.4",
