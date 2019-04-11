@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/json-tools",
-  "version": "0.8.4-next.0",
+  "version": "0.8.5-next.0",
   "description": "Utility functions for parsing/serializing rSchedule objects in JSON format.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
