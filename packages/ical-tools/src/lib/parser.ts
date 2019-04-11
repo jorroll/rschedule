@@ -8,7 +8,6 @@ import {
   WEEKDAYS,
 } from '@rschedule/rschedule';
 import { parse } from 'ical.js';
-import clone from 'lodash.clonedeep';
 
 export class ParseICalError extends Error {}
 
@@ -215,7 +214,7 @@ function processParsedVEvent<T extends typeof DateAdapter>(
     optionalDTSTART?: boolean;
   } = {},
 ) {
-  input = clone(input);
+  input = cloneJSON(input);
 
   const params: IProcessedVEvent<T> = {
     rrules: [],
@@ -223,7 +222,7 @@ function processParsedVEvent<T extends typeof DateAdapter>(
     rdates: [],
     exdates: [],
     data: {
-      iCalendar: clone(input),
+      iCalendar: cloneJSON(input),
     },
   };
 
@@ -271,7 +270,7 @@ function processParsedVEvent<T extends typeof DateAdapter>(
 }
 
 function parseJCalDateTime(input: IParsedICalProperty): IDateAdapter.JSON[] {
-  input = clone(input);
+  input = cloneJSON(input);
 
   input.shift();
   const params = input.shift()!;
@@ -591,7 +590,7 @@ function processParsedVCalendar<T extends typeof DateAdapter>(
     optionalDTSTART?: boolean;
   } = {},
 ): IProcessedVCalendar<T> {
-  input = clone(input);
+  input = cloneJSON(input);
 
   const vCalendar: IProcessedVCalendar<T> = {
     schedules: [],
@@ -612,4 +611,8 @@ function processParsedVCalendar<T extends typeof DateAdapter>(
   });
 
   return vCalendar;
+}
+
+function cloneJSON<T>(json: T): T {
+  return JSON.parse(JSON.stringify(json));
 }

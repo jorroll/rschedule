@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { ConstructorReturnType, numberSortComparer } from '../utilities';
+import { cloneJSON, ConstructorReturnType, numberSortComparer } from '../utilities';
 
 /**
  * This function performs validation checks on the provided rule options and retuns
@@ -200,7 +200,7 @@ export function cloneRuleOptions<
   const obj = { ...options };
   delete obj.start;
   delete obj.end;
-  const clone = JSON.parse(JSON.stringify(obj));
+  const clone = cloneJSON(obj);
   clone.start = options.start;
   clone.end = options.end;
   return clone;
