@@ -4,6 +4,7 @@ import {
   DateAdapter,
   Dates,
   intersection,
+  IProvidedRuleOptions,
   OccurrenceStream,
   OperatorFnOutput,
   Rule,
@@ -52,15 +53,27 @@ export function parseJSON<T extends typeof DateAdapter>(
         case 'Schedule':
           return new Schedule({
             ...json,
-            rrules: json.rrules.map(rule => rule.options),
-            exrules: json.exrules.map(rule => rule.options),
+            rrules: json.rrules.map(
+              rule => parseJSON({ ...rule, timezone: json.timezone }, dateAdapter) as Rule<T>,
+            ),
+            exrules: json.exrules.map(
+              rule => parseJSON({ ...rule, timezone: json.timezone }, dateAdapter) as Rule<T>,
+            ),
             rdates: json.rdates.dates.map(date => dateAdapter.fromJSON(date)),
             exdates: json.exdates.dates.map(date => dateAdapter.fromJSON(date)),
             dateAdapter,
           });
         case 'Rule':
-          return new Rule(json.options, {
+          const ruleOptions: IProvidedRuleOptions<T> = {
+            ...json.options,
+            start: dateAdapter.fromJSON(json.options.start),
+          };
+
+          if (json.options.end) ruleOptions.end = dateAdapter.fromJSON(json.options.end);
+
+          return new Rule(ruleOptions, {
             dateAdapter,
+            timezone: json.timezone,
           });
         case 'Dates':
           return new Dates({

@@ -245,28 +245,42 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             const rrule = parseJSON(rruleJSON1, DateAdapter) as Rule<typeof DateAdapter>;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
-            expect(rrule.options).toEqual(rruleJSON1.options);
+
+            expect({
+              ...rrule.options,
+              start: (rrule.options.start as any).toJSON(),
+              end: (rrule.options.end as any).toJSON(),
+            }).toEqual(rruleJSON1.options);
           });
 
           test('rruleJSON2', () => {
             const rrule = parseJSON(rruleJSON2, DateAdapter) as Rule<typeof DateAdapter>;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
-            expect(rrule.options).toEqual(rruleJSON2.options);
+            expect({
+              ...rrule.options,
+              start: (rrule.options.start as any).toJSON(),
+            }).toEqual(rruleJSON2.options);
           });
 
           test('rruleJSON3', () => {
             const rrule = parseJSON(rruleJSON3, DateAdapter) as Rule<typeof DateAdapter>;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
-            expect(rrule.options).toEqual(rruleJSON3.options);
+            expect({
+              ...rrule.options,
+              start: (rrule.options.start as any).toJSON(),
+            }).toEqual(rruleJSON3.options);
           });
 
           test('rruleJSON4', () => {
             const rrule = parseJSON(rruleJSON4, DateAdapter) as Rule<typeof DateAdapter>;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
-            expect(rrule.options).toEqual(rruleJSON4.options);
+            expect({
+              ...rrule.options,
+              start: (rrule.options.start as any).toJSON(),
+            }).toEqual(rruleJSON4.options);
           });
 
           test('rdatesJSON', () => {
@@ -292,7 +306,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           test('rruleJSON1', () => {
             const rrule = new Rule(
               {
-                start: {
+                start: DateAdapter.fromJSON({
                   timezone,
                   year: 1997,
                   month: 9,
@@ -301,10 +315,10 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   minute: 0,
                   second: 0,
                   millisecond: 0,
-                },
+                }),
                 frequency: 'WEEKLY',
                 byDayOfWeek: ['TU', 'TH'],
-                end: {
+                end: DateAdapter.fromJSON({
                   timezone,
                   year: 1997,
                   month: 10,
@@ -313,7 +327,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   minute: 0,
                   second: 0,
                   millisecond: 0,
-                },
+                }),
                 weekStart: 'SU',
               },
               { dateAdapter: DateAdapter, timezone },
@@ -325,7 +339,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           test('rruleJSON2', () => {
             const rrule = new Rule(
               {
-                start: {
+                start: DateAdapter.fromJSON({
                   timezone,
                   year: 2018,
                   month: 10,
@@ -334,7 +348,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   minute: 0,
                   second: 0,
                   millisecond: 0,
-                },
+                }),
                 frequency: 'MONTHLY',
                 byDayOfWeek: [['TU', 2]],
               },
@@ -347,7 +361,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           test('rruleJSON3', () => {
             const rrule = new Rule(
               {
-                start: {
+                start: DateAdapter.fromJSON({
                   timezone,
                   year: 2018,
                   month: 10,
@@ -356,7 +370,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   minute: 0,
                   second: 0,
                   millisecond: 0,
-                },
+                }),
                 frequency: 'WEEKLY',
                 byDayOfWeek: ['MO'],
               },
@@ -369,7 +383,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           test('rruleJSON4', () => {
             const rrule = new Rule(
               {
-                start: {
+                start: DateAdapter.fromJSON({
                   timezone,
                   year: 2018,
                   month: 10,
@@ -378,7 +392,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   minute: 0,
                   second: 0,
                   millisecond: 0,
-                },
+                }),
                 frequency: 'DAILY',
               },
               { dateAdapter: DateAdapter, timezone },
@@ -440,10 +454,26 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           test('scheduleJSON', () => {
             const schedule = new Schedule({
               rrules: [
-                rruleJSON1.options,
-                rruleJSON2.options,
-                rruleJSON3.options,
-                rruleJSON4.options,
+                {
+                  ...rruleJSON1.options,
+                  start: DateAdapter.fromJSON(rruleJSON1.options.start),
+                  end: rruleJSON1.options.end && DateAdapter.fromJSON(rruleJSON1.options.end),
+                },
+                {
+                  ...rruleJSON2.options,
+                  start: DateAdapter.fromJSON(rruleJSON2.options.start),
+                  end: rruleJSON2.options.end && DateAdapter.fromJSON(rruleJSON2.options.end),
+                },
+                {
+                  ...rruleJSON3.options,
+                  start: DateAdapter.fromJSON(rruleJSON3.options.start),
+                  end: rruleJSON3.options.end && DateAdapter.fromJSON(rruleJSON3.options.end),
+                },
+                {
+                  ...rruleJSON4.options,
+                  start: DateAdapter.fromJSON(rruleJSON4.options.start),
+                  end: rruleJSON4.options.end && DateAdapter.fromJSON(rruleJSON4.options.end),
+                },
               ],
               exrules: [],
               rdates: nestedRDatesJSON.dates.map(json => DateAdapter.fromJSON(json)),

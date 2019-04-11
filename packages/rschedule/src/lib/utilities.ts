@@ -36,3 +36,7 @@ export function freqToGranularity(freq: string) {
       return 'millisecond';
   }
 }
+
+export function cloneJSON<T>(json: T): T {
+  return JSON.parse(JSON.stringify(json));
+}
