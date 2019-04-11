@@ -193,6 +193,19 @@ export function normalizeDateInput<T extends typeof DateAdapter>(
     : dateAdapter.fromJSON(input as IDateAdapter.JSON).toDateTime();
 }
 
+export function cloneRuleOptions<
+  T extends typeof DateAdapter,
+  O extends IProvidedRuleOptions<T> | INormalizedRuleOptions
+>(options: O): O {
+  const obj = { ...options };
+  delete obj.start;
+  delete obj.end;
+  const clone = JSON.parse(JSON.stringify(obj));
+  clone.start = options.start;
+  clone.end = options.end;
+  return clone;
+}
+
 export class RuleValidationError extends Error {}
 
 export interface IProvidedRuleOptions<T extends typeof DateAdapter> {

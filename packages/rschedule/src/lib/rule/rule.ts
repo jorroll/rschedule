@@ -4,10 +4,10 @@ import { DateInput, HasOccurrences, IOccurrencesArgs, IRunArgs } from '../interf
 import { OccurrenceIterator } from '../iterators';
 import { PipeController } from './pipes';
 import {
+  cloneRuleOptions,
   INormalizedRuleOptions,
   IProvidedRuleOptions,
   normalizeRuleOptions,
-  RuleOption,
 } from './rule-options';
 
 const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45');
@@ -45,7 +45,7 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
   ) {
     super(args);
 
-    this.options = Object.freeze({ ...options });
+    this.options = cloneRuleOptions(options);
     this.processedOptions = normalizeRuleOptions(this.dateAdapter, this.options);
     this.timezone =
       args.timezone !== undefined ? args.timezone : this.processedOptions.start.timezone;
