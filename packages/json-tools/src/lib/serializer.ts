@@ -153,7 +153,7 @@ function _serializeToJSON<T extends typeof DateAdapter>(
     } else if (OccurrenceStream.isOccurrenceStream(input)) {
       json = {
         type: 'OccurrenceStream',
-        operators: input._operators.map(operator => serializeOperatorToJSON(operator)),
+        operators: input.operators.map(operator => serializeOperatorToJSON(operator)),
       };
     } else if (Calendar.isCalendar(input)) {
       json = {

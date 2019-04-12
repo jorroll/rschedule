@@ -63,8 +63,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
   readonly hasDuration: boolean;
   readonly timezone!: string | null;
 
-  /** @private do not use */
-  readonly _operators: ReadonlyArray<Operator<T>> = [];
+  readonly operators: ReadonlyArray<Operator<T>> = [];
 
   get _run() {
     return this.lastOperator ? this.lastOperator._run.bind(this.lastOperator) : this.emptyIterator;
@@ -84,16 +83,16 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     }
 
     if (args.operators[0] instanceof Operator) {
-      this._operators = args.operators as Operator<T>[];
+      this.operators = args.operators as Operator<T>[];
     } else {
       const operatorFns = args.operators as OperatorFnOutput<T>[];
 
       if (operatorFns.length === 1) {
-        this._operators = [
+        this.operators = [
           operatorFns[0]({ dateAdapter: this.dateAdapter, timezone: this.timezone }),
         ];
       } else if (operatorFns.length > 1) {
-        this._operators = operatorFns.reduce(
+        this.operators = operatorFns.reduce(
           (prev, curr) => {
             const base = prev[prev.length - 1];
 
@@ -106,14 +105,14 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
       }
     }
 
-    this.lastOperator = this._operators[this._operators.length - 1];
+    this.lastOperator = this.operators[this.operators.length - 1];
     this.isInfinite = (this.lastOperator && this.lastOperator.isInfinite) || false;
     this.hasDuration = (this.lastOperator && this.lastOperator.hasDuration) || false;
   }
 
   set(_: 'timezone', value: string | null): OccurrenceStream<T> {
     return new OccurrenceStream({
-      operators: this._operators.map(operator => operator.set('timezone', value)),
+      operators: this.operators.map(operator => operator.set('timezone', value)),
       dateAdapter: this.dateAdapter,
       timezone: value,
     });
