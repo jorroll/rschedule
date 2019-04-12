@@ -35,7 +35,7 @@
     "clean:build": "rm -rf build && rm -rf .rpt2_cache"
   },
   "peerDependencies": {
-    "@rschedule/rschedule": "^0.8.6-next.0",
+    "@rschedule/rschedule": "^0.8.7-next.0",
     "moment": "^2.0.0",
     "moment-timezone": "^0.5.21"
   },
