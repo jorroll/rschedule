@@ -1,14 +1,8 @@
 import { DateAdapter } from '../date-adapter';
-import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, IOccurrenceGenerator, OccurrenceGenerator } from '../interfaces';
-import {
-  CollectionIterator,
-  ICollectionsArgs,
-  ICollectionsRunArgs,
-  OccurrenceIterator,
-} from '../iterators';
-import { add, OccurrenceStream, OperatorFnOutput } from '../operators';
-import { getDifferenceBetweenWeekdays } from '../rule/pipes/utilities';
+import { DateTime } from '../date-time';
+import { IOccurrenceGenerator, OccurrenceGenerator } from '../interfaces';
+import { ICollectionsRunArgs } from '../iterators';
+import { add, OccurrenceStream, pipeFn } from '../operators';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246');
 
@@ -26,6 +20,8 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
   /** Convenience property for holding arbitrary data */
   data!: D;
+
+  pipe = pipeFn(this);
 
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
@@ -51,19 +47,6 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
     this.isInfinite = this.schedules.some(schedule => schedule.isInfinite);
     this.hasDuration = this.schedules.every(schedule => schedule.hasDuration);
-  }
-
-  pipe(...operatorFns: OperatorFnOutput<T>[]) {
-    return new Calendar({
-      data: this.data,
-      dateAdapter: this.dateAdapter,
-      timezone: this.timezone,
-      schedules: new OccurrenceStream({
-        operators: [add<T>(this), ...operatorFns],
-        dateAdapter: this.dateAdapter,
-        timezone: this.timezone,
-      }),
-    });
   }
 
   set(_: 'timezone', value: string | null) {

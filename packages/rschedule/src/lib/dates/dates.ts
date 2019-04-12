@@ -1,7 +1,7 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, dateTimeSortComparer, IDateAdapter } from '../date-time';
 import { DateInput, IRunArgs, OccurrenceGenerator } from '../interfaces';
-import { OccurrenceIterator } from '../iterators';
+import { pipeFn } from '../operators';
 import { ArgumentError, ConstructorReturnType } from '../utilities';
 
 const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac');
@@ -46,6 +46,8 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends Occurrence
   readonly hasDuration: boolean;
   readonly timezone!: string | null; // set by `OccurrenceGenerator`
 
+  pipe = pipeFn(this);
+
   data?: D;
 
   protected readonly [DATES_ID] = true;
@@ -55,7 +57,7 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends Occurrence
 
   constructor(args: {
     timezone?: string | null;
-    dates?: DateInput<T>[];
+    dates?: ReadonlyArray<DateInput<T>>;
     data?: D;
     dateAdapter?: T;
   }) {

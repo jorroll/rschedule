@@ -1,9 +1,8 @@
 import { DateAdapter } from '../date-adapter';
-import { DateTime, IDateAdapter } from '../date-time';
+import { DateTime } from '../date-time';
 import { Dates } from '../dates';
 import { DateInput, IRunArgs, OccurrenceGenerator } from '../interfaces';
-import { OccurrenceIterator } from '../iterators';
-import { add, OccurrenceStream, subtract, unique } from '../operators';
+import { add, OccurrenceStream, pipeFn, subtract, unique } from '../operators';
 import { IProvidedRuleOptions, Rule } from '../rule';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500');
@@ -24,6 +23,8 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
   readonly rdates: Dates<T>;
   readonly exdates: Dates<T>;
 
+  pipe = pipeFn(this);
+
   /** Convenience property for holding arbitrary data */
   data!: D;
 
@@ -41,8 +42,8 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
       data?: D;
       rrules?: ReadonlyArray<IProvidedRuleOptions<T> | Rule<T>>;
       exrules?: ReadonlyArray<IProvidedRuleOptions<T> | Rule<T>>;
-      rdates?: DateInput<T>[] | Dates<T>;
-      exdates?: DateInput<T>[] | Dates<T>;
+      rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
+      exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
     } = {},
   ) {
     super(args);
@@ -56,7 +57,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
         if (Rule.isRule(ruleArgs)) {
           return ruleArgs.set('timezone', this.timezone);
         } else {
-          return new Rule(ruleArgs, {
+          return new Rule(ruleArgs as IProvidedRuleOptions<T>, {
             dateAdapter: this.dateAdapter as any,
             timezone: this.timezone,
           });
@@ -69,7 +70,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
         if (Rule.isRule(ruleArgs)) {
           return ruleArgs.set('timezone', this.timezone);
         } else {
-          return new Rule(ruleArgs, {
+          return new Rule(ruleArgs as IProvidedRuleOptions<T>, {
             dateAdapter: this.dateAdapter as any,
             timezone: this.timezone,
           });
@@ -81,7 +82,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
       this.rdates = Dates.isDates(args.rdates)
         ? args.rdates.set('timezone', this.timezone)
         : new Dates({
-            dates: args.rdates,
+            dates: args.rdates as ReadonlyArray<DateInput<T>>,
             dateAdapter: this.dateAdapter as any,
             timezone: this.timezone,
           });
@@ -93,7 +94,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
       this.exdates = Dates.isDates(args.exdates)
         ? args.exdates.set('timezone', this.timezone)
         : new Dates({
-            dates: args.exdates,
+            dates: args.exdates as ReadonlyArray<DateInput<T>>,
             dateAdapter: this.dateAdapter as any,
             timezone: this.timezone,
           });

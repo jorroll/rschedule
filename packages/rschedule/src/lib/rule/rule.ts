@@ -1,6 +1,7 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
+import { pipeFn } from '../operators';
 import { PipeController } from './pipes';
 import {
   cloneRuleOptions,
@@ -20,6 +21,8 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends OccurrenceG
   static isRule(object: unknown): object is Rule<any> {
     return !!(object && typeof object === 'object' && (object as any)[RULE_ID]);
   }
+
+  pipe = pipeFn(this);
 
   /** Convenience property for holding arbitrary data */
   data: D;
