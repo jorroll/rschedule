@@ -60,11 +60,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
   }
 
   constructor(args: { dateAdapter?: T; timezone?: string | null }) {
-    if (args.dateAdapter) {
-      this.dateAdapter = args.dateAdapter as any;
-    } else {
-      this.dateAdapter = RScheduleConfig.defaultDateAdapter as any;
-    }
+    this.dateAdapter = args.dateAdapter || (RScheduleConfig.defaultDateAdapter as any);
 
     if (!this.dateAdapter) {
       throw new ArgumentError(
