@@ -2,6 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
 import { ArgumentError } from '../utilities';
+import { add } from './add.operator';
 import { Operator, OperatorFnOutput } from './interface';
 
 const OCCURRENCE_STREAM_ID = Symbol.for('dfe5463b-8eb2-46c4-a769-c641c241221c');
@@ -56,6 +57,8 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     return !!(object && typeof object === 'object' && (object as any)[OCCURRENCE_STREAM_ID]);
   }
 
+  pipe = pipeFn(this);
+
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
   readonly timezone!: string | null;
@@ -108,7 +111,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     this.hasDuration = (this.lastOperator && this.lastOperator.hasDuration) || false;
   }
 
-  set(_: 'timezone', value: string | null) {
+  set(_: 'timezone', value: string | null): OccurrenceStream<T> {
     return new OccurrenceStream({
       operators: this._operators.map(operator => operator.set('timezone', value)),
       dateAdapter: this.dateAdapter,
@@ -119,4 +122,13 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
   private *emptyIterator(args?: IRunArgs | undefined): IterableIterator<DateTime> {
     return;
   }
+}
+
+export function pipeFn<T extends typeof DateAdapter>(self: OccurrenceGenerator<T>) {
+  return (...operatorFns: OperatorFnOutput<T>[]) =>
+    new OccurrenceStream({
+      operators: [add<T>(self), ...operatorFns],
+      dateAdapter: self.dateAdapter,
+      timezone: self.timezone,
+    });
 }
