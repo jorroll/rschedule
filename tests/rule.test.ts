@@ -126,13 +126,13 @@ function testRecurring(
               it('no options', () =>
                 expect(rule.occursOn({ weekday: date.get('weekday') })).toBeTruthy());
 
-              it('excludeDates', () =>
-                expect(
-                  rule.occursOn({
-                    weekday: date.get('weekday'),
-                    excludeDates: expectedDates,
-                  }),
-                ).toBeFalsy());
+              // it.skip('excludeDates', () =>
+              //   expect(
+              //     rule.occursOn({
+              //       weekday: date.get('weekday'),
+              //       excludeDates: expectedDates,
+              //     }),
+              //   ).toBeFalsy());
             });
           });
         });

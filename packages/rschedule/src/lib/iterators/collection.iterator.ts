@@ -1,8 +1,9 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, IHasOccurrences, IOccurrencesArgs, IRunArgs, IRunnable } from '../interfaces';
+import { DateInput, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
 import { RuleOption } from '../rule';
 import { ArgumentError, ConstructorReturnType, freqToGranularity } from '../utilities';
+import { IOccurrencesArgs } from './occurrence.iterator';
 
 export class CollectionIterator<T extends typeof DateAdapter> {
   readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY';
@@ -66,12 +67,6 @@ export class CollectionIterator<T extends typeof DateAdapter> {
 
       return collections;
     }
-  }
-
-  private normalizeRunArgs(args?: { skipToDate?: DateInput<T> }) {
-    return {
-      skipToDate: this.normalizeDateInput(args && args.skipToDate),
-    };
   }
 
   private normalizeDateInput(date?: DateInput<T>) {

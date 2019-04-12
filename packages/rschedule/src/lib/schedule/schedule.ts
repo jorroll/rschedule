@@ -1,7 +1,7 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { Dates } from '../dates';
-import { DateInput, HasOccurrences, IOccurrencesArgs, IRunArgs } from '../interfaces';
+import { DateInput, HasOccurrences, IRunArgs } from '../interfaces';
 import { OccurrenceIterator } from '../iterators';
 import { add, OccurrenceStream, subtract, unique } from '../operators';
 import { IProvidedRuleOptions, Rule } from '../rule';
@@ -231,74 +231,6 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurren
       rdates,
       exdates,
     });
-  }
-
-  /**
-   * Checks to see if an occurrence exists which equals the given date.
-   */
-  occursOn(rawArgs: { date: DateInput<T> }): boolean;
-  /**
-   * **DOES NOT CURRENTLY TAKE INTO ACCOUNT EXRULES.**
-   *
-   * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
-   *
-   * Optional arguments:
-   *
-   * - `after` and `before` arguments can be provided which limit the
-   *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
-   *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
-   *       than inclusive.
-   */
-  // tslint:disable-next-line: unified-signatures
-  occursOn(rawArgs: {
-    weekday: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
-    excludeEnds?: boolean;
-  }): boolean;
-
-  occursOn(rawArgs: {
-    date?: DateInput<T>;
-    weekday?: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
-    excludeEnds?: boolean;
-  }): boolean {
-    const args = this.processOccursOnArgs(rawArgs);
-
-    if (args.weekday) {
-      const before =
-        args.before && (args.excludeEnds ? args.before.subtract(1, 'day') : args.before);
-      const after = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
-
-      // Filter to get relevant exdates
-      const excludeDates = this.exdates.adapters.filter(adapter => {
-        const date = adapter.toDateTime();
-
-        return (
-          date.get('weekday') === args.weekday &&
-          (!after || date.isAfterOrEqual(after)) &&
-          (!before || date.isBeforeOrEqual(before))
-        );
-      });
-
-      const rules: Array<Rule<T> | Dates<T>> = this.rrules.slice();
-
-      rules.push(this.rdates);
-
-      return rules.some(rule =>
-        rule.occursOn({
-          ...(args as { weekday: IDateAdapter.Weekday }),
-          excludeDates,
-        }),
-      );
-    }
-
-    for (const day of this._run({ start: args.date, end: args.date })) {
-      return !!day;
-    }
-
-    return false;
   }
 
   /**  @private use occurrences() instead */
