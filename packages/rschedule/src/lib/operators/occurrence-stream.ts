@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
-import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, IRunArgs, OccurrenceGenerator } from '../interfaces';
+import { DateTime } from '../date-time';
+import { IRunArgs, OccurrenceGenerator } from '../interfaces';
 import { ArgumentError } from '../utilities';
 import { Operator, OperatorFnOutput } from './interface';
 
@@ -61,7 +61,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
   readonly timezone!: string | null;
 
   /** @private do not use */
-  readonly _operators: Operator<T>[] = [];
+  readonly _operators: ReadonlyArray<Operator<T>> = [];
 
   get _run() {
     return this.lastOperator ? this.lastOperator._run.bind(this.lastOperator) : this.emptyIterator;
@@ -116,140 +116,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     });
   }
 
-  /**
-   * Checks to see if an occurrence exists which equals the given date.
-   */
-  occursOn(rawArgs: { date: DateInput<T> }): boolean;
-  /**
-   * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
-   * At the moment, the `before` argument is required.
-   *
-   * Arguments:
-   *
-   * - `after` and `before` arguments can be provided which limit the
-   *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
-   *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
-   *       than inclusive.
-   */
-  // tslint:disable-next-line: unified-signatures
-  occursOn(rawArgs: {
-    weekday: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before: DateInput<T>;
-    excludeEnds?: boolean;
-  }): boolean;
-
-  occursOn(rawArgs: {
-    date?: DateInput<T>;
-    weekday?: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
-    excludeEnds?: boolean;
-  }): boolean {
-    const args = this.processOccursOnArgs(rawArgs);
-
-    if (args.weekday) {
-      return this.occursOnWeekday(args);
-    }
-
-    for (const day of this._run({ start: args.date, end: args.date })) {
-      return !!day;
-    }
-
-    return false;
-  }
-
   private *emptyIterator(args?: IRunArgs | undefined): IterableIterator<DateTime> {
     return;
-  }
-
-  private occursOnWeekday(args: {
-    weekday?: IDateAdapter.Weekday;
-    after?: DateTime;
-    before?: DateTime;
-    excludeEnds?: boolean;
-    excludeDates?: DateTime[];
-  }) {
-    const weekday = args.weekday!;
-
-    if (!args.before) {
-      throw new ArgumentError(
-        'At the moment, ' +
-          'OccurrenceStream#occursOn() with a `weekday` argument ' +
-          'requires that the `before` argument be present.',
-      );
-    }
-
-    let end: DateTime | null = this.lastDate && DateTime.fromJSON(this.lastDate.toJSON());
-    let start: DateTime | null = this.firstDate && DateTime.fromJSON(this.firstDate.toJSON());
-
-    if (!start) return false;
-
-    const before = args.before && (args.excludeEnds ? args.before.subtract(1, 'day') : args.before);
-
-    const after = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
-
-    if (end && before) {
-      end = before.isBefore(end) ? before : end;
-    } else if (!end && before) {
-      end = before;
-    }
-
-    if (after) {
-      start = after.isAfter(start) ? after : start;
-    }
-
-    if (end && (end.isBefore(start) || end.isBefore(start))) {
-      return false;
-    }
-
-    if (!end) {
-      end = start.add(11, 'year');
-    }
-
-    // This function allows for an "intelligent" brute forcing of occurrences.
-    // For rules with a frequency less than a day, it only checks one
-    // iteration on any given day.
-    const bruteForceCheck = () => {
-      let date = getNextDateNotInExdates(args.excludeDates, after, end!);
-
-      if (date && date.get('weekday') === weekday) {
-        return true;
-      }
-
-      while (date) {
-        date = date.granularity('day').add(24, 'hour');
-
-        date = getNextDateNotInExdates(args.excludeDates, date, end!);
-
-        if (date && date.get('weekday') === weekday) {
-          return true;
-        }
-      }
-
-      return false;
-    };
-
-    const getNextDateNotInExdates = (
-      exdates?: Array<DateTime>,
-      start?: DateTime,
-      end?: DateTime,
-    ) => {
-      let date = this._run({ start, end }).next().value;
-
-      if (!exdates || exdates.length === 0) {
-        return date;
-      }
-
-      while (date && exdates.some(exdate => exdate.isEqual(date))) {
-        date = date.granularity('day').add(24, 'hour');
-
-        date = this._run({ start: date, end }).next().value;
-      }
-
-      return date;
-    };
-
-    return bruteForceCheck();
   }
 }
