@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, HasOccurrences, IHasOccurrences } from '../interfaces';
+import { DateInput, IOccurrenceGenerator, OccurrenceGenerator } from '../interfaces';
 import {
   CollectionIterator,
   ICollectionsArgs,
@@ -12,7 +12,7 @@ import { getDifferenceBetweenWeekdays } from '../rule/pipes/utilities';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246');
 
-export class Calendar<T extends typeof DateAdapter, D = any> extends HasOccurrences<T> {
+export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
   /**
    * Similar to `Array.isArray()`, `isCalendar()` provides a surefire method
    * of determining if an object is a `Calendar` by checking against the
@@ -22,7 +22,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends HasOccurren
     return !!(object && typeof object === 'object' && (object as any)[CALENDAR_ID]);
   }
 
-  readonly schedules: ReadonlyArray<IHasOccurrences<T>> = [];
+  readonly schedules: ReadonlyArray<IOccurrenceGenerator<T>> = [];
 
   /** Convenience property for holding arbitrary data */
   data!: D;
@@ -34,7 +34,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends HasOccurren
 
   constructor(
     args: {
-      schedules?: ReadonlyArray<IHasOccurrences<T>> | IHasOccurrences<T>;
+      schedules?: ReadonlyArray<IOccurrenceGenerator<T>> | IOccurrenceGenerator<T>;
       data?: D;
       dateAdapter?: T;
       timezone?: string | null;

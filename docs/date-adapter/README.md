@@ -88,7 +88,7 @@ Each of these classes extends from the base class without reimplementing the con
 - [LuxonDateAdapter](./luxon-date-adapter)
   - For use with luxon `DateTime` objects. Has full timezone support.
 
-Each DateAdapter has a `generators` property which contains an array if the rSchedule objects which are responsible for creating that particular DateAdapter. For example, when iterating through a `Schedule` containing two `RRule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `RRule` object which generated the date, the second element will be the `Schedule` object which generated the date. At this point, I'll call out the fact that each `IHasOccurrences` object has a `data` property for holding arbitrary data. This allows you to attach data to each rule / schedule, and access that data from the yielded dates.
+Each DateAdapter has a `generators` property which contains an array if the rSchedule objects which are responsible for creating that particular DateAdapter. For example, when iterating through a `Schedule` containing two `RRule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `RRule` object which generated the date, the second element will be the `Schedule` object which generated the date. At this point, I'll call out the fact that each `IOccurrenceGenerator` object has a `data` property for holding arbitrary data. This allows you to attach data to each rule / schedule, and access that data from the yielded dates.
 
 Example:
 

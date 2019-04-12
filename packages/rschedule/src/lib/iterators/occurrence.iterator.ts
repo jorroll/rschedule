@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { DateInput, IHasOccurrences } from '../interfaces';
+import { DateInput, IOccurrenceGenerator } from '../interfaces';
 import { IRunArgs } from '../interfaces/runnable';
 import { ConstructorReturnType } from '../utilities';
 
@@ -8,7 +8,7 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
   private readonly iterator: IterableIterator<DateTime>;
   private readonly isInfinite: boolean;
 
-  constructor(private iterable: IHasOccurrences<T>, private args: IRunArgs) {
+  constructor(private iterable: IOccurrenceGenerator<T>, private args: IRunArgs) {
     this.iterator = iterable._run(args);
     this.isInfinite = iterable.isInfinite;
   }

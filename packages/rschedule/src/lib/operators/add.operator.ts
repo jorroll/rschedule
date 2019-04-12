@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { IHasOccurrences, IRunArgs } from '../interfaces';
+import { IOccurrenceGenerator, IRunArgs } from '../interfaces';
 import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
 import {
   IterableWrapper,
@@ -20,7 +20,7 @@ const ADD_OPERATOR_ID = Symbol.for('2898c208-e9a8-41a2-8627-2bc993ab376f');
  * @param streams a spread of scheduling objects
  */
 export function add<T extends typeof DateAdapter>(
-  ...streams: IHasOccurrences<T>[]
+  ...streams: IOccurrenceGenerator<T>[]
 ): OperatorFnOutput<T> {
   return (options: IOperatorConfig<T>) => new AddOperator(streams, options);
 }

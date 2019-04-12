@@ -1,4 +1,4 @@
-_implements [IHasOccurrences](../#shared-interfaces)_
+_implements [IOccurrenceGenerator](../#shared-interfaces)_
 
 Schedule objects allow iterating a occurrence schedule made up of RRULE, EXRULE, RDATE, and EXDATE components. Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event of arbitrary complexity, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
 

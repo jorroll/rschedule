@@ -7,7 +7,7 @@ import { getDifferenceBetweenWeekdays } from '../rule/pipes';
 import { ArgumentError, ConstructorReturnType } from '../utilities';
 import { IRunArgs, IRunnable } from './runnable';
 
-export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable<T> {
+export interface IOccurrenceGenerator<T extends typeof DateAdapter> extends IRunnable<T> {
   readonly dateAdapter: T;
   readonly timezone: string | null;
 
@@ -28,11 +28,11 @@ export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable
   occursAfter(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
   occursBefore(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
 
-  set(prop: 'timezone', value: string | null): IHasOccurrences<T>;
+  set(prop: 'timezone', value: string | null): IOccurrenceGenerator<T>;
 }
 
-export abstract class HasOccurrences<T extends typeof DateAdapter>
-  implements IRunnable<T>, IHasOccurrences<T> {
+export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
+  implements IRunnable<T>, IOccurrenceGenerator<T> {
   abstract readonly isInfinite: boolean;
   abstract readonly hasDuration: boolean;
 
@@ -204,7 +204,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     return false;
   }
 
-  abstract set(prop: 'timezone', value: string | null): HasOccurrences<T>;
+  abstract set(prop: 'timezone', value: string | null): OccurrenceGenerator<T>;
 
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 

@@ -1,6 +1,6 @@
-_implements [IHasOccurrences](../#shared-interfaces)_
+_implements [IOccurrenceGenerator](../#shared-interfaces)_
 
-The `Dates` class (and `RDates` / `EXDates` subclasses) provides a `IHasOccurrences` wrapper for an array of dates.
+The `Dates` class (and `RDates` / `EXDates` subclasses) provides a `IOccurrenceGenerator` wrapper for an array of dates.
 
 Example usage:
 

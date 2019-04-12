@@ -4,7 +4,7 @@ import { Moment as MomentST } from 'moment';
 const momentST = require('moment');
 import { Moment as MomentTZ } from 'moment-timezone';
 const momentTZ = require('moment-timezone');
-import { DateAdapter, DateTime, HasOccurrences, IOccurrencesArgs } from '@rschedule/rschedule';
+import { DateAdapter, DateTime, IOccurrencesArgs, OccurrenceGenerator } from '@rschedule/rschedule';
 import { DateTime as LuxonDateTime } from 'luxon';
 
 // This function allows me to use the test's name as a
@@ -328,7 +328,7 @@ export function timezoneIsoStringFn(
 }
 
 // function to get the given time array as an ISO string
-export function occurrencesToIsoStrings(...args: HasOccurrences<any>[]): string[] {
+export function occurrencesToIsoStrings(...args: OccurrenceGenerator<any>[]): string[] {
   const strings: string[] = [];
 
   args.forEach(arg =>
@@ -360,7 +360,7 @@ export function dateTimeFn(dateAdapter: (...args: number[]) => DateAdapter) {
 }
 
 export function toISOStrings<T extends typeof DateAdapter>(
-  schedule: HasOccurrences<T> | DateAdapter[],
+  schedule: OccurrenceGenerator<T> | DateAdapter[],
   args: IOccurrencesArgs<T> = {},
 ) {
   if (Array.isArray(schedule)) {

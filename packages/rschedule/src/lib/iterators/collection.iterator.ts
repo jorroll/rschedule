@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { DateInput, IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
 import { RuleOption } from '../rule';
 import { ArgumentError, ConstructorReturnType, freqToGranularity } from '../utilities';
 import { IOccurrencesArgs } from './occurrence.iterator';
@@ -12,7 +12,7 @@ export class CollectionIterator<T extends typeof DateAdapter> {
 
   private iterator: IterableIterator<Collection<T>>;
 
-  constructor(private iterable: IHasOccurrences<T>, private args: ICollectionsRunArgs) {
+  constructor(private iterable: IOccurrenceGenerator<T>, private args: ICollectionsRunArgs) {
     if (args.granularity) {
       this.granularity = args.granularity;
     }

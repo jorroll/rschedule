@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { IHasOccurrences, IRunArgs } from '../interfaces';
+import { IOccurrenceGenerator, IRunArgs } from '../interfaces';
 import { RScheduleConfig } from '../rschedule-config';
 import { ArgumentError } from '../utilities';
 import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
@@ -42,7 +42,7 @@ const INTERSECTION_OPERATOR_ID = Symbol.for('a978cd71-e379-4a0e-b4da-cbc14ce473d
 
 export function intersection<T extends typeof DateAdapter>(args: {
   maxFailedIterations?: number;
-  streams: IHasOccurrences<T>[];
+  streams: IOccurrenceGenerator<T>[];
 }): OperatorFnOutput<T> {
   return (options: IOperatorConfig<T>) => new IntersectionOperator(args, options);
 }
@@ -59,7 +59,7 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
   constructor(
     args: {
       maxFailedIterations?: number;
-      streams: IHasOccurrences<T>[];
+      streams: IOccurrenceGenerator<T>[];
     },
     config: IOperatorConfig<T>,
   ) {

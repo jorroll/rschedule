@@ -7,11 +7,11 @@ import {
   DateAdapter,
   DateAdapter as DateAdapterConstructor,
   Dates,
-  HasOccurrences,
   ICollectionsArgs,
   IDateAdapter,
   IOccurrencesArgs,
   IProvidedRuleOptions,
+  OccurrenceGenerator,
   RScheduleConfig,
   Schedule,
 } from '@rschedule/rschedule';

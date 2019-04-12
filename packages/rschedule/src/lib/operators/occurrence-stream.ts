@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, HasOccurrences, IRunArgs } from '../interfaces';
+import { DateInput, IRunArgs, OccurrenceGenerator } from '../interfaces';
 import { ArgumentError } from '../utilities';
 import { Operator, OperatorFnOutput } from './interface';
 
@@ -46,7 +46,7 @@ const OCCURRENCE_STREAM_ID = Symbol.for('dfe5463b-8eb2-46c4-a769-c641c241221c');
  * @param operators a spread of operator functions
  */
 
-export class OccurrenceStream<T extends typeof DateAdapter> extends HasOccurrences<T> {
+export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGenerator<T> {
   /**
    * Similar to `Array.isArray()`, `isOccurrenceStream()` provides a surefire method
    * of determining if an object is an `OccurrenceStream` by checking against the
