@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { DateInput, IHasOccurrences, IRunArgs, IRunnable } from '../interfaces';
+import { DateInput, IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
 import { RScheduleConfig } from '../rschedule-config';
 import { ConstructorReturnType } from '../utilities';
 
@@ -29,7 +29,7 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
     return this.config.dateAdapter.fromJSON(end.toJSON()) as ConstructorReturnType<T>;
   }
 
-  constructor(readonly _streams: IHasOccurrences<T>[], protected config: IOperatorConfig<T>) {
+  constructor(readonly _streams: IOccurrenceGenerator<T>[], protected config: IOperatorConfig<T>) {
     this.timezone = config.timezone;
 
     this._streams = _streams.map(stream =>

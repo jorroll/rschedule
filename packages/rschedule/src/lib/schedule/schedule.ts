@@ -1,14 +1,14 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { Dates } from '../dates';
-import { DateInput, HasOccurrences, IRunArgs } from '../interfaces';
+import { DateInput, IRunArgs, OccurrenceGenerator } from '../interfaces';
 import { OccurrenceIterator } from '../iterators';
 import { add, OccurrenceStream, subtract, unique } from '../operators';
 import { IProvidedRuleOptions, Rule } from '../rule';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500');
 
-export class Schedule<T extends typeof DateAdapter, D = any> extends HasOccurrences<T> {
+export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
   /**
    * Similar to `Array.isArray`, `isSchedule` provides a surefire method
    * of determining if an object is a `Schedule` by checking against the

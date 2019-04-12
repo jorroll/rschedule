@@ -1,15 +1,15 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, dateTimeSortComparer, IDateAdapter } from '../date-time';
-import { DateInput, HasOccurrences, IRunArgs } from '../interfaces';
+import { DateInput, IRunArgs, OccurrenceGenerator } from '../interfaces';
 import { OccurrenceIterator } from '../iterators';
 import { ArgumentError, ConstructorReturnType } from '../utilities';
 
 const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac');
 
 /**
- * This base class provides a `HasOccurrences` API wrapper around arrays of dates
+ * This base class provides a `OccurrenceGenerator` API wrapper around arrays of dates
  */
-export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurrences<T> {
+export class Dates<T extends typeof DateAdapter, D = unknown> extends OccurrenceGenerator<T> {
   get length() {
     return this.datetimes.length;
   }
@@ -44,7 +44,7 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
 
   readonly isInfinite = false;
   readonly hasDuration: boolean;
-  readonly timezone!: string | null; // set by `HasOccurrences`
+  readonly timezone!: string | null; // set by `OccurrenceGenerator`
 
   data?: D;
 

@@ -34,16 +34,16 @@ RScheduleConfig.defaultDateAdapter = MomentTZDateAdapter;
 
 ## Shared Interfaces
 
-Schedule, Calendar, Rule, and Dates objects each implement the `IHasOccurrences` interface. Note, in the code below, `DateProp<T>` refers to the date object that a given DateAdapter is wrapping (e.g. the `MomentDateAdapter` wraps a `Moment` date object). `DateAdapter<T>` refers to an instance of a date adapter.
+Schedule, Calendar, Rule, and Dates objects each implement the `IOccurrenceGenerator` interface. Note, in the code below, `DateProp<T>` refers to the date object that a given DateAdapter is wrapping (e.g. the `MomentDateAdapter` wraps a `Moment` date object). `DateAdapter<T>` refers to an instance of a date adapter.
 
 For example, when providing the start date for `occurrences()`, you could pass in either `new MomentTZDateAdapter()` or `moment()`.
 
-### IHasOccurrences
+### IOccurrenceGenerator
 
 See the inline comments for more info. Also note that the `occurrences()` method yields date adapter instances. To get the underlying date object, call `.date` on the date adapter. You can see the [`IDateAdapter` interface](../date-adapter) for all the methods/properties available on date adapters, but `.date` and `.generators` are probably the only two properties you'll care about (if it wasn't for the need to return the list of `generators`, I'd almost certainly just yield the underlying date objects instead of date adapter objects).
 
 ````typescript
-interface IHasOccurrences<T extends DateAdapterConstructor> {
+interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
   /**
    * Returns an `OccurrenceIterator` object which can be used to iterate
    * over the object's occurrences.
@@ -110,7 +110,7 @@ interface IHasOccurrences<T extends DateAdapterConstructor> {
 
   setTimezone(timezone: string | undefined, options?: { keepLocalTime?: boolean }): this;
 
-  clone(): IHasOccurrences<T>;
+  clone(): IOccurrenceGenerator<T>;
 
   // A convenience property for storying arbitrary data
   data: any;

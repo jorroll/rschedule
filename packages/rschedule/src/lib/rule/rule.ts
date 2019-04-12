@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { HasOccurrences, IRunArgs } from '../interfaces';
+import { IRunArgs, OccurrenceGenerator } from '../interfaces';
 import { PipeController } from './pipes';
 import {
   cloneRuleOptions,
@@ -11,7 +11,7 @@ import {
 
 const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45');
 
-export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurrences<T> {
+export class Rule<T extends typeof DateAdapter, D = unknown> extends OccurrenceGenerator<T> {
   /**
    * Similar to `Array.isArray()`, `isRule()` provides a surefire method
    * of determining if an object is a `Rule` by checking against the
