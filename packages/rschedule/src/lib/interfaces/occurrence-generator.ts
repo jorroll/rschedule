@@ -1,23 +1,35 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { CollectionIterator, ICollectionsArgs } from '../iterators';
-import { IOccurrencesArgs, OccurrenceIterator } from '../iterators/occurrence.iterator';
+import {
+  CollectionIterator,
+  ICollectionsArgs,
+  IOccurrencesArgs,
+  OccurrenceIterator,
+} from '../iterators';
 import { RScheduleConfig } from '../rschedule-config';
 import { getDifferenceBetweenWeekdays } from '../rule/pipes';
 import { ArgumentError, ConstructorReturnType } from '../utilities';
 import { IRunArgs, IRunnable } from './runnable';
+
+export type DateInput<T extends typeof DateAdapter> =
+  | T['date']
+  | ConstructorReturnType<T>
+  | DateTime;
 
 export interface IOccurrenceGenerator<T extends typeof DateAdapter> extends IRunnable<T> {
   readonly dateAdapter: T;
   readonly timezone: string | null;
 
   occurrences(args: IOccurrencesArgs<T>): OccurrenceIterator<T>;
+
   collections(args: ICollectionsArgs<T>): CollectionIterator<T>;
+
   occursBetween(
     start: DateInput<T>,
     end: DateInput<T>,
     options: { excludeEnds?: boolean },
   ): boolean;
+
   occursOn(args: { date: DateInput<T> }): boolean;
   occursOn(args: {
     weekday: IDateAdapter.Weekday;
@@ -25,7 +37,9 @@ export interface IOccurrenceGenerator<T extends typeof DateAdapter> extends IRun
     before?: DateInput<T>;
     excludeEnds?: boolean;
   }): boolean;
+
   occursAfter(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
+
   occursBefore(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
 
   set(prop: 'timezone', value: string | null): IOccurrenceGenerator<T>;
@@ -383,8 +397,3 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     return date;
   }
 }
-
-export type DateInput<T extends typeof DateAdapter> =
-  | T['date']
-  | ConstructorReturnType<T>
-  | DateTime;
