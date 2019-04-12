@@ -1,6 +1,6 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, dateTimeSortComparer, IDateAdapter } from '../date-time';
-import { DateInput, HasOccurrences, IOccurrencesArgs, IRunArgs } from '../interfaces';
+import { DateInput, HasOccurrences, IRunArgs } from '../interfaces';
 import { OccurrenceIterator } from '../iterators';
 import { ArgumentError, ConstructorReturnType } from '../utilities';
 
@@ -135,58 +135,6 @@ export class Dates<T extends typeof DateAdapter, D = unknown> extends HasOccurre
       dateAdapter: this.dateAdapter,
       timezone: this.timezone,
     });
-  }
-
-  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
-    return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
-  }
-
-  occursOn(rawArgs: { date: DateInput<T> }): boolean;
-
-  // tslint:disable-next-line: unified-signatures
-  occursOn(rawArgs: {
-    weekday: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
-    excludeEnds?: boolean;
-    excludeDates?: DateInput<T>[];
-  }): boolean;
-
-  occursOn(rawArgs: {
-    date?: DateInput<T>;
-    weekday?: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
-    excludeEnds?: boolean;
-    excludeDates?: DateInput<T>[];
-  }): boolean {
-    const args = this.processOccursOnArgs(rawArgs);
-
-    if (args.weekday) {
-      const before =
-        args.before && (args.excludeEnds ? args.before.subtract(1, 'day') : args.before);
-
-      const after = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
-
-      return this.datetimes.some(date => {
-        return (
-          date.get('weekday') === args.weekday &&
-          (!args.excludeDates || !args.excludeDates.some(exdate => exdate.isEqual(date))) &&
-          (!after || date.isAfterOrEqual(after)) &&
-          (!before || date.isBeforeOrEqual(before))
-        );
-      });
-    }
-
-    if (this.hasDuration) {
-      return this.datetimes.some(date => date.isOccurring(args.date!));
-    } else {
-      for (const day of this._run({ start: args.date, end: args.date })) {
-        return !!day;
-      }
-    }
-
-    return false;
   }
 
   *_run(args: IRunArgs = {}) {

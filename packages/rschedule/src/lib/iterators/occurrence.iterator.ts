@@ -65,3 +65,10 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
     return this.iterable.dateAdapter.fromJSON(date.toJSON()) as ConstructorReturnType<T>;
   }
 }
+
+export interface IOccurrencesArgs<T extends typeof DateAdapter> {
+  start?: DateInput<T>;
+  end?: DateInput<T>;
+  take?: number;
+  reverse?: boolean;
+}

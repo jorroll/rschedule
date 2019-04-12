@@ -1,7 +1,6 @@
 import { DateAdapter } from '../date-adapter';
-import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, HasOccurrences, IOccurrencesArgs, IRunArgs } from '../interfaces';
-import { OccurrenceIterator } from '../iterators';
+import { DateTime } from '../date-time';
+import { HasOccurrences, IRunArgs } from '../interfaces';
 import { PipeController } from './pipes';
 import {
   cloneRuleOptions,
@@ -78,66 +77,6 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
     });
   }
 
-  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
-    return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
-  }
-
-  /**
-   *   Checks to see if an occurrence exists which equals the given date.
-   */
-  occursOn(rawArgs: { date: DateInput<T> }): boolean;
-  /**
-   * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
-   *
-   * Optional arguments:
-   *
-   * - `after` and `before` arguments can be provided which limit the
-   *   possible occurrences to ones *after or equal* or *before or equal* the given dates.
-   *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
-   *       than inclusive.
-   * - `excludeDates` argument can be provided which limits the possible occurrences
-   *   to ones not equal to a date in the `excludeDates` array.
-   */
-  // tslint:disable-next-line: unified-signatures
-  occursOn(rawArgs: {
-    weekday: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
-    excludeEnds?: boolean;
-    excludeDates?: DateInput<T>[];
-  }): boolean;
-  occursOn(rawArgs: {
-    date?: DateInput<T>;
-    weekday?: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
-    excludeEnds?: boolean;
-    excludeDates?: DateInput<T>[];
-  }): boolean {
-    const args = this.processOccursOnArgs(rawArgs);
-
-    if (args.weekday) {
-      return this.occursOnWeekday(args);
-    }
-
-    if (this.hasDuration) {
-      const duration = this.processedOptions.duration!;
-
-      for (const day of this._run({
-        start: args.date!.subtract(duration, 'millisecond'),
-        end: args.date,
-      })) {
-        return !!day;
-      }
-    } else {
-      for (const day of this._run({ start: args.date, end: args.date })) {
-        return !!day;
-      }
-    }
-
-    return false;
-  }
-
   /**  @private use `occurrences()` instead */
   *_run(rawArgs: IRunArgs = {}): IterableIterator<DateTime> {
     const args = this.normalizeRunArgs(rawArgs);
@@ -159,106 +98,5 @@ export class Rule<T extends typeof DateAdapter, D = unknown> extends HasOccurren
 
       date = iterator.next(yieldArgs).value;
     }
-  }
-
-  private occursOnWeekday(args: {
-    weekday?: IDateAdapter.Weekday;
-    after?: DateTime;
-    before?: DateTime;
-    excludeEnds?: boolean;
-    excludeDates?: DateTime[];
-  }) {
-    const weekday = args.weekday!;
-
-    if (
-      this.processedOptions.byDayOfWeek &&
-      !this.processedOptions.byDayOfWeek.some(day =>
-        typeof day === 'string' ? day === weekday : day[0] === weekday,
-      )
-    ) {
-      // The rule specificly does not occur on the given day
-      return false;
-    }
-
-    let end: DateTime | undefined;
-
-    const before = args.before && (args.excludeEnds ? args.before.subtract(1, 'day') : args.before);
-
-    const after = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
-
-    if (this.processedOptions.end && before) {
-      end = before.isBefore(this.processedOptions.end) ? before : this.processedOptions.end;
-    } else if (this.processedOptions.end) {
-      end = this.processedOptions.end;
-    } else if (before) {
-      end = before;
-    }
-
-    if (
-      end &&
-      (end.isBefore(this.processedOptions.start) || end.isBefore(this.processedOptions.start))
-    ) {
-      return false;
-    }
-
-    if (!end) {
-      end = this.processedOptions.start.add(
-        this.processedOptions.frequency === 'YEARLY' ? this.processedOptions.interval * 11 : 11,
-        'year',
-      );
-    }
-
-    // This function allows for an "intelligent" brute forcing of occurrences.
-    // For rules with a frequency less than a day, it only checks one
-    // iteration on any given day.
-    const bruteForceCheck = () => {
-      let date = getNextDateNotInExdates(args.excludeDates, after, end);
-
-      if (date && date.get('weekday') === weekday) {
-        return true;
-      }
-
-      while (date) {
-        date = date.granularity('day').add(24, 'hour');
-
-        date = getNextDateNotInExdates(args.excludeDates, date, end);
-
-        if (date && date.get('weekday') === weekday) {
-          return true;
-        }
-      }
-
-      return false;
-    };
-
-    const getNextDateNotInExdates = (
-      exdates?: Array<DateTime>,
-      start?: DateTime,
-      end?: DateTime,
-    ) => {
-      let date = this._run({ start, end }).next().value;
-
-      if (!exdates || exdates.length === 0) {
-        return date;
-      }
-
-      while (date && exdates.some(exdate => exdate.isEqual(date))) {
-        date = date.granularity('day').add(24, 'hour');
-
-        date = this._run({ start: date, end }).next().value;
-      }
-
-      return date;
-    };
-
-    return bruteForceCheck();
-  }
-
-  private normalizeRunArgs(args: IRunArgs) {
-    return {
-      ...args,
-      start: this.normalizeDateInput(args.start),
-      end: this.normalizeDateInput(args.end),
-    };
   }
 }

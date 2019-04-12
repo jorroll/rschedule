@@ -9,6 +9,7 @@ import {
   Dates,
   HasOccurrences,
   ICollectionsArgs,
+  IDateAdapter,
   IOccurrencesArgs,
   IProvidedRuleOptions,
   RScheduleConfig,
@@ -83,6 +84,30 @@ function testOccurrences(
         expect(toISOStrings(calendar, { reverse: true })).toEqual(
           toISOStrings(expectation.reverse()),
         );
+      });
+
+      describe('occursOn', () => {
+        it('date', () => {
+          for (const date of expectation) {
+            expect(calendar.occursOn({ date })).toBeTruthy();
+          }
+        });
+
+        it('weekday', () => {
+          let weekdays: IDateAdapter.Weekday[] = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+
+          for (const date of expectation) {
+            const weekday = date.toDateTime().get('weekday');
+
+            expect(calendar.occursOn({ weekday })).toBeTruthy();
+
+            weekdays = weekdays.filter(day => day !== weekday);
+          }
+
+          for (const weekday of weekdays) {
+            expect(calendar.occursOn({ weekday })).toBeFalsy();
+          }
+        });
       });
     });
 

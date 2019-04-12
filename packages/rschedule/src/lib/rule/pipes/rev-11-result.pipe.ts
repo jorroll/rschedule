@@ -9,15 +9,8 @@ export class RevResultPipe extends PipeRule implements IPipeRule {
   // of the pipe. It is meant to always be the last pipe in the chain.
   run(args: IPipeRunFn) {
     if (args.date.isBefore(this.start)) {
-      // console.log('end reached', args.date);
       return null;
     }
-
-    // console.log('result', args);
-
-    // if (!args.invalidDate) {
-    //   console.warn('valid result', args.date);
-    // }
 
     if (args.invalidDate) {
       // To prevent getting into an infinite loop.

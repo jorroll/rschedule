@@ -3,9 +3,7 @@ import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
 import {
   DateAdapter as DateAdapterConstructor,
-  HasOccurrences,
-  IOccurrencesArgs,
-  IProvidedRuleOptions,
+  IDateAdapter,
   RScheduleConfig,
   Schedule,
 } from '@rschedule/rschedule';
@@ -16,14 +14,12 @@ import { Moment as MomentTZ } from 'moment-timezone';
 import {
   context,
   DatetimeFn,
-  dateTimeFn,
   environment,
   luxonDatetimeFn,
   momentDatetimeFn,
   momentTZDatetimeFn,
   standardDatetimeFn,
   timezoneDateAdapterFn,
-  timezoneIsoStringFn,
   TIMEZONES,
   toISOStrings,
 } from './utilities';
@@ -58,6 +54,30 @@ function testOccurrences(
       expect(toISOStrings(schedule, { reverse: true })).toEqual(
         toISOStrings(expectation.reverse()),
       );
+    });
+
+    describe('occursOn', () => {
+      it('date', () => {
+        for (const date of expectation) {
+          expect(schedule.occursOn({ date })).toBeTruthy();
+        }
+      });
+
+      it('weekday', () => {
+        let weekdays: IDateAdapter.Weekday[] = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+
+        for (const date of expectation) {
+          const weekday = date.toDateTime().get('weekday');
+
+          expect(schedule.occursOn({ weekday })).toBeTruthy();
+
+          weekdays = weekdays.filter(day => day !== weekday);
+        }
+
+        for (const weekday of weekdays) {
+          expect(schedule.occursOn({ weekday })).toBeFalsy();
+        }
+      });
     });
   });
 }

@@ -19,6 +19,7 @@
     "curly": [true, "ignore-same-line"],
     "array-type": false,
     "variable-name": false,
-    "jsdoc-format": false
+    "jsdoc-format": false,
+    "unified-signatures": false
   }
 }

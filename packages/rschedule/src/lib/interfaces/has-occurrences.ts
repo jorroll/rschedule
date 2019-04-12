@@ -1,9 +1,10 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
-import { OccurrenceIterator } from '../iterators/occurrence.iterator';
+import { CollectionIterator, ICollectionsArgs } from '../iterators';
+import { IOccurrencesArgs, OccurrenceIterator } from '../iterators/occurrence.iterator';
 import { RScheduleConfig } from '../rschedule-config';
-import { RuleOption } from '../rule';
-import { ConstructorReturnType } from '../utilities';
+import { getDifferenceBetweenWeekdays } from '../rule/pipes';
+import { ArgumentError, ConstructorReturnType } from '../utilities';
 import { IRunArgs, IRunnable } from './runnable';
 
 export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable<T> {
@@ -11,13 +12,13 @@ export interface IHasOccurrences<T extends typeof DateAdapter> extends IRunnable
   readonly timezone: string | null;
 
   occurrences(args: IOccurrencesArgs<T>): OccurrenceIterator<T>;
+  collections(args: ICollectionsArgs<T>): CollectionIterator<T>;
   occursBetween(
     start: DateInput<T>,
     end: DateInput<T>,
     options: { excludeEnds?: boolean },
   ): boolean;
   occursOn(args: { date: DateInput<T> }): boolean;
-  // tslint:disable-next-line: unified-signatures
   occursOn(args: {
     weekday: IDateAdapter.Weekday;
     after?: DateInput<T>;
@@ -66,38 +67,117 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     }
 
     if (!this.dateAdapter) {
-      throw new Error("Oops! You've initialized an occurrences object without a dateAdapter.");
+      throw new ArgumentError(
+        "Oops! You've initialized an occurrences object without a dateAdapter.",
+      );
     }
 
     this.timezone = args.timezone !== undefined ? args.timezone : RScheduleConfig.defaultTimezone;
   }
 
   /**
-   * Processes object and returns an iterable for the occurrences.
+   * Processes the object's rules/dates and returns an iterable for the occurrences.
    *
    * Options object:
    * - `start` the date to begin iteration on
    * - `end` the date to end iteration on
    * - `take` the max number of dates to take before ending iteration
    * - `reverse` whether to iterate in reverse or not
-   * 
+   *
    * Examples:
    * 
    ```
-   const iterator = schedule.occurrences()
+   const iterator = schedule.occurrences({ start: new Date(), take: 5 })
    
    for (const date of iterator) {
      // do stuff
    }
 
-   iterator.toArray()
-   iterator.next().value
+   iterator.toArray() // returns Date array
+   iterator.next().value // returns next Date
    ```
-   *
-   * @param arg `OccurrencesArgs` options object
+   * 
+   * @param args options object
    */
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
-    return new OccurrenceIterator(this, this.processOccurrencesArgs(args));
+    return new OccurrenceIterator(this, this.normalizeOccurrencesArgs(args));
+  }
+
+  /**
+   * Iterates over the object's occurrences and bundles them into collections
+   * with a specified granularity (default is `"INSTANTANIOUS"`). Make sure to
+   * read about each option & combination of options below.
+   *
+   * Options object:
+   *   - start?: DateAdapter
+   *   - end?: DateAdapter
+   *   - take?: number
+   *   - reverse?: NOT SUPPORTED
+   *   - granularity?: CollectionsGranularity
+   *   - weekStart?: IDateAdapter.Weekday
+   *   - incrementLinearly?: boolean
+   *
+   * Returned `Collection` object:
+   *
+   *   - `dates` property containing an array of DateAdapter objects.
+   *   - `granularity` property containing the granularity.
+   *     - `CollectionsGranularity` type extends `RuleOptions.Frequency` type by adding
+   *       `"INSTANTANIOUS"`.
+   *   - `periodStart` property containing a DateAdapter equal to the period's
+   *     start time.
+   *   - `periodEnd` property containing a DateAdapter equal to the period's
+   *     end time.
+   *
+   * #### Details:
+   *
+   * `collections()` always returns full periods. This means that the `start` argument is
+   * transformed to be the start of whatever period the `start` argument is in, and the
+   * `end` argument is transformed to be the end of whatever period the `end` argument is
+   * in.
+   *
+   * - Example: with granularity `"YEARLY"`, the `start` argument will be transformed to be the
+   *   start of the year passed in the `start` argument, and the `end` argument will be transformed
+   *   to be the end of the year passed in the `end` argument.
+   *
+   * By default, the `periodStart` value of `Collection` objects produced by this method does not
+   * necessarily increment linearly. A collection will *always* contain at least one date,
+   * so the `periodStart` from one collection to the next can "jump". This can be changed by
+   * passing the `incrementLinearly: true` option. With this argument, `collections()` will
+   * return `Collection` objects for each period in linear succession, even if a collection object
+   * has no dates associated with it, so long as the object generating occurrences still has upcoming occurrences.
+   *
+   * - Example 1: if your object's first occurrence is 2019/2/1 (February 1st) and you call
+   *   `collection({granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   (so starting on January 1st), the first Collection produced will have a `periodStart` in February.
+   *
+   * - Example 2: if your object's first occurrence is 2019/2/1 (February 1st) and you call
+   *   `collection({incrementLinearly: true, granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   (so starting on January 1st), the first collection produced will have a `Collection#periodStart`
+   *   of January 1st and have `Collection#dates === []`. Similarly, the next 30 collections produced
+   *   (Jan 2nd - 31st) will all contain an empty array for the `dates` property. Then the February 1st
+   *   `Collection` will contain dates.
+   *
+   * When giving a `take` argument to `collections()`, you are specifying
+   * the number of `Collection` objects to return (rather than occurrences).
+   *
+   * When choosing a granularity of `"WEEKLY"`, the `weekStart` option is required.
+   *
+   * When choosing a granularity of `"MONTHLY"`:
+   *
+   * - If the `weekStart` option *is not* present, will generate collections with
+   *   the `periodStart` and `periodEnd` at the beginning and end of each month.
+   *
+   * - If the `weekStart` option *is* present, will generate collections with the
+   *   `periodStart` equal to the start of the first week of the month, and the
+   *   `periodEnd` equal to the end of the last week of the month. This behavior could be
+   *   desired when rendering opportunities in a calendar view, where the calendar renders
+   *   full weeks (which may result in the calendar displaying dates in the
+   *   previous or next months).
+   *
+   * @param args options object
+   */
+  collections(args: ICollectionsArgs<T> = {}): CollectionIterator<T> {
+    return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
   }
 
   occursBetween(
@@ -131,9 +211,11 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
   /**
    * Checks to see if an occurrence exists which equals the given date.
    */
-  abstract occursOn(args: { date: DateInput<T> }): boolean;
+  occursOn(args: { date: DateInput<T> }): boolean;
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
+   * **If there are infinite occurrences, you must include a `before` argument with
+   * the `weekday` argument.**
    *
    * Optional arguments:
    *
@@ -142,12 +224,59 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
    *   - If `excludeEnds` is `true`, then the after/before arguments become exclusive rather
    *       than inclusive.
    */
-  abstract occursOn(args: {
+  occursOn(args: {
     weekday: IDateAdapter.Weekday;
     after?: DateInput<T>;
     before?: DateInput<T>;
     excludeEnds?: boolean;
   }): boolean;
+  occursOn(rawArgs: {
+    date?: DateInput<T>;
+    weekday?: IDateAdapter.Weekday;
+    after?: DateInput<T>;
+    before?: DateInput<T>;
+    excludeEnds?: boolean;
+  }): boolean {
+    const args = this.normalizeOccursOnArgs(rawArgs);
+
+    if (args.weekday) {
+      if (this.isInfinite && !args.before) {
+        throw new ArgumentError(
+          'When calling `occursOn()` with a `weekday` argument ' +
+            'and an occurrence object that has infinite occurrences, ' +
+            'you must include a `before` argument as well.',
+        );
+      }
+
+      const start = args.after && (args.excludeEnds ? args.after.add(1, 'day') : args.after);
+      const end = args.before && (args.excludeEnds ? args.before.subtract(1, 'day') : args.before);
+      const iterator = this._run({ start, end });
+
+      let date = iterator.next().value;
+
+      if (!date) return false;
+
+      while (date) {
+        if (date.get('weekday') === args.weekday) {
+          return true;
+        }
+
+        date = iterator.next({
+          skipToDate: date
+            .add(getDifferenceBetweenWeekdays(date.get('weekday'), args.weekday), 'day')
+            .granularity('day'),
+        }).value;
+      }
+
+      return false;
+    }
+
+    for (const day of this._run({ start: args.date, end: args.date })) {
+      return !!day;
+    }
+
+    return false;
+  }
 
   occursAfter(date: DateInput<T>, options: { excludeStart?: boolean } = {}) {
     const adapter = this.normalizeDateInput(date);
@@ -175,7 +304,7 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     return false;
   }
 
-  protected processOccurrencesArgs(rawArgs: IOccurrencesArgs<T>) {
+  protected normalizeOccurrencesArgs(rawArgs: IOccurrencesArgs<T>) {
     return {
       ...rawArgs,
       start: this.normalizeDateInput(rawArgs.start),
@@ -183,25 +312,30 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
     };
   }
 
-  protected processOccursOnArgs(
+  protected normalizeCollectionsArgs(rawArgs: ICollectionsArgs<T>) {
+    if (rawArgs.reverse !== undefined) {
+      throw new ArgumentError(
+        '`collections()` does not support the `reverse` option at this time.',
+      );
+    }
+
+    return {
+      ...rawArgs,
+      start: this.normalizeDateInput(rawArgs.start),
+      end: this.normalizeDateInput(rawArgs.end),
+    };
+  }
+
+  protected normalizeOccursOnArgs(
     rawArgs: {
       date?: DateInput<T>;
-      duration?: RuleOption.Duration;
       weekday?: IDateAdapter.Weekday;
       after?: DateInput<T>;
       before?: DateInput<T>;
       excludeEnds?: boolean;
       excludeDates?: Array<DateInput<T>>;
     } = {},
-  ): {
-    date?: DateTime;
-    duration?: RuleOption.Duration;
-    weekday?: IDateAdapter.Weekday;
-    after?: DateTime;
-    before?: DateTime;
-    excludeEnds?: boolean;
-    excludeDates?: DateTime[];
-  } {
+  ) {
     return {
       ...rawArgs,
       date: this.normalizeDateInput(rawArgs.date),
@@ -210,6 +344,14 @@ export abstract class HasOccurrences<T extends typeof DateAdapter>
       excludeDates:
         rawArgs.excludeDates &&
         rawArgs.excludeDates.map(date => this.normalizeDateInput(date) as DateTime),
+    };
+  }
+
+  protected normalizeRunArgs(args: IRunArgs) {
+    return {
+      ...args,
+      start: this.normalizeDateInput(args.start),
+      end: this.normalizeDateInput(args.end),
     };
   }
 
@@ -250,11 +392,3 @@ export type DateInput<T extends typeof DateAdapter> =
   | T['date']
   | ConstructorReturnType<T>
   | DateTime;
-
-export interface IOccurrencesArgs<T extends typeof DateAdapter> {
-  start?: DateInput<T>;
-  end?: DateInput<T>;
-  take?: number;
-  reverse?: boolean;
-  datetime?: boolean;
-}
