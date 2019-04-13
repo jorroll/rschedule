@@ -2,7 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { Dates } from '../dates';
 import { DateInput, IRunArgs, OccurrenceGenerator } from '../interfaces';
-import { add, OccurrenceStream, pipeFn, subtract, unique } from '../operators';
+import { add, OccurrenceStream, OperatorFnOutput, pipeFn, subtract, unique } from '../operators';
 import { IProvidedRuleOptions, Rule } from '../rule';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500');
@@ -23,7 +23,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
   readonly rdates: Dates<T>;
   readonly exdates: Dates<T>;
 
-  pipe = pipeFn(this);
+  pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
 
   /** Convenience property for holding arbitrary data */
   data!: D;

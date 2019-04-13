@@ -57,7 +57,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     return !!(object && typeof object === 'object' && (object as any)[OCCURRENCE_STREAM_ID]);
   }
 
-  pipe = pipeFn(this);
+  pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
 
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;

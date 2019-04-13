@@ -2,7 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IOccurrenceGenerator, OccurrenceGenerator } from '../interfaces';
 import { ICollectionsRunArgs } from '../iterators';
-import { add, OccurrenceStream, pipeFn } from '../operators';
+import { add, OccurrenceStream, OperatorFnOutput, pipeFn } from '../operators';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246');
 
@@ -21,7 +21,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
   /** Convenience property for holding arbitrary data */
   data!: D;
 
-  pipe = pipeFn(this);
+  pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
 
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;

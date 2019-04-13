@@ -42,6 +42,8 @@ export interface IOccurrenceGenerator<T extends typeof DateAdapter> extends IRun
 
   occursBefore(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
 
+  pipe(...operators: unknown[]): IOccurrenceGenerator<T>;
+
   set(prop: 'timezone', value: string | null): IOccurrenceGenerator<T>;
 }
 
@@ -84,6 +86,12 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
 
     this.timezone = args.timezone !== undefined ? args.timezone : RScheduleConfig.defaultTimezone;
   }
+
+  abstract pipe(...operators: unknown[]): OccurrenceGenerator<T>;
+
+  abstract set(prop: 'timezone', value: string | null): OccurrenceGenerator<T>;
+
+  abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 
   /**
    * Processes the object's rules/dates and returns an iterable for the occurrences.
@@ -213,10 +221,6 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     }
     return false;
   }
-
-  abstract set(prop: 'timezone', value: string | null): OccurrenceGenerator<T>;
-
-  abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 
   /**
    * Checks to see if an occurrence exists which equals the given date.
