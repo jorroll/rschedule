@@ -37,7 +37,7 @@ rule
 
 ## Docs
 
-- [Version 0.9 docs (current)](./docs)
+- [Version 0.9 docs (current)](./docs#brief-overview)
 - [Version 0.7 docs](https://gitlab.com/john.carroll.p/rschedule/wikis/home)
 
 ## Installation

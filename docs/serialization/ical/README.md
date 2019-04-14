@@ -1,4 +1,4 @@
-The optional package `@rschedule/ical-tools` includes a new `VEvent` object for working with iCalendar `VEVENT` components, as well as `serializeToICal()` and `parseICal()` functions. At this time, parsing / serializing `VCALENDAR` components is not supported.
+The optional package `@rschedule/ical-tools` includes a new `VEvent` object for working with [iCalendar `VEVENT` components](https://tools.ietf.org/html/rfc5545#section-3.6.1), as well as `serializeToICal()` and `parseICal()` functions. At this time, parsing / serializing `VCALENDAR` components is not supported.
 
 Example:
 
@@ -29,11 +29,11 @@ npm install @rschedule/ical-tools ical.js
 
 ## Usage
 
-When serializing to / from iCal, you must use the `VEvent` object. This is because
+When serializing to / from the [iCalendar spec](https://tools.ietf.org/html/rfc5545), you must use the `VEvent` object. This is because
 
 1. `serializeToICal()` expects `VEvent` objects.
 2. `parseICal()` returns `VEvent` objects.
-3. Unlike `Schedule` objects, the `VEvent` object actually adhears to the specifics of the iCalendar `VEVENT` spec (e.g. only one rrule, dtstart time is the first occurrence, etc).
+3. Unlike `Schedule` objects, the `VEvent` object actually adhears to the specifics of the [iCalendar `VEVENT` spec](https://tools.ietf.org/html/rfc5545#section-3.6.1) (e.g. only one rrule, dtstart time is the first occurrence, etc).
 
 See the [`VEvent` object section](./vevent) for more info on the `VEvent` object.
 

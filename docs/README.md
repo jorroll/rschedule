@@ -31,11 +31,11 @@ rSchedule makes use of a fairly simple [`IDateAdapter`](./date-adapter) wrapper 
 
 [`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), and [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter) packages currently exists which provide an [`IDateAdapter`](./date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be pretty easy for you to create your own DateAdapter for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
 
-If you plan to use rSchedule with iCalendar support, you'll need to add the optional `@rschedule/ical-tools` package. In addition to `serializeToICal()` and `parseICal()` functions, the ical-tools package contains a `VEvent` object which adhears to the iCalendar `VEVENT` component specifications. Jump to the [`ical serialization`](./serialization/ical) section to learn more.
+If you plan to use rSchedule with iCalendar support, you'll need to add the optional [`@rschedule/ical-tools`](./serialization/ical) package. In addition to `serializeToICal()` and `parseICal()` functions, the ical-tools package contains a [`VEvent` object](./serialization/ical/vevent) which adhears to the [iCalendar `VEVENT` component specifications](https://tools.ietf.org/html/rfc5545#section-3.6.1). Jump to the [`ical serialization`](./serialization/ical) section to learn more.
 
-If you don't need iCalendar support, you can serialize your objects using the optional `@rschedule/json-tools` package (which is much smaller than `@rschedule/ical-tools`).
+If you don't need iCalendar support, you can serialize your objects using the optional [`@rschedule/json-tools` package](./serialization/json) (which is much smaller than `@rschedule/ical-tools`).
 
-If you're not serializing to iCalendar, your primary tool will be the friendly `Schedule` object (which is not iCal spec complient--its better). It can be used to build an occurrence schedule from an arbitrary number of inclusion rules, exclusion rules, inclusion dates, and exclusion dates.
+If you're not serializing to iCalendar, your primary tool will be the friendly [`Schedule` object](./usage/schedule) (which is not iCal spec complient--its better). It can be used to build an occurrence schedule from an arbitrary number of inclusion rules, exclusion rules, inclusion dates, and exclusion dates.
 
 Example usage:
 
@@ -62,7 +62,7 @@ const schedule = new Schedule({
 schedule.occurrences().toArray();
 ```
 
-Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
+Each [`Schedule` object](./usage/schedule) is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
 
 To iterate over a collection of schedules, e.g. for displaying on a calendar, you can use the [`Calendar` object](./usage/calendar). The Calendar object combines a collection of occurrence generators into a single iterable object (i.e. it displays the `union` of all the given occurrence generators).
 
