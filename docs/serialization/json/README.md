@@ -3,6 +3,8 @@ The optional package `@rschedule/json-tools` includes `serializeToJSON()` and `p
 Example:
 
 ```typescript
+import { serializeToJSON, parseJSON } from '@rschedule/json-tools';
+
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
 const schedule = new Schedule<typeof StandardDateAdapter>({
@@ -42,7 +44,10 @@ The `serializeToJSON()` function accepts a spread of `Calendar`, `Schedule`, `Da
 Example:
 
 ```typescript
+import { serializeToJSON } from '@rschedule/json-tools';
+
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
+
 const schedule = new Schedule<typeof StandardDateAdapter>({
   rrules: [
     {
