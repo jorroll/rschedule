@@ -6,6 +6,8 @@ export type ConstructorReturnType<T extends new (...args: any[]) => any> = T ext
   ? R
   : any;
 
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+
 export function numberSortComparer(a: number, b: number) {
   if (a > b) {
     return 1;

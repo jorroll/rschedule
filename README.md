@@ -1,6 +1,6 @@
 # rSchedule
 
-**Still pre-1.0 release**
+**Still pre-1.0 release (i.e. Beta)**
 
 ## _Note: these docs refer to the master branch of the library, rather than a specific release. At the moment, the master branch represents an unreleased overhaul of the library and these docs have NOT been properly updated to reflect these changes yet. Check out the [wiki page](https://gitlab.com/john.carroll.p/rschedule/wikis/home) for docs relating to the current release._
 
