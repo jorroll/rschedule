@@ -40,7 +40,7 @@ rule
   .map(date => date.toISOString());
 ```
 
-Add another schedule, subtract a specific date, filter to return only unique dates, and query to see if the result occurs on a Monday before `2013/9/15`.
+Add another schedule, subtract a specific date, filter to return only unique dates, and query to see if the result occurs on a Monday before `2013/11/15`.
 
 ```typescript
 const schedule = new Schedule({
