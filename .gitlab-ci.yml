@@ -2,7 +2,7 @@ stages:
   - test
   - dependency_scanning
 
-test_UTC:
+UTC:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -17,7 +17,7 @@ test_UTC:
     - TZ='UTC' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_Africa/Johannesburg:
+Africa/Johannesburg:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -32,7 +32,7 @@ test_Africa/Johannesburg:
     - TZ='Africa/Johannesburg' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_America/Los_Angeles:
+America/Los_Angeles:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -47,7 +47,7 @@ test_America/Los_Angeles:
     - TZ='America/Los_Angeles' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_America/New_York:
+America/New_York:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -62,7 +62,7 @@ test_America/New_York:
     - TZ='America/New_York' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_America/Santiago:
+America/Santiago:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -77,7 +77,7 @@ test_America/Santiago:
     - TZ='America/Santiago' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_Europe/London:
+Europe/London:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -92,7 +92,7 @@ test_Europe/London:
     - TZ='Europe/London' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_Asia/Shanghai:
+Asia/Shanghai:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -107,7 +107,7 @@ test_Asia/Shanghai:
     - TZ='Asia/Shanghai' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_Asia/Jakarta:
+Asia/Jakarta:
   image: node:8.15.1-alpine
   stage: test
   cache:
@@ -122,7 +122,7 @@ test_Asia/Jakarta:
     - TZ='Asia/Jakarta' yarn test --ci=true
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
-test_Australia/Melbourne:
+Australia/Melbourne:
   image: node:8.15.1-alpine
   stage: test
   cache:
