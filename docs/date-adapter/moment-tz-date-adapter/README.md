@@ -1,8 +1,8 @@
-### `MomentTZDateAdapter`
+# @rschedule/moment-tz-date-adapter
 
 ![NPM version](https://flat.badgen.net/npm/v/@rschedule/moment-tz-date-adapter) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/moment-tz-date-adapter)
 
-**implements [`IDateAdapter<Moment>`](../#IDateAdapter-Interface)**
+**[`MomentTZDateAdapter implements IDateAdapter<Moment>`](../#IDateAdapter-Interface)**
 
 rSchedule DateAdapter for working with [moment-timezone](https://momentjs.com/timezone/) `Moment` objects. Has full timezone support. If you don't need full timezone support, or if you are not using the [`moment-timezone`](https://momentjs.com/timezone/) add on to [`moment`](https://momentjs.com), then you should consider the [`MomentDateAdapter`](./moment-date-adapter) instead.
 
