@@ -1,3 +1,5 @@
+# RScheduleConfig class
+
 The `RScheduleConfig` object holds global config values for rSchedule.
 
 Config properties:

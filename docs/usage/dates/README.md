@@ -1,4 +1,6 @@
-_implements [IOccurrenceGenerator](../#IOccurrenceGenerator-Interface)_
+# Dates class
+
+[**`Dates implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
 
 The `Dates` class provides a `IOccurrenceGenerator` wrapper for an array of dates.
 

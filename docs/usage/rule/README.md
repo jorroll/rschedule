@@ -1,4 +1,6 @@
-_implements [IOccurrenceGenerator](../#IOccurrenceGenerator-Interface)_
+# Rule class
+
+[**`Rule implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
 
 RRule objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects.
 

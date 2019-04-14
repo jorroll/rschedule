@@ -1,3 +1,5 @@
+# Using rSchedule
+
 This library has four main occurrence generating classes which each implement `OccurrenceGenerator`:
 
 - [Schedule](./schedule-class)

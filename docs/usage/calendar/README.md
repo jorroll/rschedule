@@ -1,4 +1,6 @@
-_implements [IOccurrenceGenerator](../#IOccurrenceGenerator-Interface)_
+# Calendar class
+
+[**`Calendar implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
 
 While [`Schedule`](../schedule) objects are intended to represent the schedule of a single event, `Calendar` objects are intended to represent a group (calendar) of events. `Calendar` objects support iterating through _the union_ of a group of [`IOccurrenceGenerator`](../#IOccurrenceGenerator-Interface) objects.
 

@@ -1,3 +1,5 @@
+# Occurrence Operators
+
 This library exports a selection of occurrence stream operators for manipulating a stream of occurrences. Current operators are:
 
   - [Add](#add)

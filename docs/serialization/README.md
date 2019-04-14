@@ -1,3 +1,5 @@
+# Serializing rSchedule objects
+
 Two optional packages exist for handling serializing / deserializing rSchedule objects.
 
 - For [iCal support](https://tools.ietf.org/html/rfc5545), use the [optional `ical-tools` package](./ical).
