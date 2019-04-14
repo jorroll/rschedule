@@ -1,3 +1,7 @@
+# @rschedule/ical-tools
+
+![NPM version](https://flat.badgen.net/npm/v/@rschedule/ical-tools) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/ical-tools)
+
 The optional package `@rschedule/ical-tools` includes a new `VEvent` object for working with [iCalendar `VEVENT` components](https://tools.ietf.org/html/rfc5545#section-3.6.1), as well as `serializeToICal()` and `parseICal()` functions. At this time, parsing / serializing `VCALENDAR` components is not supported.
 
 Example:

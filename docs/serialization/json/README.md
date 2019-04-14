@@ -1,3 +1,7 @@
+# @rschedule/json-tools
+
+![NPM version](https://flat.badgen.net/npm/v/@rschedule/json-tools) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/json-tools)
+
 The optional package `@rschedule/json-tools` includes `serializeToJSON()` and `parseJSON()` functions.
 
 Example:

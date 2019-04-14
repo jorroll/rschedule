@@ -1,5 +1,7 @@
 ### `StandardDateAdapter`
 
+![NPM version](https://flat.badgen.net/npm/v/@rschedule/standard-date-adapter) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/standard-date-adapter)
+
 **implements [`IDateAdapter<Date>`](../#IDateAdapter-Interface)**
 
 rSchedule DateAdapter for working with standard javascript `Date` objects. Only supports local and UTC timezones.
