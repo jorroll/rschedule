@@ -163,24 +163,39 @@ function vEventToJCal<T extends typeof DateAdapter>(vevent: VEvent<T>): IJCalCom
   );
 }
 
+export function serializeToJCal<T extends typeof DateAdapter>(inputs: VEvent<T>): IJCalComponent;
 export function serializeToJCal<T extends typeof DateAdapter>(
   ...inputs: VEvent<T>[]
-): IJCalComponent[] {
-  return inputs.map(input => {
+): IJCalComponent[];
+export function serializeToJCal<T extends typeof DateAdapter>(
+  ...inputs: VEvent<T>[]
+): IJCalComponent[] | IJCalComponent {
+  const jCal = inputs.map(input => {
     if (VEvent.isVEvent(input)) {
       return vEventToJCal(input);
     } else {
       throw new SerializeICalError(`Unsupported input type "${input}"`);
     }
   });
+
+  return jCal.length > 1 ? jCal : jCal[0];
 }
 
-export function serializeToICal<T extends typeof DateAdapter>(...inputs: VEvent<T>[]): string[] {
-  return serializeToJCal(...inputs).map((jcal: any) =>
-    // ical.js makes new lines with `\r\n` instead of just `\n`
-    // `\r` is a "Carriage Return" character. We'll remove it.
-    stringify(jcal).replace(/\r/g, ''),
+export function serializeToICal<T extends typeof DateAdapter>(inputs: VEvent<T>): string;
+export function serializeToICal<T extends typeof DateAdapter>(...inputs: VEvent<T>[]): string[];
+export function serializeToICal<T extends typeof DateAdapter>(
+  ...inputs: VEvent<T>[]
+): string[] | string {
+  const jCal = serializeToJCal(...inputs);
+
+  const iCal = (inputs.length === 1 ? [(jCal as unknown) as IJCalComponent] : jCal).map(
+    (jcal: any) =>
+      // ical.js makes new lines with `\r\n` instead of just `\n`
+      // `\r` is a "Carriage Return" character. We'll remove it.
+      stringify(jcal).replace(/\r/g, ''),
   );
+
+  return iCal.length > 1 ? iCal : iCal[0];
 }
 
 function serializeByDayOfWeek(arg: RuleOption.ByDayOfWeek) {

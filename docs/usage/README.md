@@ -1,52 +1,39 @@
-This library has five main classes:
+This library has four main occurrence generating classes which each implement `OccurrenceGenerator`:
 
-- [Schedule](usage/schedule-class)
-- [Calendar](usage/calendar-class)
-- [Rule](usage/rule-class)
-- [Dates](usage/dates-class)
-- [RScheduleConfig](#rscheduleconfig)
+- [Schedule](./schedule-class)
+- [Calendar](./calendar-class)
+- [Rule](./rule-class)
+- [Dates](./dates-class)
 
-It also has makes use of an [`IDateAdapter`](../date-adapter) interface which allows rSchedule to be used with the date library of your choosing. Be sure to look at the [`IDateAdapter` interface section](../date-adapter) as you must provide a date adapter for each `Schedule`, `Calendar`, `Rule`, or `Dates` object you create.
+Additionally, this library makes use of an [`IDateAdapter`](../date-adapter) interface which allows rSchedule to be used with the date library of your choosing. You must provide a date adapter for each `OccurrenceGenerator` object you create, usually as a `dateAdapter` argument. 
 
-I'll also call out here that all of the objects are generic and receive a `DateAdapterConstructor` type object. Type inference will often take care of this for you, but when it doesn't, remember that the type you need to pass is for the constructor.
+All of the `OccurrenceGenerator<T extends typeof DateAdapter>` objects are *generic* and receive a `typeof DateAdapter` type argument. Type inference will often take care of typing these objects for you but, when it doesn't, **remember that the type you need to pass is for the constructor** (i.e. `Schedule<typeof StandardDateAdapter>`).
 
-i.e.
+For convenience, an [RScheduleConfig](./rschedule-config) object exists which allows you to set a global `defaultDateAdapter`, removing the need to provide a date adapter when creating `OccurrenceGenerator` objects. Making use of the `defaultDateAdapter`, however, will mean that typescript will not be able to infer the proper type and you'll need to specify it yourself.
+
+Example of manually specifying types:
 
 ```typescript
 // good
 new Schedule<typeof MomentTZDateAdapter>();
 
-// bad
+// error!
 new Schedule<MomentTZDateAdapter>();
 ```
 
-Finally, it has an assortment of [Occurrence stream operators](./operators) which allow combining multiple occurrence streams from different objects into a single occurrence stream. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. Internally, the iteration logic of both `Schedule` and `Calendar` is implemented using occurrence stream operators.
+Finally, this library has an assortment of [occurrence stream operators](./operators) which allow combining multiple occurrence generators into a single occurrence generator. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. See [`occurrence stream operators`](./operators) for more information.
 
-## RScheduleConfig
+### IOccurrenceGenerator Interface
 
-The `RScheduleConfig` object is a class with just one static property: `defaultDateAdapter`. It is a convenience property which allows you to define a global default `DateAdapter` constructor object which all rSchedule classes should use. See the [`IDateAdapter`](../date-adapter) section for more info.
-
-```typescript
-import { RScheduleConfig } from '@rschedule/rschedule';
-
-RScheduleConfig.defaultDateAdapter = MomentTZDateAdapter;
-```
-
-## Shared Interfaces
-
-Schedule, Calendar, Rule, and Dates objects each implement the `IOccurrenceGenerator` interface. Note, in the code below, `DateProp<T>` refers to the date object that a given DateAdapter is wrapping (e.g. the `MomentDateAdapter` wraps a `Moment` date object). `DateAdapter<T>` refers to an instance of a date adapter.
-
-For example, when providing the start date for `occurrences()`, you could pass in either `new MomentTZDateAdapter()` or `moment()`.
-
-### IOccurrenceGenerator
-
-See the inline comments for more info. Also note that the `occurrences()` method yields date adapter instances. To get the underlying date object, call `.date` on the date adapter. You can see the [`IDateAdapter` interface](../date-adapter) for all the methods/properties available on date adapters, but `.date` and `.generators` are probably the only two properties you'll care about (if it wasn't for the need to return the list of `generators`, I'd almost certainly just yield the underlying date objects instead of date adapter objects).
+Schedule, Calendar, Rule, Dates, and OccurrenceStream objects each implement the `IOccurrenceGenerator` interface. Note, in the code below, `DateInput<T>` type accepts either the date object that a given DateAdapter is wrapping (e.g. the `MomentDateAdapter` wraps a `Moment` date object), or a date adapter itself.
 
 ````typescript
 interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
+  readonly dateAdapter: T;
+  readonly timezone: string | null;
+
   /**
-   * Returns an `OccurrenceIterator` object which can be used to iterate
-   * over the object's occurrences.
+   * Processes the object's rules/dates and returns an iterable for the occurrences.
    *
    * Options object:
    * - `start` the date to begin iteration on
@@ -55,40 +42,106 @@ interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
    * - `reverse` whether to iterate in reverse or not
    *
    * Examples:
-   *
+   * 
    * ```
-   * const iterator = schedule.occurrences()
-   *
+   * const iterator = schedule.occurrences({ start: new Date(), take: 5 })
+   * 
    * for (const date of iterator) {
    *   // do stuff
    * }
-   *
-   * iterator.toArray()
-   * iterator.next().value
+   * 
+   * iterator.toArray() // returns Date array
+   * iterator.next().value // returns next Date
    * ```
-   *
-   * @param arg `OccurrencesArgs` options object
+   * 
    */
-  occurrences(args?: {
-    start?: DateProp<T> | DateAdapter<T>;
-    end?: DateProp<T> | DateAdapter<T>;
-    take?: number;
-    reverse?: boolean;
-  }): OccurrenceIterator<T>;
+  occurrences(args: IOccurrencesArgs<T>): OccurrenceIterator<T>;
+
+  /**
+   * Iterates over the object's occurrences and bundles them into collections
+   * with a specified granularity (default is `"INSTANTANIOUS"`). Make sure to
+   * read about each option & combination of options below.
+   *
+   * Options object:
+   *   - start?: DateAdapter
+   *   - end?: DateAdapter
+   *   - take?: number
+   *   - reverse?: NOT SUPPORTED
+   *   - granularity?: CollectionsGranularity
+   *   - weekStart?: IDateAdapter.Weekday
+   *   - incrementLinearly?: boolean
+   *
+   * Returned `Collection` object:
+   *
+   *   - `dates` property containing an array of DateAdapter objects.
+   *   - `granularity` property containing the granularity.
+   *     - `CollectionsGranularity` type extends `RuleOptions.Frequency` type by adding
+   *       `"INSTANTANIOUS"`.
+   *   - `periodStart` property containing a DateAdapter equal to the period's
+   *     start time.
+   *   - `periodEnd` property containing a DateAdapter equal to the period's
+   *     end time.
+   *
+   * #### Details:
+   *
+   * `collections()` always returns full periods. This means that the `start` argument is
+   * transformed to be the start of whatever period the `start` argument is in, and the
+   * `end` argument is transformed to be the end of whatever period the `end` argument is
+   * in.
+   *
+   * - Example: with granularity `"YEARLY"`, the `start` argument will be transformed to be the
+   *   start of the year passed in the `start` argument, and the `end` argument will be transformed
+   *   to be the end of the year passed in the `end` argument.
+   *
+   * By default, the `periodStart` value of `Collection` objects produced by this method does not
+   * necessarily increment linearly. A collection will *always* contain at least one date,
+   * so the `periodStart` from one collection to the next can "jump". This can be changed by
+   * passing the `incrementLinearly: true` option. With this argument, `collections()` will
+   * return `Collection` objects for each period in linear succession, even if a collection object
+   * has no dates associated with it, so long as the object generating occurrences still has upcoming occurrences.
+   *
+   * - Example 1: if your object's first occurrence is 2019/2/1 (February 1st) and you call
+   *   `collection({granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   (so starting on January 1st), the first Collection produced will have a `periodStart` in February.
+   *
+   * - Example 2: if your object's first occurrence is 2019/2/1 (February 1st) and you call
+   *   `collection({incrementLinearly: true, granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   (so starting on January 1st), the first collection produced will have a `Collection#periodStart`
+   *   of January 1st and have `Collection#dates === []`. Similarly, the next 30 collections produced
+   *   (Jan 2nd - 31st) will all contain an empty array for the `dates` property. Then the February 1st
+   *   `Collection` will contain dates.
+   *
+   * When giving a `take` argument to `collections()`, you are specifying
+   * the number of `Collection` objects to return (rather than occurrences).
+   *
+   * When choosing a granularity of `"WEEKLY"`, the `weekStart` option is required.
+   *
+   * When choosing a granularity of `"MONTHLY"`:
+   *
+   * - If the `weekStart` option *is not* present, will generate collections with
+   *   the `periodStart` and `periodEnd` at the beginning and end of each month.
+   *
+   * - If the `weekStart` option *is* present, will generate collections with the
+   *   `periodStart` equal to the start of the first week of the month, and the
+   *   `periodEnd` equal to the end of the last week of the month. This behavior could be
+   *   desired when rendering opportunities in a calendar view, where the calendar renders
+   *   full weeks (which may result in the calendar displaying dates in the
+   *   previous or next months).
+   *
+   */
+  collections(args: ICollectionsArgs<T>): CollectionIterator<T>;
 
   occursBetween(
-    start: DateProp<T> | DateAdapter<T>,
-    end: DateProp<T> | DateAdapter<T>,
+    start: DateInput<T>,
+    end: DateInput<T>,
     options: { excludeEnds?: boolean },
   ): boolean;
 
-  /**
-   * Checks to see if an occurrence exists which equals the given date.
-   */
-  occursOn(args: { date: DateProp<T> | DateAdapter<T> }): boolean;
-
+  occursOn(args: { date: DateInput<T> }): boolean;
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
+   * **If there are infinite occurrences, you must include a `before` argument with
+   * the `weekday` argument.**
    *
    * Optional arguments:
    *
@@ -98,34 +151,18 @@ interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
    *       than inclusive.
    */
   occursOn(args: {
-    weekday: DateTime.Weekday;
-    after?: DateProp<T> | DateAdapter<T>;
-    before?: DateProp<T> | DateAdapter<T>;
+    weekday: IDateAdapter.Weekday;
+    after?: DateInput<T>;
+    before?: DateInput<T>;
     excludeEnds?: boolean;
   }): boolean;
 
-  occursAfter(date: DateProp<T> | DateAdapter<T>, options: { excludeStart?: boolean }): boolean;
+  occursAfter(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
 
-  occursBefore(date: DateProp<T> | DateAdapter<T>, options: { excludeStart?: boolean }): boolean;
+  occursBefore(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
 
-  setTimezone(timezone: string | undefined, options?: { keepLocalTime?: boolean }): this;
+  pipe(...operators: unknown[]): IOccurrenceGenerator<T>;
 
-  clone(): IOccurrenceGenerator<T>;
-
-  // A convenience property for storying arbitrary data
-  data: any;
-}
-
-// Note that an occurrence iterator returns date adapter instances.
-// To get the underlying date object, call `.date` on the result.
-class OccurrenceIterator<T extends DateAdapterConstructor> {
-  public [Symbol.iterator]: () => IterableIterator<InstanceType<T>>;
-
-  public next(): IterableResult<InstanceType<T>>;
-
-  // If the occurrence stream is infinite, and you didn't limit it with
-  // arguments when calling `#occurrences()`, then `toArray()` will return
-  // `undefined`, else it will return an array of all of the occurrences.
-  public toArray(): InstanceType<T>[] | undefined;
+  set(prop: 'timezone', value: string | null): IOccurrenceGenerator<T>;
 }
 ````

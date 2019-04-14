@@ -115,7 +115,6 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
    iterator.next().value // returns next Date
    ```
    * 
-   * @param args options object
    */
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
     return new OccurrenceIterator(this, this.normalizeOccurrencesArgs(args));
@@ -192,7 +191,6 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
    *   full weeks (which may result in the calendar displaying dates in the
    *   previous or next months).
    *
-   * @param args options object
    */
   collections(args: ICollectionsArgs<T> = {}): CollectionIterator<T> {
     return new CollectionIterator(this, this.normalizeCollectionsArgs(args));

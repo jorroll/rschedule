@@ -8,43 +8,48 @@ import { Operator, OperatorFnOutput } from './interface';
 const OCCURRENCE_STREAM_ID = Symbol.for('dfe5463b-8eb2-46c4-a769-c641c241221c');
 
 /**
- * This function allows you to build a new, complex recurrance schedule by
- * combining the output of other schedules using various operator
- * functions. You can then feed the result into a `Calendar` object
- * as input.
+ * `OccurrenceStream` allows you to combine occurrence generators using
+ * operator functions to produce new, complex recurrence schedules.
+ * For example: internally, `Schedule` relies on an `OccurrenceStream` to combine
+ * rrules, exrules, rdates, and exdates appropriately.
  * 
  * ### Example
  ```
- const includeDatesFromTheseSchedules = [new Schedule()]
+ const schedule1 = new Schedule();
+ const schedule2 = new Rule();
+ const dates = new Dates();
 
- const excludeDatesFromTheseSchedules = [
-   new Schedule(),
-   new EXRule()
-  ]
-
- const includeTheseSpecificDates = new RDates()
- const excludeTheseSpecificDates = new EXDates()
-
- const customSchedule = occurrenceStream(
-    add(...includeDatesFromTheseSchedules),
-    subtract(...excludeDatesFromTheseSchedules),
-    add(includeTheseSpecificDates),
-    subtract(excludeTheseSpecificDates),
-    unique(),
-  )
-
- new Calendar({
-   schedules: customSchedule
+ const stream = new OccurrenceStream({
+   operators: [
+     add(schedule1),
+     subtract(schedule2, dates)
+   ]
  })
+
+ stream.occurrences().toArray() // occurrences
+
+ new Calendar({ schedules: stream }).occurrences().toArray() // occurrences
  ```
- * This function works similarly to the `pipe()` method in rxjs, in that
- * it receives an arbitrary number of `operator()` functions as arguments
- * and uses the functions to create a new, single stream of occurrences.
+ * In general, you should not need to manually create an `OccurrenceStream`.
+ * Instead, you can use `OccurrenceGenerater#pipe()` to pass an occurrence
+ * generator's occurrences through various operator functions (similar to
+ * rxjs pipes).
  * 
- * Internally, it uses the result of one operator function as the input for
- * the next operator function, meaning that the order of functions matters.
+ * ### Example
+ ```
+ const schedule = new Schedule().pipe(
+  add(schedule1),
+  subtract(schedule2, dates)
+ )
+
+ schedule.occurrences().toArray() // occurrences
+ ```
  * 
- * @param operators a spread of operator functions
+ * Operator functions:
+ * - add()
+ * - subtract()
+ * - intersection()
+ * - unique()
  */
 
 export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGenerator<T> {

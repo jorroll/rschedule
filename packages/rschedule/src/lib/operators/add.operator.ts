@@ -12,12 +12,10 @@ import {
 const ADD_OPERATOR_ID = Symbol.for('2898c208-e9a8-41a2-8627-2bc993ab376f');
 
 /**
- * An operator function, intended as an argument for
- * `occurrenceStream()`, which gets the union of the previous
- * schedule's occurrences in the `occurrenceStream` pipe as well as the occurrences
- * of any input arguments.
+ * An operator function which accepts a spread of occurrence generators
+ * and adds their occurrences to the output.
  *
- * @param streams a spread of scheduling objects
+ * @param streams a spread of occurrence generators
  */
 export function add<T extends typeof DateAdapter>(
   ...streams: IOccurrenceGenerator<T>[]

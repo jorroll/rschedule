@@ -12,7 +12,7 @@ import {
 
 const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45');
 
-export class Rule<T extends typeof DateAdapter, D = unknown> extends OccurrenceGenerator<T> {
+export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
   /**
    * Similar to `Array.isArray()`, `isRule()` provides a surefire method
    * of determining if an object is a `Rule` by checking against the

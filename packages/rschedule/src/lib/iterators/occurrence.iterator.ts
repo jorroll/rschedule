@@ -2,7 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { DateInput, IOccurrenceGenerator } from '../interfaces';
 import { IRunArgs } from '../interfaces/runnable';
-import { ConstructorReturnType } from '../utilities';
+import { ConstructorReturnType, InfiniteLoopError } from '../utilities';
 
 export class OccurrenceIterator<T extends typeof DateAdapter> {
   private readonly iterator: IterableIterator<DateTime>;
@@ -23,6 +23,12 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
     if (this.args.end || this.args.take || !this.isInfinite) {
       return Array.from(this._run());
     }
+
+    throw new InfiniteLoopError(
+      'OccurrenceIterator#toArray() can only be called if the iterator ' +
+        'is not infinite, or you provide and `end` argument, or you provide ' +
+        'a `take` argument.',
+    );
   }
 
   private *_run(rawArgs?: { skipToDate?: DateInput<T> }) {

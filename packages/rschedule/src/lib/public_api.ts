@@ -14,4 +14,4 @@ export * from './dates/public_api';
 export * from './rule/public_api';
 export * from './schedule/public_api';
 
-export { ArgumentError, ConstructorReturnType, Omit } from './utilities';
+export { ArgumentError, ConstructorReturnType, Omit, InfiniteLoopError } from './utilities';

@@ -59,7 +59,6 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
   constructor(args: {
     start: DateInput<T>;
-    duration?: number;
     dateAdapter?: T;
     data?: D;
     rrule?: IVEventRuleOptions<T>;
@@ -108,7 +107,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       });
     }
 
-    this.duration = args.duration;
+    // this.duration = args.duration;
     this.hasDuration = !!this.duration;
 
     this.isInfinite = !!(this.rrule && this.rrule.isInfinite);
@@ -146,7 +145,6 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
     return new VEvent({
       start: this.start,
-      duration: this.duration,
       dateAdapter: this.dateAdapter,
       data: this.data,
       ...(this.rrule ? { rrule: this.rrule.options } : {}),

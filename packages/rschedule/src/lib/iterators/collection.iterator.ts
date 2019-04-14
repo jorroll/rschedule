@@ -2,7 +2,12 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { DateInput, IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
 import { RuleOption } from '../rule';
-import { ArgumentError, ConstructorReturnType, freqToGranularity } from '../utilities';
+import {
+  ArgumentError,
+  ConstructorReturnType,
+  freqToGranularity,
+  InfiniteLoopError,
+} from '../utilities';
 import { IOccurrencesArgs } from './occurrence.iterator';
 
 export class CollectionIterator<T extends typeof DateAdapter> {
@@ -54,8 +59,7 @@ export class CollectionIterator<T extends typeof DateAdapter> {
   /**
    * While `next()` and `[Symbol.iterator]` both share state,
    * `toArray()` does not share state and always returns the whole
-   * collections array (or `undefined`, in the case of collection of
-   * infinite length)
+   * collections array.
    */
   toArray() {
     if (this.args.end || this.args.take || !this.iterable.isInfinite) {
@@ -67,6 +71,12 @@ export class CollectionIterator<T extends typeof DateAdapter> {
 
       return collections;
     }
+
+    throw new InfiniteLoopError(
+      'CollectionIterator#toArray() can only be called if the iterator ' +
+        'is not infinite, or you provide and `end` argument, or you provide ' +
+        'a `take` argument.',
+    );
   }
 
   private normalizeDateInput(date?: DateInput<T>) {

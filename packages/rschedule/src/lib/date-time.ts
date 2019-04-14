@@ -18,7 +18,7 @@ export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
 
 export interface IDateAdapter<D = unknown> {
   /** Returns the date object this DateAdapter is wrapping */
-  readonly date: unknown;
+  readonly date: D;
   readonly timezone: string | null;
   readonly duration: number | undefined;
 

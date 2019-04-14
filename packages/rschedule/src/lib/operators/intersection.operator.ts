@@ -15,29 +15,23 @@ import {
 const INTERSECTION_OPERATOR_ID = Symbol.for('a978cd71-e379-4a0e-b4da-cbc14ce473dc');
 
 /**
- * An operator function, intended as an argument for
- * `occurrenceStream()`, which takes a spread of occurrence streams and only
- * returns the dates which intersect every occurrence stream.
+ * An operator function, which takes a spread of occurrence generators and only
+ * returns the dates which intersect every occurrence generator.
  *
- * Because it's possible for all the streams to never intersect,
+ * Because it's possible for all the generators to never intersect,
  * and because the intersection operator can't detect this lack of intersection,
- * the IntersectionOperator must be constructed with either a
- * `{maxFailedIterations: number}` argument or a `{defaultEndDate: T}` argument.
+ * you must call `intersection()` with a `{maxFailedIterations: number}` argument.
+ * For convenience, you can globally set `RScheduleConfig.defaultMaxFailedIterations`.
+ * Without further information, I'd probably set `defaultMaxFailedIterations = 50`.
  *
- * The `maxFailedIterations` argument caps the number of iterations `IterationOperator#_run()` will
+ * The `maxFailedIterations` argument caps the number of iterations the operator will
  * run through without finding a single valid occurrence. If this number is reached, the operator will
  * stop iterating (preventing a possible infinite loop).
  *
- * - Note: I'm going to emphasize that `maxFailedIterations` caps the number of iterations which
+ * - Note: `maxFailedIterations` caps the number of iterations which
  *   *fail to turn up a single valid occurrence*. Every time a valid occurrence is returned,
  *   the current iteration count is reset to 0.
  *
- * Alternatively, you can construct the operator with a `defaultEndDate` argument. This argument
- * acts as the default `end` argument for `IterationOperator#_run()` for when you call that method
- * without supplying an `end` argument (again, preventing possible infinite loops).
- *
- * @param options On object containing the defaultEndDate and/or maxFailedIterations args
- * @param inputs a spread of occurrence streams
  */
 
 export function intersection<T extends typeof DateAdapter>(args: {
@@ -73,7 +67,7 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
     this.maxFailedIterations =
       args.maxFailedIterations || (RScheduleConfig.defaultMaxFailedIterations as number);
 
-    if (this.maxFailedIterations === undefined) {
+    if (!this.maxFailedIterations) {
       throw new ArgumentError(
         'The IntersectionOperator must be provided ' +
           'a `maxFailedIterations` argument. This argument is ' +

@@ -1,8 +1,10 @@
 import {
+  ArgumentError,
   ConstructorReturnType,
   DateAdapter,
   IDateAdapter,
   IProvidedRuleOptions,
+  RScheduleConfig,
   RuleOption,
   WEEKDAYS,
 } from '@rschedule/rschedule';
@@ -27,14 +29,42 @@ export interface IVEventArgs<T extends typeof DateAdapter> {
   data: { jCal: IJCalComponent };
 }
 
+export interface IParsedICalString<T extends typeof DateAdapter> {
+  vEvents: VEvent<T, { jCal: IJCalComponent }>[];
+  iCal: string;
+  jCal: IJCalComponent[];
+}
+export function parseICal<T extends typeof DateAdapter>(
+  iCalString: string,
+  options: {
+    dateAdapter?: T;
+  },
+): IParsedICalString<T>;
+export function parseICal<T extends typeof DateAdapter>(
+  iCalString: string[],
+  options: {
+    dateAdapter?: T;
+  },
+): IParsedICalString<T>[];
 export function parseICal<T extends typeof DateAdapter>(
   iCalString: string | string[],
-  dateAdapter: T,
-) {
+  options: {
+    dateAdapter?: T;
+  } = {},
+): IParsedICalString<T> | IParsedICalString<T>[] {
+  const dateAdapter = options.dateAdapter || (RScheduleConfig.defaultDateAdapter as T);
+
+  if (!dateAdapter) {
+    throw new ArgumentError(
+      'No `dateAdapter` option provided to `parseICal()`. Additionally, ' +
+        '`RScheduleConfig.defaultDateAdapter` not set.',
+    );
+  }
+
   // normalize input
   const input = Array.isArray(iCalString) ? iCalString : [iCalString];
 
-  return input.map(iCal => {
+  const results = input.map(iCal => {
     const match = iCal.trim().match(LINE_REGEX);
 
     if (match && match[0] && !(match[0].toUpperCase().split(':')[0] === 'BEGIN')) {
@@ -55,29 +85,20 @@ export function parseICal<T extends typeof DateAdapter>(
 
     const parsedJCal = parseJCal(jCal, dateAdapter);
 
-    const parsedICal: {
-      vEvents: Array<
-        VEvent<
-          T,
-          {
-            jCal: IJCalComponent;
-          }
-        >
-      >;
-      iCal: string;
-      jCal: IJCalComponent[];
-    } = {
+    const parsedICal: IParsedICalString<T> = {
       vEvents: [],
       iCal,
       jCal: parsedJCal.jCal,
     };
 
     parsedJCal.vEvents.forEach(vEvent => {
-      parsedICal.vEvents.push(new VEvent({ ...vEvent, dateAdapter }));
+      parsedICal.vEvents.push(new VEvent<T, { jCal: IJCalComponent }>({ ...vEvent, dateAdapter }));
     });
 
     return parsedICal;
   });
+
+  return results.length > 1 ? results : results[0];
 }
 
 function parseJCal<T extends typeof DateAdapter>(

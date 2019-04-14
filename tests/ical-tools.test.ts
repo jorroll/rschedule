@@ -581,21 +581,19 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             it('serializes Schedule', () => {
               expect(cloneJSON(serializeToJCal(schedule))).toEqual(
                 cloneJSON([
+                  'vevent',
                   [
-                    'vevent',
+                    buildDTSTART(2010, 11, 10, 0, 0, 0, { timezone }),
                     [
-                      buildDTSTART(2010, 11, 10, 0, 0, 0, { timezone }),
-                      [
-                        'rrule',
-                        {},
-                        'recur',
-                        {
-                          freq: 'DAILY',
-                        },
-                      ],
+                      'rrule',
+                      {},
+                      'recur',
+                      {
+                        freq: 'DAILY',
+                      },
                     ],
-                    [],
                   ],
+                  [],
                 ]),
               );
             });
@@ -613,7 +611,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 ical[1] = `DTSTART;TZID=${timezone}:20101110T000000`;
               }
 
-              expect(serializeToICal(schedule)).toEqual([ical.join('\n').concat('\n')]);
+              expect(serializeToICal(schedule)).toEqual(ical.join('\n').concat('\n'));
             });
           });
         });
@@ -621,7 +619,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         describe('parseICal()', () => {
           it('parses RRULE_STRING', () => {
             if (DateAdapter.hasTimezoneSupport) {
-              const result = parseICal(RRULE_STRING, DateAdapter)[0];
+              const result = parseICal(RRULE_STRING, { dateAdapter: DateAdapter });
 
               expect(result.iCal).toBe(`BEGIN:VEVENT\n${RRULE_STRING}\nEND:VEVENT`);
 
@@ -694,12 +692,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 },
               ]);
             } else {
-              expect(() => parseICal(RRULE_STRING, DateAdapter)).toThrowError();
+              expect(() => parseICal(RRULE_STRING, { dateAdapter: DateAdapter })).toThrowError();
             }
           });
 
           it('parses RRULE_STRING_TWO', () => {
-            const result = parseICal(RRULE_STRING_TWO, DateAdapter)[0];
+            const result = parseICal(RRULE_STRING_TWO, { dateAdapter: DateAdapter });
 
             expect(result.iCal).toBe(`BEGIN:VEVENT\n${RRULE_STRING_TWO}\nEND:VEVENT`);
 
@@ -789,7 +787,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           it('parses VEVENT_STRING', () => {
             if (DateAdapter.hasTimezoneSupport) {
-              const result = parseICal(VEVENT_STRING, DateAdapter)[0];
+              const result = parseICal(VEVENT_STRING, { dateAdapter: DateAdapter });
 
               expect(result.iCal).toBe(VEVENT_STRING);
 
@@ -854,7 +852,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 },
               ]);
             } else {
-              expect(() => parseICal(VEVENT_STRING, DateAdapter)).toThrowError();
+              expect(() => parseICal(VEVENT_STRING, { dateAdapter: DateAdapter })).toThrowError();
             }
           });
 
@@ -1638,37 +1636,41 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           // });
 
           it('handles INVALID_STRING_ONE', () => {
-            expect(() => parseICal(INVALID_STRING_ONE, DateAdapter)).toThrowError(
+            expect(() => parseICal(INVALID_STRING_ONE, { dateAdapter: DateAdapter })).toThrowError(
               `invalid line (no token ";" or ":") "Dced34xdio"`,
             );
           });
 
           it('handles INVALID_STRING_TWO', () => {
-            expect(() => parseICal(INVALID_STRING_TWO, DateAdapter)).toThrowError(
+            expect(() => parseICal(INVALID_STRING_TWO, { dateAdapter: DateAdapter })).toThrowError(
               `Invalid VEVENT component: "DTSTART" property missing.`,
             );
           });
 
           it('handles INVALID_STRING_THREE', () => {
-            expect(parseICal(INVALID_STRING_THREE, DateAdapter)).toEqual([
-              { jCal: [], iCal: INVALID_STRING_THREE, vEvents: [] },
-            ]);
+            expect(parseICal(INVALID_STRING_THREE, { dateAdapter: DateAdapter })).toEqual({
+              jCal: [],
+              iCal: INVALID_STRING_THREE,
+              vEvents: [],
+            });
           });
 
           it('handles INVALID_STRING_FOUR', () => {
-            expect(parseICal(INVALID_STRING_FOUR, DateAdapter)).toEqual([
-              { jCal: [], iCal: INVALID_STRING_FOUR, vEvents: [] },
-            ]);
+            expect(parseICal(INVALID_STRING_FOUR, { dateAdapter: DateAdapter })).toEqual({
+              jCal: [],
+              iCal: INVALID_STRING_FOUR,
+              vEvents: [],
+            });
           });
 
           it('handles INVALID_STRING_FIVE', () => {
-            expect(() => parseICal(INVALID_STRING_FIVE, DateAdapter)).toThrowError(
+            expect(() => parseICal(INVALID_STRING_FIVE, { dateAdapter: DateAdapter })).toThrowError(
               `invalid line (no token ";" or ":") "dfDDDdveajdfdoih3289hxfd"`,
             );
           });
 
           it('handles INVALID_STRING_SIX', () => {
-            expect(() => parseICal(INVALID_STRING_SIX, DateAdapter)).toThrowError(
+            expect(() => parseICal(INVALID_STRING_SIX, { dateAdapter: DateAdapter })).toThrowError(
               `Invalid parameters in 'dfDDDdve;ajdfdoih3289hxfd'`,
             );
           });
@@ -1686,11 +1688,11 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             .concat('\n');
 
           it('local', () => {
-            const parsed = parseICal(icalLocal, DateAdapter)[0].vEvents[0] as VEvent<
+            const parsed = parseICal(icalLocal, { dateAdapter: DateAdapter }).vEvents[0] as VEvent<
               typeof DateAdapter
             >;
 
-            const serialized = serializeToICal(parsed)[0];
+            const serialized = serializeToICal(parsed);
 
             expect(serialized).toBe(icalLocal);
           });
@@ -1707,15 +1709,14 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           it('America/New_York', () => {
             if (DateAdapter.hasTimezoneSupport) {
-              const parsed = parseICal(icalNewYork, DateAdapter)[0].vEvents[0] as VEvent<
-                typeof DateAdapter
-              >;
+              const parsed = parseICal(icalNewYork, { dateAdapter: DateAdapter })
+                .vEvents[0] as VEvent<typeof DateAdapter>;
 
-              const serialized = serializeToICal(parsed)[0];
+              const serialized = serializeToICal(parsed);
 
               expect(serialized).toBe(icalNewYork);
             } else {
-              expect(() => parseICal(icalNewYork, DateAdapter)).toThrowError();
+              expect(() => parseICal(icalNewYork, { dateAdapter: DateAdapter })).toThrowError();
             }
           });
         });
@@ -1753,7 +1754,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             ical[3] = `RDATE;TZID=${timezone}:20101011T000000`;
           }
 
-          const serialized = serializeToICal(schedule)[0];
+          const serialized = serializeToICal(schedule);
 
           expect(serialized).toBe(ical.join('\n').concat('\n'));
         });

@@ -8,11 +8,10 @@ import { IterableWrapper, streamPastEnd, streamPastSkipToDate } from './utilitie
 const SUBTRACT_OPERATOR_ID = Symbol.for('66b1962f-32c5-4c16-9a9d-e69f52812ab8');
 
 /**
- * An operator function, intended as an argument for
- * `occurrenceStream()`, which excludes the occurrences of input arguments from the
- * occurrences of the previous schedule's occurrences in the `occurrenceStream` pipe.
+ * An operator function which accepts a spread of occurrence generators
+ * and removes their occurrences from the output.
  *
- * @param inputs a spread of scheduling objects
+ * @param streams a spread of occurrence generators
  */
 export function subtract<T extends typeof DateAdapter>(
   ...streams: IOccurrenceGenerator<T>[]

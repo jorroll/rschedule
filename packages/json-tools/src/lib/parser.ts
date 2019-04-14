@@ -1,5 +1,6 @@
 import {
   add,
+  ArgumentError,
   Calendar,
   DateAdapter,
   Dates,
@@ -7,6 +8,7 @@ import {
   IProvidedRuleOptions,
   OccurrenceStream,
   OperatorFnOutput,
+  RScheduleConfig,
   Rule,
   Schedule,
   subtract,
@@ -24,25 +26,34 @@ export class ParseJSONError extends Error {}
 
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON,
-  dateAdapterConstructor: T,
   options?: {
+    dateAdapter?: T;
     maxFailedIterations?: number;
   },
 ): RScheduleObject<T>;
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON[],
-  dateAdapterConstructor: T,
   options?: {
+    dateAdapter?: T;
     maxFailedIterations?: number;
   },
 ): RScheduleObject<T>[];
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON | RScheduleObjectJSON[],
-  dateAdapter: T,
   options: {
+    dateAdapter?: T;
     maxFailedIterations?: number;
   } = {},
 ): RScheduleObject<T> | RScheduleObject<T>[] {
+  const dateAdapter = options.dateAdapter || (RScheduleConfig.defaultDateAdapter as T);
+
+  if (!dateAdapter) {
+    throw new ArgumentError(
+      'No `dateAdapter` option provided to `parseJSON()`. Additionally, ' +
+        '`RScheduleConfig.defaultDateAdapter` not set.',
+    );
+  }
+
   const inputs = Array.isArray(input) ? input : [input];
 
   let result: Array<RScheduleObject<T>>;
@@ -54,10 +65,10 @@ export function parseJSON<T extends typeof DateAdapter>(
           return new Schedule({
             ...json,
             rrules: json.rrules.map(
-              rule => parseJSON({ ...rule, timezone: json.timezone }, dateAdapter) as Rule<T>,
+              rule => parseJSON({ ...rule, timezone: json.timezone }, { dateAdapter }) as Rule<T>,
             ),
             exrules: json.exrules.map(
-              rule => parseJSON({ ...rule, timezone: json.timezone }, dateAdapter) as Rule<T>,
+              rule => parseJSON({ ...rule, timezone: json.timezone }, { dateAdapter }) as Rule<T>,
             ),
             rdates: json.rdates.dates.map(date => dateAdapter.fromJSON(date)),
             exdates: json.exdates.dates.map(date => dateAdapter.fromJSON(date)),
@@ -92,7 +103,9 @@ export function parseJSON<T extends typeof DateAdapter>(
         case 'Calendar':
           return new Calendar({
             ...json,
-            schedules: json.schedules.map(schedule => parseJSON(schedule, dateAdapter, options)),
+            schedules: json.schedules.map(schedule =>
+              parseJSON(schedule, { dateAdapter, ...options }),
+            ),
             dateAdapter,
           });
         default:
@@ -119,13 +132,15 @@ function parseOperatorJSON<T extends typeof DateAdapter>(
 ): OperatorFnOutput<T> {
   switch (json.type) {
     case 'AddOperator':
-      return add(...json.streams.map(stream => parseJSON(stream, dateAdapter, options)));
+      return add(...json.streams.map(stream => parseJSON(stream, { dateAdapter, ...options })));
     case 'SubtractOperator':
-      return subtract(...json.streams.map(stream => parseJSON(stream, dateAdapter, options)));
+      return subtract(
+        ...json.streams.map(stream => parseJSON(stream, { dateAdapter, ...options })),
+      );
     case 'IntersectionOperator':
       return intersection({
         maxFailedIterations: options.maxFailedIterations,
-        streams: json.streams.map(stream => parseJSON(stream, dateAdapter, options)),
+        streams: json.streams.map(stream => parseJSON(stream, { dateAdapter, ...options })),
       });
     case 'UniqueOperator':
       return unique();
