@@ -1,11 +1,22 @@
+# Date adapters
+
 rSchedule is date library agnostic. It needs a `IDateAdapter` constructor to process dates. A selection of DateAdapters already exist. Additionally, it should be pretty easy for you to create your own date adapter for whatever date library you wish.
 
-Most all of the rSchedule objects are generic and receive a `typeof DateAdapter` type object as an argument. There are two ways to provide this argument.
+- [StandardDateAdapter](./standard-date-adapter)
+  - For use with the standard javascript `Date` object. Supports local and UTC timezones.
+- [MomentDateAdapter](./moment-date-adapter)
+  - For use with moment `Moment` objects. Supports local and UTC timezones.
+- [MomentTZDateAdapter](./moment-tz-date-adapter)
+  - For use with moment-timezone `Moment` objects. Has full timezone support.
+- [LuxonDateAdapter](./luxon-date-adapter)
+  - For use with luxon `DateTime` objects. Has full timezone support.
 
-1. When creating the object, provide the date adapter constructor
+Date adapters are provided to rSchedule occurrence generator objects, all of which have generic types and receive a `typeof DateAdapter` type object as an argument. There are two ways to provide this argument.
+
+1. When creating the generator object, provide the date adapter constructor
 
    ```typescript
-   new Schedule({ dateAdapter: MomentTZDateAdapter });
+   new Schedule({ dateAdapter: LuxonDateAdapter });
 
    const providedRuleOptions = {
      start: moment(),
@@ -39,17 +50,6 @@ When providing a date adapter constructor as a constructor argument (option 1, a
   // bad
   new Schedule<MomentTZDateAdapter>();
   ```
-
-### Date Adapters
-
-- [StandardDateAdapter](./standard-date-adapter)
-  - For use with the standard javascript `Date` object. Supports local and UTC timezones.
-- [MomentDateAdapter](./moment-date-adapter)
-  - For use with moment `Moment` objects. Supports local and UTC timezones.
-- [MomentTZDateAdapter](./moment-tz-date-adapter)
-  - For use with moment-timezone `Moment` objects. Has full timezone support.
-- [LuxonDateAdapter](./luxon-date-adapter)
-  - For use with luxon `DateTime` objects. Has full timezone support.
 
 Each DateAdapter has a `generators` property which contains an array of the rSchedule objects which are responsible for generating that particular date. For example, when iterating through a `Schedule` containing two `RRule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `RRule` object which generated the date, the second element will be the `Schedule` object which generated the date. The `IDateAdapter#generators` property pairs with the `IOccurrenceGenerator#data` data property. This allows you to attach data to a `Rule` or `Schedule`, and access that data from the yielded dates.
 
