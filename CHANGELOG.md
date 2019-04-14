@@ -8,7 +8,9 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 - Added in beginning of `duration` support.
 - Moved `MomentTZDateAdapter` into its own package.
 - Updated `json-tools` to work with new API.
-- Broke `ical-tools`
+- Updated `ical-tools` to work with new API.
+  - Added new `VEvent` object which aligns to the `VEVENT` component in the ICalendar spec.
+  - Removed the `ical-tools` dependency on `lodash.clonedeep`.
 - Migrated docs from a gitlab WIKI to individual files inside the repo so that doc changes are tracked alongside the repo.
 - Eliminated `EXRule`, `RRule`, `EXDate`, and `RDate` objects. Now there are just `Dates` and `Rule` objects.
 - Simplified the code for operators.
