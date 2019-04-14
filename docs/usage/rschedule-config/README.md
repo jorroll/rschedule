@@ -2,11 +2,13 @@
 
 The `RScheduleConfig` object holds global config values for rSchedule.
 
-Config properties:
-
-- `defaultDateAdapter`
-- `defaultTimezone`
-- `defaultMaxFailedIterations`
+```typescript
+class RScheduleConfig {
+  static defaultDateAdapter: typeof DateAdapter | undefined;
+  static defaultTimezone: string | null = null;
+  static defaultMaxFailedIterations: number | undefined;
+}
+```
 
 ### `defaultDateAdapter`
 
