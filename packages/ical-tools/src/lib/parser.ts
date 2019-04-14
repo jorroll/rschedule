@@ -1,230 +1,114 @@
 import {
-  Calendar,
+  ConstructorReturnType,
   DateAdapter,
   IDateAdapter,
   IProvidedRuleOptions,
   RuleOption,
-  Schedule,
   WEEKDAYS,
 } from '@rschedule/rschedule';
 import { parse } from 'ical.js';
+import { IJCalComponent, IJCalProperty } from './serializer';
+import { IVEventRuleOptions, VEvent } from './vevent';
 
 export class ParseICalError extends Error {}
 
 const LINE_REGEX = /^.*\n?/;
 
-export interface IParsedICalProperty extends Array<any> {
-  [0]: string;
-  [1]: { [property: string]: string };
-  [2]: string;
-  [3]: any;
-}
-
-export type IDtstartProperty<T extends typeof DateAdapter> = IParsedICalProperty & {
-  processedValue: T['date'];
+type IDtstartProperty<T extends typeof DateAdapter> = IJCalProperty & {
+  processedValue: ConstructorReturnType<T>;
 };
 
-export interface IParsedICalComponent {
-  [0]: string;
-  [1]: IParsedICalProperty[];
-  [2]: IParsedICalComponent[];
-}
-
-export interface IProcessedVEvent<T extends typeof DateAdapter> {
-  rrules: Array<IProvidedRuleOptions<T>>;
-  exrules: Array<IProvidedRuleOptions<T>>;
-  rdates: Array<T['date']>;
-  exdates: Array<T['date']>;
-  data: { iCalendar: IParsedICalComponent };
-}
-
-export interface IProcessedVCalendar<T extends typeof DateAdapter> {
-  schedules: Array<IProcessedVEvent<T>>;
-  data: { iCalendar: IParsedICalComponent };
-}
-
-export interface IProcessedICalendar<T extends typeof DateAdapter> {
-  vevents: Array<IProcessedVEvent<T>>;
-  vcalendars: Array<IProcessedVCalendar<T>>;
-  iCalendar: IParsedICalComponent[];
+export interface IVEventArgs<T extends typeof DateAdapter> {
+  start: ConstructorReturnType<T>;
+  rrule?: IVEventRuleOptions<T>;
+  exrule?: IVEventRuleOptions<T>;
+  rdates?: ConstructorReturnType<T>[];
+  exdates?: ConstructorReturnType<T>[];
+  data: { jCal: IJCalComponent };
 }
 
 export function parseICal<T extends typeof DateAdapter>(
-  input: string | string[],
+  iCalString: string | string[],
   dateAdapter: T,
-  options: {
-    optionalDTSTART?: boolean;
-    returnOptionsObjects?: boolean;
-  } = {},
 ) {
   // normalize input
-  if (!Array.isArray(input)) {
-    input = [input];
-  }
+  const input = Array.isArray(iCalString) ? iCalString : [iCalString];
 
-  return input.map(ical => {
-    const match = ical.trim().match(LINE_REGEX);
+  return input.map(iCal => {
+    const match = iCal.trim().match(LINE_REGEX);
 
     if (match && match[0] && !(match[0].toUpperCase().split(':')[0] === 'BEGIN')) {
-      ical = `BEGIN:VEVENT\n${ical}\nEND:VEVENT`;
+      iCal = `BEGIN:VEVENT\n${iCal}\nEND:VEVENT`;
+    } else if (match && match[0] && !(match[0].toUpperCase().split(':')[1] !== 'VEVENT')) {
+      throw new ParseICalError(
+        `"parseICal()" currently only supports parsing VEVENT ical components.`,
+      );
     }
 
-    let parsedICal: any;
+    let jCal: IJCalComponent;
 
     try {
-      parsedICal = parse(ical);
+      jCal = parse(iCal);
     } catch (e) {
       throw new ParseICalError(e.message);
     }
 
-    const processedICal = processParsedICalString(parsedICal, dateAdapter, options);
+    const parsedJCal = parseJCal(jCal, dateAdapter);
 
-    if (options.returnOptionsObjects) {
-      return {
-        calendars: processedICal.vcalendars,
-        events: processedICal.vevents,
-        iCalendar: processedICal.iCalendar,
-      };
-    }
-
-    const result: {
-      calendars: Array<
-        Calendar<
+    const parsedICal: {
+      vEvents: Array<
+        VEvent<
           T,
           {
-            iCalendar: IParsedICalComponent;
+            jCal: IJCalComponent;
           }
         >
       >;
-      events: Array<
-        Schedule<
-          T,
-          {
-            iCalendar: IParsedICalComponent;
-          }
-        >
-      >;
-      iCalendar: IParsedICalComponent[];
+      iCal: string;
+      jCal: IJCalComponent[];
     } = {
-      calendars: [],
-      events: [],
-      iCalendar: processedICal.iCalendar,
+      vEvents: [],
+      iCal,
+      jCal: parsedJCal.jCal,
     };
 
-    processedICal.vcalendars.forEach(vcalendar => {
-      if (
-        vcalendar.data.iCalendar[1].some(
-          prop => prop[0] === 'x-rschedule-type' && prop[3] === 'SCHEDULE',
-        )
-      ) {
-        const rrules: Array<IProvidedRuleOptions<T>> = [];
-        const exrules: Array<IProvidedRuleOptions<T>> = [];
-        const rdates: Array<T['date']> = [];
-        const exdates: Array<T['date']> = [];
-
-        vcalendar.schedules.forEach(event => {
-          event.rrules.forEach(rrule => {
-            rrules.push(rrule);
-          });
-
-          event.exrules.forEach(exrule => {
-            exrules.push(exrule);
-          });
-
-          event.rdates.forEach(date => {
-            rdates.push(date);
-          });
-
-          event.exdates.forEach(date => {
-            exdates.push(date);
-          });
-        });
-
-        result.events.push(
-          new Schedule({
-            data: vcalendar.data,
-            rrules,
-            exrules,
-            rdates,
-            exdates,
-            dateAdapter,
-          }),
-        );
-      } else {
-        result.calendars.push(
-          new Calendar({
-            schedules: vcalendar.schedules.map(
-              schedule =>
-                new Schedule({
-                  ...schedule,
-                  dateAdapter,
-                }),
-            ),
-            data: vcalendar.data,
-            dateAdapter,
-          }),
-        );
-      }
+    parsedJCal.vEvents.forEach(vEvent => {
+      parsedICal.vEvents.push(new VEvent({ ...vEvent, dateAdapter }));
     });
 
-    result.events.push(
-      ...processedICal.vevents.map(vevent => new Schedule({ ...vevent, dateAdapter })),
-    );
-
-    return result;
+    return parsedICal;
   });
 }
 
-function processParsedICalString<T extends typeof DateAdapter>(
-  input: IParsedICalComponent | IParsedICalComponent[],
+function parseJCal<T extends typeof DateAdapter>(
+  input: IJCalComponent | IJCalComponent[],
   dateAdapter: T,
-  options: {
-    optionalDTSTART?: boolean;
-  } = {},
 ) {
   const root =
-    typeof (input as any)[0] === 'string'
-      ? [input as IParsedICalComponent]
-      : (input as IParsedICalComponent[]);
+    typeof (input as any)[0] === 'string' ? [input as IJCalComponent] : (input as IJCalComponent[]);
 
-  const iCalendar: IProcessedICalendar<T> = {
-    vevents: [],
-    vcalendars: [],
-    iCalendar: root,
+  const parsedJCal: {
+    vEvents: IVEventArgs<T>[];
+    jCal: IJCalComponent[];
+  } = {
+    vEvents: [],
+    jCal: root,
   };
 
   root.forEach(component => {
     switch (component[0]) {
       case 'vevent':
-        return iCalendar.vevents.push(processParsedVEvent(component, dateAdapter, options));
-      case 'vcalendar':
-        return iCalendar.vcalendars.push(processParsedVCalendar(component, dateAdapter, options));
+        return parsedJCal.vEvents.push(parseVEvent(component, dateAdapter));
       default:
         return;
     }
   });
 
-  return iCalendar;
+  return parsedJCal;
 }
 
-function processParsedVEvent<T extends typeof DateAdapter>(
-  input: IParsedICalComponent,
-  dateAdapter: T,
-  options: {
-    optionalDTSTART?: boolean;
-  } = {},
-) {
-  input = cloneJSON(input);
-
-  const params: IProcessedVEvent<T> = {
-    rrules: [],
-    exrules: [],
-    rdates: [],
-    exdates: [],
-    data: {
-      iCalendar: cloneJSON(input),
-    },
-  };
+function parseVEvent<T extends typeof DateAdapter>(rawInput: IJCalComponent, dateAdapter: T) {
+  const input = cloneJSON(rawInput);
 
   const dtstartIndex = input[1].findIndex(property => property[0] === 'dtstart');
 
@@ -234,7 +118,16 @@ function processParsedVEvent<T extends typeof DateAdapter>(
 
   const dtstartProperty: IDtstartProperty<T> = [...input[1].splice(dtstartIndex, 1)[0]] as any;
 
-  dtstartProperty.processedValue = processDTSTART(dtstartProperty, dateAdapter);
+  dtstartProperty.processedValue = parseDTSTART(dtstartProperty, dateAdapter);
+
+  const params: IVEventArgs<T> = {
+    start: dtstartProperty.processedValue,
+    rdates: [],
+    exdates: [],
+    data: {
+      jCal: cloneJSON(rawInput),
+    },
+  };
 
   input[1].forEach(property => {
     switch (property[0]) {
@@ -243,33 +136,22 @@ function processParsedVEvent<T extends typeof DateAdapter>(
           `Invalid VEVENT component: must have exactly 1 "DTSTART" property.`,
         );
       case 'rrule':
-        return params.rrules.push(processRRULE(property, dateAdapter, dtstartProperty));
+        return (params.rrule = parseRule(property, dateAdapter, dtstartProperty));
       case 'exrule':
-        return params.exrules.push(processRRULE(property, dateAdapter, dtstartProperty));
+        return (params.exrule = parseRule(property, dateAdapter, dtstartProperty));
       case 'rdate':
-        return params.rdates.push(...convertJCalDateTimeToDate(property, dateAdapter));
+        return params.rdates!.push(...jCalDateTimeToDateAdapter(property, dateAdapter));
       case 'exdate':
-        return params.exdates.push(...convertJCalDateTimeToDate(property, dateAdapter));
+        return params.exdates!.push(...jCalDateTimeToDateAdapter(property, dateAdapter));
       default:
         return;
     }
   });
 
-  // If the DTSTART time is not optional, add the DTSTART time
-  // to the VEVENT as an RDATE if there isn't already an RDATE
-  // equal to the DTSTART time.
-  if (!options.optionalDTSTART) {
-    const start = new dateAdapter(dtstartProperty.processedValue);
-
-    if (!params.rdates.map(date => new dateAdapter(date)).some(date => date.isEqual(start))) {
-      params.rdates.push(dtstartProperty.processedValue);
-    }
-  }
-
   return params;
 }
 
-function parseJCalDateTime(input: IParsedICalProperty): IDateAdapter.JSON[] {
+function parseJCalDateTime(input: IJCalProperty): IDateAdapter.JSON[] {
   input = cloneJSON(input);
 
   input.shift();
@@ -298,7 +180,7 @@ function parseJCalDateTime(input: IParsedICalProperty): IDateAdapter.JSON[] {
     }
 
     const result: IDateAdapter.JSON = {
-      timezone: params.tzid,
+      timezone: params.tzid || null,
       year: parseInt(match[0], 10),
       month: parseInt(match[1], 10),
       day: parseInt(match[2], 10),
@@ -318,33 +200,38 @@ function parseJCalDateTime(input: IParsedICalProperty): IDateAdapter.JSON[] {
   return results;
 }
 
-function convertJCalDateTimeToDate<T extends typeof DateAdapter>(
-  input: IParsedICalProperty,
+function jCalDateTimeToDateAdapter<T extends typeof DateAdapter>(
+  input: IJCalProperty,
   dateAdapter: T,
   options: {
-    dtstart?: IDtstartProperty<T>;
+    timezone?: string | null;
   } = {},
-): Array<T['date']> {
-  const results = parseJCalDateTime(input).map(result => dateAdapter.fromJSON(result));
+): ConstructorReturnType<T>[] {
+  const results = parseJCalDateTime(input).map(result =>
+    dateAdapter.fromJSON(result),
+  ) as ConstructorReturnType<T>[];
 
-  if (options.dtstart && options.dtstart![1].tzid) {
-    return results.map(adapter => adapter.set('timezone', options.dtstart![1].tzid).date);
+  if (options.timezone !== undefined) {
+    return results.map(
+      adapter =>
+        adapter.set('timezone', options.timezone as string | null) as ConstructorReturnType<T>,
+    );
   } else {
-    return results.map(adapter => adapter.date);
+    return results;
   }
 }
 
-export function processDTSTART<T extends typeof DateAdapter>(
-  input: IParsedICalProperty,
+export function parseDTSTART<T extends typeof DateAdapter>(
+  input: IJCalProperty,
   dateAdapterConstructor: T,
-): T['date'] {
+): ConstructorReturnType<T> {
   const type = input[2];
 
   if (!['date-time', 'date'].includes(type)) {
     throw new ParseICalError(`Invalid DTSTART value type "${type}".`);
   }
 
-  const dates = convertJCalDateTimeToDate(input, dateAdapterConstructor);
+  const dates = jCalDateTimeToDateAdapter(input, dateAdapterConstructor);
 
   if (dates.length !== 1) {
     throw new ParseICalError(`Invalid DTSTART: must have exactly 1 value.`);
@@ -353,13 +240,13 @@ export function processDTSTART<T extends typeof DateAdapter>(
   return dates[0];
 }
 
-export function processRRULE<T extends typeof DateAdapter>(
-  input: IParsedICalProperty,
+export function parseRule<T extends typeof DateAdapter>(
+  input: IJCalProperty,
   dateAdapterConstructor: T,
   dtstart: IDtstartProperty<T>,
 ): IProvidedRuleOptions<T> {
   if (!(input[3] && input[3].freq)) {
-    throw new ParseICalError(`Invalid RRULE property: must contain a "FREQ" value.`);
+    throw new ParseICalError(`Invalid RRULE/EXRULE property: must contain a "FREQ" value.`);
   }
 
   const result: IProvidedRuleOptions<T> = {
@@ -421,24 +308,21 @@ export function parseFrequency(text: string) {
 // Here we say that the type `T` must be a constructor that returns a DateAdapter
 // complient type
 export function parseUNTIL<T extends typeof DateAdapter>(
-  input: IParsedICalProperty,
+  input: IJCalProperty,
   dateAdapterConstructor: T,
   dtstart: IDtstartProperty<T>,
 ) {
-  const until = convertJCalDateTimeToDate(
+  const until = jCalDateTimeToDateAdapter(
     ['until', {}, dtstart[2], input[3].until],
     dateAdapterConstructor,
-    { dtstart },
+    { timezone: dtstart.processedValue.timezone },
   );
 
   if (until.length !== 1) {
     throw new ParseICalError(`Invalid RRULE "UNTIL" property. Must specify one value.`);
-  } else if (
-    new dateAdapterConstructor(until[0]).valueOf() <
-    new dateAdapterConstructor(dtstart.processedValue).valueOf()
-  ) {
+  } else if (until[0].valueOf() < dtstart.processedValue.valueOf()) {
     throw new ParseICalError(
-      `Invalid RRULE "UNTIL" property. ` + `"UNTIL" value cannot be less than "DTSTART" value.`,
+      `Invalid RRULE "UNTIL" property. "UNTIL" value cannot be less than "DTSTART" value.`,
     );
   }
 
@@ -581,36 +465,6 @@ export function parseWKST(input: number) {
   }
 
   return WEEKDAYS[input - 1];
-}
-
-function processParsedVCalendar<T extends typeof DateAdapter>(
-  input: IParsedICalComponent,
-  dateAdapterConstructor: T,
-  options: {
-    optionalDTSTART?: boolean;
-  } = {},
-): IProcessedVCalendar<T> {
-  input = cloneJSON(input);
-
-  const vCalendar: IProcessedVCalendar<T> = {
-    schedules: [],
-    data: {
-      iCalendar: input,
-    },
-  };
-
-  input[2].forEach(component => {
-    switch (component[0]) {
-      case 'vevent':
-        return vCalendar.schedules.push(
-          processParsedVEvent(component, dateAdapterConstructor, options),
-        );
-      default:
-        return;
-    }
-  });
-
-  return vCalendar;
 }
 
 function cloneJSON<T>(json: T): T {

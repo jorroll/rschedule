@@ -308,15 +308,20 @@ export function timezoneDateAdapterFn(
   dateAdapterConstructor: typeof DateAdapter,
   datetimeFn: (...args: any[]) => any,
   timezone: string | null,
-): (...args: number[]) => DateAdapter {
-  return (...args: number[]) => {
-    const dateAdapterArgs: (string | number)[] = args;
+): (...args: (number | string | null)[]) => DateAdapter {
+  return (...args: (number | string | null)[]) => {
+    let tzArg = timezone;
+    const dateAdapterArgs: (string | number | null)[] = args;
 
-    if (timezone !== null) {
-      dateAdapterArgs.push(timezone);
+    if (typeof args[args.length - 1] !== 'number') {
+      tzArg = args.pop() as string | null;
     }
 
-    return new dateAdapterConstructor(datetimeFn(...dateAdapterArgs), { timezone });
+    if (tzArg !== null) {
+      dateAdapterArgs.push(tzArg);
+    }
+
+    return new dateAdapterConstructor(datetimeFn(...dateAdapterArgs), { timezone: tzArg });
   };
 }
 

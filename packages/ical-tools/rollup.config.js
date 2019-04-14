@@ -10,11 +10,10 @@ export default [
       format: 'umd',
       globals: {
         '@rschedule/rschedule': 'rSchedule',
-        'lodash.clonedeep': 'cloneDeep',
         'ical.js': 'ICAL',
       },
     },
-    external: ['@rschedule/rschedule', 'ical.js', 'lodash.clonedeep'],
+    external: ['@rschedule/rschedule', 'ical.js'],
     plugins: [typescript()],
   },
   {
@@ -25,11 +24,10 @@ export default [
       format: 'esm',
       globals: {
         '@rschedule/rschedule': 'rSchedule',
-        'lodash.clonedeep': 'cloneDeep',
         'ical.js': 'ICAL',
       },
     },
-    external: ['@rschedule/rschedule', 'ical.js', 'lodash.clonedeep'],
+    external: ['@rschedule/rschedule', 'ical.js'],
     plugins: [
       typescript({
         tsconfig: './tsconfig.module.json',

@@ -51,9 +51,9 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
       }
       default:
         throw new InvalidDateAdapterError(
-          'The `DateAdapter` only supports datetimes in ' +
-            `UTC or LOCAL time. You provided a JSON object ` +
-            `with a "${json.timezone}" timezone.`,
+          'The `StandardDateAdapter` only supports datetimes in ' +
+            `UTC or LOCAL (null) time. You provided a JSON object ` +
+            `with timezone "${json.timezone}".`,
         );
     }
   }

@@ -5,12 +5,25 @@ import {
   IProvidedRuleOptions,
   normalizeDateInput,
   RuleOption,
-  Schedule,
   WEEKDAYS,
 } from '@rschedule/rschedule';
 import { stringify } from 'ical.js';
+import { VEvent } from './vevent';
 
 export class SerializeICalError extends Error {}
+
+export interface IJCalProperty extends Array<any> {
+  [0]: string;
+  [1]: { [property: string]: string };
+  [2]: string;
+  [3]: any;
+}
+
+export interface IJCalComponent {
+  [0]: string;
+  [1]: IJCalProperty[];
+  [2]: IJCalComponent[];
+}
 
 /**
  * Serializes an array of date adapters into JCal format.
@@ -19,9 +32,9 @@ export class SerializeICalError extends Error {}
  * @param type whether these are RDATEs or EXDATEs
  */
 function datesToJCalProps<T extends typeof DateAdapter>(
+  type: 'RDATE' | 'EXDATE',
   dates: Dates<T>,
-  type: 'RDATE' | 'EXDATE' = 'RDATE',
-) {
+): IJCalProperty[] {
   const adapters = dates.adapters.map(adapter => adapter.toDateTime());
 
   // group dates by timezone
@@ -48,7 +61,7 @@ function datesToJCalProps<T extends typeof DateAdapter>(
       timezones.get(timezone)!.push(dateTimeToJCal(date));
     });
 
-  const result: Array<Array<string | { tzid?: string }>> = [];
+  const result: Array<[string, {} | { tzid: string }, string, ...string[]]> = [];
 
   for (const [timezone, dateStrings] of timezones) {
     if (timezone === 'local' || timezone === 'UTC') {
@@ -58,7 +71,7 @@ function datesToJCalProps<T extends typeof DateAdapter>(
     }
   }
 
-  return result;
+  return result as IJCalProperty;
 }
 
 /**
@@ -70,10 +83,10 @@ function datesToJCalProps<T extends typeof DateAdapter>(
  * "RRULE" or an "EXRULE".
  */
 function ruleOptionsToJCalProp<T extends typeof DateAdapter>(
+  type: 'RRULE' | 'EXRULE',
   dateAdapter: T,
   ruleOptions: IProvidedRuleOptions<T>,
-  type: 'RRULE' | 'EXRULE',
-) {
+): IJCalProperty {
   const start = normalizeDateInput(ruleOptions.start, dateAdapter);
 
   let end: DateTime | undefined;
@@ -83,7 +96,7 @@ function ruleOptionsToJCalProp<T extends typeof DateAdapter>(
 
     if (start.timezone) {
       end = dateAdapter
-        .fromJSON(end.toJSON())
+        .fromDateTime(end)
         .set('timezone', 'UTC')
         .toDateTime();
     }
@@ -92,7 +105,7 @@ function ruleOptionsToJCalProp<T extends typeof DateAdapter>(
   const stringOptions: any = {};
 
   for (const option in ruleOptions) {
-    if (ruleOptions.hasOwnProperty(option)) {
+    if (ruleOptions.hasOwnProperty(option) && (ruleOptions as any)[option] !== undefined) {
       switch (option) {
         case 'frequency':
           stringOptions.freq = ruleOptions.frequency;
@@ -136,109 +149,33 @@ function ruleOptionsToJCalProp<T extends typeof DateAdapter>(
   return [type.toLowerCase(), {}, 'recur', stringOptions];
 }
 
-function scheduleToJCal<T extends typeof DateAdapter>(schedule: Schedule<T>) {
-  const start = schedule.firstDate;
-
-  if (!start) return [];
-
-  if (
-    schedule.rrules.some(rule => !rule.firstDate || !rule.firstDate.isEqual(start)) ||
-    schedule.exrules.some(rule => !rule.firstDate || !rule.firstDate.isEqual(start)) ||
-    schedule.rdates.adapters.some(adapter => adapter.isBefore(start)) ||
-    schedule.exdates.adapters.some(adapter => adapter.isBefore(start))
-  ) {
-    return [
-      'vcalendar',
-      [['x-rschedule-type', {}, 'unknown', 'SCHEDULE']],
-      [
-        ...schedule.rrules.map(rule =>
-          wrapInVEVENT(
-            dateToJCalDTSTART(rule.firstDate!),
-            ruleOptionsToJCalProp(rule['dateAdapter'], rule.options as any, 'RRULE'),
-          ),
-        ),
-        ...schedule.exrules.map(rule =>
-          wrapInVEVENT(
-            dateToJCalDTSTART(rule.firstDate!),
-            ruleOptionsToJCalProp(rule['dateAdapter'], rule.options as any, 'EXRULE'),
-          ),
-        ),
-        ...(schedule.rdates.length > 0
-          ? wrapInVEVENT(
-              dateToJCalDTSTART(schedule.rdates.firstDate!),
-              ...datesToJCalProps(schedule.rdates, 'RDATE'),
-            )
-          : []),
-        ...(schedule.exdates.length > 0
-          ? wrapInVEVENT(
-              dateToJCalDTSTART(schedule.exdates.firstDate!),
-              ...datesToJCalProps(schedule.exdates, 'EXDATE'),
-            )
-          : []),
-      ],
-    ];
-  } else {
-    return wrapInVEVENT(
-      dateToJCalDTSTART(start),
-      ...schedule.rrules.map(rule =>
-        ruleOptionsToJCalProp(rule['dateAdapter'], rule.options as any, 'RRULE'),
-      ),
-      ...schedule.exrules.map(rule =>
-        ruleOptionsToJCalProp(rule['dateAdapter'], rule.options as any, 'EXRULE'),
-      ),
-      ...datesToJCalProps(schedule.rdates, 'RDATE'),
-      ...datesToJCalProps(schedule.exdates, 'EXDATE'),
-    );
-  }
+function vEventToJCal<T extends typeof DateAdapter>(vevent: VEvent<T>): IJCalComponent {
+  return wrapInVEVENT(
+    dateToJCalDTSTART(vevent.start.toDateTime()),
+    ...(vevent.rrule
+      ? [ruleOptionsToJCalProp('RRULE', vevent.dateAdapter, vevent.rrule.options)]
+      : []),
+    ...(vevent.exrule
+      ? [ruleOptionsToJCalProp('EXRULE', vevent.dateAdapter, vevent.exrule.options)]
+      : []),
+    ...(vevent.rdates ? datesToJCalProps('RDATE', vevent.rdates) : []),
+    ...(vevent.exdates ? datesToJCalProps('EXDATE', vevent.exdates) : []),
+  );
 }
 
-// function calendarToJCal<T extends typeof DateAdapter>(calendar: Calendar<T, any>) {
-//   if (calendar.schedules.some(schedule => !Schedule.isSchedule(schedule))) {
-//     throw new SerializeICalError(
-//       `Cannot serialize complex Calendar objects. ` +
-//         `You can only serialize Calendar objects which are entirely made up ` +
-//         `of simple Schedule objects. This Calendar contains an OperatorObject ` +
-//         `which isn't a Schedule. See the @rschedule/ical-tools docs for more info.`,
-//     );
-//   }
-
-//   calendar.schedules.forEach(schedule => {
-//     const sched = schedule as Schedule<T>;
-//     const start = sched.firstDate;
-
-//     if (
-//       start &&
-//       (sched.rrules.some(rrule => rrule.firstDate.isEqual(start)) ||
-//         sched.exrules.some(exrule => exrule.firstDate.isEqual(start)))
-//     ) {
-//       throw new SerializeICalError(
-//         `Cannot serialize complex Calendar objects. ` +
-//           `You can only serialize Calendar objects which are entirely made up ` +
-//           `of simple Schedule objects. This Calendar contains a Schedule object ` +
-//           `which contains rules with multiple DTSTART times. ` +
-//           `See the @rschedule/ical-tools docs for more info.`,
-//       );
-//     }
-//   });
-
-//   return [
-//     'vcalendar',
-//     [],
-//     calendar.schedules.map(schedule => scheduleToJCal(schedule as Schedule<T>)),
-//   ];
-// }
-
-export function serializeToJCal<T extends typeof DateAdapter>(...inputs: Schedule<T>[]): any[] {
+export function serializeToJCal<T extends typeof DateAdapter>(
+  ...inputs: VEvent<T>[]
+): IJCalComponent[] {
   return inputs.map(input => {
-    if (Schedule.isSchedule(input)) {
-      return scheduleToJCal(input);
+    if (VEvent.isVEvent(input)) {
+      return vEventToJCal(input);
     } else {
       throw new SerializeICalError(`Unsupported input type "${input}"`);
     }
   });
 }
 
-export function serializeToICal<T extends typeof DateAdapter>(...inputs: Schedule<T>[]): string[] {
+export function serializeToICal<T extends typeof DateAdapter>(...inputs: VEvent<T>[]): string[] {
   return serializeToJCal(...inputs).map((jcal: any) =>
     // ical.js makes new lines with `\r\n` instead of just `\n`
     // `\r` is a "Carriage Return" character. We'll remove it.
@@ -286,6 +223,6 @@ function normalizeTimeLength(input: number) {
   return int.length > 1 ? int : `0${int}`;
 }
 
-function wrapInVEVENT(...inputs: any[]) {
+function wrapInVEVENT(...inputs: any[]): IJCalComponent {
   return ['vevent', [...inputs], []];
 }

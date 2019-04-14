@@ -7,14 +7,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn prebuild:rschedule && run-p build:*",
+    "build": "yarn clean:build && yarn prebuild:rschedule && run-p build:*",
     "prebuild:rschedule": "yarn --cwd='./packages/rschedule' build",
     "build:standard-date-adapter": "yarn --cwd='./packages/standard-date-adapter' build",
     "build:luxon-date-adapter": "yarn --cwd='./packages/luxon-date-adapter' build",
     "build:moment-date-adapter": "yarn --cwd='./packages/moment-date-adapter' build",
     "build:moment-tz-date-adapter": "yarn --cwd='./packages/moment-tz-date-adapter' build",
     "build:json-tools": "yarn --cwd='./packages/json-tools' build",
-    "wipBuild:ical-tools": "yarn --cwd='./packages/ical-tools' build",
+    "build:ical-tools": "yarn --cwd='./packages/ical-tools' build",
     "test": "jest --config './jest.config.json'",
     "test:watch": "jest --config './jest.config.json' --watch",
     "test:prod": "yarn lint && yarn test --coverage --no-cache",
