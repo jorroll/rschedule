@@ -2,7 +2,7 @@
 
 This repo attempts to follow [semantic versioning](https://semver.org/).
 
-## Unreleased changes as of 2019/3/30
+## 0.9.0 BREAKING (2019/4/14)
 
 - Rewrote repo so that, internally, immutable custom `DateTime` objects are used for datetime manipulation. This appears to have eliminated all outstanding recurrence bugs.
 - Added in beginning of `duration` support.
