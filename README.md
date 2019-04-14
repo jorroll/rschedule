@@ -2,12 +2,13 @@
 
 ### Still pre-1.0 release (i.e. Beta)
 
-A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol.
+A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol. The library is "date agnostic" and usable with standard `Date`, [`Moment`](https://momentjs.com), or luxon [`DateTime`](https://moment.github.io/luxon/) objects through a [`IDateAdapter` interface](./docs/date-adapter).
 
 At this point, the library's core functionality is feature complete and the tests are passing. This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule).
 
-Example usage:
+### Example usage:
 
+Iterate using standard javascript syntax
 ```typescript
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
@@ -25,7 +26,11 @@ for (const date of rule.occurrences()) {
 
   if (index > 10) break;
 }
+```
 
+Get the first 5 occurrences after a starting date
+
+```typescript
 rule
   .occurrences({
     start: new Date(2010, 5, 7),
@@ -33,6 +38,27 @@ rule
   })
   .toArray()
   .map(date => date.toISOString());
+```
+
+Add another schedule, subtract a specific date, filter to return only unique dates, and query to see if the result occurs on a Monday before `2013/9/15`.
+
+```typescript
+const schedule = new Schedule({
+  rrule: [{
+    frequency: 'DAILY',
+    byDayOfWeek: ['MO'],
+    start: new Date(2011, 1, 7),
+  }]
+})
+
+const dates = new Dates({ dates: [new Date(2010,10,15)] })
+
+rule.pipe(
+  add(schedule),
+  subtract(dates),
+  unique()
+)
+  .occursOn({ weekday: 'MO', before: new Date(2013,10,15) }) // true
 ```
 
 ## Docs
