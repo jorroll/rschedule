@@ -37,7 +37,7 @@ rule
 
 ## Docs
 
-- [Version 0.9 docs (current)](./docs/README.md)
+- [Version 0.9 docs (current)](./docs)
 - [Version 0.7 docs](https://gitlab.com/john.carroll.p/rschedule/wikis/home)
 
 ## Installation
@@ -61,7 +61,7 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 
 ## Known Limitations
 
-- No `BYWEEKNO`, `BYYEARDAY`, or `BYSETPOS` rule support. "By day of year" and "by position in set" should both be pretty straightforward to implement (if someone else wants to), they're just not something I need so not on my todo list.
+- No [`BYWEEKNO`](https://gitlab.com/john.carroll.p/rschedule/issues/2), [`BYYEARDAY`](https://gitlab.com/john.carroll.p/rschedule/issues/3), or [`BYSETPOS`](https://gitlab.com/john.carroll.p/rschedule/issues/4) rule support. "By day of year" and "by position in set" should both be pretty straightforward to implement (if someone else wants to), they're just not something I need so not on my todo list.
   - "By week of year" is different though. I spent a fair bit trying to get it to work and its just SUPER annoying (because it can create a valid date for year A in year B. e.g. the Saturday of the last week of 1998 _is in the year 1999_). Anyway, obviously doable, I have no plans to implement it though.
 - No `VCALENDAR` iCal support.
 - `VEVENT` iCal support includes iteration logic, but it doesn't include all of the spec. For example, it doesn't support the `VTIMEZONE` component.
