@@ -1,48 +1,10 @@
 # rSchedule
 
-**Still pre-1.0 release**
+## Version 0.9 Docs
 
 A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol.
 
-At this point, the library's core functionality is feature complete and _fairly_ stable, though I'm still tweaking it in places ahead of a 1.0 release as I dog food it in my own app. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule).
-
-Example usage:
-
-```typescript
-const rule = new RRule(
-  {
-    frequency: 'YEARLY',
-    byMonthOfYear: [2, 6],
-    byDayOfWeek: ['SU', ['MO', 3]],
-    start: new Date(2010, 1, 7),
-  },
-  {
-    dateAdapter: StandardDateAdapter,
-  },
-);
-
-let index = 0;
-for (const date of rule.occurrences()) {
-  date.toISOString();
-  index++;
-
-  if (index > 10) break;
-}
-
-rule
-  .occurrences({
-    start: new Date(2010, 5, 7),
-    take: 5,
-  })
-  .toArray()
-  .map(date => date.toISOString());
-```
-
-rSchedule makes use of a fairly simple [`IDateAdapter`](./date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
-
-[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), and [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter) packages currently exists which provide a [`IDateAdapter`](./date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). Additionally, it should be pretty easy for you to create your own `DateAdapter` for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
-
-The `MomentTZDateAdapter` and `LuxonDateAdapter` support different timezones. All `DateAdapter` packages support `local` and `UTC` timezones. As noted above, installing a specific `DateAdapter` package is a seperate step, so, if you wanted to use rSchedule with standard javascript `Date` objects, you might install with
+At this point, the library's core functionality is feature complete and the tests are passing. This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule).
 
 ### Installation
 
@@ -65,13 +27,22 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 
 ## Brief Overview
 
-While [`RRule` objects](./usage/rule) contain the main recurrence logic, you probably won't use them directly. Instead, the friendly [`Schedule` object](./usage/schedule) exist which builds an occurrence schedule based off of an arbirary number of RRules, EXRules, RDates, and EXDates.
+rSchedule makes use of a fairly simple [`IDateAdapter`](./date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
+
+[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), and [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter) packages currently exists which provide an [`IDateAdapter`](./date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be pretty easy for you to create your own DateAdapter for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
+
+If you plan to use rSchedule with iCalendar support, you'll need to add the optional `@rschedule/ical-tools` package. In addition to `serializeToICal()` and `parseICal()` functions, the ical-tools package contains a `VEvent` object which adhears to the iCalendar `VEVENT` component specifications. Jump to the [`ical serialization`](./serialization/ical) section to learn more.
+
+If you don't need iCalendar support, you can serialize your objects using the optional `@rschedule/json-tools` package (which is much smaller than `@rschedule/ical-tools`).
+
+If you're not serializing to iCalendar, your primary tool will be the friendly `Schedule` object (which is not iCal spec complient--its better). It can be used to build an occurrence schedule from an arbitrary number of inclusion rules, exclusion rules, inclusion dates, and exclusion dates.
 
 Example usage:
 
 ```typescript
+RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
+
 const schedule = new Schedule({
-  dateAdapter: StandardDateAdapter,
   rrules: [
     {
       frequency: 'YEARLY',
@@ -85,14 +56,15 @@ const schedule = new Schedule({
       start: new Date(2012, 1, 7),
     },
   ],
+  exdates: [new Date(2010, 3, 2)]
 });
 
 schedule.occurrences().toArray();
 ```
 
-Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event of arbitrary complexity, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
+Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
 
-To iterate over a collection of Schedule objects, e.g. for displaying on a calendar, you can use the [`Calendar` object](./usage/calendar). The Calendar object combines a collection of occurrence streams into a single iterable object (i.e. it displays the `union` of all the given occurrence streams).
+To iterate over a collection of schedules, e.g. for displaying on a calendar, you can use the [`Calendar` object](./usage/calendar). The Calendar object combines a collection of occurrence generators into a single iterable object (i.e. it displays the `union` of all the given occurrence generators).
 
 Example usage:
 
@@ -111,7 +83,7 @@ for (const occurrence of calendar.occurrences({ start: new Date() })) {
 }
 ```
 
-Additionally, for iterating over an arbitrary collection of dates, you can make use of the [`Dates` object](./usage/dates) (or its subclasses `RDates` and `EXDates`, which are used by `Schedule`).
+Additionally, the [`Dates` object](./usage/dates) provides an `OccurrenceGenerator` wrapper over a collection of arbitrary dates.
 
 Example usage:
 
@@ -121,6 +93,8 @@ RScheduleConfig.defaultDateAdapter = StandardDateAdatper;
 const dates = new Dates({
   dates: [new Date(2000), new Date(2001), new Date(2002)],
 });
+
+dates.occursOn({date: new Date(2000)}) // true
 
 for (const date of dates.occurrences({ start: new Date(2000, 5) })) {
   // do stuff
@@ -139,16 +113,18 @@ const scheduleTwo = new Schedule();
 const scheduleThree = new Schedule();
 const scheduleFour = new Schedule();
 
-new Calendar({
-  schedule: occurrenceStream(
-    add(scheduleOne),
-    subtract(scheduleTwo),
-    add(scheduleThree),
-    subtract(scheduleFour),
-    unique(),
-  ),
-});
+new Calendar().pipe(
+  add(scheduleOne),
+  subtract(scheduleTwo),
+  add(scheduleThree),
+  subtract(scheduleFour),
+  unique(),
+);
 ```
+
+Internally, some rSchedule objects rely on occurrence stream operators to handle their recurrence logic (e.g. `Schedule`).
+
+Finally, there are [`Rule` objects](./usage/rule) which process recurrence rules. You probably won't need to use `Rule` object's direction though, instead using making use of `Schedule` objects.
 
 ## [Usage Overview](./usage)
 

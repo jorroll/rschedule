@@ -7,11 +7,8 @@ import { IterableWrapper, streamPastEnd, streamPastSkipToDate } from './utilitie
 const UNIQUE_OPERATOR_ID = Symbol.for('cba869a4-13bf-407a-9648-18cc66261231');
 
 /**
- * An operator function, intended as an argument for `occurrenceStream()`,
- * which combines the input occurrence streams, if any, with the previous occurrence stream
- * in the `occurrenceStream()` pipe and removes any duplicate dates from the stream.
- *
- * @param inputs a spread of scheduling objects
+ * An operator function which deduplicates an occurrence stream. Occurrence
+ * `duration` is currently ignored.
  */
 export function unique<T extends typeof DateAdapter>(): OperatorFnOutput<T> {
   return (options: IOperatorConfig<T>) => new UniqueOperator([], options);

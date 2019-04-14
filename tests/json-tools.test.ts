@@ -242,7 +242,9 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
         describe('parseJSON()', () => {
           test('rruleJSON1', () => {
-            const rrule = parseJSON(rruleJSON1, DateAdapter) as Rule<typeof DateAdapter>;
+            const rrule = parseJSON(rruleJSON1, { dateAdapter: DateAdapter }) as Rule<
+              typeof DateAdapter
+            >;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
 
@@ -254,7 +256,9 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           });
 
           test('rruleJSON2', () => {
-            const rrule = parseJSON(rruleJSON2, DateAdapter) as Rule<typeof DateAdapter>;
+            const rrule = parseJSON(rruleJSON2, { dateAdapter: DateAdapter }) as Rule<
+              typeof DateAdapter
+            >;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
             expect({
@@ -264,7 +268,9 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           });
 
           test('rruleJSON3', () => {
-            const rrule = parseJSON(rruleJSON3, DateAdapter) as Rule<typeof DateAdapter>;
+            const rrule = parseJSON(rruleJSON3, { dateAdapter: DateAdapter }) as Rule<
+              typeof DateAdapter
+            >;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
             expect({
@@ -274,7 +280,9 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           });
 
           test('rruleJSON4', () => {
-            const rrule = parseJSON(rruleJSON4, DateAdapter) as Rule<typeof DateAdapter>;
+            const rrule = parseJSON(rruleJSON4, { dateAdapter: DateAdapter }) as Rule<
+              typeof DateAdapter
+            >;
 
             expect(Rule.isRule(rrule)).toBeTruthy();
             expect({
@@ -284,19 +292,25 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           });
 
           test('rdatesJSON', () => {
-            const rdates = parseJSON(rdatesJSON, DateAdapter) as Dates<typeof DateAdapter>;
+            const rdates = parseJSON(rdatesJSON, { dateAdapter: DateAdapter }) as Dates<
+              typeof DateAdapter
+            >;
 
             expect(Dates.isDates(rdates)).toBeTruthy();
           });
 
           test('exdatesJSON', () => {
-            const exdates = parseJSON(exdatesJSON, DateAdapter) as Dates<typeof DateAdapter>;
+            const exdates = parseJSON(exdatesJSON, { dateAdapter: DateAdapter }) as Dates<
+              typeof DateAdapter
+            >;
 
             expect(Dates.isDates(exdates)).toBeTruthy();
           });
 
           test('scheduleJSON', () => {
-            const schedule = parseJSON(scheduleJSON, DateAdapter) as Schedule<typeof DateAdapter>;
+            const schedule = parseJSON(scheduleJSON, { dateAdapter: DateAdapter }) as Schedule<
+              typeof DateAdapter
+            >;
 
             expect(Schedule.isSchedule(schedule)).toBeTruthy();
           });

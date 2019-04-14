@@ -9,7 +9,7 @@ const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac');
 /**
  * This base class provides a `OccurrenceGenerator` API wrapper around arrays of dates
  */
-export class Dates<T extends typeof DateAdapter, D = unknown> extends OccurrenceGenerator<T> {
+export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
   get length() {
     return this.datetimes.length;
   }

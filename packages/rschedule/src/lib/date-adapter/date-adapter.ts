@@ -51,26 +51,6 @@ export class DateAdapter implements IDateAdapter<unknown> {
     throw unimplementedError('toISOString()');
   }
 
-  isEqual(object?: DateAdapter): boolean {
-    return !!object && this.valueOf() === object.valueOf();
-  }
-
-  isBefore(object: DateAdapter): boolean {
-    return this.valueOf() < object.valueOf();
-  }
-
-  isBeforeOrEqual(object: DateAdapter): boolean {
-    return this.valueOf() <= object.valueOf();
-  }
-
-  isAfter(object: DateAdapter): boolean {
-    return this.valueOf() > object.valueOf();
-  }
-
-  isAfterOrEqual(object: DateAdapter): boolean {
-    return this.valueOf() >= object.valueOf();
-  }
-
   toDateTime(): DateTime {
     throw unimplementedError('toDateTime()');
   }
@@ -84,6 +64,6 @@ export class DateAdapter implements IDateAdapter<unknown> {
   }
 }
 
-export function unimplementedError(name: string) {
+function unimplementedError(name: string) {
   return new Error(`You must implement the "${name}" method for this DateAdapter class`);
 }

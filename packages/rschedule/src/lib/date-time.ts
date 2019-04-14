@@ -18,7 +18,7 @@ export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
 
 export interface IDateAdapter<D = unknown> {
   /** Returns the date object this DateAdapter is wrapping */
-  readonly date: unknown;
+  readonly date: D;
   readonly timezone: string | null;
   readonly duration: number | undefined;
 
@@ -41,15 +41,15 @@ export interface IDateAdapter<D = unknown> {
 
   toISOString(): string;
 
-  isEqual(object?: IDateAdapter | DateTime): boolean;
+  // isEqual(object?: IDateAdapter | DateTime): boolean;
 
-  isBefore(object: IDateAdapter | DateTime): boolean;
+  // isBefore(object: IDateAdapter | DateTime): boolean;
 
-  isBeforeOrEqual(object: IDateAdapter | DateTime): boolean;
+  // isBeforeOrEqual(object: IDateAdapter | DateTime): boolean;
 
-  isAfter(object: IDateAdapter | DateTime): boolean;
+  // isAfter(object: IDateAdapter | DateTime): boolean;
 
-  isAfterOrEqual(object: IDateAdapter | DateTime): boolean;
+  // isAfterOrEqual(object: IDateAdapter | DateTime): boolean;
 
   toDateTime(): DateTime;
 
@@ -145,7 +145,7 @@ export class DateTime implements IDateAdapter<unknown> {
 
   // While we constrain the argument to be another DateAdapter in typescript
   // we handle the case of someone passing in another type of object in javascript
-  isEqual(object?: DateTime | IDateAdapter): boolean {
+  isEqual(object?: DateTime): boolean {
     if (!object) {
       return false;
     }
@@ -155,31 +155,31 @@ export class DateTime implements IDateAdapter<unknown> {
     return this.valueOf() === object.valueOf();
   }
 
-  isBefore(object: DateTime | IDateAdapter): boolean {
+  isBefore(object: DateTime): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() < object.valueOf();
   }
 
-  isBeforeOrEqual(object: DateTime | IDateAdapter): boolean {
+  isBeforeOrEqual(object: DateTime): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() <= object.valueOf();
   }
 
-  isAfter(object: DateTime | IDateAdapter): boolean {
+  isAfter(object: DateTime): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() > object.valueOf();
   }
 
-  isAfterOrEqual(object: DateTime | IDateAdapter): boolean {
+  isAfterOrEqual(object: DateTime): boolean {
     assertSameTimeZone(this, object);
 
     return this.valueOf() >= object.valueOf();
   }
 
-  isOccurring(object: DateTime | IDateAdapter) {
+  isOccurring(object: DateTime) {
     if (!this.duration) {
       throw new Error('DateTime#isOccurring() is only applicable to DateTimes with durations');
     }

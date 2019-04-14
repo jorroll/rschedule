@@ -1,4 +1,4 @@
-_implements [IOccurrenceGenerator](../#shared-interfaces)_
+_implements [IOccurrenceGenerator](../#IOccurrenceGenerator-Interface)_
 
 RRule objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects.
 
@@ -7,41 +7,62 @@ Rule objects are created with a variety of [iCAL spec](https://tools.ietf.org/ht
 Rule objects support:
 
 ```typescript
-interface ProvidedOptions<T extends DateAdapterConstructor> {
-  // start date, DateProp<T> is the type of the date object your date adapter
-  // is wrapping. DateAdapter<T> is an instance of a date adapter.
-  start: DateProp<T> | DateAdapter<T>;
-
-  // 'YEARLY' | 'MONTHLY' | 'WEEKLY' | 'DAILY' | 'HOURLY' | 'MINUTELY' | 'SECONDLY'
-  frequency: Frequency;
-
-  interval?: number;
-
-  // end date. Types are the same as `start`
-  until?: DateProp<T> | DateAdapter<T>;
-
-  // cap on the number of occurrences
-  count?: number;
-
-  // default is 'MO'
-  weekStart?: DateAdapter.Weekday; // 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'
-
-  byMonthOfYear?: ByMonthOfYear[];
-  byDayOfMonth?: ByDayOfMonth[];
-  byDayOfWeek?: ByDayOfWeek[];
-  byHourOfDay?: ByHourOfDay[];
-  byMinuteOfHour?: ByMinuteOfHour[];
-  bySecondOfMinute?: BySecondOfMinute[];
+export interface IProvidedRuleOptions<T extends typeof DateAdapter> {
+  start: RuleOption.Start<T>;
+  end?: RuleOption.End<T>;
+  duration?: RuleOption.Duration;
+  frequency: RuleOption.Frequency;
+  interval?: RuleOption.Interval;
+  count?: RuleOption.Count;
+  weekStart?: RuleOption.WeekStart;
+  bySecondOfMinute?: RuleOption.BySecondOfMinute[];
+  byMinuteOfHour?: RuleOption.ByMinuteOfHour[];
+  byHourOfDay?: RuleOption.ByHourOfDay[];
+  byDayOfWeek?: RuleOption.ByDayOfWeek[];
+  byDayOfMonth?: RuleOption.ByDayOfMonth[];
+  byMonthOfYear?: RuleOption.ByMonthOfYear[];
 }
 
-const options: ProvidedOptions = {
-  // choose your options
-};
+export namespace IDateAdapter {
+  export type Weekday = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
+}
 
-const rule = new RRule(options, {
-  dateAdapter: StandardDateAdapter,
-  data: 'Holds anything I want',
-});
+export namespace RuleOption {
+  // Either a date object or a date adapter object.
+  export type Start<T extends typeof DateAdapter> = DateInput<T>;
+  // Either a date object or a date adapter object.
+  export type End<T extends typeof DateAdapter> = DateInput<T>;
+  export type Duration = number;
+  export type Interval = number;
+  export type Count = number;
+  export type WeekStart = IDateAdapter.Weekday;
+  export type Frequency =
+    | 'SECONDLY'
+    | 'MINUTELY'
+    | 'HOURLY'
+    | 'DAILY'
+    | 'WEEKLY'
+    | 'MONTHLY'
+    | 'YEARLY';
+
+  /**
+   * The ByDayOfWeek type corresponds to either a two letter string for the weekday
+   * (i.e. 'SU', 'MO', etc) or an array of length two containing a weekday string
+   * and a number, in that order. The number describes the position of the weekday
+   * in the month / year (depending on other rules). It's explained pretty well
+   * in the [ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10).
+   * If the number is negative, it is calculated from the end of
+   * the month / year.
+   */
+  export type ByDayOfWeek = IDateAdapter.Weekday | [IDateAdapter.Weekday, number];
+  export type ByMillisecondOfSecond = number;
+  export type BySecondOfMinute = number;
+  export type ByMonthOfYear = number;
+  export type ByMinuteOfHour = number;
+  export type ByHourOfDay = number;
+  export type ByDayOfMonth = number;
+  export type ByWeekOfMonth = number;
+}
 ```
 
 Rule objects must be created with a start date and a frequency.
@@ -222,4 +243,26 @@ type ByMinuteOfHour = 0 | 1 | 2 | // ... | 59
 
 ```typescript
 type BySecondOfMinute = 0 | 1 | 2 | // ... | 60
+```
+
+### Constructor
+
+`Rule` has the following constructor.
+
+```typescript
+class Rule<T extends typeof DateAdapter, D = any> {
+  constructor(
+    options: IProvidedRuleOptions<T>,
+    args?: {
+      // The data property holds arbitrary data associated with the `Rule`.
+      // When iterating through an occurrence generator, you can access a list of the objects
+      // which generated any given date by accessing the `IDateAdapter#generators` property.
+      // In this way, for a given, generated date, you can access the object which generated
+      // the date as well as the arbitrary data associated with that object.
+      data?: D;
+      dateAdapter?: T;
+      timezone?: string | null
+    },
+  );
+}
 ```
