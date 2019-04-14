@@ -249,7 +249,6 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
     zones.forEach(zone => {
       // function to create new dateAdapter instances
       const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, zone);
-      const isoString = timezoneIsoStringFn(dateAdapter);
 
       RScheduleConfig.defaultDateAdapter = DateAdapter;
       RScheduleConfig.defaultTimezone = zone;
@@ -278,6 +277,8 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         if (options.timezone) {
           (result as any).processedValue = dateAdapter(y, m, d, h, mm, s, options.timezone);
           result[1].tzid = options.timezone;
+        } else if (options.timezone === null) {
+          (result as any).processedValue = dateAdapter(y, m, d, h, mm, s, options.timezone);
         } else {
           (result as any).processedValue = dateAdapter(y, m, d, h, mm, s);
         }

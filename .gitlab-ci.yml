@@ -3,19 +3,132 @@ stages:
   - dependency_scanning
 
 test:
-  image: node:8.15.1-alpine
-  stage: test
-  cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
-  script:
-    - yarn test --ci=true
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  1:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='UTC' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  2:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='Africa/Johannesburg' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  3:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='America/Los_Angeles' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  4:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='America/New_York' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  5:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='America/Santiago' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  6:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='Europe/London' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  7:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='Asia/Shanghai' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  8:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='Asia/Jakarta' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+  9:
+    image: node:8.15.1-alpine
+    stage: test
+    cache:
+      paths:
+        - node_modules/
+    tags:
+      - linux
+    before_script:
+      - apk add yarn
+      - yarn install
+    script:
+      - TZ='Australia/Melbourne' yarn test --ci=true
+    coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 dependency_scanning:
   image: docker:stable
