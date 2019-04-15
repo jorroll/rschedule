@@ -4,7 +4,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## 0.10.0 BREAKING (2019/4/15)
 
-#### Breaking
+### Breaking
 
 - fixed `VEvent` to allow multiple rrules / exrules as per the ical spec.
   - This also included appropriate changes in `ical-tools` `serializeToICal()` and 
@@ -15,7 +15,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
   This distinction can be important when serializing a `Dates` object as it ensures the original
   timezones associated with the underlying dates are preserved.
 
-#### Features
+### Features
 
 - added ability to set `Rule#options` via `Rule#set()`.
 - added ability to pass whole `Rule` and `Dates` objects to the `VEvent` constructor.
