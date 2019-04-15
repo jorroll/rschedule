@@ -73,7 +73,13 @@ Rule objects must be created with a start date and a frequency.
 
 The following is largely copy-pasted from the [ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10). Because the ICAL spec names things a little weird, you'll notice the text has different names. You should be able to figure it out though.
 
-### Frequency
+### Start (required)
+
+The `start` property specifies the rule's start time. Unlike the iCal spec, the `start` time for rSchedule `Rule` objects does not need to equal the first occurrence of the `Rule`.
+
+- Accepts a date or date adapter object.
+
+### Frequency (required)
 
 > The FREQ rule part identifies the type of recurrence rule. This
 > rule part MUST be specified in the recurrence rule. Valid values
@@ -105,7 +111,9 @@ type Frequency = 'YEARLY' | 'MONTHLY' | 'WEEKLY' | 'DAILY' | 'HOURLY' | 'MINUTEL
 
 - Accepts a `number`.
 
-### Until
+### End
+
+Note: in the iCal spec and the description below, this property is called `UNTIL`. 
 
 > The UNTIL rule part defines a DATE or DATE-TIME value that bounds
 > the recurrence rule in an inclusive manner. If the value
@@ -257,10 +265,10 @@ class Rule<T extends typeof DateAdapter, D = any> {
     options: IProvidedRuleOptions<T>,
     args?: {
       // The data property holds arbitrary data associated with the `Rule`.
-      // When iterating through an occurrence generator, you can access a list of the objects
-      // which generated any given date by accessing the `IDateAdapter#generators` property.
-      // In this way, for a given, generated date, you can access the object which generated
-      // the date as well as the arbitrary data associated with that object.
+      // When iterating through a Rule, you can access a list of the generator objects (i.e. this Rule)
+      // which generated any yielded date by accessing the `IDateAdapter#generators` property.
+      // In this way, for a given, yielded date, you can access the object which generated
+      // the date (in this case, this Rule) as well as the arbitrary data associated with that object (this data).
       data?: D;
       dateAdapter?: T;
       timezone?: string | null

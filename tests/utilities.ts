@@ -78,7 +78,7 @@ export interface DatetimeFn<R> {
 }
 
 export function standardDatetimeFn(...args: Array<number | string>) {
-  if (args.length === 0) {
+  if (args.length === 0 || typeof args[0] !== 'number') {
     return new Date();
   }
 
@@ -107,8 +107,8 @@ export function standardDatetimeFn(...args: Array<number | string>) {
 }
 
 export function momentDatetimeFn(...args: Array<number | string>): MomentST {
-  if (args.length === 0) {
-    return momentST();
+  if (args.length === 0 || typeof args[0] !== 'number') {
+    return args[0] === 'UTC' ? momentST().utc() : momentST();
   }
 
   const numbers: number[] = [];
@@ -134,8 +134,13 @@ export function momentDatetimeFn(...args: Array<number | string>): MomentST {
 }
 
 export function momentTZDatetimeFn(...args: Array<number | string>): MomentTZ {
-  if (args.length === 0) {
-    return momentTZ();
+  if (args.length === 0 || typeof args[0] !== 'number') {
+    const tz = args[0];
+    return tz === 'UTC'
+      ? momentTZ().tz('UTC')
+      : [null, undefined].includes((tz as unknown) as null | undefined)
+      ? momentTZ()
+      : momentTZ().tz(tz);
   }
 
   const numbers: number[] = [];
@@ -161,6 +166,15 @@ export function momentTZDatetimeFn(...args: Array<number | string>): MomentTZ {
 }
 
 export function luxonDatetimeFn(...args: Array<number | string>): LuxonDateTime {
+  if (args.length === 0 || typeof args[0] !== 'number') {
+    const tz = args[0];
+    return tz === 'UTC'
+      ? LuxonDateTime.utc()
+      : [null, undefined].includes((tz as unknown) as null | undefined)
+      ? LuxonDateTime.local()
+      : LuxonDateTime.local().setZone(tz as string);
+  }
+
   if (args.length === 0) {
     return LuxonDateTime.local();
   }
@@ -313,7 +327,7 @@ export function timezoneDateAdapterFn(
     let tzArg = timezone;
     const dateAdapterArgs: (string | number | null)[] = args;
 
-    if (typeof args[args.length - 1] !== 'number') {
+    if (args.length !== 0 && typeof args[args.length - 1] !== 'number') {
       tzArg = args.pop() as string | null;
     }
 

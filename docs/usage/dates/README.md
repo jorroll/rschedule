@@ -29,11 +29,11 @@ class Dates<T extends typeof DateAdapter, D = any> {
   constructor(args: {
     timezone?: string | null;
     dates?: Array<DateInput<T>>;
-    // The data property holds arbitrary data associated with the `Dates` object.
-    // When iterating through an occurrence generator, you can access a list of the objects
-    // which generated any given date by accessing the `IDateAdapter#generators` property.
-    // In this way, for a given, generated date, you can access the object which generated
-    // the date as well as the arbitrary data associated with that object.
+    // The data property holds arbitrary data associated with the `Dates`.
+    // When iterating through a Dates, you can access a list of the generator objects (i.e. this Dates)
+    // which generated any yielded date by accessing the `IDateAdapter#generators` property.
+    // In this way, for a given, yielded date, you can access the object which generated
+    // the date (in this case, this Dates) as well as the arbitrary data associated with that object (this data).
     data?: D;
     dateAdapter?: T;
   });

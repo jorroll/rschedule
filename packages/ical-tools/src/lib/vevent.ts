@@ -36,10 +36,10 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
   }
 
   // For some reason, error is thrown if typed as `readonly Rule<T>[]`
-  readonly rrule: Rule<T> | null = null;
-  readonly exrule: Rule<T> | null = null;
-  readonly rdates: Dates<T> | null = null;
-  readonly exdates: Dates<T> | null = null;
+  readonly rrules: ReadonlyArray<Rule<T>> = [];
+  readonly exrules: ReadonlyArray<Rule<T>> = [];
+  readonly rdates: Dates<T>;
+  readonly exdates: Dates<T>;
 
   pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
 
@@ -61,15 +61,15 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
     start: DateInput<T>;
     dateAdapter?: T;
     data?: D;
-    rrule?: IVEventRuleOptions<T>;
-    exrule?: IVEventRuleOptions<T>;
-    rdates?: ReadonlyArray<DateInput<T>>;
-    exdates?: ReadonlyArray<DateInput<T>>;
+    rrules?: ReadonlyArray<IVEventRuleOptions<T> | Rule<T>>;
+    exrules?: ReadonlyArray<IVEventRuleOptions<T> | Rule<T>>;
+    rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
+    exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
   }) {
     super(args);
 
-    this._start = this.normalizeStartInput(args.start);
-    this.start = this.dateAdapter.fromDateTime(this._start) as ConstructorReturnType<T>;
+    this.start = this.normalizeDateInputToAdapter(args.start);
+    this._start = this.start.toDateTime();
 
     this.timezone = this.start.timezone;
 
@@ -77,45 +77,89 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       this.data = args.data;
     }
 
-    if (args.rrule) {
-      this.rrule = new Rule(standardizeVEventRuleOptions(args.rrule, args), {
-        dateAdapter: this.dateAdapter as any,
-        timezone: this.timezone,
+    if (args.rrules) {
+      this.rrules = args.rrules.map(ruleArgs => {
+        if (Rule.isRule(ruleArgs)) {
+          if (!this.normalizeDateInput(ruleArgs.options.start).isEqual(this._start)) {
+            throw new ArgumentError(
+              'When passing a `Rule` object to the `VEvent` constructor, ' +
+                'the rule `start` time must equal the `VEvent` start time.',
+            );
+          } else if (ruleArgs.timezone !== this.timezone) {
+            throw new ArgumentError(
+              'When passing a `Rule` object to the `VEvent` constructor, ' +
+                "the rule `timezone` time must equal the timezone of the VEvent's `start` time.",
+            );
+          }
+
+          return ruleArgs;
+        } else {
+          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
+            dateAdapter: this.dateAdapter as any,
+            timezone: this.timezone,
+          });
+        }
       });
     }
 
-    if (args.exrule) {
-      this.exrule = new Rule(standardizeVEventRuleOptions(args.exrule, args), {
-        dateAdapter: this.dateAdapter as any,
-        timezone: this.timezone,
+    if (args.exrules) {
+      this.exrules = args.exrules.map(ruleArgs => {
+        if (Rule.isRule(ruleArgs)) {
+          if (!this.normalizeDateInput(ruleArgs.options.start).isEqual(this._start)) {
+            throw new ArgumentError(
+              'When passing a `Rule` object to the `VEvent` constructor, ' +
+                'the rule `start` time must equal the `VEvent` start time.',
+            );
+          } else if (ruleArgs.timezone !== this.timezone) {
+            throw new ArgumentError(
+              'When passing a `Rule` object to the `VEvent` constructor, ' +
+                "the rule `timezone` time must equal the timezone of the VEvent's `start` time.",
+            );
+          }
+
+          return ruleArgs;
+        } else {
+          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
+            dateAdapter: this.dateAdapter as any,
+            timezone: this.timezone,
+          });
+        }
       });
     }
 
     if (args.rdates) {
-      this.rdates = new Dates({
-        dates: args.rdates as ReadonlyArray<DateInput<T>>,
-        dateAdapter: this.dateAdapter as any,
-        timezone: this.timezone,
-      });
+      this.rdates = Dates.isDates(args.rdates)
+        ? args.rdates.set('timezone', this.timezone)
+        : new Dates({
+            dates: args.rdates as ReadonlyArray<DateInput<T>>,
+            dateAdapter: this.dateAdapter,
+            timezone: this.timezone,
+          });
+    } else {
+      this.rdates = new Dates({ dateAdapter: this.dateAdapter, timezone: this.timezone });
     }
 
     if (args.exdates) {
-      this.exdates = new Dates({
-        dates: args.exdates as ReadonlyArray<DateInput<T>>,
-        dateAdapter: this.dateAdapter as any,
-        timezone: this.timezone,
-      });
+      this.exdates = Dates.isDates(args.exdates)
+        ? args.exdates.set('timezone', this.timezone)
+        : new Dates({
+            dates: args.exdates as ReadonlyArray<DateInput<T>>,
+            dateAdapter: this.dateAdapter,
+            timezone: this.timezone,
+          });
+    } else {
+      this.exdates = new Dates({ dateAdapter: this.dateAdapter, timezone: this.timezone });
     }
 
     // this.duration = args.duration;
     this.hasDuration = !!this.duration;
 
-    this.isInfinite = !!(this.rrule && this.rrule.isInfinite);
+    this.isInfinite = this.rrules.some(rule => rule.isInfinite);
 
     this.occurrenceStream = new OccurrenceStream({
       operators: [
-        ...(this.rrule ? [add<T>(this.rrule)] : []),
-        ...(this.exrule ? [subtract<T>(this.exrule)] : []),
+        add<T>(...this.rrules),
+        subtract<T>(...this.exrules),
         add<T>(
           new Dates({
             dates: [this.start],
@@ -123,8 +167,8 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
             dateAdapter: this.dateAdapter,
           }),
         ),
-        ...(this.rdates ? [add<T>(this.rdates)] : []),
-        ...(this.exdates ? [subtract<T>(this.exdates)] : []),
+        add<T>(this.rdates),
+        subtract<T>(this.exdates),
         unique<T>(),
       ],
       dateAdapter: this.dateAdapter,
@@ -132,14 +176,26 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
     });
   }
 
-  set(prop: 'timezone', value: string | null): VEvent<T, D>;
-  set(prop: 'timezone', value: string | null) {
-    let timezone = this.timezone;
+  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): VEvent<T, D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput<T>): VEvent<T, D>;
+  add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule<T, unknown> | DateInput<T>) {
+    const rrules = this.rrules.slice();
+    const exrules = this.exrules.slice();
+    let rdates = this.rdates;
+    let exdates = this.exdates;
 
     switch (prop) {
-      case 'timezone':
-        if (value === this.timezone) return this;
-        timezone = value as string | null;
+      case 'rrule':
+        rrules.push(value as Rule<T, unknown>);
+        break;
+      case 'exrule':
+        exrules.push(value as Rule<T, unknown>);
+        break;
+      case 'rdate':
+        rdates = this.rdates.add(value as DateInput<T>);
+        break;
+      case 'exdate':
+        exdates = this.exdates.add(value as DateInput<T>);
         break;
     }
 
@@ -147,10 +203,99 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       start: this.start,
       dateAdapter: this.dateAdapter,
       data: this.data,
-      ...(this.rrule ? { rrule: this.rrule.options } : {}),
-      ...(this.exrule ? { exrule: this.exrule.options } : {}),
-      ...(this.rdates ? { rdates: this.rdates.adapters } : {}),
-      ...(this.exdates ? { exdates: this.exdates.adapters } : {}),
+      rrules,
+      exrules,
+      rdates,
+      exdates,
+    });
+  }
+
+  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): VEvent<T, D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): VEvent<T, D>;
+  remove(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule<T, unknown> | DateInput<T>) {
+    let rrules = this.rrules;
+    let exrules = this.exrules;
+    let rdates = this.rdates;
+    let exdates = this.exdates;
+
+    switch (prop) {
+      case 'rrule':
+        rrules = rrules.filter(rule => rule !== value);
+        break;
+      case 'exrule':
+        exrules = exrules.filter(rule => rule !== value);
+        break;
+      case 'rdate':
+        rdates = this.rdates.remove(value as DateInput<T>);
+        break;
+      case 'exdate':
+        exdates = this.exdates.remove(value as DateInput<T>);
+        break;
+    }
+
+    return new VEvent({
+      start: this.start,
+      dateAdapter: this.dateAdapter,
+      data: this.data,
+      rrules,
+      exrules,
+      rdates,
+      exdates,
+    });
+  }
+
+  set(prop: 'timezone', value: string | null): VEvent<T, D>;
+  set(prop: 'start', value: DateInput<T>): VEvent<T, D>;
+  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): VEvent<T, D>;
+  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): VEvent<T, D>;
+  set(
+    prop: 'start' | 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
+    value: DateInput<T> | string | null | Rule<T, unknown>[] | Dates<T, unknown>,
+  ) {
+    let start = this.start;
+    let rrules = this.rrules;
+    let exrules = this.exrules;
+    let rdates = this.rdates;
+    let exdates = this.exdates;
+
+    switch (prop) {
+      case 'timezone': {
+        if (value === this.timezone) return this;
+        start = start.set('timezone', value as string | null) as ConstructorReturnType<T>;
+        break;
+      }
+      case 'start': {
+        const newStart = this.normalizeDateInputToAdapter(value);
+
+        if (start.timezone === newStart.timezone && start.valueOf() === newStart.valueOf()) {
+          return this;
+        }
+
+        start = newStart;
+        break;
+      }
+      case 'rrules':
+        rrules = value as Rule<T, unknown>[];
+        break;
+      case 'exrules':
+        exrules = value as Rule<T, unknown>[];
+        break;
+      case 'rdates':
+        rdates = value as Dates<T, unknown>;
+        break;
+      case 'exdates':
+        exdates = value as Dates<T, unknown>;
+        break;
+    }
+
+    return new VEvent({
+      start,
+      dateAdapter: this.dateAdapter,
+      data: this.data,
+      rrules,
+      exrules,
+      rdates,
+      exdates,
     });
   }
 
@@ -173,18 +318,6 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       date = iterator.next(yieldArgs).value;
 
       index++;
-    }
-  }
-
-  protected normalizeStartInput(date: DateInput<T>) {
-    if (DateTime.isInstance(date)) {
-      return date;
-    } else if (DateAdapter.isInstance(date)) {
-      return date.toDateTime();
-    } else if (DateAdapter.isDate(date)) {
-      return new DateAdapter(date).toDateTime();
-    } else {
-      throw new ArgumentError('Invalid `start` argument for `new VEvent()`: ' + `"${date}"`);
     }
   }
 

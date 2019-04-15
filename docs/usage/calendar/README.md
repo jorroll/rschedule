@@ -39,10 +39,11 @@ class Calendar<T extends typeof DateAdapter, D = any> {
   constructor(args: {
     schedules?: IOccurrenceGenerator<T>[] | IOccurrenceGenerator<T>;
     // The data property holds arbitrary data associated with the `Calendar`.
-    // When iterating through an occurrence generator, you can access a list of the objects
-    // which generated any given date by accessing the `IDateAdapter#generators` property.
-    // In this way, for a given, generated date, you can access the object which generated
-    // the date as well as the arbitrary data associated with that object.
+    // When iterating through a Calendar, you can access a list of the generator objects
+    // (i.e. Schedules, Rules, Dates, etc) which generated any yielded date by accessing 
+    // the `IDateAdapter#generators` property. In this way, for a given, yielded date, 
+    // you can access the objects which generated the date as well as the arbitrary data 
+    // associated with those objects.
     data?: D;
     dateAdapter?: T;
     timezone?: string | null;
