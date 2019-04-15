@@ -580,6 +580,23 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           );
 
           describe('serializeToJCal()', () => {
+            it('serializes Schedule with only `start`', () => {
+              expect(
+                cloneJSON(
+                  serializeToJCal(
+                    new VEvent({
+                      start: dateAdapter(2010, 11, 10, 0, 0, 0),
+                      dateAdapter: DateAdapter,
+                    }),
+                  ),
+                ),
+              ).toEqual(
+                cloneJSON(['vevent', [buildDTSTART(2010, 11, 10, 0, 0, 0, { timezone })], []]),
+              );
+            });
+          });
+
+          describe('serializeToJCal()', () => {
             it('serializes Schedule', () => {
               expect(cloneJSON(serializeToJCal(schedule))).toEqual(
                 cloneJSON([
