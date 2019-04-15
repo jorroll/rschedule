@@ -51,7 +51,7 @@ When providing a date adapter constructor as a constructor argument (option 1, a
   new Schedule<MomentTZDateAdapter>();
   ```
 
-Each DateAdapter has a `generators` property which contains an array of the rSchedule objects which are responsible for generating that particular date. For example, when iterating through a `Schedule` containing two `RRule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `RRule` object which generated the date, the second element will be the `Schedule` object which generated the date. The `IDateAdapter#generators` property pairs with the `IOccurrenceGenerator#data` data property. This allows you to attach data to a `Rule` or `Schedule`, and access that data from the yielded dates.
+Each DateAdapter has a `generators` property which contains an array of the rSchedule objects which are responsible for generating that particular date. For example, when iterating through a `Schedule` containing two `RRule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `RRule` object which generated the date, the second element will be the `Schedule` object which generated the date. The `IDateAdapter#generators` property pairs with the `data` property found on `Schedule`, `Calendar`, `Rule`, and `Dates` objects. This allows you to attach data to a `Rule` or `Schedule`, and access that data from the yielded dates.
 
 Example:
 
@@ -59,22 +59,22 @@ Example:
 const schedule = new Schedule({
   dateAdapter: StandardDateAdapter,
   rrules: [
-    [
+    new RRule(
       {
         start: new Date(),
         frequency: 'DAILY',
         byDayOfWeek: ['MO'],
       },
       { data: 'Mondays Rule' },
-    ],
-    [
+    ),
+    new RRule(
       {
         start: new Date(),
         frequency: 'DAILY',
         byDayOfWeek: ['WE'],
       },
       { data: 'Wednesdays Rule' },
-    ],
+    ),
   ],
   data: 'The schedule',
 });
@@ -113,8 +113,10 @@ export interface IDateAdapter<D = unknown> {
    * responsible for creating this IDateAdapter.
    *
    * Examples:
+   * 
    * - If this IDateAdapter was produced by a `RRule` object, this array
    *   will just contain the `RRule` object.
+   * 
    * - If this IDateAdapter was produced by a `Schedule` object, this
    *   array will contain the `Schedule` object as well as the `RRule`
    *   or `RDates` object which generated it.
