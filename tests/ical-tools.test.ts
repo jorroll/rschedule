@@ -570,9 +570,11 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             () =>
               (schedule = new VEvent({
                 start: dateAdapter(2010, 11, 10, 0, 0, 0),
-                rrule: {
-                  frequency: 'DAILY',
-                },
+                rrules: [
+                  {
+                    frequency: 'DAILY',
+                  },
+                ],
                 dateAdapter: DateAdapter,
               })),
           );
@@ -648,7 +650,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 cloneJSON(
                   result.vEvents.map(event => ({
                     start: event.start,
-                    rrule: event.rrule!.options,
+                    rrules: event.rrules.map(rule => rule.options),
                     data: event.data,
                   })),
                 ),
@@ -680,15 +682,17 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                     ],
                   },
                   start: dateAdapter(1997, 9, 2, 9, 0, 0, 'America/New_York').toJSON(),
-                  rrule: {
-                    byDayOfWeek: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
-                    byMonthOfYear: [1],
-                    frequency: 'YEARLY',
-                    start: dateAdapter(1997, 9, 2, 9, 0, 0, 'America/New_York').toJSON(),
-                    end: dateAdapter(2000, 1, 31, 14, 0, 0, 'UTC')
-                      .set('timezone', 'America/New_York')
-                      .toJSON(),
-                  },
+                  rrules: [
+                    {
+                      byDayOfWeek: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
+                      byMonthOfYear: [1],
+                      frequency: 'YEARLY',
+                      start: dateAdapter(1997, 9, 2, 9, 0, 0, 'America/New_York').toJSON(),
+                      end: dateAdapter(2000, 1, 31, 14, 0, 0, 'UTC')
+                        .set('timezone', 'America/New_York')
+                        .toJSON(),
+                    },
+                  ],
                 },
               ]);
             } else {
@@ -729,9 +733,9 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               cloneJSON(
                 result.vEvents.map(event => ({
                   start: event.start,
-                  rrule: event.rrule!.options,
-                  rdates: event.rdates!.adapters,
-                  exdates: event.exdates!.adapters,
+                  rrules: event.rrules.map(rule => rule.options),
+                  rdates: event.rdates.adapters,
+                  exdates: event.exdates.adapters,
                   data: event.data,
                 })),
               ),
@@ -761,26 +765,20 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   ],
                 },
                 start: dateAdapter(1997, 9, 2, 9, 0, 0, null).toJSON(),
-                exdates: [
-                  dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC')
-                    .set('timezone', null)
-                    .toJSON(),
-                ],
+                exdates: [dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC').toJSON()],
                 rdates: [
-                  dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC')
-                    .set('timezone', null)
-                    .toJSON(),
-                  dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC')
-                    .set('timezone', null)
-                    .toJSON(),
+                  dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC').toJSON(),
+                  dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC').toJSON(),
                 ],
-                rrule: {
-                  byDayOfWeek: ['TU', 'TH'],
-                  frequency: 'WEEKLY',
-                  start: dateAdapter(1997, 9, 2, 9, 0, 0, null).toJSON(),
-                  end: dateAdapter(1997, 10, 7, 0, 0, 0, null).toJSON(),
-                  weekStart: 'SU',
-                },
+                rrules: [
+                  {
+                    byDayOfWeek: ['TU', 'TH'],
+                    frequency: 'WEEKLY',
+                    start: dateAdapter(1997, 9, 2, 9, 0, 0, null).toJSON(),
+                    end: dateAdapter(1997, 10, 7, 0, 0, 0, null).toJSON(),
+                    weekStart: 'SU',
+                  },
+                ],
               },
             ]);
           });
@@ -817,7 +815,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 cloneJSON(
                   result.vEvents.map(event => ({
                     start: event.start,
-                    rrule: event.rrule!.options,
+                    rrules: event.rrules.map(rule => rule.options),
                     data: event.data,
                   })),
                 ),
@@ -845,10 +843,12 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                     ],
                   },
                   start: dateAdapter(2018, 10, 8, 9, 0, 0, 'Europe/London').toJSON(),
-                  rrule: {
-                    frequency: 'DAILY',
-                    start: dateAdapter(2018, 10, 8, 9, 0, 0, 'Europe/London').toJSON(),
-                  },
+                  rrules: [
+                    {
+                      frequency: 'DAILY',
+                      start: dateAdapter(2018, 10, 8, 9, 0, 0, 'Europe/London').toJSON(),
+                    },
+                  ],
                 },
               ]);
             } else {
@@ -1726,11 +1726,13 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           const schedule = new VEvent({
             start: now,
-            rrule: {
-              frequency: 'DAILY',
-              count: 3,
-              byHourOfDay: [7, 16],
-            },
+            rrules: [
+              {
+                frequency: 'DAILY',
+                count: 3,
+                byHourOfDay: [7, 16],
+              },
+            ],
             rdates: [dateAdapter(2010, 10, 11, 0)],
             dateAdapter: DateAdapter,
           });

@@ -31,15 +31,16 @@ class VEvent<T extends typeof DateAdapter, D = any> {
     start: DateInput<T>;
     dateAdapter?: T;
     // The data property holds arbitrary data associated with the `VEvent`.
-    // When iterating through an occurrence generator, you can access a list of the objects
-    // which generated any given date by accessing the `IDateAdapter#generators` property.
-    // In this way, for a given, generated date, you can access the object which generated
-    // the date as well as the arbitrary data associated with that object.
+    // When iterating through a VEvent, you can access a list of the generator objects (i.e. Rules / Dates)
+    // which generated any yielded date by accessing the `IDateAdapter#generators` property.
+    // In this way, for a given, yielded date, you can access the objects which generated
+    // the date as well as the arbitrary data associated with those objects.
+    // The data property is ignored when serializing to iCal.
     data?: D;
-    rrule?: IVEventRuleOptions<T>;
-    exrule?: IVEventRuleOptions<T>;
-    rdates?: DateInput<T>[];
-    exdates?: DateInput<T>[];
+    rrules?: ReadonlyArray<IVEventRuleOptions<T> | Rule<T>>;
+    exrules?: ReadonlyArray<IVEventRuleOptions<T> | Rule<T>>;
+    rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
+    exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
   });
 }
 ```

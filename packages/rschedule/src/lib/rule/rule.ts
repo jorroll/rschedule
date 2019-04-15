@@ -61,22 +61,46 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
   }
 
   /**
-   * Allows you to change the timezone that dates are output in.
+   * Rule's are immutable. This allows you to create a new Rule with an updated timezone
+   * or rule option.
    *
    * ### Important!
-   * This does not change the *options* associated with this
+   * When updating the rule's timezone, this does not change the *options* associated with this
    * `Rule`, so the rule is still processed using whatever timezone is
    * associated with the rule's `start` time. When the rule is run, and
    * a date is found to be valid, that date is only then converted to
-   * the timezone you specify here and returned to you.
+   * the timezone you specify here and returned to you. If you wish
+   * to update the timezone associated with the rule options, change the rule's
+   * `start` time.
    */
-  set(_: 'timezone', value: string | null) {
-    if (value === this.timezone) return this;
+  set(prop: 'timezone', value: string | null): Rule<T, D>;
+  set<O extends keyof IProvidedRuleOptions<T>>(
+    prop: O,
+    value: IProvidedRuleOptions<T>[O],
+  ): Rule<T, D>;
+  set<O extends keyof IProvidedRuleOptions<T> | 'timezone'>(
+    prop: O,
+    value: IProvidedRuleOptions<T>[Exclude<O, 'timezone'>] | string | null,
+  ): Rule<T, D> {
+    const options = cloneRuleOptions(this.options);
+    let timezone = this.timezone;
 
-    return new Rule(this.options, {
+    const test = (1 as unknown) as IProvidedRuleOptions<T>['start'];
+
+    if (prop === 'timezone') {
+      if (value === this.timezone) return this;
+      timezone = value as string | null;
+    } else {
+      options[prop as Exclude<O, 'timezone'>] = value as IProvidedRuleOptions<T>[Exclude<
+        O,
+        'timezone'
+      >];
+    }
+
+    return new Rule(options, {
       data: this.data,
       dateAdapter: this.dateAdapter,
-      timezone: value,
+      timezone,
     });
   }
 

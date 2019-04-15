@@ -10,36 +10,33 @@ const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac');
  * This base class provides a `OccurrenceGenerator` API wrapper around arrays of dates
  */
 export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
-  get length() {
-    return this.datetimes.length;
-  }
-
-  /**
-   * Convenience getter for returning the wrapped dates in DateAdapter format.
-   */
-  get adapters(): ConstructorReturnType<T>[] {
-    return this.datetimes.map(date =>
-      this.dateAdapter.fromJSON(date.toJSON()),
-    ) as ConstructorReturnType<T>[];
-  }
-
-  /** Returns the first occurrence or, if there are no occurrences, null. */
-  get firstDate(): ConstructorReturnType<T> | null {
-    return (this.adapters[0] as ConstructorReturnType<T>) || null;
-  }
-
-  /** Returns the last occurrence or, if there are no occurrences, null. */
-  get lastDate(): ConstructorReturnType<T> | null {
-    return (this.adapters[this.length - 1] as ConstructorReturnType<T>) || null;
-  }
-
   /**
    * Similar to `Array.isArray()`, `isDates()` provides a surefire method
    * of determining if an object is a `Dates` by checking against the
    * global symbol registry.
    */
-  static isDates(object: any): object is Dates<any> {
+  static isDates(object: unknown): object is Dates<any> {
     return !!(object && typeof object === 'object' && (object as any)[DATES_ID]);
+  }
+
+  get length() {
+    return this.adapters.length;
+  }
+
+  readonly adapters: ReadonlyArray<ConstructorReturnType<T>> = [];
+
+  /** Returns the first occurrence or, if there are no occurrences, null. */
+  get firstDate(): ConstructorReturnType<T> | null {
+    const first = this.adapters[0];
+
+    return (first && (first.set('timezone', this.timezone) as ConstructorReturnType<T>)) || null;
+  }
+
+  /** Returns the last occurrence or, if there are no occurrences, null. */
+  get lastDate(): ConstructorReturnType<T> | null {
+    const last = this.adapters[this.length - 1];
+
+    return (last && (last.set('timezone', this.timezone) as ConstructorReturnType<T>)) || null;
   }
 
   readonly isInfinite = false;
@@ -52,7 +49,6 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
 
   protected readonly [DATES_ID] = true;
 
-  /** @private - use `adapters` instead */
   private readonly datetimes: DateTime[] = [];
 
   constructor(args: {
@@ -66,7 +62,10 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     this.data = args.data;
 
     if (args.dates) {
-      this.datetimes = args.dates.map(date => this.normalizeDateInput(date)!);
+      this.adapters = args.dates.map(date => this.normalizeDateInputToAdapter(date));
+      this.datetimes = this.adapters.map(adapter =>
+        adapter.set('timezone', this.timezone).toDateTime(),
+      );
     }
 
     this.hasDuration = this.datetimes.every(date => !!date.duration);
@@ -74,7 +73,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
 
   add(value: DateInput<T>) {
     return new Dates({
-      dates: [...this.datetimes, this.normalizeDateInput(value)!],
+      dates: [...this.adapters, value],
       timezone: this.timezone,
       data: this.data,
       dateAdapter: this.dateAdapter,
@@ -82,9 +81,9 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
   }
 
   remove(value: DateInput<T>) {
-    const dates = this.datetimes.slice();
-    const input = this.normalizeDateInput(value)!;
-    const index = dates.findIndex(date => date.isEqual(input));
+    const dates = this.adapters.slice();
+    const input = this.normalizeDateInputToAdapter(value);
+    const index = dates.findIndex(date => date.valueOf() === input.valueOf());
 
     if (index >= 0) {
       dates.splice(index, 1);
@@ -98,21 +97,33 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     });
   }
 
+  /**
+   * Dates are immutable. This allows you to create a new Dates with an updated timezone
+   * or `dates` property.
+   *
+   * ### Important!
+   * When updating the dates' timezone, this does not change the *`dates`* associated with this
+   * `Dates`. Instead, when the `Dates` object is processed and a specific date is found to be
+   * valid, only then is that date converted to the timezone you specify here are returned to
+   * you. This distinction might matter when viewing the timezone associated with
+   * `Dates#adapters`. If you wish to update the timezone associated with the `date` objects
+   * this `Dates` is wrapping, you must update the `dates` property.
+   *
+   */
   set(prop: 'timezone', value: string | null): Dates<T, D>;
   set(prop: 'dates', value: DateInput<T>[]): Dates<T, D>;
   set(prop: 'timezone' | 'dates', value: DateInput<T>[] | string | null) {
     let timezone = this.timezone;
-    let dates: DateAdapter[] | DateTime[] = this.datetimes;
+    let dates: DateInput<T>[] = this.adapters.slice();
 
     if (prop === 'timezone') {
       if (value === this.timezone) return this;
       timezone = value as string | null;
-      dates = this.adapters.map(adapter => adapter.set('timezone', timezone));
     } else if (prop === 'dates') {
-      dates = (value as DateInput<T>[]).map(date => this.normalizeDateInput(date)!);
+      dates = value as DateInput<T>[];
     } else {
       throw new ArgumentError(
-        `Unexpected prop argument "${prop}". ` + `Accepted values are "timezone" or "dates"`,
+        `Unexpected prop argument "${prop}". Accepted values are "timezone" or "dates"`,
       );
     }
 
@@ -128,7 +139,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     fn: (
       date: ConstructorReturnType<T>,
       index: number,
-      array: ConstructorReturnType<T>[],
+      array: ReadonlyArray<ConstructorReturnType<T>>,
     ) => boolean,
   ) {
     return new Dates({

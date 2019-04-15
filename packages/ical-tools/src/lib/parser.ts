@@ -22,8 +22,8 @@ type IDtstartProperty<T extends typeof DateAdapter> = IJCalProperty & {
 
 export interface IVEventArgs<T extends typeof DateAdapter> {
   start: ConstructorReturnType<T>;
-  rrule?: IVEventRuleOptions<T>;
-  exrule?: IVEventRuleOptions<T>;
+  rrules?: IVEventRuleOptions<T>[];
+  exrules?: IVEventRuleOptions<T>[];
   rdates?: ConstructorReturnType<T>[];
   exdates?: ConstructorReturnType<T>[];
   data: { jCal: IJCalComponent };
@@ -143,6 +143,8 @@ function parseVEvent<T extends typeof DateAdapter>(rawInput: IJCalComponent, dat
 
   const params: IVEventArgs<T> = {
     start: dtstartProperty.processedValue,
+    rrules: [],
+    exrules: [],
     rdates: [],
     exdates: [],
     data: {
@@ -157,9 +159,9 @@ function parseVEvent<T extends typeof DateAdapter>(rawInput: IJCalComponent, dat
           `Invalid VEVENT component: must have exactly 1 "DTSTART" property.`,
         );
       case 'rrule':
-        return (params.rrule = parseRule(property, dateAdapter, dtstartProperty));
+        return params.rrules!.push(parseRule(property, dateAdapter, dtstartProperty));
       case 'exrule':
-        return (params.exrule = parseRule(property, dateAdapter, dtstartProperty));
+        return params.exrules!.push(parseRule(property, dateAdapter, dtstartProperty));
       case 'rdate':
         return params.rdates!.push(...jCalDateTimeToDateAdapter(property, dateAdapter));
       case 'exdate':

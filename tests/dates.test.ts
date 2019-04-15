@@ -177,7 +177,6 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             }).set('timezone', 'UTC');
 
             expect(dates.timezone).toBe('UTC');
-            expect(dates.adapters.every(date => date.timezone === 'UTC')).toBeTruthy();
           });
         });
 

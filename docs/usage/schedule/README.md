@@ -59,10 +59,10 @@ class Schedule<T extends typeof DateAdapter, D = any> {
     dateAdapter?: T;
     timezone?: string | null;
     // The data property holds arbitrary data associated with the `Schedule`.
-    // When iterating through an occurrence generator, you can access a list of the objects
-    // which generated any given date by accessing the `IDateAdapter#generators` property.
-    // In this way, for a given, generated date, you can access the object which generated
-    // the date as well as the arbitrary data associated with that object.
+    // When iterating through a Schedule, you can access a list of the generator objects (i.e. Rules / Dates)
+    // which generated any yielded date by accessing the `IDateAdapter#generators` property.
+    // In this way, for a given, yielded date, you can access the objects which generated
+    // the date as well as the arbitrary data associated with those objects.
     data?: D;
     rrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
     exrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;

@@ -2,6 +2,25 @@
 
 This repo attempts to follow [semantic versioning](https://semver.org/).
 
+## 0.10.0 BREAKING (2019/4/15)
+
+#### Breaking
+
+- fixed `VEvent` to allow multiple rrules / exrules as per the ical spec.
+  - This also included appropriate changes in `ical-tools` `serializeToICal()` and 
+    `parseICal()` functions.
+- updated `Dates` to not change the timezone associated with `Dates#adapters`.
+  This means that a date in `Dates#adapters` may not have the same timezone as `Dates#timezone`
+  (dates yielded by `Dates` are still updated to have the same timezone as `Dates#timezone`, however).
+  This distinction can be important when serializing a `Dates` object as it ensures the original
+  timezones associated with the underlying dates are preserved.
+
+#### Features
+
+- added ability to set `Rule#options` via `Rule#set()`.
+- added ability to pass whole `Rule` and `Dates` objects to the `VEvent` constructor.
+- added `VEvent#set()`, `VEvent#add()`, and `VEvent#remove()`.
+
 ## 0.9.1 FIX (2019/4/14)
 
 - Fixed npm tag associated with `@rschedule/rschedule` release

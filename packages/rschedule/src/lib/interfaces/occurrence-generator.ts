@@ -388,6 +388,18 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
       : new this.dateAdapter(date).set('timezone', this.timezone).toDateTime();
   }
 
+  protected normalizeDateInputToAdapter(date: DateInput<T>): ConstructorReturnType<T>;
+  protected normalizeDateInputToAdapter(date?: DateInput<T>): undefined;
+  protected normalizeDateInputToAdapter(date?: DateInput<T>) {
+    if (!date) {
+      return;
+    } else if (DateTime.isInstance(date)) {
+      return this.dateAdapter.fromDateTime(date);
+    }
+
+    return DateAdapter.isInstance(date) ? date : new this.dateAdapter(date);
+  }
+
   protected normalizeRunOutput(date: DateTime) {
     if (date.timezone !== this.timezone) {
       return this.dateAdapter

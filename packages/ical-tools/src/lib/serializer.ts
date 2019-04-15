@@ -152,14 +152,12 @@ function ruleOptionsToJCalProp<T extends typeof DateAdapter>(
 function vEventToJCal<T extends typeof DateAdapter>(vevent: VEvent<T>): IJCalComponent {
   return wrapInVEVENT(
     dateToJCalDTSTART(vevent.start.toDateTime()),
-    ...(vevent.rrule
-      ? [ruleOptionsToJCalProp('RRULE', vevent.dateAdapter, vevent.rrule.options)]
-      : []),
-    ...(vevent.exrule
-      ? [ruleOptionsToJCalProp('EXRULE', vevent.dateAdapter, vevent.exrule.options)]
-      : []),
-    ...(vevent.rdates ? datesToJCalProps('RDATE', vevent.rdates) : []),
-    ...(vevent.exdates ? datesToJCalProps('EXDATE', vevent.exdates) : []),
+    ...vevent.rrules.map(rule => ruleOptionsToJCalProp('RRULE', vevent.dateAdapter, rule.options)),
+    ...vevent.exrules.map(rule =>
+      ruleOptionsToJCalProp('EXRULE', vevent.dateAdapter, rule.options),
+    ),
+    ...datesToJCalProps('RDATE', vevent.rdates),
+    ...datesToJCalProps('EXDATE', vevent.exdates),
   );
 }
 
