@@ -74,27 +74,27 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
    * `start` time.
    */
   set(prop: 'timezone', value: string | null): Rule<T, D>;
+  set(prop: 'options', value: IProvidedRuleOptions<T>): Rule<T, D>;
   set<O extends keyof IProvidedRuleOptions<T>>(
     prop: O,
     value: IProvidedRuleOptions<T>[O],
   ): Rule<T, D>;
-  set<O extends keyof IProvidedRuleOptions<T> | 'timezone'>(
+  set<O extends keyof IProvidedRuleOptions<T> | 'timezone' | 'options'>(
     prop: O,
-    value: IProvidedRuleOptions<T>[Exclude<O, 'timezone'>] | string | null,
+    value: IProvidedRuleOptions<T>[Exclude<O, 'timezone' | 'options'>] | string | null,
   ): Rule<T, D> {
-    const options = cloneRuleOptions(this.options);
+    let options = cloneRuleOptions(this.options);
     let timezone = this.timezone;
-
-    const test = (1 as unknown) as IProvidedRuleOptions<T>['start'];
 
     if (prop === 'timezone') {
       if (value === this.timezone) return this;
       timezone = value as string | null;
+    } else if (prop === 'options') {
+      options = value as IProvidedRuleOptions<T>;
     } else {
-      options[prop as Exclude<O, 'timezone'>] = value as IProvidedRuleOptions<T>[Exclude<
-        O,
-        'timezone'
-      >];
+      options[prop as Exclude<O, 'timezone' | 'options'>] = value as IProvidedRuleOptions<
+        T
+      >[Exclude<O, 'timezone' | 'options'>];
     }
 
     return new Rule(options, {
