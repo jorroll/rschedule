@@ -1,6 +1,6 @@
 # @rschedule/standard-date-adapter
 
-![NPM version](https://flat.badgen.net/npm/v/@rschedule/standard-date-adapter) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/standard-date-adapter)
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/standard-date-adapter)](https://www.npmjs.com/package/@rschedule/standard-date-adapter) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/standard-date-adapter)](https://bundlephobia.com/result?p=@rschedule/standard-date-adapter)
 
 **[`StandardDateAdapter implements IDateAdapter<Date>`](../#IDateAdapter-Interface)**
 

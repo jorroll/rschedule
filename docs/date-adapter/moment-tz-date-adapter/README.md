@@ -1,6 +1,6 @@
 # @rschedule/moment-tz-date-adapter
 
-![NPM version](https://flat.badgen.net/npm/v/@rschedule/moment-tz-date-adapter) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/moment-tz-date-adapter)
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/moment-tz-date-adapter)](https://www.npmjs.com/package/@rschedule/moment-tz-date-adapter) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/moment-tz-date-adapter)](https://bundlephobia.com/result?p=@rschedule/moment-tz-date-adapter)
 
 **[`MomentTZDateAdapter implements IDateAdapter<Moment>`](../#IDateAdapter-Interface)**
 

@@ -1,6 +1,6 @@
 # rSchedule
 
-![NPM version](https://flat.badgen.net/npm/v/@rschedule/rschedule) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/rschedule)
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/rschedule)](https://www.npmjs.com/package/@rschedule/rschedule) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/rschedule)](https://bundlephobia.com/result?p=@rschedule/rschedule)
 
 ### Still pre-1.0 release (i.e. Beta)
 

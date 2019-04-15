@@ -1,6 +1,6 @@
 # @rschedule/luxon-date-adapter
 
-![NPM version](https://flat.badgen.net/npm/v/@rschedule/luxon-date-adapter) ![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/luxon-date-adapter)
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/luxon-date-adapter)](https://www.npmjs.com/package/@rschedule/luxon-date-adapter) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/luxon-date-adapter)](https://www.npmjs.com/package/@rschedule/luxon-date-adapter)
 
 **[`LuxonDateAdapter implements IDateAdapter<DateTime>`](../#IDateAdapter-Interface)**
 
