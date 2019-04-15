@@ -12,17 +12,12 @@
   "license": "Unlicense",
   "keywords": [
     "rschedule",
+    "dates",
     "momentjs",
+    "moment",
     "moment-timezone",
     "javascript",
-    "typescript",
-    "recurring",
-    "events",
-    "dates",
-    "recurrences",
-    "calendar",
-    "icalendar",
-    "rfc"
+    "typescript"
   ],
   "main": "build/main.js",
   "typings": "build/packages/moment-tz-date-adapter/index.d.ts",

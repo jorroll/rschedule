@@ -12,16 +12,10 @@
   "license": "Unlicense",
   "keywords": [
     "rschedule",
+    "dates",
     "luxon",
     "javascript",
-    "typescript",
-    "recurring",
-    "events",
-    "dates",
-    "recurrences",
-    "calendar",
-    "icalendar",
-    "rfc"
+    "typescript"
   ],
   "main": "build/main.js",
   "typings": "build/packages/luxon-date-adapter/index.d.ts",

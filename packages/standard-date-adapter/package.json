@@ -12,15 +12,9 @@
   "license": "Unlicense",
   "keywords": [
     "rschedule",
-    "javascript",
-    "typescript",
-    "recurring",
-    "events",
     "dates",
-    "recurrences",
-    "calendar",
-    "icalendar",
-    "rfc"
+    "javascript",
+    "typescript"
   ],
   "main": "build/main.js",
   "typings": "build/packages/standard-date-adapter/index.d.ts",

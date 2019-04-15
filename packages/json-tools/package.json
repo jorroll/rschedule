@@ -11,10 +11,10 @@
   },
   "license": "Unlicense",
   "keywords": [
+    "rschedule",
     "javascript",
     "typescript",
-    "icalendar",
-    "rfc"
+    "json"
   ],
   "main": "build/main.js",
   "typings": "build/packages/json-tools/index.d.ts",
