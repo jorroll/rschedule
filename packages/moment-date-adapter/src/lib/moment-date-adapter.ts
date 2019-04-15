@@ -1,4 +1,10 @@
-import { DateAdapter, DateTime, IDateAdapter, InvalidDateAdapterError } from '@rschedule/rschedule';
+import {
+  DateAdapter,
+  DateTime,
+  IDateAdapter,
+  InvalidDateAdapterError,
+  OccurrenceGenerator,
+} from '@rschedule/rschedule';
 import moment from 'moment';
 
 const MOMENT_DATE_ADAPTER_ID = Symbol.for('9f60d072-15b6-453c-be71-5c8f9c04fbbd');
@@ -62,12 +68,14 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
     return MomentDateAdapter.fromJSON(datetime.toJSON());
   }
 
+  readonly date: moment.Moment;
   readonly timezone: string | null;
   readonly duration: number | undefined;
+  readonly generators: OccurrenceGenerator<typeof MomentDateAdapter>[] = [];
 
   protected readonly [MOMENT_DATE_ADAPTER_ID] = true;
 
-  constructor(readonly date: moment.Moment, options: { duration?: number } = {}) {
+  constructor(date: moment.Moment, options: { duration?: number } = {}) {
     super(undefined);
 
     this.date = date.clone();

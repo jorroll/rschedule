@@ -3,6 +3,7 @@ import {
   DateTime,
   IDateAdapter,
   InvalidDateAdapterError,
+  OccurrenceGenerator,
   RScheduleConfig,
 } from '@rschedule/rschedule';
 
@@ -62,12 +63,10 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
     return StandardDateAdapter.fromJSON(datetime.toJSON());
   }
 
-  readonly generators: any[] = [];
-
-  /** Returns the date object this DateAdapter is wrapping */
   readonly date: Date;
   readonly timezone: string | null;
   readonly duration: number | undefined;
+  readonly generators: OccurrenceGenerator<typeof StandardDateAdapter>[] = [];
 
   protected readonly [STANDARD_DATE_ADAPTER_ID] = true;
 

@@ -1,4 +1,10 @@
-import { DateAdapter, DateTime, IDateAdapter, InvalidDateAdapterError } from '@rschedule/rschedule';
+import {
+  DateAdapter,
+  DateTime,
+  IDateAdapter,
+  InvalidDateAdapterError,
+  OccurrenceGenerator,
+} from '@rschedule/rschedule';
 import { DateTime as LuxonDateTime, LocalZone } from 'luxon';
 
 const LUXON_DATE_ADAPTER_ID = Symbol.for('9689fd66-841f-4a75-8ee0-f0515571779b');
@@ -67,15 +73,18 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
     return LuxonDateAdapter.fromJSON(datetime.toJSON());
   }
 
+  readonly date: LuxonDateTime;
   readonly timezone: string | null;
   readonly duration: number | undefined;
+  readonly generators: OccurrenceGenerator<typeof LuxonDateAdapter>[] = [];
 
   protected readonly [LUXON_DATE_ADAPTER_ID] = true;
 
-  constructor(readonly date: LuxonDateTime, options: { duration?: number } = {}) {
+  constructor(date: LuxonDateTime, options: { duration?: number } = {}) {
     super(undefined);
 
-    this.timezone = this.date.zone instanceof LocalZone ? null : this.date.zoneName;
+    this.date = date;
+    this.timezone = date.zone instanceof LocalZone ? null : date.zoneName;
     this.duration = options.duration;
 
     this.assertIsValid();
