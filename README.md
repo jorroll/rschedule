@@ -65,7 +65,8 @@ rule.pipe(
 
 ## Docs
 
-- [Version 0.9 docs (current)](./docs#brief-overview)
+- [Version 0.10 docs (current)](./docs#brief-overview)
+- [Version 0.9 docs](https://gitlab.com/john.carroll.p/rschedule/tree/a80b576c981570710def8f83575a4932b12f8f34/docs#brief-overview)
 - [Version 0.7 docs](https://gitlab.com/john.carroll.p/rschedule/wikis/home)
 
 ## Installation
