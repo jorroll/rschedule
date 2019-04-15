@@ -37,7 +37,7 @@ When serializing to / from the [iCalendar spec](https://tools.ietf.org/html/rfc5
 
 1. `serializeToICal()` expects `VEvent` objects.
 2. `parseICal()` returns `VEvent` objects.
-3. Unlike `Schedule` objects, the `VEvent` object actually adhears to the specifics of the [iCalendar `VEVENT` spec](https://tools.ietf.org/html/rfc5545#section-3.6.1) (e.g. only one rrule, dtstart time is the first occurrence, etc).
+3. Unlike `Schedule` objects, the `VEvent` object actually adhears to the specifics of the [iCalendar `VEVENT` spec](https://tools.ietf.org/html/rfc5545#section-3.6.1) (e.g. dtstart time is the first occurrence, etc).
 
 See the [`VEvent` object section](./vevent) for more info on the `VEvent` object.
 
