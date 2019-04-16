@@ -1,22 +1,27 @@
-_implements [IOccurrenceGenerator](../../../usage/#IOccurrenceGenerator-Interface)_
+# VEvent class
+
+**VEvent implements [IOccurrenceGenerator](../../../usage/#IOccurrenceGenerator-Interface), IScheduleLike;**
 
 `VEvent` objects allow iterating a occurrence schedule made up of an RRULE and/or EXRULE as well as RDATEs and EXDATEs. Each `VEvent` object follows the iCalendar `VEVENT` spec. As such, duplicate occurrences are filtered out.
 
 Example usage:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter
+RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
 const vEvent = new VEvent({
   start: new Date(2012, 5, 24),
   rrule: {
     frequency: 'WEEKLY',
-    end: new Date(2012, 11, 31)
+    end: new Date(2012, 11, 31),
   },
   data: 'Holds anything I want',
-})
+});
 
-vEvent.occurrences({take: 10}).toArray().map(date => date.toISOString())
+vEvent
+  .occurrences({ take: 10 })
+  .toArray()
+  .map(date => date.toISOString());
 ```
 
 Not all iCal rules are currently supported. See the [`Rule` object section](../../../usage/rule) for more info.

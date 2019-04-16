@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    // "rootDir": "src",
+    "outDir": "build/main",
+    "declarationDir": "build/main",
+    "downlevelIteration": true
+  },
+  "include": ["src/**/*.ts"]
+}

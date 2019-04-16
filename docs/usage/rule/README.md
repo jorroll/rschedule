@@ -6,6 +6,8 @@ RRule objects implement the `RRULE` portion of the [iCAL spec](https://tools.iet
 
 Rule objects are created with a variety of [iCAL spec](https://tools.ietf.org/html/rfc5545) options which are summarized below. If you're not familiar, you can read the [recurrence rule section of the ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10) to really familiarize yourself with the concepts (its not long).
 
+There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up rSchedule objects. [See the `rule-tools` docs for more information.](../rule-tools)
+
 Rule objects support:
 
 ```typescript
@@ -113,7 +115,7 @@ type Frequency = 'YEARLY' | 'MONTHLY' | 'WEEKLY' | 'DAILY' | 'HOURLY' | 'MINUTEL
 
 ### End
 
-Note: in the iCal spec and the description below, this property is called `UNTIL`. 
+Note: in the iCal spec and the description below, this property is called `UNTIL`.
 
 > The UNTIL rule part defines a DATE or DATE-TIME value that bounds
 > the recurrence rule in an inclusive manner. If the value
@@ -271,7 +273,7 @@ class Rule<T extends typeof DateAdapter, D = any> {
       // the date (in this case, this Rule) as well as the arbitrary data associated with that object (this data).
       data?: D;
       dateAdapter?: T;
-      timezone?: string | null
+      timezone?: string | null;
     },
   );
 }

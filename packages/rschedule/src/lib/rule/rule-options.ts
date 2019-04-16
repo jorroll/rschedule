@@ -1,6 +1,7 @@
 import { cloneJSON, ConstructorReturnType, numberSortComparer } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
+import { DateInput } from '../utilities';
 
 /**
  * This function performs validation checks on the provided rule options and retuns
@@ -12,7 +13,9 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
 ): INormalizedRuleOptions {
   let start: DateTime;
 
-  if (dateAdapterConstructor.isInstance(options.start)) {
+  if (DateTime.isInstance(options.start)) {
+    start = options.start;
+  } else if (dateAdapterConstructor.isInstance(options.start)) {
     start = options.start.toDateTime();
   } else if (dateAdapterConstructor.isDate(options.start)) {
     start = new dateAdapterConstructor(options.start).toDateTime();
@@ -26,7 +29,9 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
   let end: DateTime | undefined;
 
   if (options.end) {
-    if (dateAdapterConstructor.isInstance(options.end)) {
+    if (DateTime.isInstance(options.end)) {
+      end = options.end;
+    } else if (dateAdapterConstructor.isInstance(options.end)) {
       end = options.end.toDateTime();
     } else if (dateAdapterConstructor.isDate(options.end)) {
       end = new dateAdapterConstructor(options.end).toDateTime();
@@ -242,7 +247,7 @@ export interface INormalizedRuleOptions {
 }
 
 export namespace RuleOption {
-  export type Start<T extends typeof DateAdapter> = T['date'] | ConstructorReturnType<T>;
+  export type Start<T extends typeof DateAdapter> = DateInput<T>;
 
   export type End<T extends typeof DateAdapter> = Start<T>;
 

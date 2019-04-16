@@ -7,9 +7,11 @@ This library has four main occurrence generating classes which each implement `O
 - [Rule](./rule-class)
 - [Dates](./dates-class)
 
-Additionally, this library makes use of an [`IDateAdapter`](../date-adapter) interface which allows rSchedule to be used with the date library of your choosing. You must provide a date adapter for each `OccurrenceGenerator` object you create, usually as a `dateAdapter` argument. 
+If you plan on using rSchedule with the iCalendar spec, it also has a fifth `VEvent` object which replaces the `Schedule` object. [See the `@rschedule/ical-tools` docs for more info.](../serialization/ical)
 
-All of the `OccurrenceGenerator<T extends typeof DateAdapter>` objects are *generic* and receive a `typeof DateAdapter` type argument. Type inference will often take care of typing these objects for you but, when it doesn't, **remember that the type you need to pass is for the constructor** (i.e. `Schedule<typeof StandardDateAdapter>`).
+Additionally, this library makes use of an [`IDateAdapter`](../date-adapter) interface which allows rSchedule to be used with the date library of your choosing. You must provide a date adapter for each `OccurrenceGenerator` object you create, usually as a `dateAdapter` argument.
+
+All of the `OccurrenceGenerator<T extends typeof DateAdapter>` objects are _generic_ and receive a `typeof DateAdapter` type argument. Type inference will often take care of typing these objects for you but, when it doesn't, **remember that the type you need to pass is for the constructor** (i.e. `Schedule<typeof StandardDateAdapter>`).
 
 For convenience, an [RScheduleConfig](./rschedule-config) object exists which allows you to set a global `defaultDateAdapter`, removing the need to provide a date adapter when creating `OccurrenceGenerator` objects. Making use of the `defaultDateAdapter`, however, will mean that typescript will not be able to infer the proper type and you'll need to specify it yourself.
 
@@ -24,6 +26,8 @@ new Schedule<MomentTZDateAdapter>();
 ```
 
 Finally, this library has an assortment of [occurrence stream operators](./operators) which allow combining multiple occurrence generators into a single occurrence generator. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. See [`occurrence stream operators`](./operators) for more information.
+
+There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
 
 ### IOccurrenceGenerator Interface
 
@@ -44,18 +48,18 @@ interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
    * - `reverse` whether to iterate in reverse or not
    *
    * Examples:
-   * 
+   *
    * ```
    * const iterator = schedule.occurrences({ start: new Date(), take: 5 })
-   * 
+   *
    * for (const date of iterator) {
    *   // do stuff
    * }
-   * 
+   *
    * iterator.toArray() // returns Date array
    * iterator.next().value // returns next Date
    * ```
-   * 
+   *
    */
   occurrences(args: IOccurrencesArgs<T>): OccurrenceIterator<T>;
 

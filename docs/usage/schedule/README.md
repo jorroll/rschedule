@@ -1,6 +1,6 @@
 # Schedule class
 
-[**`Schedule implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
+**Schedule implements [IOccurrenceGenerator](../#IOccurrenceGenerator-Interface), IScheduleLike;**
 
 `Schedule` objects allow iterating a occurrence schedule made up of RRULE, EXRULE, RDATE, and EXDATE components. Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
 
@@ -48,6 +48,8 @@ else if (schedule.occursBefore(new Date(2012,2,12)))) {
   // do different stuff
 }
 ```
+
+There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up rSchedule objects. [See the `rule-tools` docs for more information.](../rule-tools)
 
 ### Constructor
 

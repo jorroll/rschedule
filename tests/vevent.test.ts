@@ -2,11 +2,7 @@ import { VEvent } from '@rschedule/ical-tools';
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-import {
-  DateAdapter as DateAdapterConstructor,
-  IDateAdapter,
-  RScheduleConfig,
-} from '@rschedule/rschedule';
+import { DateAdapter as DateAdapterConstructor, IDateAdapter } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
 import { Moment as MomentST } from 'moment';
@@ -108,16 +104,14 @@ describe('VEvent', () => {
 
       timezones.forEach(zone => {
         context(zone, timezone => {
-          RScheduleConfig.defaultDateAdapter = DateAdapter;
-          RScheduleConfig.defaultTimezone = timezone;
-
           const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, timezone);
 
           describe('VEventClass', () => {
-            it('is instantiable', () =>
+            it('is instantiable', () => {
               expect(new VEvent({ start: dateAdapter(), dateAdapter: DateAdapter })).toBeInstanceOf(
                 VEvent,
-              ));
+              );
+            });
           });
 
           testOccurrences(
@@ -253,6 +247,7 @@ describe('VEvent', () => {
             'rdates & exdates 2',
             new VEvent({
               start: dateAdapter(1998, 1, 1, 9, 0),
+              dateAdapter: DateAdapter,
               rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
               exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
             }),

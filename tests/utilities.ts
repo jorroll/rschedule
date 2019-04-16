@@ -9,17 +9,33 @@ import { DateTime as LuxonDateTime } from 'luxon';
 
 // This function allows me to use the test's name as a
 // variable inside the test
-export function test<T extends any>(name: T, fn: (name: T) => any) {
-  return it(`${name}`, () => fn(name));
+export function test<T>(name: T, fn: (name: T) => any) {
+  if (DateAdapter.isInstance(name)) {
+    it(name.toISOString(), () => {
+      fn(name);
+    });
+  } else {
+    it(`${name}`, () => {
+      fn(name);
+    });
+  }
 }
 
 // This function allows me to use the describe block's name as a
 // variable inside tests
 export function context<T>(name: T, fn: (name: T) => any) {
   if (Array.isArray(name)) {
-    return describe(`${name[0]}`, () => fn(name));
+    describe(`${name[0]}`, () => {
+      fn(name);
+    });
+  } else if (DateAdapter.isInstance(name)) {
+    describe(name.toISOString(), () => {
+      fn(name);
+    });
   } else {
-    return describe(`${name}`, () => fn(name));
+    describe(`${name}`, () => {
+      fn(name);
+    });
   }
 }
 
@@ -27,9 +43,13 @@ export function context<T>(name: T, fn: (name: T) => any) {
 // same test suite
 export function environment<T>(object: T, fn: (object: T) => any) {
   if (typeof object === 'function') {
-    return describe((object as any).name, () => fn(object));
+    describe((object as any).name, () => {
+      fn(object);
+    });
   } else if (Array.isArray(object)) {
-    return describe(object[0].name, () => fn(object));
+    describe(object[0].name, () => {
+      fn(object);
+    });
   } else {
     throw new Error('"environment()" utility function received unexpected value');
   }
