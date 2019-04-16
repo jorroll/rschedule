@@ -28,21 +28,18 @@ export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON,
   options?: {
     dateAdapter?: T;
-    maxFailedIterations?: number;
   },
 ): RScheduleObject<T>;
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON[],
   options?: {
     dateAdapter?: T;
-    maxFailedIterations?: number;
   },
 ): RScheduleObject<T>[];
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON | RScheduleObjectJSON[],
   options: {
     dateAdapter?: T;
-    maxFailedIterations?: number;
   } = {},
 ): RScheduleObject<T> | RScheduleObject<T>[] {
   const dateAdapter = options.dateAdapter || (RScheduleConfig.defaultDateAdapter as T);
@@ -101,17 +98,13 @@ export function parseJSON<T extends typeof DateAdapter>(
         case 'OccurrenceStream':
           return new OccurrenceStream({
             ...json,
-            operators: json.operators.map(operator =>
-              parseOperatorJSON(operator, dateAdapter, options),
-            ),
+            operators: json.operators.map(operator => parseOperatorJSON(operator, dateAdapter)),
             dateAdapter,
           });
         case 'Calendar':
           return new Calendar({
             ...json,
-            schedules: json.schedules.map(schedule =>
-              parseJSON(schedule, { dateAdapter, ...options }),
-            ),
+            schedules: json.schedules.map(schedule => parseJSON(schedule, { dateAdapter })),
             dateAdapter,
           });
         default:
@@ -132,21 +125,16 @@ export function parseJSON<T extends typeof DateAdapter>(
 function parseOperatorJSON<T extends typeof DateAdapter>(
   json: IOperatorJSON,
   dateAdapter: T,
-  options: {
-    maxFailedIterations?: number;
-  } = {},
 ): OperatorFnOutput<T> {
   switch (json.type) {
     case 'AddOperator':
-      return add(...json.streams.map(stream => parseJSON(stream, { dateAdapter, ...options })));
+      return add(...json.streams.map(stream => parseJSON(stream, { dateAdapter })));
     case 'SubtractOperator':
-      return subtract(
-        ...json.streams.map(stream => parseJSON(stream, { dateAdapter, ...options })),
-      );
+      return subtract(...json.streams.map(stream => parseJSON(stream, { dateAdapter })));
     case 'IntersectionOperator':
       return intersection({
-        maxFailedIterations: options.maxFailedIterations,
-        streams: json.streams.map(stream => parseJSON(stream, { dateAdapter, ...options })),
+        maxFailedIterations: json.maxFailedIterations,
+        streams: json.streams.map(stream => parseJSON(stream, { dateAdapter })),
       });
     case 'UniqueOperator':
       return unique();

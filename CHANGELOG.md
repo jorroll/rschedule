@@ -7,6 +7,8 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 ### Breaking
 
 - updated `RScheduleConfig` so that config options are namespaced.
+- updated `@rschedule/json-tools` so that `IntersectionOperator#maxFailedIterations` is serialized.
+  - There is no longer the option to provide `maxFailedIterations` to `parseJSON()`.
 
 ### Features
 
@@ -14,6 +16,15 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 - ability to set all `Rule#options` via `Rule#set()`.
 - added `IScheduleLike<T extends typeof DateAdapter>` interface.
 - added `RScheduleConfig.Rule.defaultWeekStart` config option.
+- added `Operator.isOperator()`
+
+### Fixes
+
+- `AddOperator.isAddOperator()`
+- `SubtractOperator.isSubtractOperator()`
+- `IntersectionOperator.isIntersectionOperator()`
+- `UniqueOperator.isUniqueOperator()`
+- `OccurrenceStream.isOccurrenceStream()`
 
 ## 0.10.0 BREAKING (2019/4/15)
 

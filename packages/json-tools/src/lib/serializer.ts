@@ -83,8 +83,8 @@ export interface IOccurrenceStreamJSON {
 export type IOperatorJSON =
   | IAddOperatorJSON
   | ISubtractOperatorJSON
-  | IIntersectionOperator
-  | IUniqueOperator;
+  | IIntersectionOperatorJSON
+  | IUniqueOperatorJSON;
 
 export interface IAddOperatorJSON {
   type: 'AddOperator';
@@ -96,12 +96,13 @@ export interface ISubtractOperatorJSON {
   streams: RScheduleObjectJSON[];
 }
 
-export interface IIntersectionOperator {
+export interface IIntersectionOperatorJSON {
   type: 'IntersectionOperator';
   streams: RScheduleObjectJSON[];
+  maxFailedIterations?: number;
 }
 
-export interface IUniqueOperator {
+export interface IUniqueOperatorJSON {
   type: 'UniqueOperator';
 }
 
@@ -118,15 +119,15 @@ export function serializeToJSON<T extends typeof DateAdapter>(
 }
 
 function _serializeToJSON<T extends typeof DateAdapter>(
-  withTimezone: boolean,
+  isNested: boolean,
   input: RScheduleObject<T>,
 ): RScheduleObjectJSON;
 function _serializeToJSON<T extends typeof DateAdapter>(
-  withTimezone: boolean,
+  isNested: boolean,
   ...input: RScheduleObject<T>[]
 ): RScheduleObjectJSON[];
 function _serializeToJSON<T extends typeof DateAdapter>(
-  withTimezone: boolean,
+  isNested: boolean,
   ...input: RScheduleObject<T>[]
 ): RScheduleObjectJSON | RScheduleObjectJSON[] {
   const result = input.map(input => {
@@ -166,7 +167,7 @@ function _serializeToJSON<T extends typeof DateAdapter>(
       throw new SerializeJSONError(`Unsupported input type "${input}"`);
     }
 
-    if (withTimezone) {
+    if (isNested) {
       json.timezone = input.timezone;
     }
 
@@ -218,22 +219,23 @@ function serializeOperatorToJSON<T extends typeof DateAdapter>(input: Operator<T
     return {
       type: 'AddOperator',
       streams: (input as AddOperator<T>)._streams.map(stream =>
-        serializeToJSON(stream as RScheduleObject<T>),
+        _serializeToJSON(false, stream as RScheduleObject<T>),
       ),
     };
   } else if (SubtractOperator.isSubtractOperator(input)) {
     return {
       type: 'SubtractOperator',
       streams: (input as SubtractOperator<T>)._streams.map(stream =>
-        serializeToJSON(stream as RScheduleObject<T>),
+        _serializeToJSON(false, stream as RScheduleObject<T>),
       ),
     };
   } else if (IntersectionOperator.isIntersectionOperator(input)) {
     return {
       type: 'IntersectionOperator',
       streams: (input as IntersectionOperator<T>)._streams.map(stream =>
-        serializeToJSON(stream as RScheduleObject<T>),
+        _serializeToJSON(false, stream as RScheduleObject<T>),
       ),
+      maxFailedIterations: (input as IntersectionOperator<T>).maxFailedIterations,
     };
   } else if (UniqueOperator.isUniqueOperator(input)) {
     return {
