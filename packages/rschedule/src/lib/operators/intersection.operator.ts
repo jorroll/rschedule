@@ -42,13 +42,14 @@ export function intersection<T extends typeof DateAdapter>(args: {
 }
 
 export class IntersectionOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isIntersectionOperator(object: unknown): object is IntersectionOperator<any> {
-    return !!(object && typeof object === 'object' && (object as any)[INTERSECTION_OPERATOR_ID]);
+  static isIntersectionOperator(object: any): object is IntersectionOperator<any> {
+    return !!(super.isOperator(object) && (object as any)[INTERSECTION_OPERATOR_ID]);
   }
 
   readonly isInfinite: boolean;
+  readonly maxFailedIterations?: number;
 
-  private maxFailedIterations?: number;
+  protected readonly [INTERSECTION_OPERATOR_ID] = true;
 
   constructor(
     args: {

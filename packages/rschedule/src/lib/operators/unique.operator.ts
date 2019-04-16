@@ -15,9 +15,11 @@ export function unique<T extends typeof DateAdapter>(): OperatorFnOutput<T> {
 }
 
 export class UniqueOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isUniqueOperator(object: unknown): object is UniqueOperator<any> {
-    return !!(object && typeof object === 'object' && (object as any)[UNIQUE_OPERATOR_ID]);
+  static isUniqueOperator(object: any): object is UniqueOperator<any> {
+    return !!(super.isOperator(object) && (object as any)[UNIQUE_OPERATOR_ID]);
   }
+
+  protected readonly [UNIQUE_OPERATOR_ID] = true;
 
   /** Not actually used but necessary for IRunnable interface */
   set(_: 'timezone', value: string | null) {

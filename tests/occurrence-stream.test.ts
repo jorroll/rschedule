@@ -227,6 +227,16 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           });
         }
 
+        describe('OccurrenceStreamClass', () => {
+          it('isOccurrenceStream()', () => {
+            expect(
+              OccurrenceStream.isOccurrenceStream(
+                new OccurrenceStream({ operators: [], dateAdapter: DateAdapter, timezone }),
+              ),
+            ).toBe(true);
+          });
+        });
+
         describe('OccurrenceStream', () => {
           testOneDates();
           testTwoDates();

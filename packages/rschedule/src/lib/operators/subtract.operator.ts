@@ -20,9 +20,11 @@ export function subtract<T extends typeof DateAdapter>(
 }
 
 export class SubtractOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isSubtractOperator(object: unknown): object is SubtractOperator<any> {
-    return !!(object && typeof object === 'object' && (object as any)[SUBTRACT_OPERATOR_ID]);
+  static isSubtractOperator(object: any): object is SubtractOperator<any> {
+    return !!(super.isOperator(object) && (object as any)[SUBTRACT_OPERATOR_ID]);
   }
+
+  protected readonly [SUBTRACT_OPERATOR_ID] = true;
 
   /** Not actually used but necessary for IRunnable interface */
   set(_: 'timezone', value: string | null) {

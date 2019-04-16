@@ -24,9 +24,11 @@ export function add<T extends typeof DateAdapter>(
 }
 
 export class AddOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isAddOperator(object: unknown): object is AddOperator<any> {
-    return !!(object && typeof object === 'object' && (object as any)[ADD_OPERATOR_ID]);
+  static isAddOperator(object: any): object is AddOperator<any> {
+    return !!(super.isOperator(object) && (object as any)[ADD_OPERATOR_ID]);
   }
+
+  protected readonly [ADD_OPERATOR_ID] = true;
 
   /** Not actually used but necessary for IRunnable interface */
   set(_: 'timezone', value: string | null) {

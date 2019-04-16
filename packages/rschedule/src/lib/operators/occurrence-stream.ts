@@ -74,6 +74,8 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     return this.lastOperator ? this.lastOperator._run.bind(this.lastOperator) : this.emptyIterator;
   }
 
+  protected readonly [OCCURRENCE_STREAM_ID] = true;
+
   private readonly lastOperator: Operator<T> | undefined;
 
   constructor(args: {
@@ -84,10 +86,8 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     super(args);
 
     if (!args.operators || args.operators.length === 0) {
-      throw new ArgumentError('OccurrenceStream must be provided an array of operators)');
-    }
-
-    if (args.operators[0] instanceof Operator) {
+      this.operators = [];
+    } else if (args.operators[0] instanceof Operator) {
       this.operators = args.operators as Operator<T>[];
     } else {
       const operatorFns = args.operators as OperatorFnOutput<T>[];
