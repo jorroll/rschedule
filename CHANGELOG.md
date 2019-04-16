@@ -4,9 +4,15 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Breaking
+
+- updated `RScheduleConfig` so that config options are namespaced.
+
 ### Features
 
 - ability to set all `Rule#options` via `Rule#set()`.
+- added `IScheduleLike<T extends typeof DateAdapter>` interface.
+- added `RScheduleConfig.Rule.defaultWeekStart` config option.
 
 ## 0.10.0 BREAKING (2019/4/15)
 
