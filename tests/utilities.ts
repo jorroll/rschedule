@@ -9,8 +9,12 @@ import { DateTime as LuxonDateTime } from 'luxon';
 
 // This function allows me to use the test's name as a
 // variable inside the test
-export function test<T extends any>(name: T, fn: (name: T) => any) {
-  return it(`${name}`, () => fn(name));
+export function test<T>(name: T, fn: (name: T) => any) {
+  if (DateAdapter.isInstance(name)) {
+    return it(name.toISOString(), () => fn(name));
+  } else {
+    return it(`${name}`, () => fn(name));
+  }
 }
 
 // This function allows me to use the describe block's name as a
@@ -18,6 +22,8 @@ export function test<T extends any>(name: T, fn: (name: T) => any) {
 export function context<T>(name: T, fn: (name: T) => any) {
   if (Array.isArray(name)) {
     return describe(`${name[0]}`, () => fn(name));
+  } else if (DateAdapter.isInstance(name)) {
+    return describe(name.toISOString(), () => fn(name));
   } else {
     return describe(`${name}`, () => fn(name));
   }

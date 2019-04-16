@@ -52,12 +52,14 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
 
   private readonly datetimes: DateTime[] = [];
 
-  constructor(args: {
-    timezone?: string | null;
-    dates?: ReadonlyArray<DateInput<T>>;
-    data?: D;
-    dateAdapter?: T;
-  }) {
+  constructor(
+    args: {
+      timezone?: string | null;
+      dates?: ReadonlyArray<DateInput<T>>;
+      data?: D;
+      dateAdapter?: T;
+    } = {},
+  ) {
     super(args);
 
     this.data = args.data;

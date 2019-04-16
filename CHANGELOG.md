@@ -10,6 +10,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ### Features
 
+- added `@rschedule/rule-tools` package.
 - ability to set all `Rule#options` via `Rule#set()`.
 - added `IScheduleLike<T extends typeof DateAdapter>` interface.
 - added `RScheduleConfig.Rule.defaultWeekStart` config option.
