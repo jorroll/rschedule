@@ -50,12 +50,11 @@ export function scheduleHasPattern<T extends typeof DateAdapter>(
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function addSchedulePattern<T extends typeof DateAdapter, R extends IScheduleLike<T>>(
-  pattern: Pattern,
-  date: DateInput<T>,
-  schedule: R,
-  options: { dateAdapter?: T } = {},
-): R {
+export function addSchedulePattern<
+  T extends typeof DateAdapter,
+  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
+  R extends IScheduleLike<any> = IScheduleLike<any>
+>(pattern: Pattern, date: DateInput<T>, schedule: R, options: { dateAdapter?: T } = {}): R {
   if (pattern === 'date') {
     return schedule.add('rdate', date) as R;
   }
@@ -76,7 +75,8 @@ export function addSchedulePattern<T extends typeof DateAdapter, R extends ISche
  */
 export function endScheduleRecurrencePattern<
   T extends typeof DateAdapter,
-  R extends IScheduleLike<T>
+  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
+  R extends IScheduleLike<any> = IScheduleLike<any>
 >(
   type: RecurrencePattern,
   date: DateInput<T>,
@@ -107,7 +107,11 @@ export function endScheduleRecurrencePattern<
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function removeSchedulePattern<T extends typeof DateAdapter, R extends IScheduleLike<T>>(
+export function removeSchedulePattern<
+  T extends typeof DateAdapter,
+  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
+  R extends IScheduleLike<any> = IScheduleLike<any>
+>(
   pattern: Pattern,
   date: DateInput<T>,
   schedule: R,
@@ -134,9 +138,11 @@ export function removeSchedulePattern<T extends typeof DateAdapter, R extends IS
  * Remove all of the schedule's `exdates` which do not intersect the schedule's
  * occurrences.
  */
-export function cleanScheduleEXDates<T extends typeof DateAdapter, R extends IScheduleLike<T>>(
-  schedule: R,
-): R {
+export function cleanScheduleEXDates<
+  T extends typeof DateAdapter,
+  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
+  R extends IScheduleLike<any> = IScheduleLike<any>
+>(schedule: R): R {
   const options = {
     dateAdapter: schedule.dateAdapter,
     timezone: schedule.timezone,
