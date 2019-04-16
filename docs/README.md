@@ -1,6 +1,6 @@
 # rSchedule
 
-## Version 0.9 Docs
+## Version 0.10 Docs
 
 A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol.
 
@@ -56,7 +56,7 @@ const schedule = new Schedule({
       start: new Date(2012, 1, 7),
     },
   ],
-  exdates: [new Date(2010, 3, 2)]
+  exdates: [new Date(2010, 3, 2)],
 });
 
 schedule.occurrences().toArray();
@@ -94,7 +94,7 @@ const dates = new Dates({
   dates: [new Date(2000), new Date(2001), new Date(2002)],
 });
 
-dates.occursOn({date: new Date(2000)}) // true
+dates.occursOn({ date: new Date(2000) }); // true
 
 for (const date of dates.occurrences({ start: new Date(2000, 5) })) {
   // do stuff
