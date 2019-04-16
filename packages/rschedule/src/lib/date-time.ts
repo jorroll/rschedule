@@ -617,7 +617,7 @@ function shiftArray(array: any[], from: 'first' | 'last' = 'first') {
  * @param month base-1
  * @param year
  */
-export function monthLength(month: number, year: number) {
+function monthLength(month: number, year: number) {
   const block = {
     1: 31,
     2: getDaysInFebruary(year),

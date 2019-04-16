@@ -1,4 +1,4 @@
-import { DateTime, monthLength } from '../../date-time';
+import { DateTime } from '../../date-time';
 import { RuleOption } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeError, PipeRule } from './interfaces';
 import { getNthWeekdayOfMonth } from './utilities';
@@ -58,7 +58,7 @@ export function normalizeByDayOfMonth(
   byDayOfMonth: RuleOption.ByDayOfMonth[],
   byDayOfWeek?: RuleOption.ByDayOfWeek[],
 ) {
-  const lengthOfMonth = monthLength(date.get('month'), date.get('year'));
+  const lengthOfMonth = date.endGranularity('month').get('day');
 
   let normalizedByDayOfMonth = byDayOfMonth
     .filter(day => lengthOfMonth >= Math.abs(day))
