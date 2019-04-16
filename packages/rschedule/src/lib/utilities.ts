@@ -1,46 +1,80 @@
-export class ArgumentError extends Error {}
+import { ArgumentError, ConstructorReturnType } from './basic-utilities';
+import { DateAdapter } from './date-adapter';
+import { DateTime } from './date-time';
+import { RScheduleConfig } from './rschedule-config';
 
-export class InfiniteLoopError extends Error {}
+export type DateInput<T extends typeof DateAdapter> =
+  | T['date']
+  | ConstructorReturnType<T>
+  | DateTime;
 
-export type ConstructorReturnType<T extends new (...args: any[]) => any> = T extends new (
-  ...args: any[]
-) => infer R
-  ? R
-  : any;
+export function dateInputToDateAdapter<T extends typeof DateAdapter>(
+  date: DateInput<T>,
+  dateAdapter?: T,
+): ConstructorReturnType<T> {
+  dateAdapter = dateAdapter || (RScheduleConfig.defaultDateAdapter as T | undefined);
 
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
-
-export function numberSortComparer(a: number, b: number) {
-  if (a > b) {
-    return 1;
-  } else if (b > a) {
-    return -1;
-  } else {
-    return 0;
+  if (!dateAdapter) {
+    throw new ArgumentError(
+      'No `dateAdapter` option provided and `RScheduleConfig.defaultDateAdapter` not set.',
+    );
   }
+
+  if (DateTime.isInstance(date)) {
+    return dateAdapter.fromDateTime(date) as ConstructorReturnType<T>;
+  }
+
+  return DateAdapter.isInstance(date) ? date : (new dateAdapter(date) as ConstructorReturnType<T>);
 }
 
-export function freqToGranularity(freq: string) {
-  switch (freq) {
-    case 'YEARLY':
-      return 'year';
-    case 'MONTHLY':
-      return 'month';
-    case 'WEEKLY':
-      return 'week';
-    case 'DAILY':
-      return 'day';
-    case 'HOURLY':
-      return 'hour';
-    case 'MINUTELY':
-      return 'minute';
-    case 'SECONDLY':
-      return 'second';
-    default:
-      return 'millisecond';
+export function dateInputToDateTime<T extends typeof DateAdapter>(
+  date: DateInput<T>,
+  timezone: string | null,
+  dateAdapter?: T,
+): DateTime {
+  dateAdapter = dateAdapter || (RScheduleConfig.defaultDateAdapter as T | undefined);
+
+  if (!dateAdapter) {
+    throw new ArgumentError(
+      'No `dateAdapter` option provided and `RScheduleConfig.defaultDateAdapter` not set.',
+    );
   }
+
+  if (DateTime.isInstance(date)) {
+    if (date.timezone !== timezone) {
+      return dateAdapter
+        .fromDateTime(date)
+        .set('timezone', timezone)
+        .toDateTime();
+    }
+
+    return date;
+  }
+
+  return DateAdapter.isInstance(date)
+    ? date.set('timezone', timezone).toDateTime()
+    : new dateAdapter(date).set('timezone', timezone).toDateTime();
 }
 
-export function cloneJSON<T>(json: T): T {
-  return JSON.parse(JSON.stringify(json));
+export function normalizeDateTimeTimezone<T extends typeof DateAdapter>(
+  date: DateTime,
+  timezone: string | null,
+  dateAdapter?: T,
+): DateTime {
+  dateAdapter = dateAdapter || (RScheduleConfig.defaultDateAdapter as T | undefined);
+
+  if (!dateAdapter) {
+    throw new ArgumentError(
+      'No `dateAdapter` option provided and `RScheduleConfig.defaultDateAdapter` not set.',
+    );
+  }
+
+  if (date.timezone !== timezone) {
+    return dateAdapter
+      .fromDateTime(date)
+      .set('timezone', timezone)
+      .toDateTime();
+  }
+
+  return date;
 }

@@ -1,8 +1,9 @@
+import { ConstructorReturnType, InfiniteLoopError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { DateInput, IOccurrenceGenerator } from '../interfaces';
+import { IOccurrenceGenerator } from '../interfaces';
 import { IRunArgs } from '../interfaces/runnable';
-import { ConstructorReturnType, InfiniteLoopError } from '../utilities';
+import { DateInput } from '../utilities';
 
 export class OccurrenceIterator<T extends typeof DateAdapter> {
   private readonly iterator: IterableIterator<DateTime>;

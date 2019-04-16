@@ -1,5 +1,5 @@
+import { freqToGranularity } from '../../basic-utilities';
 import { DateTime, IDateAdapter } from '../../date-time';
-import { freqToGranularity } from '../../utilities';
 import { intervalDifferenceBetweenDates } from './01-frequency.pipe';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 

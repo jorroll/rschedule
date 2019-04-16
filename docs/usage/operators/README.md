@@ -1,11 +1,11 @@
-# Occurrence Operators
+# Occurrence Operators <!-- omit in toc -->
 
 This library exports a selection of occurrence stream operators for manipulating a stream of occurrences. Current operators are:
 
-  - [Add](#add)
-  - [Subtract](#subtract)
-  - [Intersection](#intersection)
-  - [Unique](#unique)
+- [Add](#add)
+- [Subtract](#subtract)
+- [Intersection](#intersection)
+- [Unique](#unique)
 
 Each of these operator functions is used as an argument to `IOccurrenceGenerator#pipe()`.
 
@@ -32,12 +32,12 @@ const schedule = new Calendar().pipe(
   add(rdates),
   subtract(exdates),
   unique(),
-)
+);
 
-schedule.occurrences({take: 5}).toArray() // occurrences;
+schedule.occurrences({ take: 5 }).toArray(); // occurrences;
 ```
 
-## Operators
+## Operators <!-- omit in toc -->
 
 #### Add
 
@@ -56,20 +56,24 @@ An operator function which accepts a spread of occurrence generators and removes
 Example:
 
 ```typescript
-new Calendar().pipe(add(schedule), subtract(aDifferentSchedule));
+new Calendar().pipe(
+  add(schedule),
+  subtract(aDifferentSchedule),
+);
 ```
 
 #### Intersection
 
 An operator function which takes a spread of occurrence generators and only returns the dates which intersect every occurrence generator.
 
-Because it's possible for all the generators to never intersect, and because the intersection operator can't detect this lack of intersection, you must call `intersection()` with a `{maxFailedIterations: number}` argument. For convenience, you can globally set `RScheduleConfig.defaultMaxFailedIterations`.
+Because it's possible for all the generators to never intersect, and because the intersection operator can't detect this lack of intersection, you must call `intersection()` with a `{maxFailedIterations: number}` argument if it is built from occurrence generators of infinite length. For convenience, you can globally set `RScheduleConfig.defaultMaxFailedIterations`.
 
 - Without further information, I'd probably set `defaultMaxFailedIterations = 50`.
 
 The `maxFailedIterations` argument caps the number of iterations the operator will run through without finding a single valid occurrence. If this number is reached, the operator will stop iterating (preventing a possible infinite loop).
 
-- Note: `maxFailedIterations` caps the number of iterations which *fail to turn up a single valid occurrence*. Every time a valid occurrence is returned, the current iteration count is reset to 0.
+- Note: `maxFailedIterations` caps the number of iterations which _fail to turn up a single valid occurrence_. Every time a valid occurrence is returned, the current iteration count is reset to 0.
+- If the occurrence generators feeding the IntersectionOperator are not infinite, the `maxFailedIterations` number is ignored.
 
 Example:
 
@@ -85,8 +89,6 @@ Example:
 
 ```typescript
 new Calendar({
-  schedules: [scheduleOne, scheduleTwo]
-}).pipe(
-  unique()
-)
+  schedules: [scheduleOne, scheduleTwo],
+}).pipe(unique());
 ```

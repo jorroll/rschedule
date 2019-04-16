@@ -17,15 +17,15 @@ export class DateAdapter implements IDateAdapter<unknown> {
     return !!(object && typeof object === 'object' && (object as any)[DATE_ADAPTER_ID]);
   }
 
-  static isDate(_: unknown): boolean {
+  static isDate(_object: unknown): boolean {
     throw unimplementedError('isDate()');
   }
 
-  static fromJSON(_: IDateAdapter.JSON): DateAdapter {
+  static fromJSON(_json: IDateAdapter.JSON): DateAdapter {
     throw unimplementedError('fromJSON()');
   }
 
-  static fromDateTime(_: DateTime): DateAdapter {
+  static fromDateTime(_datetime: DateTime): DateAdapter {
     throw unimplementedError('fromDateTime()');
   }
 
@@ -37,9 +37,9 @@ export class DateAdapter implements IDateAdapter<unknown> {
 
   protected readonly [DATE_ADAPTER_ID] = true;
 
-  constructor(_: unknown, options?: unknown) {}
+  constructor(_date: unknown, options?: unknown) {}
 
-  set(prop: 'timezone', value: string | null): DateAdapter {
+  set(_prop: 'timezone', _value: string | null): DateAdapter {
     throw unimplementedError('set()');
   }
 

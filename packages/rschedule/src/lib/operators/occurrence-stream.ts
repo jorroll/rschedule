@@ -1,7 +1,7 @@
+import { ArgumentError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
-import { ArgumentError } from '../utilities';
 import { add } from './add.operator';
 import { Operator, OperatorFnOutput } from './interface';
 

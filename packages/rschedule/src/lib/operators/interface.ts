@@ -1,8 +1,9 @@
+import { ConstructorReturnType } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { DateInput, IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
+import { IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
 import { RScheduleConfig } from '../rschedule-config';
-import { ConstructorReturnType } from '../utilities';
+import { DateInput, dateInputToDateTime } from '../utilities';
 
 export abstract class Operator<T extends typeof DateAdapter> implements IRunnable<T> {
   readonly isInfinite: boolean;
@@ -49,16 +50,12 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
 
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 
+  protected normalizeDateInput(date: DateInput<T>): DateTime;
+  protected normalizeDateInput(date?: DateInput<T>): undefined;
   protected normalizeDateInput(date?: DateInput<T>) {
-    if (!date) {
-      return;
-    } else if (DateTime.isInstance(date)) {
-      return date;
-    }
+    if (!date) return;
 
-    return DateAdapter.isInstance(date)
-      ? date.set('timezone', this.timezone).toDateTime()
-      : new this.config.dateAdapter(date).set('timezone', this.timezone).toDateTime();
+    return dateInputToDateTime(date, this.timezone, this.config.dateAdapter);
   }
 
   protected normalizeRunOutput(date: DateTime) {

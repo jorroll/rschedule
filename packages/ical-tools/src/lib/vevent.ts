@@ -8,6 +8,7 @@ import {
   DateTime,
   IProvidedRuleOptions,
   IRunArgs,
+  IScheduleLike,
   OccurrenceGenerator,
   OccurrenceStream,
   Omit,
@@ -25,7 +26,8 @@ export type IVEventRuleOptions<T extends typeof DateAdapter> = Omit<
   'duration'
 >;
 
-export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
+export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T>
+  implements IScheduleLike<T> {
   /**
    * Similar to `Array.isArray`, `isVEvent` provides a surefire method
    * of determining if an object is a `VEvent` by checking against the
