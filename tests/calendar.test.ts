@@ -12,7 +12,6 @@ import {
   IOccurrencesArgs,
   IProvidedRuleOptions,
   OccurrenceGenerator,
-  RScheduleConfig,
   Schedule,
 } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
@@ -219,14 +218,13 @@ describe('Calendar', () => {
 
       timezones.forEach(zone => {
         context(zone, timezone => {
-          RScheduleConfig.defaultDateAdapter = DateAdapter;
-          RScheduleConfig.defaultTimezone = timezone;
-
           const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, timezone);
 
           describe('CalendarClass', () => {
             it('is instantiable', () =>
-              expect(new Calendar({ dateAdapter: DateAdapter })).toBeInstanceOf(Calendar));
+              expect(new Calendar({ dateAdapter: DateAdapter, timezone })).toBeInstanceOf(
+                Calendar,
+              ));
           });
 
           testOccurrences(
@@ -243,7 +241,10 @@ describe('Calendar', () => {
                     start: dateAdapter(1997, 9, 2, 9),
                   },
                 ],
+                dateAdapter: DateAdapter,
               }),
+              dateAdapter: DateAdapter,
+              timezone,
             }),
             [
               dateAdapter(1998, 1, 5, 9, 0),
@@ -295,6 +296,7 @@ describe('Calendar', () => {
                       start: dateAdapter(1997, 9, 2, 9),
                     },
                   ],
+                  dateAdapter: DateAdapter,
                 }),
                 new Schedule({
                   rrules: [
@@ -307,8 +309,11 @@ describe('Calendar', () => {
                       start: dateAdapter(1997, 9, 2, 9),
                     },
                   ],
+                  dateAdapter: DateAdapter,
                 }),
               ],
+              dateAdapter: DateAdapter,
+              timezone,
             }),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -373,6 +378,7 @@ describe('Calendar', () => {
               schedules: [
                 new Schedule({
                   rdates: [dateAdapter(1998, 1, 1, 9, 0)],
+                  dateAdapter: DateAdapter,
                 }),
                 new Dates({
                   dates: [
@@ -380,8 +386,11 @@ describe('Calendar', () => {
                     dateAdapter(2000, 1, 1, 9, 0),
                     dateAdapter(2017, 1, 1, 9, 0),
                   ],
+                  dateAdapter: DateAdapter,
                 }),
               ],
+              dateAdapter: DateAdapter,
+              timezone,
             }),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -418,12 +427,16 @@ describe('Calendar', () => {
                 new Schedule({
                   rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
                   exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                  dateAdapter: DateAdapter,
                 }),
                 new Schedule({
                   rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
                   exdates: [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                  dateAdapter: DateAdapter,
                 }),
               ],
+              dateAdapter: DateAdapter,
+              timezone,
             }),
             [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
             {
@@ -458,6 +471,7 @@ describe('Calendar', () => {
                       start: dateAdapter(1997, 9, 2, 9),
                     },
                   ],
+                  dateAdapter: DateAdapter,
                 }),
                 new Schedule({
                   rrules: [
@@ -470,12 +484,16 @@ describe('Calendar', () => {
                       start: dateAdapter(1997, 9, 2, 9),
                     },
                   ],
+                  dateAdapter: DateAdapter,
                 }),
                 new Schedule({
                   rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
                   exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+                  dateAdapter: DateAdapter,
                 }),
               ],
+              dateAdapter: DateAdapter,
+              timezone,
             }),
             [
               dateAdapter(1997, 9, 2, 9, 0),

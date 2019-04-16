@@ -6,7 +6,6 @@ import {
   DateInput,
   Dates,
   IOccurrencesArgs,
-  RScheduleConfig,
 } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
@@ -155,13 +154,10 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, zone);
       const isoString = timezoneIsoStringFn(dateAdapter);
 
-      RScheduleConfig.defaultDateAdapter = DateAdapter;
-      RScheduleConfig.defaultTimezone = zone;
-
       context(zone, timezone => {
         describe('RDatesClass', () => {
           it('is instantiable', () =>
-            expect(new Dates({ dateAdapter: DateAdapter })).toBeInstanceOf(Dates));
+            expect(new Dates({ dateAdapter: DateAdapter, timezone })).toBeInstanceOf(Dates));
         });
 
         describe('set()', () => {
@@ -174,6 +170,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 dateAdapter(2017, 1, 1, 9, 0),
               ],
               timezone,
+              dateAdapter: DateAdapter,
             }).set('timezone', 'UTC');
 
             expect(dates.timezone).toBe('UTC');
@@ -207,6 +204,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             'with Dates & duplicate',
             new Dates({
               dateAdapter: DateAdapter,
+              timezone,
               dates: [
                 dateAdapter(1998, 1, 1, 9, 0),
                 dateAdapter(1998, 1, 1, 9, 0),

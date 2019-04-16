@@ -11,9 +11,13 @@ import { DateTime as LuxonDateTime } from 'luxon';
 // variable inside the test
 export function test<T>(name: T, fn: (name: T) => any) {
   if (DateAdapter.isInstance(name)) {
-    return it(name.toISOString(), () => fn(name));
+    it(name.toISOString(), () => {
+      fn(name);
+    });
   } else {
-    return it(`${name}`, () => fn(name));
+    it(`${name}`, () => {
+      fn(name);
+    });
   }
 }
 
@@ -21,11 +25,17 @@ export function test<T>(name: T, fn: (name: T) => any) {
 // variable inside tests
 export function context<T>(name: T, fn: (name: T) => any) {
   if (Array.isArray(name)) {
-    return describe(`${name[0]}`, () => fn(name));
+    describe(`${name[0]}`, () => {
+      fn(name);
+    });
   } else if (DateAdapter.isInstance(name)) {
-    return describe(name.toISOString(), () => fn(name));
+    describe(name.toISOString(), () => {
+      fn(name);
+    });
   } else {
-    return describe(`${name}`, () => fn(name));
+    describe(`${name}`, () => {
+      fn(name);
+    });
   }
 }
 
@@ -33,9 +43,13 @@ export function context<T>(name: T, fn: (name: T) => any) {
 // same test suite
 export function environment<T>(object: T, fn: (object: T) => any) {
   if (typeof object === 'function') {
-    return describe((object as any).name, () => fn(object));
+    describe((object as any).name, () => {
+      fn(object);
+    });
   } else if (Array.isArray(object)) {
-    return describe(object[0].name, () => fn(object));
+    describe(object[0].name, () => {
+      fn(object);
+    });
   } else {
     throw new Error('"environment()" utility function received unexpected value');
   }

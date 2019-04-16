@@ -5,7 +5,6 @@ import {
   ConstructorReturnType,
   DateAdapter as DateAdapterConstructor,
   IProvidedRuleOptions,
-  RScheduleConfig,
   Schedule,
 } from '@rschedule/rschedule';
 import {

@@ -13,7 +13,6 @@ import {
   DateAdapter as DateAdapterConstructor,
   Dates,
   DateTime,
-  RScheduleConfig,
   Rule,
   Schedule,
 } from '@rschedule/rschedule';
@@ -61,9 +60,6 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       // function to create new dateAdapter instances
       const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, zone);
       const isoString = timezoneIsoStringFn(dateAdapter);
-
-      RScheduleConfig.defaultDateAdapter = DateAdapter;
-      RScheduleConfig.defaultTimezone = zone;
 
       context(zone, timezone => {
         const nestedRRuleJSON1: IRuleJSON = {

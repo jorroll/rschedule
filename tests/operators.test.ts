@@ -11,7 +11,6 @@ import {
   IOccurrencesArgs,
   IRunnable,
   OccurrenceGenerator,
-  RScheduleConfig,
   subtract,
   unique,
 } from '@rschedule/rschedule';
@@ -63,9 +62,6 @@ describe('Operators', () => {
 
       timezones.forEach(zone => {
         context(zone, timezone => {
-          RScheduleConfig.defaultDateAdapter = DateAdapter;
-          RScheduleConfig.defaultTimezone = timezone;
-
           const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, timezone);
           const dateTime = dateTimeFn(dateAdapter);
           const isoString = timezoneIsoStringFn(dateAdapter);
@@ -79,6 +75,8 @@ describe('Operators', () => {
               dateAdapter(2019, 1, 1, 1, 1, 1, 1),
               dateAdapter(2020, 3, 3, 3, 3, 3, 3),
             ],
+            dateAdapter: DateAdapter,
+            timezone,
           });
 
           const datesB = new Dates({
@@ -90,6 +88,8 @@ describe('Operators', () => {
               dateAdapter(2020, 3, 3, 3, 3, 3, 3),
               dateAdapter(2020, 4, 4, 4, 4, 4, 4),
             ],
+            dateAdapter: DateAdapter,
+            timezone,
           });
 
           describe('testOneDates', () => {

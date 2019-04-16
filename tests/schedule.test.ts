@@ -4,7 +4,6 @@ import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
 import {
   DateAdapter as DateAdapterConstructor,
   IDateAdapter,
-  RScheduleConfig,
   Schedule,
 } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
@@ -108,20 +107,20 @@ describe('Schedule', () => {
 
       timezones.forEach(zone => {
         context(zone, timezone => {
-          RScheduleConfig.defaultDateAdapter = DateAdapter;
-          RScheduleConfig.defaultTimezone = timezone;
-
           const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, timezone);
 
           describe('ScheduleClass', () => {
             it('is instantiable', () =>
-              expect(new Schedule({ dateAdapter: DateAdapter })).toBeInstanceOf(Schedule));
+              expect(new Schedule({ dateAdapter: DateAdapter, timezone })).toBeInstanceOf(
+                Schedule,
+              ));
           });
 
           testOccurrences(
             '1 rule',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               rrules: [
                 // YearlyByMonthAndMonthDay
                 {
@@ -144,6 +143,7 @@ describe('Schedule', () => {
             '3 rules',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               rrules: [
                 // YearlyByMonthAndMonthDay
                 {
@@ -186,6 +186,7 @@ describe('Schedule', () => {
             'rdates & duplicate',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               rdates: [
                 dateAdapter(1998, 1, 1, 9, 0).date,
                 dateAdapter(1998, 1, 1, 9, 0).date,
@@ -204,6 +205,7 @@ describe('Schedule', () => {
             'exdates',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               exdates: [dateAdapter(1998, 1, 20, 9, 0).date, dateAdapter(1998, 1, 1, 9, 0).date],
             }),
             [],
@@ -213,6 +215,7 @@ describe('Schedule', () => {
             'rdates & exdates',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               rdates: [
                 dateAdapter(1998, 1, 1, 9, 0),
                 dateAdapter(2000, 1, 1, 9, 0),
@@ -228,6 +231,8 @@ describe('Schedule', () => {
             new Schedule({
               rdates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
               exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+              timezone,
+              dateAdapter: DateAdapter,
             }),
             [dateAdapter(2000, 1, 1, 9, 0)],
           );
@@ -236,6 +241,7 @@ describe('Schedule', () => {
             'rdates & exdates cancelling',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               rdates: [dateAdapter(1998, 1, 1, 9, 0).date],
               exdates: [dateAdapter(1998, 1, 1, 9, 0).date],
             }),
@@ -246,6 +252,7 @@ describe('Schedule', () => {
             'rules & exdates',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               rrules: [
                 {
                   frequency: 'WEEKLY',
@@ -270,6 +277,7 @@ describe('Schedule', () => {
             'rrules & rdates & exdates',
             new Schedule({
               dateAdapter: DateAdapter,
+              timezone,
               rrules: [
                 // YearlyByMonthAndMonthDay
                 {

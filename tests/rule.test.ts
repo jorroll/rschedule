@@ -7,7 +7,7 @@
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-import { DateAdapter as DateAdapterConstructor, RScheduleConfig, Rule } from '@rschedule/rschedule';
+import { DateAdapter as DateAdapterConstructor, Rule } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime } from 'luxon';
 import { Moment as MomentST } from 'moment';
@@ -306,13 +306,10 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       DatetimeFn<any>
     ];
 
-    // const timezones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
+    // const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : [null, 'UTC'];
     const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
 
     timezones.forEach(timezone => {
-      RScheduleConfig.defaultDateAdapter = DateAdapter;
-      RScheduleConfig.defaultTimezone = timezone;
-
       context(timezone, zone => {
         const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, zone);
 
@@ -339,7 +336,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   start,
                   byDayOfWeek: ['TH'],
                 },
-                { dateAdapter: DateAdapter },
+                { dateAdapter: DateAdapter, timezone },
               );
 
               const secondOccurrence = dateAdapter(2018, 8, 23, 0, 0, 0, 0).set(
@@ -365,7 +362,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               frequency: 'DAILY',
               start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           dateAdapter(1997, 9, 5, 9, 0, 0, 0),
           false,
@@ -379,7 +376,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               frequency: 'DAILY',
               start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           dateAdapter(1997, 9, 5, 9, 0, 0, 0),
           true,
@@ -393,7 +390,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               frequency: 'DAILY',
               start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           dateAdapter(1997, 9, 4, 9, 0, 0, 0),
           false,
@@ -407,7 +404,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               frequency: 'DAILY',
               start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           dateAdapter(1997, 9, 4, 9, 0, 0, 0),
           true,
@@ -421,7 +418,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               frequency: 'DAILY',
               start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           dateAdapter(1997, 9, 2, 9, 0, 0, 0),
           dateAdapter(1997, 9, 6, 9, 0, 0, 0),
@@ -440,7 +437,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               frequency: 'DAILY',
               start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           dateAdapter(1997, 9, 2, 9, 0, 0, 0),
           dateAdapter(1997, 9, 6, 9, 0, 0, 0),
@@ -463,7 +460,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 count: 3,
                 start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 0, 0),
@@ -481,7 +478,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 2,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -499,7 +496,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 100,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -517,7 +514,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMonthOfYear: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 2, 9, 0),
@@ -535,7 +532,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 3, 9, 0),
@@ -554,7 +551,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [5, 7],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 5, 9, 0),
@@ -572,7 +569,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -595,7 +592,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 1], ['TH', -1]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 12, 25, 9, 0),
@@ -613,7 +610,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 3], ['TH', -3]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 12, 11, 9, 0),
@@ -632,7 +629,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -651,7 +648,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 1], ['TH', -1]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 6, 9, 0),
@@ -670,7 +667,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 3], ['TH', -3]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 15, 9, 0),
@@ -689,7 +686,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -709,7 +706,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -727,7 +724,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byHourOfDay: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0),
@@ -745,7 +742,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6),
@@ -763,7 +760,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 6),
@@ -782,7 +779,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6),
@@ -801,7 +798,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 6),
@@ -820,7 +817,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 6),
@@ -840,7 +837,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 6),
@@ -856,7 +853,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 frequency: 'YEARLY',
                 start: parse('20150101T000000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             parse('20160101T000000'),
             parse('20160101T000000'),
@@ -871,7 +868,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 frequency: 'YEARLY',
                 start: parse('19200101T000000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             parse('20160101T000000'),
             parse('20160101T000000'),
@@ -886,7 +883,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 frequency: 'YEARLY',
                 start: parse('19200101T000000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             parse('20160101T000000'),
             parse('20170101T000000'),
@@ -904,7 +901,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 count: 3,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -922,7 +919,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 2,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -940,7 +937,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 18,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -958,7 +955,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMonthOfYear: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 2, 9, 0),
@@ -976,7 +973,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 3, 9, 0),
@@ -995,7 +992,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [5, 7],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 5, 9, 0),
@@ -1013,7 +1010,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1031,7 +1028,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 1], ['TH', -1]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1049,7 +1046,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 3], ['TH', -3]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 11, 9, 0),
@@ -1068,7 +1065,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1087,7 +1084,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 1], ['TH', -1]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 6, 9, 0),
@@ -1106,7 +1103,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: [['TU', 3], ['TH', -3]],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 15, 9, 0),
@@ -1125,7 +1122,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1145,7 +1142,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1163,7 +1160,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byHourOfDay: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0),
@@ -1181,7 +1178,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6),
@@ -1199,7 +1196,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 6),
@@ -1218,7 +1215,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6),
@@ -1237,7 +1234,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 6),
@@ -1256,7 +1253,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 6),
@@ -1276,7 +1273,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 6),
@@ -1294,7 +1291,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [-1],
                 start: parse('20131201T0900000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(2013, 12, 31, 9, 0),
@@ -1313,7 +1310,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [-1],
                 start: parse('20151201T0900000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(2015, 12, 31, 9, 0),
@@ -1333,7 +1330,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 count: 3,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1351,7 +1348,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 2,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1369,7 +1366,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 20,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1387,7 +1384,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMonthOfYear: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 6, 9, 0),
@@ -1405,7 +1402,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1427,7 +1424,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1445,7 +1442,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byHourOfDay: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0),
@@ -1463,7 +1460,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6),
@@ -1481,7 +1478,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 6),
@@ -1500,7 +1497,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6),
@@ -1519,7 +1516,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 6),
@@ -1538,7 +1535,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 6),
@@ -1558,7 +1555,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 6),
@@ -1575,7 +1572,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 start: parse('20181031T180000'),
                 end: parse('20181115T050000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(2018, 10, 31, 18),
@@ -1593,7 +1590,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 end: parse('20181009T000000'),
                 byDayOfWeek: ['SU', 'WE'],
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               DateAdapter.fromJSON({
@@ -1631,7 +1628,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 count: 3,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1649,7 +1646,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 2,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1667,7 +1664,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 92,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1685,7 +1682,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMonthOfYear: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1703,7 +1700,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 3, 9, 0),
@@ -1722,7 +1719,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [5, 7],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 5, 9, 0),
@@ -1740,7 +1737,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1759,7 +1756,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1778,7 +1775,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1798,7 +1795,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 9, 0),
@@ -1816,7 +1813,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byHourOfDay: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0),
@@ -1834,7 +1831,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6),
@@ -1852,7 +1849,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 6),
@@ -1871,7 +1868,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6),
@@ -1890,7 +1887,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 6),
@@ -1909,7 +1906,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 6),
@@ -1929,7 +1926,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 6),
@@ -1946,7 +1943,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 start: parse('20181101T110000'),
                 end: parse('20181106T110000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(2018, 11, 1, 11),
@@ -1968,7 +1965,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 count: 3,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -1986,7 +1983,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 2,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2004,7 +2001,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 769,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2022,7 +2019,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMonthOfYear: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2040,7 +2037,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 3, 0, 0),
@@ -2059,7 +2056,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [5, 7],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 5, 0, 0),
@@ -2077,7 +2074,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2096,7 +2093,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2115,7 +2112,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2135,7 +2132,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2153,7 +2150,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byHourOfDay: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0),
@@ -2171,7 +2168,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6),
@@ -2189,7 +2186,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 6),
@@ -2208,7 +2205,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6),
@@ -2227,7 +2224,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 6),
@@ -2246,7 +2243,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 6),
@@ -2266,7 +2263,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 6),
@@ -2285,7 +2282,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 count: 3,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2303,7 +2300,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 2,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2321,7 +2318,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 1501,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2339,7 +2336,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMonthOfYear: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2357,7 +2354,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 3, 0, 0),
@@ -2376,7 +2373,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [5, 7],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 5, 0, 0),
@@ -2394,7 +2391,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2413,7 +2410,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2432,7 +2429,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2452,7 +2449,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0),
@@ -2470,7 +2467,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byHourOfDay: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0),
@@ -2488,7 +2485,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6),
@@ -2506,7 +2503,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 6),
@@ -2525,7 +2522,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6),
@@ -2544,7 +2541,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 6),
@@ -2563,7 +2560,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 6),
@@ -2583,7 +2580,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T180606'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 6),
@@ -2602,7 +2599,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 count: 3,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 0),
@@ -2620,7 +2617,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 2,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 0),
@@ -2638,7 +2635,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 interval: 90061,
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 0),
@@ -2656,7 +2653,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMonthOfYear: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0, 0),
@@ -2674,7 +2671,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [1, 3],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 3, 0, 0, 0),
@@ -2693,7 +2690,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [5, 7],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 5, 0, 0, 0),
@@ -2711,7 +2708,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 0),
@@ -2730,7 +2727,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0, 0),
@@ -2749,7 +2746,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0, 0),
@@ -2769,7 +2766,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfWeek: ['TU', 'TH'],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1998, 1, 1, 0, 0, 0),
@@ -2787,7 +2784,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byHourOfDay: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 0),
@@ -2805,7 +2802,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 0),
@@ -2823,7 +2820,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0, 6),
@@ -2842,7 +2839,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byMinuteOfHour: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 0),
@@ -2861,7 +2858,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 0, 6),
@@ -2880,7 +2877,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 6, 6),
@@ -2900,7 +2897,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 bySecondOfMinute: [6, 18],
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 18, 6, 6),
@@ -2920,7 +2917,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 start: parse('19970902T090000'),
                 end: parse('19970905T080000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2938,7 +2935,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 start: parse('19970902T090000'),
                 end: parse('19970904T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -2956,7 +2953,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 start: parse('19970902T090000'),
                 end: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [dateAdapter(1997, 9, 2, 9, 0)],
           );
@@ -2970,7 +2967,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 start: parse('19970902T090000'),
                 end: parse('19970901T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [],
           );
@@ -2984,7 +2981,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 start: parse('19970902T090000'),
                 end: dateAdapter(1997, 9, 5),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -3006,7 +3003,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 weekStart: 'MO',
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -3026,7 +3023,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 weekStart: 'SU',
                 start: parse('19970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             ),
             [
               dateAdapter(1997, 9, 2, 9, 0),
@@ -3044,7 +3041,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               count: 3,
               start: dateAdapter(1997, 9, 2),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           [
             dateAdapter(1997, 9, 2, 0, 0),
@@ -3061,7 +3058,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               count: 3,
               start: parse('19970902T090000.5'),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           [
             dateAdapter(1997, 9, 2, 9, 0),
@@ -3080,7 +3077,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 byDayOfMonth: [31],
                 start: parse('99970902T090000'),
               },
-              { dateAdapter: DateAdapter },
+              { dateAdapter: DateAdapter, timezone },
             );
 
             expect(() => {
@@ -3097,7 +3094,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               count: 1,
               start: dateAdapter(2014, 12, 31, 22, 0, 0, 1),
             },
-            { dateAdapter: DateAdapter },
+            { dateAdapter: DateAdapter, timezone },
           ),
           [dateAdapter(2014, 12, 31, 22, 0, 0, 1)],
         );

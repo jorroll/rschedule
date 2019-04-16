@@ -2,11 +2,7 @@ import { IJCalProperty, serializeToICal, serializeToJCal, VEvent } from '@rsched
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-import {
-  ConstructorReturnType,
-  DateAdapter as DateAdapterConstructor,
-  RScheduleConfig,
-} from '@rschedule/rschedule';
+import { ConstructorReturnType, DateAdapter as DateAdapterConstructor } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
 import { Moment as MomentST } from 'moment';
@@ -249,9 +245,6 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
     zones.forEach(zone => {
       // function to create new dateAdapter instances
       const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, zone);
-
-      RScheduleConfig.defaultDateAdapter = DateAdapter;
-      RScheduleConfig.defaultTimezone = zone;
 
       function buildDTSTART(
         y: number,

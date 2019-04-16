@@ -81,7 +81,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
 
     if (!this.dateAdapter) {
       throw new ArgumentError(
-        "Oops! You've initialized an occurrences object without a dateAdapter.",
+        "Oops! You've initialized an `OccurrenceGenerator` without a dateAdapter.",
       );
     }
 

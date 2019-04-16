@@ -4,14 +4,9 @@ import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
 import {
   add,
   DateAdapter as DateAdapterConstructor,
-  DateInput,
   Dates,
   intersection,
-  IOccurrencesArgs,
-  IRunnable,
-  OccurrenceGenerator,
   OccurrenceStream,
-  RScheduleConfig,
   subtract,
   unique,
 } from '@rschedule/rschedule';
@@ -61,9 +56,6 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
     timezones.forEach(zone => {
       context(zone, timezone => {
-        RScheduleConfig.defaultDateAdapter = DateAdapter;
-        RScheduleConfig.defaultTimezone = timezone;
-
         const dateAdapter = timezoneDateAdapterFn(DateAdapter, datetime, timezone);
         const isoString = timezoneIsoStringFn(dateAdapter);
         const toAdapter = dateTimeToAdapterFn(DateAdapter, timezone);
@@ -76,6 +68,8 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             dateAdapter(2019, 1, 1, 1, 1, 1, 1),
             dateAdapter(2020, 3, 3, 3, 3, 3, 3),
           ],
+          dateAdapter: DateAdapter,
+          timezone,
         });
 
         const datesB = new Dates({
@@ -87,6 +81,8 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             dateAdapter(2020, 3, 3, 3, 3, 3, 3),
             dateAdapter(2020, 4, 4, 4, 4, 4, 4),
           ],
+          dateAdapter: DateAdapter,
+          timezone,
         });
 
         function testOneDates() {
