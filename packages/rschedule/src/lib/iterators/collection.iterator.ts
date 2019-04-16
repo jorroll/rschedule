@@ -1,13 +1,14 @@
-import { DateAdapter } from '../date-adapter';
-import { DateTime, IDateAdapter } from '../date-time';
-import { DateInput, IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
-import { RuleOption } from '../rule';
 import {
   ArgumentError,
   ConstructorReturnType,
   freqToGranularity,
   InfiniteLoopError,
-} from '../utilities';
+} from '../basic-utilities';
+import { DateAdapter } from '../date-adapter';
+import { DateTime, IDateAdapter } from '../date-time';
+import { IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
+import { RuleOption } from '../rule';
+import { DateInput } from '../utilities';
 import { IOccurrencesArgs } from './occurrence.iterator';
 
 export class CollectionIterator<T extends typeof DateAdapter> {

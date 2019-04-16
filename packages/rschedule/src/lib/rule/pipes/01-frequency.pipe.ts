@@ -1,3 +1,4 @@
+import { freqToGranularity } from '../../basic-utilities';
 import {
   DateTime,
   IDateAdapter,
@@ -7,7 +8,6 @@ import {
   MILLISECONDS_IN_SECOND,
   MILLISECONDS_IN_WEEK,
 } from '../../date-time';
-import { freqToGranularity } from '../../utilities';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
 /**

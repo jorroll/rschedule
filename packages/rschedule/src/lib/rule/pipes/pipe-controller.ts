@@ -1,7 +1,7 @@
 import { DateTime } from '../../date-time';
 import { INormalizedRuleOptions } from '../rule-options';
 
-import { ArgumentError } from '../../utilities';
+import { ArgumentError } from '../../basic-utilities';
 import { FrequencyPipe } from './01-frequency.pipe';
 import { ByMonthOfYearPipe } from './02-by-month-of-year.pipe';
 import { ByDayOfMonthPipe } from './05-by-day-of-month.pipe';

@@ -1,6 +1,6 @@
+import { ConstructorReturnType } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
-import { ConstructorReturnType } from '../utilities';
 
 export interface IRunnable<T extends typeof DateAdapter> {
   readonly timezone: string | null;

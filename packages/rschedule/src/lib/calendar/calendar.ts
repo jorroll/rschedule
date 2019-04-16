@@ -49,7 +49,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
     this.hasDuration = this.schedules.every(schedule => schedule.hasDuration);
   }
 
-  set(_: 'timezone', value: string | null) {
+  set(_prop: 'timezone', value: string | null) {
     return new Calendar({
       schedules: this.schedules.map(schedule => schedule.set('timezone', value)),
       data: this.data,

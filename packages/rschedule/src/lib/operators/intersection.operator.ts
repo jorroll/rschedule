@@ -1,8 +1,8 @@
+import { ArgumentError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IOccurrenceGenerator, IRunArgs } from '../interfaces';
 import { RScheduleConfig } from '../rschedule-config';
-import { ArgumentError } from '../utilities';
 import { IOperatorConfig, Operator, OperatorFnOutput } from './interface';
 import {
   IterableWrapper,
@@ -48,7 +48,7 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
 
   readonly isInfinite: boolean;
 
-  private maxFailedIterations: number;
+  private maxFailedIterations?: number;
 
   constructor(
     args: {
@@ -64,22 +64,24 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
         ? false
         : !this._streams.some(stream => !stream.isInfinite);
 
-    this.maxFailedIterations =
-      args.maxFailedIterations || (RScheduleConfig.defaultMaxFailedIterations as number);
+    if (this.isInfinite) {
+      this.maxFailedIterations =
+        args.maxFailedIterations || RScheduleConfig.IntersectionOperator.defaultMaxFailedIterations;
 
-    if (!this.maxFailedIterations) {
-      throw new ArgumentError(
-        'The IntersectionOperator must be provided ' +
-          'a `maxFailedIterations` argument. This argument is ' +
-          'used when input streams are of infinite length in order ' +
-          'to ensure that the IntersectionOperator does not enter ' +
-          'an infinite loop because the underlying schedules never intersect. ' +
-          'If the `maxFailedIterations` count is reached it will be assumed that ' +
-          'all valid occurrences have been found and iteration will end.' +
-          'Without additional information, "50" is probably a good ' +
-          '`maxFailedIterations` value. ' +
-          'Note also that you can provide a `defaultMaxFailedIterations` number to `RScheduleConfig`',
-      );
+      if (!this.maxFailedIterations) {
+        throw new ArgumentError(
+          'The IntersectionOperator must be provided ' +
+            'a `maxFailedIterations` argument when it is built from schedules of infinite length. ' +
+            'This argument is used to ensure that the IntersectionOperator does not enter ' +
+            'an infinite loop because the underlying schedules never intersect. ' +
+            'If the `maxFailedIterations` count is reached it will be assumed that ' +
+            'all valid occurrences have been found and iteration will end.' +
+            'Without additional information, "50" is probably a good ' +
+            '`maxFailedIterations` value. ' +
+            'If the schedules are not of infinite length, `maxFailedIterations` is ignored. ' +
+            'Note also that you can provide a `defaultMaxFailedIterations` number to `RScheduleConfig`.',
+        );
+      }
     }
   }
 
@@ -168,7 +170,7 @@ function cycleStreams(
   streams: IterableWrapper[],
   lastValidDate: DateTime | undefined,
   options: {
-    maxIterations: number;
+    maxIterations?: number;
     hasEndDate: boolean;
     iteration: number;
     end?: DateTime;
@@ -185,7 +187,7 @@ function cycleStreams(
 
   options.iteration++;
 
-  if (!options.hasEndDate && options.iteration > options.maxIterations) {
+  if (options.maxIterations && !options.hasEndDate && options.iteration > options.maxIterations) {
     return false;
   }
 

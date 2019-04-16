@@ -1,4 +1,4 @@
-import { ArgumentError } from './utilities';
+import { ArgumentError } from './basic-utilities';
 
 export const WEEKDAYS: Array<'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'> = [
   'SU',
@@ -63,8 +63,6 @@ export namespace IDateAdapter {
 
   export type TimeUnit = 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond';
 
-  export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
-
   export interface JSON {
     timezone: string | null;
     duration?: number;
@@ -76,6 +74,140 @@ export namespace IDateAdapter {
     second: number;
     millisecond: number;
   }
+
+  export type Year = number;
+
+  export type YearDay = number;
+
+  export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
+  // >= 1 && <= 31
+  export type Day =
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 15
+    | 16
+    | 17
+    | 18
+    | 19
+    | 20
+    | 21
+    | 22
+    | 23
+    | 24
+    | 25
+    | 26
+    | 27
+    | 28
+    | 29
+    | 30
+    | 31;
+
+  // >= 0 && <= 23
+  export type Hour =
+    | 0
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 15
+    | 16
+    | 17
+    | 18
+    | 19
+    | 20
+    | 21
+    | 22
+    | 23;
+
+  // >= 0 && <= 59
+  export type Minute =
+    | 0
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 15
+    | 16
+    | 17
+    | 18
+    | 19
+    | 20
+    | 21
+    | 22
+    | 23
+    | 24
+    | 25
+    | 26
+    | 27
+    | 28
+    | 29
+    | 30
+    | 31
+    | 32
+    | 33
+    | 34
+    | 35
+    | 36
+    | 37
+    | 38
+    | 39
+    | 40
+    | 41
+    | 42
+    | 43
+    | 44
+    | 45
+    | 46
+    | 47
+    | 48
+    | 49
+    | 50
+    | 51
+    | 52
+    | 53
+    | 54
+    | 55
+    | 56
+    | 57
+    | 58
+    | 59;
+
+  export type Second = Minute;
+
+  export type Millisecond = number;
 }
 
 export class InvalidDateTimeError extends Error {}
@@ -237,28 +369,35 @@ export class DateTime implements IDateAdapter<unknown> {
     }
   }
 
+  get(unit: 'year'): IDateAdapter.Year;
+  get(unit: 'yearday'): IDateAdapter.YearDay;
+  get(unit: 'month'): IDateAdapter.Month;
   get(unit: 'weekday'): IDateAdapter.Weekday;
-  get(unit: IDateAdapter.TimeUnit | 'yearday'): number;
+  get(unit: 'day'): IDateAdapter.Day;
+  get(unit: 'hour'): IDateAdapter.Hour;
+  get(unit: 'minute'): IDateAdapter.Minute;
+  get(unit: 'second'): IDateAdapter.Second;
+  get(unit: 'millisecond'): IDateAdapter.Millisecond;
   get(unit: IDateAdapter.TimeUnit | 'yearday' | 'weekday'): any {
     switch (unit) {
       case 'year':
-        return this.date.getUTCFullYear();
+        return this.date.getUTCFullYear() as IDateAdapter.Year;
       case 'month':
-        return this.date.getUTCMonth() + 1;
+        return (this.date.getUTCMonth() + 1) as IDateAdapter.Month;
       case 'yearday':
-        return getUTCYearDay(this.date);
+        return getUTCYearDay(this.date) as IDateAdapter.YearDay;
       case 'weekday':
-        return WEEKDAYS[this.date.getUTCDay()];
+        return WEEKDAYS[this.date.getUTCDay()] as IDateAdapter.Weekday;
       case 'day':
-        return this.date.getUTCDate();
+        return this.date.getUTCDate() as IDateAdapter.Day;
       case 'hour':
-        return this.date.getUTCHours();
+        return this.date.getUTCHours() as IDateAdapter.Hour;
       case 'minute':
-        return this.date.getUTCMinutes();
+        return this.date.getUTCMinutes() as IDateAdapter.Minute;
       case 'second':
-        return this.date.getUTCSeconds();
+        return this.date.getUTCSeconds() as IDateAdapter.Second;
       case 'millisecond':
-        return this.date.getUTCMilliseconds();
+        return this.date.getUTCMilliseconds() as IDateAdapter.Millisecond;
       default:
         throw new ArgumentError('Invalid unit provided to `DateTime#set`');
     }
@@ -478,7 +617,7 @@ function shiftArray(array: any[], from: 'first' | 'last' = 'first') {
  * @param month base-1
  * @param year
  */
-export function monthLength(month: number, year: number) {
+function monthLength(month: number, year: number) {
   const block = {
     1: 31,
     2: getDaysInFebruary(year),

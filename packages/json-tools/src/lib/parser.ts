@@ -82,6 +82,12 @@ export function parseJSON<T extends typeof DateAdapter>(
 
           if (json.options.end) ruleOptions.end = dateAdapter.fromJSON(json.options.end);
 
+          if (!ruleOptions.weekStart && RScheduleConfig.Rule.defaultWeekStart) {
+            // Need to explicitly set weekStart otherwise the defaultWeekStart will kick in
+            // and potentially create a different schedule.
+            ruleOptions.weekStart = 'MO';
+          }
+
           return new Rule(ruleOptions, {
             dateAdapter,
             timezone: json.timezone,

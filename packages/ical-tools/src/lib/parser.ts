@@ -315,6 +315,10 @@ export function parseRule<T extends typeof DateAdapter>(
   }
   if (input[3].hasOwnProperty('wkst')) {
     result.weekStart = parseWKST(input[3].wkst);
+  } else if (RScheduleConfig.Rule.defaultWeekStart) {
+    // Need to explicitly set weekStart otherwise the defaultWeekStart will kick in
+    // and potentially create a different schedule.
+    result.weekStart = 'MO';
   }
 
   return result;

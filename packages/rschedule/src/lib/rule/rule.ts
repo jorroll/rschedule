@@ -2,6 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
 import { OccurrenceStream, OperatorFnOutput, pipeFn } from '../operators';
+import { RScheduleConfig } from '../rschedule-config';
 import { PipeController } from './pipes';
 import {
   cloneRuleOptions,
@@ -48,6 +49,11 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
     super(args);
 
     this.options = cloneRuleOptions(options);
+
+    if (RScheduleConfig.Rule.defaultWeekStart && !this.options.weekStart) {
+      this.options.weekStart = RScheduleConfig.Rule.defaultWeekStart;
+    }
+
     this.processedOptions = normalizeRuleOptions(this.dateAdapter, this.options);
     this.timezone =
       args.timezone !== undefined ? args.timezone : this.processedOptions.start.timezone;

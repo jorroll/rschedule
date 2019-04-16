@@ -1,3 +1,4 @@
+import { ArgumentError, ConstructorReturnType } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import {
@@ -8,13 +9,13 @@ import {
 } from '../iterators';
 import { RScheduleConfig } from '../rschedule-config';
 import { getDifferenceBetweenWeekdays } from '../rule/pipes';
-import { ArgumentError, ConstructorReturnType } from '../utilities';
+import {
+  DateInput,
+  dateInputToDateAdapter,
+  dateInputToDateTime,
+  normalizeDateTimeTimezone,
+} from '../utilities';
 import { IRunArgs, IRunnable } from './runnable';
-
-export type DateInput<T extends typeof DateAdapter> =
-  | T['date']
-  | ConstructorReturnType<T>
-  | DateTime;
 
 export interface IOccurrenceGenerator<T extends typeof DateAdapter> extends IRunnable<T> {
   readonly dateAdapter: T;
@@ -370,44 +371,20 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
   protected normalizeDateInput(date: DateInput<T>): DateTime;
   protected normalizeDateInput(date?: DateInput<T>): undefined;
   protected normalizeDateInput(date?: DateInput<T>) {
-    if (!date) {
-      return;
-    } else if (DateTime.isInstance(date)) {
-      if (date.timezone !== this.timezone) {
-        return this.dateAdapter
-          .fromJSON(date.toJSON())
-          .set('timezone', this.timezone)
-          .toDateTime();
-      }
+    if (!date) return;
 
-      return date;
-    }
-
-    return DateAdapter.isInstance(date)
-      ? date.set('timezone', this.timezone).toDateTime()
-      : new this.dateAdapter(date).set('timezone', this.timezone).toDateTime();
+    return dateInputToDateTime(date, this.timezone, this.dateAdapter);
   }
 
   protected normalizeDateInputToAdapter(date: DateInput<T>): ConstructorReturnType<T>;
   protected normalizeDateInputToAdapter(date?: DateInput<T>): undefined;
   protected normalizeDateInputToAdapter(date?: DateInput<T>) {
-    if (!date) {
-      return;
-    } else if (DateTime.isInstance(date)) {
-      return this.dateAdapter.fromDateTime(date);
-    }
+    if (!date) return;
 
-    return DateAdapter.isInstance(date) ? date : new this.dateAdapter(date);
+    return dateInputToDateAdapter(date, this.dateAdapter);
   }
 
   protected normalizeRunOutput(date: DateTime) {
-    if (date.timezone !== this.timezone) {
-      return this.dateAdapter
-        .fromJSON(date.toJSON())
-        .set('timezone', this.timezone)
-        .toDateTime();
-    }
-
-    return date;
+    return normalizeDateTimeTimezone(date, this.timezone, this.dateAdapter);
   }
 }
