@@ -23,7 +23,7 @@ Date adapters are provided to rSchedule occurrence generator objects, all of whi
      frequency: 'DAILY',
    };
 
-   new RRule(providedRuleOptions, { dateAdapter: MomentTZDateAdapter });
+   new Rule(providedRuleOptions, { dateAdapter: MomentTZDateAdapter });
    ```
 
 2. Set the default date adapter for all rSchedule classes using [`RScheduleConfig.defaultDateAdapter`](../usage/rschedule-config/#defaultDateAdapter).
@@ -38,7 +38,7 @@ Date adapters are provided to rSchedule occurrence generator objects, all of whi
      frequency: 'DAILY',
    };
 
-   new RRule<typeof MomentTZDateAdapter>(providedRuleOptions);
+   new Rule<typeof MomentTZDateAdapter>(providedRuleOptions);
    ```
 
 When providing a date adapter constructor as a constructor argument (option 1, above), type inference will often take care of properly typing your generic objects for you. In cases where type inference is unavailable, you will need to manually provide the property type arguments. In these cases, remember that the type argument you need to provide is for the date adapter **_constructor_** (not a date adapter _instance_). In Typescript, you get a constructor type using the `typeof` keyword.
@@ -51,7 +51,7 @@ When providing a date adapter constructor as a constructor argument (option 1, a
   new Schedule<MomentTZDateAdapter>();
   ```
 
-Each DateAdapter has a `generators` property which contains an array of the rSchedule objects which are responsible for generating that particular date. For example, when iterating through a `Schedule` containing two `RRule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `RRule` object which generated the date, the second element will be the `Schedule` object which generated the date. The `IDateAdapter#generators` property pairs with the `data` property found on `Schedule`, `Calendar`, `Rule`, and `Dates` objects. This allows you to attach data to a `Rule` or `Schedule`, and access that data from the yielded dates.
+Each DateAdapter has a `generators` property which contains an array of the rSchedule objects which are responsible for generating that particular date. For example, when iterating through a `Schedule` containing two `Rule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `Rule` object which generated the date, the second element will be the `Schedule` object which generated the date. The `IDateAdapter#generators` property pairs with the `data` property found on `Schedule`, `Calendar`, `Rule`, and `Dates` objects. This allows you to attach data to a `Rule` or `Schedule`, and access that data from the yielded dates.
 
 Example:
 
@@ -59,7 +59,7 @@ Example:
 const schedule = new Schedule({
   dateAdapter: StandardDateAdapter,
   rrules: [
-    new RRule(
+    new Rule(
       {
         start: new Date(),
         frequency: 'DAILY',
@@ -67,7 +67,7 @@ const schedule = new Schedule({
       },
       { data: 'Mondays Rule' },
     ),
-    new RRule(
+    new Rule(
       {
         start: new Date(),
         frequency: 'DAILY',
@@ -113,13 +113,13 @@ export interface IDateAdapter<D = unknown> {
    * responsible for creating this IDateAdapter.
    *
    * Examples:
-   * 
-   * - If this IDateAdapter was produced by a `RRule` object, this array
-   *   will just contain the `RRule` object.
-   * 
+   *
+   * - If this IDateAdapter was produced by a `Rule` object, this array
+   *   will just contain the `Rule` object.
+   *
    * - If this IDateAdapter was produced by a `Schedule` object, this
-   *   array will contain the `Schedule` object as well as the `RRule`
-   *   or `RDates` object which generated it.
+   *   array will contain the `Schedule` object as well as the `Rule`
+   *   or `Dates` object which generated it.
    */
   readonly generators: unknown[];
 

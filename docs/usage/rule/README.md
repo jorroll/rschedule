@@ -2,7 +2,7 @@
 
 [**`Rule implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
 
-RRule objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects.
+`Rule` objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects.
 
 Rule objects are created with a variety of [iCAL spec](https://tools.ietf.org/html/rfc5545) options which are summarized below. If you're not familiar, you can read the [recurrence rule section of the ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10) to really familiarize yourself with the concepts (its not long).
 
@@ -217,7 +217,7 @@ type ByDayOfWeek = (Weekday | [Weekday, number])[];
 Example
 
 ```typescript
-new RRule({
+new Rule({
   // ...
   byDayOfWeek: ['TU', ['TH', 3]],
 });
