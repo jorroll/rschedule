@@ -62,7 +62,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
 
     if (!start) return null;
 
-    return this.dateAdapter.fromJSON(start.toJSON()) as ConstructorReturnType<T>;
+    return this.dateAdapter.fromDateTime(start) as ConstructorReturnType<T>;
   }
 
   /** If generator is infinite, returns `null`. Otherwise returns the end date */
@@ -73,7 +73,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
 
     if (!end) return null;
 
-    return this.dateAdapter.fromJSON(end.toJSON()) as ConstructorReturnType<T>;
+    return this.dateAdapter.fromDateTime(end) as ConstructorReturnType<T>;
   }
 
   constructor(args: { dateAdapter?: T; timezone?: string | null }) {

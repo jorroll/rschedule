@@ -93,7 +93,7 @@ export class CollectionIterator<T extends typeof DateAdapter> {
   private normalizeDateOutput(date?: DateTime) {
     if (!date) return;
 
-    return this.iterable.dateAdapter.fromJSON(date.toJSON());
+    return this.iterable.dateAdapter.fromDateTime(date);
   }
 
   private *_run() {

@@ -22,7 +22,7 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
 
     if (!start) return null;
 
-    return this.config.dateAdapter.fromJSON(start.toJSON()) as ConstructorReturnType<T>;
+    return this.config.dateAdapter.fromDateTime(start) as ConstructorReturnType<T>;
   }
 
   /** If generator is infinite, returns `null`. Otherwise returns the end date */
@@ -33,7 +33,7 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
 
     if (!end) return null;
 
-    return this.config.dateAdapter.fromJSON(end.toJSON()) as ConstructorReturnType<T>;
+    return this.config.dateAdapter.fromDateTime(end) as ConstructorReturnType<T>;
   }
 
   protected readonly [OPERATOR_ID] = true;

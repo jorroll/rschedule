@@ -69,7 +69,7 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
       return;
     }
 
-    return this.iterable.dateAdapter.fromJSON(date.toJSON()) as ConstructorReturnType<T>;
+    return this.iterable.dateAdapter.fromDateTime(date) as ConstructorReturnType<T>;
   }
 }
 
