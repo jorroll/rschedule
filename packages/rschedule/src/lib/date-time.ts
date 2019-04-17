@@ -26,14 +26,14 @@ export interface IDateAdapter<D = unknown> {
    * This property contains an ordered array of the generator objects
    * responsible for producing this IDateAdapter.
    *
-   * - If this IDateAdapter was produced by a `RRule` object, this array
-   *   will just contain the `RRule` object.
+   * - If this IDateAdapter was produced by a `Rule` object, this array
+   *   will just contain the `Rule` object.
    * - If this IDateAdapter was produced by a `Schedule` object, this
-   *   array will contain the `Schedule` object as well as the `RRule`
-   *   or `RDates` object which generated it.
+   *   array will contain the `Schedule` object as well as the `Rule`
+   *   or `Dates` object which generated it.
    * - If this IDateAdapter was produced by a `Calendar` object, this
    *   array will contain, at minimum, the `Calendar`, `Schedule`, and
-   *   `RRule`/`RDates` objects which generated it.
+   *   `Rule`/`Dates` objects which generated it.
    */
   readonly generators: unknown[];
 
@@ -250,14 +250,14 @@ export class DateTime implements IDateAdapter<unknown> {
    * This property contains an ordered array of the generator objects
    * responsible for producing this DateAdapter.
    *
-   * - If this DateAdapter was produced by a `RRule` object, this array
-   *   will just contain the `RRule` object.
+   * - If this DateAdapter was produced by a `Rule` object, this array
+   *   will just contain the `Rule` object.
    * - If this DateAdapter was produced by a `Schedule` object, this
-   *   array will contain the `Schedule` object as well as the `RRule`
-   *   or `RDates` object which generated it.
+   *   array will contain the `Schedule` object as well as the `Rule`
+   *   or `Dates` object which generated it.
    * - If this DateAdapter was produced by a `Calendar` object, this
    *   array will contain, at minimum, the `Calendar`, `Schedule`, and
-   *   `RRule`/`RDates` objects which generated it.
+   *   `Rule`/`Dates` objects which generated it.
    */
   readonly generators: unknown[] = [];
 

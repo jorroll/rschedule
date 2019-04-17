@@ -10,11 +10,12 @@ At this point, the library's core functionality is feature complete and the test
 
 ### Example usage:
 
-Iterate using standard javascript syntax
+#### Iterate using standard javascript syntax
+
 ```typescript
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
-const rule = new RRule({
+const rule = new Rule({
   frequency: 'YEARLY',
   byMonthOfYear: [2, 6],
   byDayOfWeek: ['SU', ['MO', 3]],
@@ -30,7 +31,7 @@ for (const date of rule.occurrences()) {
 }
 ```
 
-Get the first 5 occurrences after a starting date
+#### Get the first 5 occurrences after a starting date
 
 ```typescript
 rule
@@ -42,25 +43,26 @@ rule
   .map(date => date.toISOString());
 ```
 
-Add another schedule, subtract a specific date, filter to return only unique dates, and query to see if the result occurs on a Monday before `2013/11/15`.
+#### Add another rule, subtract specific dates, filter to only return unique dates, and query to see if the result occurs on a Monday before `2013/11/15`.
 
 ```typescript
-const schedule = new Schedule({
-  rrule: [{
-    frequency: 'DAILY',
-    byDayOfWeek: ['MO'],
-    start: new Date(2011, 1, 7),
-  }]
-})
+const secondRule = new Rule({
+  start: new Date(2011, 1, 7),
+  frequency: 'DAILY',
+  byDayOfWeek: ['MO'],
+});
 
-const dates = new Dates({ dates: [new Date(2010,10,15)] })
+const dates = new Dates({
+  dates: [new Date(2010, 10, 15), new Date(2010, 11, 3)],
+});
 
-rule.pipe(
-  add(schedule),
-  subtract(dates),
-  unique()
-)
-  .occursOn({ weekday: 'MO', before: new Date(2013,10,15) }) // true
+rule
+  .pipe(
+    add(secondRule),
+    subtract(dates),
+    unique(),
+  )
+  .occursOn({ weekday: 'MO', before: new Date(2013, 10, 15) }); // true
 ```
 
 ## Docs
