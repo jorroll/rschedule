@@ -1,4 +1,4 @@
-import { cloneJSON, ConstructorReturnType, numberSortComparer } from '../basic-utilities';
+import { cloneJSON, numberSortComparer } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { DateInput } from '../utilities';
@@ -188,7 +188,7 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
 }
 
 export function normalizeDateInput<T extends typeof DateAdapter>(
-  input: T['date'] | ConstructorReturnType<T> | IDateAdapter.JSON,
+  input: T['date'] | InstanceType<T> | IDateAdapter.JSON,
   dateAdapter: T,
 ) {
   return DateAdapter.isInstance(input)

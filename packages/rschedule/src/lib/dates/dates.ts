@@ -1,4 +1,4 @@
-import { ArgumentError, ConstructorReturnType } from '../basic-utilities';
+import { ArgumentError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, dateTimeSortComparer } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
@@ -24,20 +24,20 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     return this.adapters.length;
   }
 
-  readonly adapters: ReadonlyArray<ConstructorReturnType<T>> = [];
+  readonly adapters: ReadonlyArray<InstanceType<T>> = [];
 
   /** Returns the first occurrence or, if there are no occurrences, null. */
-  get firstDate(): ConstructorReturnType<T> | null {
+  get firstDate(): InstanceType<T> | null {
     const first = this.adapters[0];
 
-    return (first && (first.set('timezone', this.timezone) as ConstructorReturnType<T>)) || null;
+    return (first && (first.set('timezone', this.timezone) as InstanceType<T>)) || null;
   }
 
   /** Returns the last occurrence or, if there are no occurrences, null. */
-  get lastDate(): ConstructorReturnType<T> | null {
+  get lastDate(): InstanceType<T> | null {
     const last = this.adapters[this.length - 1];
 
-    return (last && (last.set('timezone', this.timezone) as ConstructorReturnType<T>)) || null;
+    return (last && (last.set('timezone', this.timezone) as InstanceType<T>)) || null;
   }
 
   readonly isInfinite = false;
@@ -139,11 +139,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
   }
 
   filter(
-    fn: (
-      date: ConstructorReturnType<T>,
-      index: number,
-      array: ReadonlyArray<ConstructorReturnType<T>>,
-    ) => boolean,
+    fn: (date: InstanceType<T>, index: number, array: ReadonlyArray<InstanceType<T>>) => boolean,
   ) {
     return new Dates({
       dates: this.adapters.filter(fn),

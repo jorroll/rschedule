@@ -1,4 +1,4 @@
-import { ArgumentError, ConstructorReturnType } from '../basic-utilities';
+import { ArgumentError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import {
@@ -57,23 +57,23 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
   readonly dateAdapter: T;
 
   /** Returns the first occurrence or, if there are no occurrences, null. */
-  get firstDate(): ConstructorReturnType<T> | null {
+  get firstDate(): InstanceType<T> | null {
     const start = this._run().next().value;
 
     if (!start) return null;
 
-    return this.dateAdapter.fromDateTime(start) as ConstructorReturnType<T>;
+    return this.dateAdapter.fromDateTime(start) as InstanceType<T>;
   }
 
   /** If generator is infinite, returns `null`. Otherwise returns the end date */
-  get lastDate(): ConstructorReturnType<T> | null {
+  get lastDate(): InstanceType<T> | null {
     if (this.isInfinite) return null;
 
     const end = this._run({ reverse: true }).next().value;
 
     if (!end) return null;
 
-    return this.dateAdapter.fromDateTime(end) as ConstructorReturnType<T>;
+    return this.dateAdapter.fromDateTime(end) as InstanceType<T>;
   }
 
   constructor(args: { dateAdapter?: T; timezone?: string | null }) {
@@ -376,7 +376,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     return dateInputToDateTime(date, this.timezone, this.dateAdapter);
   }
 
-  protected normalizeDateInputToAdapter(date: DateInput<T>): ConstructorReturnType<T>;
+  protected normalizeDateInputToAdapter(date: DateInput<T>): InstanceType<T>;
   protected normalizeDateInputToAdapter(date?: DateInput<T>): undefined;
   protected normalizeDateInputToAdapter(date?: DateInput<T>) {
     if (!date) return;

@@ -1,4 +1,3 @@
-import { ConstructorReturnType } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
@@ -17,23 +16,23 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
   readonly timezone: string | null;
 
   /** Returns the first occurrence or, if there are no occurrences, null. */
-  get firstDate(): ConstructorReturnType<T> | null {
+  get firstDate(): InstanceType<T> | null {
     const start = this._run().next().value;
 
     if (!start) return null;
 
-    return this.config.dateAdapter.fromDateTime(start) as ConstructorReturnType<T>;
+    return this.config.dateAdapter.fromDateTime(start) as InstanceType<T>;
   }
 
   /** If generator is infinite, returns `null`. Otherwise returns the end date */
-  get lastDate(): ConstructorReturnType<T> | null {
+  get lastDate(): InstanceType<T> | null {
     if (this.isInfinite) return null;
 
     const end = this._run({ reverse: true }).next().value;
 
     if (!end) return null;
 
-    return this.config.dateAdapter.fromDateTime(end) as ConstructorReturnType<T>;
+    return this.config.dateAdapter.fromDateTime(end) as InstanceType<T>;
   }
 
   protected readonly [OPERATOR_ID] = true;

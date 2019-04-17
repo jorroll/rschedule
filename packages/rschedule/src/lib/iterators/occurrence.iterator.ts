@@ -1,4 +1,4 @@
-import { ConstructorReturnType, InfiniteLoopError } from '../basic-utilities';
+import { InfiniteLoopError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IOccurrenceGenerator } from '../interfaces';
@@ -62,14 +62,14 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
       : new this.iterable.dateAdapter(date).set('timezone', this.iterable.timezone).toDateTime();
   }
 
-  private normalizeDateOutput(date: DateTime): ConstructorReturnType<T>;
+  private normalizeDateOutput(date: DateTime): InstanceType<T>;
   private normalizeDateOutput(date?: DateTime): undefined;
   private normalizeDateOutput(date?: DateTime) {
     if (!date) {
       return;
     }
 
-    return this.iterable.dateAdapter.fromDateTime(date) as ConstructorReturnType<T>;
+    return this.iterable.dateAdapter.fromDateTime(date) as InstanceType<T>;
   }
 }
 
