@@ -1,17 +1,14 @@
-import { ArgumentError, ConstructorReturnType } from './basic-utilities';
+import { ArgumentError } from './basic-utilities';
 import { DateAdapter } from './date-adapter';
 import { DateTime } from './date-time';
 import { RScheduleConfig } from './rschedule-config';
 
-export type DateInput<T extends typeof DateAdapter> =
-  | T['date']
-  | ConstructorReturnType<T>
-  | DateTime;
+export type DateInput<T extends typeof DateAdapter> = T['date'] | InstanceType<T> | DateTime;
 
 export function dateInputToDateAdapter<T extends typeof DateAdapter>(
   date: DateInput<T>,
   dateAdapter?: T,
-): ConstructorReturnType<T> {
+): InstanceType<T> {
   dateAdapter = dateAdapter || (RScheduleConfig.defaultDateAdapter as T | undefined);
 
   if (!dateAdapter) {
@@ -21,10 +18,10 @@ export function dateInputToDateAdapter<T extends typeof DateAdapter>(
   }
 
   if (DateTime.isInstance(date)) {
-    return dateAdapter.fromDateTime(date) as ConstructorReturnType<T>;
+    return dateAdapter.fromDateTime(date) as InstanceType<T>;
   }
 
-  return DateAdapter.isInstance(date) ? date : (new dateAdapter(date) as ConstructorReturnType<T>);
+  return DateAdapter.isInstance(date) ? date : (new dateAdapter(date) as InstanceType<T>);
 }
 
 export function dateInputToDateTime<T extends typeof DateAdapter>(

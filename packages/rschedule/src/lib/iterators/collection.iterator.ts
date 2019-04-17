@@ -1,9 +1,4 @@
-import {
-  ArgumentError,
-  ConstructorReturnType,
-  freqToGranularity,
-  InfiniteLoopError,
-} from '../basic-utilities';
+import { ArgumentError, freqToGranularity, InfiniteLoopError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
@@ -14,7 +9,7 @@ import { IOccurrencesArgs } from './occurrence.iterator';
 export class CollectionIterator<T extends typeof DateAdapter> {
   readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY';
   readonly weekStart?: IDateAdapter.Weekday;
-  readonly startDate: ConstructorReturnType<T> | null;
+  readonly startDate: InstanceType<T> | null;
 
   private iterator: IterableIterator<Collection<T>>;
 
@@ -43,9 +38,7 @@ export class CollectionIterator<T extends typeof DateAdapter> {
 
     this.startDate =
       (this.args.start &&
-        (this.normalizeDateOutput(this.getPeriod(this.args.start).start) as ConstructorReturnType<
-          T
-        >)) ||
+        (this.normalizeDateOutput(this.getPeriod(this.args.start).start) as InstanceType<T>)) ||
       null;
 
     this.iterator = this._run();
@@ -78,16 +71,6 @@ export class CollectionIterator<T extends typeof DateAdapter> {
         'is not infinite, or you provide and `end` argument, or you provide ' +
         'a `take` argument.',
     );
-  }
-
-  private normalizeDateInput(date?: DateInput<T>) {
-    if (!date) {
-      return;
-    }
-
-    return DateAdapter.isInstance(date)
-      ? date.set('timezone', this.iterable.timezone).toDateTime()
-      : new this.iterable.dateAdapter(date).set('timezone', this.iterable.timezone).toDateTime();
   }
 
   private normalizeDateOutput(date?: DateTime) {
@@ -222,10 +205,10 @@ export class CollectionIterator<T extends typeof DateAdapter> {
 
 export class Collection<T extends typeof DateAdapter> {
   constructor(
-    readonly dates: ConstructorReturnType<T>[] = [],
+    readonly dates: InstanceType<T>[] = [],
     readonly granularity: CollectionsGranularity,
-    readonly periodStart: ConstructorReturnType<T>,
-    readonly periodEnd: ConstructorReturnType<T>,
+    readonly periodStart: InstanceType<T>,
+    readonly periodEnd: InstanceType<T>,
   ) {}
 }
 

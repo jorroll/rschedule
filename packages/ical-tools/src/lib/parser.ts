@@ -1,6 +1,5 @@
 import {
   ArgumentError,
-  ConstructorReturnType,
   DateAdapter,
   IDateAdapter,
   IProvidedRuleOptions,
@@ -17,15 +16,15 @@ export class ParseICalError extends Error {}
 const LINE_REGEX = /^.*\n?/;
 
 type IDtstartProperty<T extends typeof DateAdapter> = IJCalProperty & {
-  processedValue: ConstructorReturnType<T>;
+  processedValue: InstanceType<T>;
 };
 
 export interface IVEventArgs<T extends typeof DateAdapter> {
-  start: ConstructorReturnType<T>;
+  start: InstanceType<T>;
   rrules?: IVEventRuleOptions<T>[];
   exrules?: IVEventRuleOptions<T>[];
-  rdates?: ConstructorReturnType<T>[];
-  exdates?: ConstructorReturnType<T>[];
+  rdates?: InstanceType<T>[];
+  exdates?: InstanceType<T>[];
   data: { jCal: IJCalComponent };
 }
 
@@ -229,15 +228,14 @@ function jCalDateTimeToDateAdapter<T extends typeof DateAdapter>(
   options: {
     timezone?: string | null;
   } = {},
-): ConstructorReturnType<T>[] {
+): InstanceType<T>[] {
   const results = parseJCalDateTime(input).map(result =>
     dateAdapter.fromJSON(result),
-  ) as ConstructorReturnType<T>[];
+  ) as InstanceType<T>[];
 
   if (options.timezone !== undefined) {
     return results.map(
-      adapter =>
-        adapter.set('timezone', options.timezone as string | null) as ConstructorReturnType<T>,
+      adapter => adapter.set('timezone', options.timezone as string | null) as InstanceType<T>,
     );
   } else {
     return results;
@@ -247,7 +245,7 @@ function jCalDateTimeToDateAdapter<T extends typeof DateAdapter>(
 export function parseDTSTART<T extends typeof DateAdapter>(
   input: IJCalProperty,
   dateAdapterConstructor: T,
-): ConstructorReturnType<T> {
+): InstanceType<T> {
   const type = input[2];
 
   if (!['date-time', 'date'].includes(type)) {

@@ -2,7 +2,6 @@ import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
 import {
-  ConstructorReturnType,
   DateAdapter as DateAdapterConstructor,
   IProvidedRuleOptions,
   Schedule,
@@ -65,8 +64,8 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       context(zone, () => {
         function testIsRecurrencePattern<T extends typeof DateAdapter>(
           name: string,
-          date: ConstructorReturnType<T>,
-          optionsFn: (date: ConstructorReturnType<T>) => IProvidedRuleOptions<T>,
+          date: InstanceType<T>,
+          optionsFn: (date: InstanceType<T>) => IProvidedRuleOptions<T>,
           expectations: [RecurrencePattern, boolean][],
         ) {
           describe('isRecurrencePattern()', () => {
@@ -168,7 +167,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           describe('isRecurrencePattern()', () => {
             function weeklyTH<T extends typeof DateAdapter>(
-              date: ConstructorReturnType<T>,
+              date: InstanceType<T>,
             ): IProvidedRuleOptions<T> {
               return {
                 start: date,
@@ -178,7 +177,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             }
 
             function weeklyMO<T extends typeof DateAdapter>(
-              date: ConstructorReturnType<T>,
+              date: InstanceType<T>,
             ): IProvidedRuleOptions<T> {
               return {
                 start: date,
@@ -188,7 +187,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             }
 
             function dailyTH<T extends typeof DateAdapter>(
-              date: ConstructorReturnType<T>,
+              date: InstanceType<T>,
             ): IProvidedRuleOptions<T> {
               return {
                 start: date,
@@ -198,7 +197,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             }
 
             function monthly2ndTH<T extends typeof DateAdapter>(
-              date: ConstructorReturnType<T>,
+              date: InstanceType<T>,
             ): IProvidedRuleOptions<T> {
               return {
                 start: date,
@@ -208,7 +207,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             }
 
             function monthlyLastWE<T extends typeof DateAdapter>(
-              date: ConstructorReturnType<T>,
+              date: InstanceType<T>,
             ): IProvidedRuleOptions<T> {
               return {
                 start: date,
@@ -218,7 +217,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             }
 
             function monthly14th<T extends typeof DateAdapter>(
-              date: ConstructorReturnType<T>,
+              date: InstanceType<T>,
             ): IProvidedRuleOptions<T> {
               return {
                 start: date,

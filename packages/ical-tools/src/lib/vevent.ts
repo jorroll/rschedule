@@ -1,7 +1,6 @@
 import {
   add,
   ArgumentError,
-  ConstructorReturnType,
   DateAdapter,
   DateInput,
   Dates,
@@ -48,7 +47,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
   /** Convenience property for holding arbitrary data */
   data!: D;
 
-  readonly start: ConstructorReturnType<T>;
+  readonly start: InstanceType<T>;
   readonly isInfinite: boolean;
   readonly duration?: number;
   readonly hasDuration: boolean;
@@ -263,7 +262,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
     switch (prop) {
       case 'timezone': {
         if (value === this.timezone) return this;
-        start = start.set('timezone', value as string | null) as ConstructorReturnType<T>;
+        start = start.set('timezone', value as string | null) as InstanceType<T>;
         break;
       }
       case 'start': {

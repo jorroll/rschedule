@@ -2,7 +2,7 @@ import { IJCalProperty, serializeToICal, serializeToJCal, VEvent } from '@rsched
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-import { ConstructorReturnType, DateAdapter as DateAdapterConstructor } from '@rschedule/rschedule';
+import { DateAdapter as DateAdapterConstructor } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
 import { Moment as MomentST } from 'moment';
@@ -257,7 +257,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           timezone?: string | null;
         } = {},
       ): IJCalProperty & {
-        processedValue: ConstructorReturnType<typeof DateAdapter>;
+        processedValue: InstanceType<typeof DateAdapter>;
       } {
         const result: IJCalProperty = [
           'dtstart',

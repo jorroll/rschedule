@@ -2,12 +2,6 @@ export class ArgumentError extends Error {}
 
 export class InfiniteLoopError extends Error {}
 
-export type ConstructorReturnType<T extends new (...args: any[]) => any> = T extends new (
-  ...args: any[]
-) => infer R
-  ? R
-  : any;
-
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export function numberSortComparer(a: number, b: number) {
