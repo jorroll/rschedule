@@ -51,12 +51,14 @@ export interface IRuleJSON {
   type: 'Rule';
   timezone?: string | null;
   options: IRuleOptionsJSON;
+  data?: unknown;
 }
 
 export interface IDatesJSON {
   type: 'Dates';
   timezone?: string | null;
   dates: IDateAdapter.JSON[];
+  data?: unknown;
 }
 
 export interface IScheduleJSON {
@@ -66,12 +68,14 @@ export interface IScheduleJSON {
   exrules: IRuleJSON[];
   rdates: IDatesJSON;
   exdates: IDatesJSON;
+  data?: unknown;
 }
 
 export interface ICalendarJSON {
   type: 'Calendar';
   timezone?: string | null;
   schedules: (RScheduleObjectJSON)[];
+  data?: unknown;
 }
 
 export interface IOccurrenceStreamJSON {
@@ -106,40 +110,46 @@ export interface IUniqueOperatorJSON {
   type: 'UniqueOperator';
 }
 
-export function serializeToJSON<T extends typeof DateAdapter>(
-  inputs: RScheduleObject<T>,
-): RScheduleObjectJSON;
-export function serializeToJSON<T extends typeof DateAdapter>(
-  ...inputs: RScheduleObject<T>[]
-): RScheduleObjectJSON[];
-export function serializeToJSON<T extends typeof DateAdapter>(
-  ...inputs: RScheduleObject<T>[]
-): RScheduleObjectJSON | RScheduleObjectJSON[] {
-  return _serializeToJSON(true, ...inputs);
+export interface ISerializeToJSONOptions<T extends typeof DateAdapter> {
+  serializeData?: boolean | ((input: Extract<RScheduleObject<T>, { data?: any }>) => unknown);
+  isNested?: boolean;
 }
 
-function _serializeToJSON<T extends typeof DateAdapter>(
-  isNested: boolean,
-  input: RScheduleObject<T>,
+export function serializeToJSON<T extends typeof DateAdapter>(
+  inputs: RScheduleObject<T>,
+  options?: ISerializeToJSONOptions<T>,
 ): RScheduleObjectJSON;
-function _serializeToJSON<T extends typeof DateAdapter>(
-  isNested: boolean,
-  ...input: RScheduleObject<T>[]
+export function serializeToJSON<T extends typeof DateAdapter>(
+  inputs: RScheduleObject<T>[],
+  options?: ISerializeToJSONOptions<T>,
 ): RScheduleObjectJSON[];
-function _serializeToJSON<T extends typeof DateAdapter>(
-  isNested: boolean,
-  ...input: RScheduleObject<T>[]
+export function serializeToJSON<T extends typeof DateAdapter>(
+  inputs: RScheduleObject<T> | RScheduleObject<T>[],
+  options: ISerializeToJSONOptions<T> = {},
 ): RScheduleObjectJSON | RScheduleObjectJSON[] {
-  const result = input.map(input => {
+  const arrayProvided = Array.isArray(inputs);
+
+  if (!Array.isArray(inputs)) {
+    inputs = [inputs];
+  }
+
+  const serializeData = !!options.serializeData;
+  const serializationOptions = { ...options, isNested: true };
+
+  const result = inputs.map(input => {
     let json: RScheduleObjectJSON;
 
     if (Schedule.isSchedule(input)) {
       json = {
         type: 'Schedule',
-        rrules: input.rrules.map(rule => _serializeToJSON(false, rule)) as IRuleJSON[],
-        exrules: input.exrules.map(rule => _serializeToJSON(false, rule)) as IRuleJSON[],
-        rdates: _serializeToJSON(false, input.rdates) as IDatesJSON,
-        exdates: _serializeToJSON(false, input.exdates) as IDatesJSON,
+        rrules: input.rrules.map(rule =>
+          serializeToJSON(rule, serializationOptions),
+        ) as IRuleJSON[],
+        exrules: input.exrules.map(rule =>
+          serializeToJSON(rule, serializationOptions),
+        ) as IRuleJSON[],
+        rdates: serializeToJSON(input.rdates, serializationOptions) as IDatesJSON,
+        exdates: serializeToJSON(input.exdates, serializationOptions) as IDatesJSON,
       };
     } else if (Dates.isDates(input)) {
       json = {
@@ -154,27 +164,36 @@ function _serializeToJSON<T extends typeof DateAdapter>(
     } else if (OccurrenceStream.isOccurrenceStream(input)) {
       json = {
         type: 'OccurrenceStream',
-        operators: input.operators.map(operator => serializeOperatorToJSON(operator)),
+        operators: input.operators.map(operator =>
+          serializeOperatorToJSON(operator, serializationOptions),
+        ),
       };
     } else if (Calendar.isCalendar(input)) {
       json = {
         type: 'Calendar',
         schedules: input.schedules.map(schedule =>
-          _serializeToJSON(false, schedule as RScheduleObject<T>),
+          serializeToJSON(schedule as RScheduleObject<T>, serializationOptions),
         ),
       };
     } else {
       throw new SerializeJSONError(`Unsupported input type "${input}"`);
     }
 
-    if (isNested) {
+    if (!options.isNested) {
       json.timezone = input.timezone;
+    }
+
+    if (serializeData && (input as any).data !== undefined) {
+      (json as Extract<RScheduleObjectJSON, { data?: unknown }>).data =
+        typeof options.serializeData === 'function'
+          ? options.serializeData(input as Extract<RScheduleObject<T>, { data?: unknown }>)
+          : (input as Extract<RScheduleObject<T>, { data?: unknown }>).data;
     }
 
     return json;
   });
 
-  if (result.length < 2) {
+  if (!arrayProvided) {
     return result[0] as RScheduleObjectJSON;
   }
 
@@ -214,26 +233,33 @@ function serializeDateToJSON<T extends typeof DateAdapter>(
   }
 }
 
-function serializeOperatorToJSON<T extends typeof DateAdapter>(input: Operator<T>): IOperatorJSON {
+function serializeOperatorToJSON<T extends typeof DateAdapter>(
+  input: Operator<T>,
+  options: {
+    serializeData?: boolean | ((input: Extract<RScheduleObject<T>, { data?: any }>) => unknown);
+  },
+): IOperatorJSON {
+  const serializationOptions = { ...options, isNested: true };
+
   if (AddOperator.isAddOperator(input)) {
     return {
       type: 'AddOperator',
       streams: (input as AddOperator<T>)._streams.map(stream =>
-        _serializeToJSON(false, stream as RScheduleObject<T>),
+        serializeToJSON(stream as RScheduleObject<T>, serializationOptions),
       ),
     };
   } else if (SubtractOperator.isSubtractOperator(input)) {
     return {
       type: 'SubtractOperator',
       streams: (input as SubtractOperator<T>)._streams.map(stream =>
-        _serializeToJSON(false, stream as RScheduleObject<T>),
+        serializeToJSON(stream as RScheduleObject<T>, serializationOptions),
       ),
     };
   } else if (IntersectionOperator.isIntersectionOperator(input)) {
     return {
       type: 'IntersectionOperator',
       streams: (input as IntersectionOperator<T>)._streams.map(stream =>
-        _serializeToJSON(false, stream as RScheduleObject<T>),
+        serializeToJSON(stream as RScheduleObject<T>, serializationOptions),
       ),
       maxFailedIterations: (input as IntersectionOperator<T>).maxFailedIterations,
     };

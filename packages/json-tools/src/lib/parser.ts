@@ -24,23 +24,22 @@ import {
 
 export class ParseJSONError extends Error {}
 
+export interface IParseJSONOptions<T extends typeof DateAdapter> {
+  dateAdapter?: T;
+  parseData?: (data?: unknown) => unknown;
+}
+
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON,
-  options?: {
-    dateAdapter?: T;
-  },
+  options?: IParseJSONOptions<T>,
 ): RScheduleObject<T>;
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON[],
-  options?: {
-    dateAdapter?: T;
-  },
+  options?: IParseJSONOptions<T>,
 ): RScheduleObject<T>[];
 export function parseJSON<T extends typeof DateAdapter>(
   input: RScheduleObjectJSON | RScheduleObjectJSON[],
-  options: {
-    dateAdapter?: T;
-  } = {},
+  options: IParseJSONOptions<T> = {},
 ): RScheduleObject<T> | RScheduleObject<T>[] {
   const dateAdapter = options.dateAdapter || (RScheduleConfig.defaultDateAdapter as T);
 
@@ -62,14 +61,15 @@ export function parseJSON<T extends typeof DateAdapter>(
           return new Schedule({
             ...json,
             rrules: json.rrules.map(
-              rule => parseJSON({ ...rule, timezone: json.timezone }, { dateAdapter }) as Rule<T>,
+              rule => parseJSON({ ...rule, timezone: json.timezone }, options) as Rule<T>,
             ),
             exrules: json.exrules.map(
-              rule => parseJSON({ ...rule, timezone: json.timezone }, { dateAdapter }) as Rule<T>,
+              rule => parseJSON({ ...rule, timezone: json.timezone }, options) as Rule<T>,
             ),
             rdates: json.rdates.dates.map(date => dateAdapter.fromJSON(date)),
             exdates: json.exdates.dates.map(date => dateAdapter.fromJSON(date)),
             dateAdapter,
+            data: options.parseData ? options.parseData(json.data) : json.data,
           });
         case 'Rule':
           const ruleOptions: IProvidedRuleOptions<T> = {
@@ -88,24 +88,27 @@ export function parseJSON<T extends typeof DateAdapter>(
           return new Rule(ruleOptions, {
             dateAdapter,
             timezone: json.timezone,
+            data: options.parseData ? options.parseData(json.data) : json.data,
           });
         case 'Dates':
           return new Dates({
             ...json,
             dates: json.dates.map(date => dateAdapter.fromJSON(date)),
             dateAdapter,
+            data: options.parseData ? options.parseData(json.data) : json.data,
           });
         case 'OccurrenceStream':
           return new OccurrenceStream({
             ...json,
-            operators: json.operators.map(operator => parseOperatorJSON(operator, dateAdapter)),
+            operators: json.operators.map(operator => parseOperatorJSON(operator, options)),
             dateAdapter,
           });
         case 'Calendar':
           return new Calendar({
             ...json,
-            schedules: json.schedules.map(schedule => parseJSON(schedule, { dateAdapter })),
+            schedules: json.schedules.map(schedule => parseJSON(schedule, options)),
             dateAdapter,
+            data: options.parseData ? options.parseData(json.data) : json.data,
           });
         default:
           throw new ParseJSONError(`Unknown input type "${(json as any).type}"`);
@@ -124,17 +127,20 @@ export function parseJSON<T extends typeof DateAdapter>(
 
 function parseOperatorJSON<T extends typeof DateAdapter>(
   json: IOperatorJSON,
-  dateAdapter: T,
+  options: {
+    dateAdapter?: T;
+    parseData?: (data?: unknown) => unknown;
+  },
 ): OperatorFnOutput<T> {
   switch (json.type) {
     case 'AddOperator':
-      return add(...json.streams.map(stream => parseJSON(stream, { dateAdapter })));
+      return add(...json.streams.map(stream => parseJSON(stream, options)));
     case 'SubtractOperator':
-      return subtract(...json.streams.map(stream => parseJSON(stream, { dateAdapter })));
+      return subtract(...json.streams.map(stream => parseJSON(stream, options)));
     case 'IntersectionOperator':
       return intersection({
         maxFailedIterations: json.maxFailedIterations,
-        streams: json.streams.map(stream => parseJSON(stream, { dateAdapter })),
+        streams: json.streams.map(stream => parseJSON(stream, options)),
       });
     case 'UniqueOperator':
       return unique();

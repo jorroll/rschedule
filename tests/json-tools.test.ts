@@ -176,9 +176,35 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           },
         };
 
+        const nestedRRuleJSON4Data: IRuleJSON = {
+          type: 'Rule',
+          options: {
+            start: {
+              timezone,
+              duration: undefined,
+              year: 2018,
+              month: 10,
+              day: 8,
+              hour: 9,
+              minute: 0,
+              second: 0,
+              millisecond: 0,
+            },
+            frequency: 'DAILY',
+          },
+          data: {
+            one: 'happy',
+          },
+        };
+
         const rruleJSON4 = {
           timezone,
           ...nestedRRuleJSON4,
+        };
+
+        const rruleJSON4Data = {
+          timezone,
+          ...nestedRRuleJSON4Data,
         };
 
         const nestedRDatesJSON: IDatesJSON = {
@@ -243,14 +269,32 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           exdates: nestedEXDatesJSON,
         };
 
+        const nestedScheduleJSONData: IScheduleJSON = {
+          type: 'Schedule',
+          rrules: [nestedRRuleJSON1, nestedRRuleJSON2, nestedRRuleJSON3, nestedRRuleJSON4Data],
+          exrules: [nestedRRuleJSON2],
+          rdates: nestedRDatesJSON,
+          exdates: nestedEXDatesJSON,
+        };
+
         const scheduleJSON = {
           timezone,
           ...nestedScheduleJSON,
         };
 
+        const scheduleJSONData = {
+          timezone,
+          ...nestedScheduleJSONData,
+        };
+
         const nestedAddOperatorJSON: IAddOperatorJSON = {
           type: 'AddOperator',
           streams: [nestedScheduleJSON],
+        };
+
+        const nestedAddOperatorJSONData: IAddOperatorJSON = {
+          type: 'AddOperator',
+          streams: [nestedScheduleJSONData],
         };
 
         const nestedSubtractOperatorJSON: ISubtractOperatorJSON = {
@@ -278,8 +322,23 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           ],
         };
 
+        const nestedOccurrenceStreamJSONData: IOccurrenceStreamJSON = {
+          type: 'OccurrenceStream',
+          operators: [
+            nestedAddOperatorJSONData,
+            nestedSubtractOperatorJSON,
+            nestedIntersectionOperatorJSON,
+            nestedUniqueOperatorJSON,
+          ],
+        };
+
         const occurrenceStreamJSON: IOccurrenceStreamJSON = {
           ...nestedOccurrenceStreamJSON,
+          timezone,
+        };
+
+        const occurrenceStreamJSONData: IOccurrenceStreamJSON = {
+          ...nestedOccurrenceStreamJSONData,
           timezone,
         };
 
@@ -288,8 +347,18 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           schedules: [nestedRRuleJSON1, nestedRDatesJSON, nestedOccurrenceStreamJSON],
         };
 
+        const nestedCalendarJSONData: ICalendarJSON = {
+          type: 'Calendar',
+          schedules: [nestedRRuleJSON1, nestedRDatesJSON, nestedOccurrenceStreamJSONData],
+        };
+
         const calendarJSON: ICalendarJSON = {
           ...nestedCalendarJSON,
+          timezone,
+        };
+
+        const calendarJSONData: ICalendarJSON = {
+          ...nestedCalendarJSONData,
           timezone,
         };
 
@@ -373,7 +442,33 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
               }),
               frequency: 'DAILY',
             },
-            { dateAdapter: DateAdapter, timezone },
+            {
+              dateAdapter: DateAdapter,
+              timezone,
+            },
+          );
+
+          const rrule4Data = new Rule(
+            {
+              start: DateAdapter.fromJSON({
+                timezone,
+                year: 2018,
+                month: 10,
+                day: 8,
+                hour: 9,
+                minute: 0,
+                second: 0,
+                millisecond: 0,
+              }),
+              frequency: 'DAILY',
+            },
+            {
+              dateAdapter: DateAdapter,
+              timezone,
+              data: {
+                one: 'happy',
+              },
+            },
           );
 
           const rdates = new Dates({
@@ -427,6 +522,15 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             timezone,
           });
 
+          const scheduleData = new Schedule({
+            rrules: [rrule1, rrule2, rrule3, rrule4Data],
+            exrules: [rrule2],
+            rdates,
+            exdates,
+            dateAdapter: DateAdapter,
+            timezone,
+          });
+
           const occurrenceStream = new OccurrenceStream({
             operators: [
               add(schedule),
@@ -441,8 +545,28 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             timezone,
           });
 
+          const occurrenceStreamData = new OccurrenceStream({
+            operators: [
+              add(scheduleData),
+              subtract(rrule2),
+              intersection({
+                streams: [rrule3],
+                maxFailedIterations: 50,
+              }),
+              unique(),
+            ],
+            dateAdapter: DateAdapter,
+            timezone,
+          });
+
           const calendar = new Calendar({
             schedules: [rrule1, rdates, occurrenceStream],
+            dateAdapter: DateAdapter,
+            timezone,
+          });
+
+          const calendarData = new Calendar({
+            schedules: [rrule1, rdates, occurrenceStreamData],
             dateAdapter: DateAdapter,
             timezone,
           });
@@ -463,6 +587,26 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             expect(serializeToJSON(rrule4)).toEqual(rruleJSON4);
           });
 
+          test('rruleJSON4Data', () => {
+            expect(serializeToJSON(rrule4Data)).toEqual(rruleJSON4);
+            expect(serializeToJSON(rrule4Data, { serializeData: true })).toEqual(rruleJSON4Data);
+            expect(
+              serializeToJSON(rrule4Data, {
+                serializeData: input => {
+                  const json = JSON.parse(JSON.stringify(input.data));
+                  json.two = 'sad';
+                  return json;
+                },
+              }),
+            ).toEqual({
+              ...rruleJSON4,
+              data: {
+                one: 'happy',
+                two: 'sad',
+              },
+            });
+          });
+
           test('rdatesJSON', () => {
             expect(serializeToJSON(rdates)).toEqual(rdatesJSON);
           });
@@ -475,12 +619,33 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             expect(serializeToJSON(schedule)).toEqual(scheduleJSON);
           });
 
+          test('scheduleJSONData', () => {
+            expect(serializeToJSON(scheduleData)).toEqual(scheduleJSON);
+            expect(serializeToJSON(scheduleData, { serializeData: true })).toEqual(
+              scheduleJSONData,
+            );
+          });
+
           test('occurrenceStreamJSON', () => {
             expect(serializeToJSON(occurrenceStream)).toEqual(occurrenceStreamJSON);
           });
 
+          test('occurrenceStreamJSONData', () => {
+            expect(serializeToJSON(occurrenceStreamData)).toEqual(occurrenceStreamJSON);
+            expect(serializeToJSON(occurrenceStreamData, { serializeData: true })).toEqual(
+              occurrenceStreamJSONData,
+            );
+          });
+
           test('calendarJSON', () => {
             expect(serializeToJSON(calendar)).toEqual(calendarJSON);
+          });
+
+          test('calendarJSONData', () => {
+            expect(serializeToJSON(calendarData)).toEqual(calendarJSON);
+            expect(serializeToJSON(calendarData, { serializeData: true })).toEqual(
+              calendarJSONData,
+            );
           });
         });
 
@@ -522,6 +687,17 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             expect(serializeToJSON(rrule)).toEqual(rruleJSON4);
           });
 
+          test('rruleJSON4Data', () => {
+            const rrule = parseJSON(rruleJSON4Data, { dateAdapter: DateAdapter }) as Rule<
+              typeof DateAdapter
+            >;
+
+            expect(Rule.isRule(rrule)).toBeTruthy();
+            expect(rrule.data).toBeTruthy();
+            expect(serializeToJSON(rrule)).toEqual(rruleJSON4);
+            expect(serializeToJSON(rrule, { serializeData: true })).toEqual(rruleJSON4Data);
+          });
+
           test('rdatesJSON', () => {
             const rdates = parseJSON(rdatesJSON, { dateAdapter: DateAdapter }) as Dates<
               typeof DateAdapter
@@ -549,6 +725,17 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             expect(serializeToJSON(schedule)).toEqual(scheduleJSON);
           });
 
+          test('scheduleJSONData', () => {
+            const schedule = parseJSON(scheduleJSONData, { dateAdapter: DateAdapter }) as Schedule<
+              typeof DateAdapter
+            >;
+
+            expect(Schedule.isSchedule(schedule)).toBeTruthy();
+            expect(schedule.data).toBeFalsy();
+            expect(serializeToJSON(schedule)).toEqual(scheduleJSON);
+            expect(serializeToJSON(schedule, { serializeData: true })).toEqual(scheduleJSONData);
+          });
+
           test('occurrenceStreamJSON', () => {
             const occurrenceStream = parseJSON(occurrenceStreamJSON, {
               dateAdapter: DateAdapter,
@@ -558,6 +745,19 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             expect(serializeToJSON(occurrenceStream)).toEqual(occurrenceStreamJSON);
           });
 
+          test('occurrenceStreamJSONData', () => {
+            const occurrenceStream = parseJSON(occurrenceStreamJSONData, {
+              dateAdapter: DateAdapter,
+            }) as OccurrenceStream<typeof DateAdapter>;
+
+            expect(OccurrenceStream.isOccurrenceStream(occurrenceStream)).toBeTruthy();
+            expect((occurrenceStream as any).data).toBeFalsy();
+            expect(serializeToJSON(occurrenceStream)).toEqual(occurrenceStreamJSON);
+            expect(serializeToJSON(occurrenceStream, { serializeData: true })).toEqual(
+              occurrenceStreamJSONData,
+            );
+          });
+
           test('calendarJSON', () => {
             const calendar = parseJSON(calendarJSON, { dateAdapter: DateAdapter }) as Calendar<
               typeof DateAdapter
@@ -565,6 +765,17 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
             expect(Calendar.isCalendar(calendar)).toBeTruthy();
             expect(serializeToJSON(calendar)).toEqual(calendarJSON);
+          });
+
+          test('calendarJSONData', () => {
+            const calendar = parseJSON(calendarJSONData, { dateAdapter: DateAdapter }) as Calendar<
+              typeof DateAdapter
+            >;
+
+            expect(Calendar.isCalendar(calendar)).toBeTruthy();
+            expect(calendar.data).toBeFalsy();
+            expect(serializeToJSON(calendar)).toEqual(calendarJSON);
+            expect(serializeToJSON(calendar, { serializeData: true })).toEqual(calendarJSONData);
           });
         });
       });
