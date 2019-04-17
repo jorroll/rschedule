@@ -1,5 +1,6 @@
 import {
   IAddOperatorJSON,
+  ICalendarJSON,
   IDatesJSON,
   IIntersectionOperatorJSON,
   IOccurrenceStreamJSON,
@@ -31,7 +32,6 @@ import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
 import { Moment as MomentST } from 'moment';
 import { Moment as MomentTZ } from 'moment-timezone';
-import { ICalendarJSON } from 'packages/json-tools/build/packages/json-tools';
 import {
   context,
   DatetimeFn,
