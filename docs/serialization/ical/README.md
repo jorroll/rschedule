@@ -2,16 +2,22 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/ical-tools)](https://www.npmjs.com/package/@rschedule/ical-tools) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/ical-tools)](https://bundlephobia.com/result?p=@rschedule/ical-tools)
 
-The optional package `@rschedule/ical-tools` includes a new `VEvent` object for working with [iCalendar `VEVENT` components](https://tools.ietf.org/html/rfc5545#section-3.6.1), as well as `serializeToICal()` and `parseICal()` functions. At this time, parsing / serializing `VCALENDAR` components is not supported.
+The optional package `@rschedule/ical-tools` includes a new `VEvent` object for working with [iCalendar `VEVENT` components](https://tools.ietf.org/html/rfc5545#section-3.6.1), as well as `serializeToICal()` and `parseICal()` functions.
+
+Some limitations:
+
+- Parsing / serializing `VCALENDAR` components is not currently supported.
+- You can _only_ parse / serialize `VEvent` objects.
+- `VEvent#data` is ignored.
 
 Example:
 
 ```typescript
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
-const vEvent = new VEvent({
-  start: new Date()
-})
+const vEvent = new VEvent<typeof StandardDateAdapter>({
+  start: new Date(),
+});
 
 const iCal = serializeToICal(vEvent); // => string
 
@@ -21,7 +27,6 @@ parseICal(iCal); // => { vEvents: [vEvent], iCal: iCal, jCal: [...] }
 ## Installation
 
 `@rschedule/ical-tools` has a peer dependency on `ical.js`
-
 
 ```bash
 yarn add @rschedule/ical-tools ical.js
@@ -51,8 +56,8 @@ Example:
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
 const vEvent = new VEvent({
-  start: new Date()
-})
+  start: new Date(),
+});
 
 const iCal = serializeToICal(vEvent); // => string
 ```
@@ -74,4 +79,3 @@ result.vEvents // => VEvent[];
 result.iCal // => string;
 result.jCal // => jCal object
 ```
-
