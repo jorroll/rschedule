@@ -1,22 +1,30 @@
-import { ArgumentError } from '../basic-utilities';
+import { ArgumentError, Include } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, dateTimeSortComparer } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
+import {
+  CollectionIterator,
+  ICollectionsArgs,
+  IOccurrencesArgs,
+  OccurrenceIterator,
+} from '../iterators';
 import { OccurrenceStream, OperatorFnOutput, pipeFn } from '../operators';
 import { DateInput } from '../utilities';
 
 const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac');
 
-/**
- * This base class provides a `OccurrenceGenerator` API wrapper around arrays of dates
- */
+type GetDatesType<T> = Include<T, Dates<any, any>> extends never
+  ? Dates<any, any>
+  : Include<T, Dates<any, any>>;
+
 export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
   /**
    * Similar to `Array.isArray()`, `isDates()` provides a surefire method
    * of determining if an object is a `Dates` by checking against the
    * global symbol registry.
    */
-  static isDates(object: unknown): object is Dates<any> {
+  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
+  static isDates<T>(object: T): object is GetDatesType<T> {
     return !!(object && typeof object === 'object' && (object as any)[DATES_ID]);
   }
 
@@ -72,6 +80,14 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     }
 
     this.hasDuration = this.datetimes.every(date => !!date.duration);
+  }
+
+  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T, [this]> {
+    return new OccurrenceIterator(this, this.normalizeOccurrencesArgs(args));
+  }
+
+  collections(args: ICollectionsArgs<T> = {}): CollectionIterator<T, [this]> {
+    return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
   }
 
   add(value: DateInput<T>) {
@@ -193,7 +209,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
         yieldArgs = undefined;
       }
 
-      date.generators.push(this);
+      date.generators.unshift(this);
 
       yieldArgs = yield this.normalizeRunOutput(date);
 

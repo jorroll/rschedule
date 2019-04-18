@@ -5,6 +5,16 @@ import { RScheduleConfig } from './rschedule-config';
 
 export type DateInput<T extends typeof DateAdapter> = T['date'] | InstanceType<T> | DateTime;
 
+// tslint:disable-next-line: no-empty-interface
+interface ITypedWithDateAdapter<T extends typeof DateAdapter> {}
+
+// tslint:disable-next-line: no-empty-interface
+interface ITypedWithDateAdapterAndData<T extends typeof DateAdapter, D = any> {}
+
+export type DateAdapterFor<O> = O extends ITypedWithDateAdapter<infer A> ? A : never;
+
+export type DataFor<O> = O extends ITypedWithDateAdapterAndData<any, infer D> ? D : never;
+
 export function dateInputToDateAdapter<T extends typeof DateAdapter>(
   date: DateInput<T>,
   dateAdapter?: T,

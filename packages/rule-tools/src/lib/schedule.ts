@@ -1,6 +1,7 @@
 import {
   Calendar,
   DateAdapter,
+  DateAdapterFor,
   DateInput,
   Dates,
   intersection,
@@ -27,21 +28,21 @@ import { buildRecurrencePattern, isRecurrencePattern } from './rule';
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function scheduleHasPattern<T extends typeof DateAdapter>(
-  type: Pattern,
-  date: DateInput<T>,
-  schedule: IScheduleLike<T>,
+export function scheduleHasPattern<S extends IScheduleLike<typeof DateAdapter>>(
+  pattern: Pattern,
+  date: DateInput<DateAdapterFor<S>>,
+  schedule: S,
   options: {
-    dateAdapter?: T | undefined;
+    dateAdapter?: DateAdapterFor<S> | undefined;
     ignoreStart?: boolean | undefined;
     ignoreEnd?: boolean | undefined;
   } = {},
 ): boolean {
-  if (type === 'date') {
+  if (pattern === 'date') {
     return schedule.rdates.occursOn({ date });
   }
 
-  return schedule.rrules.some(rule => isRecurrencePattern(type, date, rule, options));
+  return schedule.rrules.some(rule => isRecurrencePattern(pattern, date, rule, options));
 }
 
 /**
@@ -50,19 +51,20 @@ export function scheduleHasPattern<T extends typeof DateAdapter>(
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function addSchedulePattern<
-  T extends typeof DateAdapter,
-  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
-  R extends IScheduleLike<any> = IScheduleLike<any>
->(pattern: Pattern, date: DateInput<T>, schedule: R, options: { dateAdapter?: T } = {}): R {
+export function addSchedulePattern<S extends IScheduleLike<typeof DateAdapter>>(
+  pattern: Pattern,
+  date: DateInput<DateAdapterFor<S>>,
+  schedule: S,
+  options: { dateAdapter?: DateAdapterFor<S> } = {},
+): S {
   if (pattern === 'date') {
-    return schedule.add('rdate', date) as R;
+    return schedule.add('rdate', date) as S;
   }
 
   return schedule.add(
     'rrule',
-    new Rule(buildRecurrencePattern(pattern, date, options), options),
-  ) as R;
+    new Rule<any>(buildRecurrencePattern(pattern, date, options), options),
+  ) as S;
 }
 
 /**
@@ -73,25 +75,21 @@ export function addSchedulePattern<
  *
  * _See the `rule-tools` docs for more information on available RecurrencePatterns._
  */
-export function endScheduleRecurrencePattern<
-  T extends typeof DateAdapter,
-  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
-  R extends IScheduleLike<any> = IScheduleLike<any>
->(
-  type: RecurrencePattern,
-  date: DateInput<T>,
-  schedule: R,
-  options: { dateAdapter?: T; cleanEXDates?: boolean } = {},
-): R {
+export function endScheduleRecurrencePattern<S extends IScheduleLike<typeof DateAdapter>>(
+  pattern: RecurrencePattern,
+  date: DateInput<DateAdapterFor<S>>,
+  schedule: S,
+  options: { dateAdapter?: DateAdapterFor<S>; cleanEXDates?: boolean } = {},
+): S {
   schedule = schedule.set(
     'rrules',
     schedule.rrules.map(rule =>
-      isRecurrencePattern(type, date, rule, options) ? rule.set('end', date) : rule,
+      isRecurrencePattern(pattern, date, rule, options) ? rule.set('end', date) : rule,
     ),
-  ) as R;
+  ) as S;
 
   if (options.cleanEXDates) {
-    schedule = cleanScheduleEXDates(schedule as any);
+    schedule = cleanScheduleEXDates(schedule);
   }
 
   return schedule;
@@ -107,28 +105,24 @@ export function endScheduleRecurrencePattern<
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function removeSchedulePattern<
-  T extends typeof DateAdapter,
-  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
-  R extends IScheduleLike<any> = IScheduleLike<any>
->(
+export function removeSchedulePattern<S extends IScheduleLike<typeof DateAdapter>>(
   pattern: Pattern,
-  date: DateInput<T>,
-  schedule: R,
-  options: { dateAdapter?: T; cleanEXDates?: boolean } = {},
-): R {
+  date: DateInput<DateAdapterFor<S>>,
+  schedule: S,
+  options: { dateAdapter?: DateAdapterFor<S>; cleanEXDates?: boolean } = {},
+): S {
   if (pattern === 'date') {
-    schedule = schedule.remove('rdate', date) as R;
+    schedule = schedule.remove('rdate', date) as S;
   } else {
     schedule = schedule.set(
       'rrules',
       schedule.rrules.filter(rule => !isRecurrencePattern(pattern, date, rule, options)),
-    ) as R;
+    ) as S;
   }
 
   // Remove any exdates that are no longer needed
   if (options.cleanEXDates) {
-    schedule = cleanScheduleEXDates(schedule as any);
+    schedule = cleanScheduleEXDates(schedule);
   }
 
   return schedule;
@@ -138,17 +132,13 @@ export function removeSchedulePattern<
  * Remove all of the schedule's `exdates` which do not intersect the schedule's
  * occurrences.
  */
-export function cleanScheduleEXDates<
-  T extends typeof DateAdapter,
-  // use of `any` is needed because of https://github.com/Microsoft/TypeScript/issues/30975
-  R extends IScheduleLike<any> = IScheduleLike<any>
->(schedule: R): R {
+export function cleanScheduleEXDates<S extends IScheduleLike<typeof DateAdapter>>(schedule: S): S {
   const options = {
     dateAdapter: schedule.dateAdapter,
     timezone: schedule.timezone,
   };
 
-  const intersectingExDates = new Calendar<T>({
+  const intersectingExDates = new Calendar<typeof DateAdapter>({
     schedules: schedule.set('exdates', new Dates(options)),
     ...options,
   })
@@ -161,5 +151,5 @@ export function cleanScheduleEXDates<
     .occurrences()
     .toArray();
 
-  return schedule.set('exdates', schedule.exdates.set('dates', intersectingExDates)) as R;
+  return schedule.set('exdates', schedule.exdates.set('dates', intersectingExDates)) as S;
 }

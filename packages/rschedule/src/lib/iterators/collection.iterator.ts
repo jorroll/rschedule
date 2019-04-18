@@ -6,7 +6,10 @@ import { RuleOption } from '../rule';
 import { DateInput } from '../utilities';
 import { IOccurrencesArgs } from './occurrence.iterator';
 
-export class CollectionIterator<T extends typeof DateAdapter> {
+export class CollectionIterator<
+  T extends typeof DateAdapter,
+  G extends ReadonlyArray<IOccurrenceGenerator<T>> = ReadonlyArray<IOccurrenceGenerator<T>>
+> {
   readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY';
   readonly weekStart?: IDateAdapter.Weekday;
   readonly startDate: InstanceType<T> | null;
@@ -37,9 +40,7 @@ export class CollectionIterator<T extends typeof DateAdapter> {
     };
 
     this.startDate =
-      (this.args.start &&
-        (this.normalizeDateOutput(this.getPeriod(this.args.start).start) as InstanceType<T>)) ||
-      null;
+      (this.args.start && this.normalizeDateOutput(this.getPeriod(this.args.start).start)) || null;
 
     this.iterator = this._run();
   }
@@ -73,6 +74,8 @@ export class CollectionIterator<T extends typeof DateAdapter> {
     );
   }
 
+  private normalizeDateOutput(date: DateTime): InstanceType<T> & { generators: G };
+  private normalizeDateOutput(date?: DateTime): undefined;
   private normalizeDateOutput(date?: DateTime) {
     if (!date) return;
 
@@ -106,11 +109,11 @@ export class CollectionIterator<T extends typeof DateAdapter> {
         date = iterator.next().value;
       }
 
-      yield new Collection(
-        dates.map(date => this.normalizeDateOutput(date)!),
+      yield new Collection<T, G>(
+        dates.map(date => this.normalizeDateOutput(date)),
         this.granularity,
-        this.normalizeDateOutput(period.start)!,
-        this.normalizeDateOutput(period.end)!,
+        this.normalizeDateOutput(period.start),
+        this.normalizeDateOutput(period.end),
       );
 
       if (!date) return;
@@ -203,12 +206,15 @@ export class CollectionIterator<T extends typeof DateAdapter> {
   }
 }
 
-export class Collection<T extends typeof DateAdapter> {
+export class Collection<
+  T extends typeof DateAdapter,
+  G extends ReadonlyArray<IOccurrenceGenerator<T>> = ReadonlyArray<IOccurrenceGenerator<T>>
+> {
   constructor(
-    readonly dates: InstanceType<T>[] = [],
+    readonly dates: (InstanceType<T> & { generators: G })[] = [],
     readonly granularity: CollectionsGranularity,
-    readonly periodStart: InstanceType<T>,
-    readonly periodEnd: InstanceType<T>,
+    readonly periodStart: InstanceType<T> & { generators: G },
+    readonly periodEnd: InstanceType<T> & { generators: G },
   ) {}
 }
 

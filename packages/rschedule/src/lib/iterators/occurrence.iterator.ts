@@ -5,7 +5,10 @@ import { IOccurrenceGenerator } from '../interfaces';
 import { IRunArgs } from '../interfaces/runnable';
 import { DateInput } from '../utilities';
 
-export class OccurrenceIterator<T extends typeof DateAdapter> {
+export class OccurrenceIterator<
+  T extends typeof DateAdapter,
+  G extends ReadonlyArray<IOccurrenceGenerator<T>> = ReadonlyArray<IOccurrenceGenerator<T>>
+> {
   private readonly iterator: IterableIterator<DateTime>;
   private readonly isInfinite: boolean;
 
@@ -62,7 +65,7 @@ export class OccurrenceIterator<T extends typeof DateAdapter> {
       : new this.iterable.dateAdapter(date).set('timezone', this.iterable.timezone).toDateTime();
   }
 
-  private normalizeDateOutput(date: DateTime): InstanceType<T>;
+  private normalizeDateOutput(date: DateTime): InstanceType<T> & { generators: G };
   private normalizeDateOutput(date?: DateTime): undefined;
   private normalizeDateOutput(date?: DateTime) {
     if (!date) {

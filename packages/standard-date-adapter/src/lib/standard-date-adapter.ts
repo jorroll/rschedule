@@ -18,7 +18,7 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
    * of determining if an object is a `DateAdapter` by checking against the
    * global symbol registry.
    */
-  static isInstance(object: unknown): object is DateAdapter {
+  static isInstance(object: unknown): object is StandardDateAdapter {
     return !!(super.isInstance(object) && (object as any)[STANDARD_DATE_ADAPTER_ID]);
   }
 
@@ -66,7 +66,7 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   readonly date: Date;
   readonly timezone: string | null;
   readonly duration: number | undefined;
-  readonly generators: OccurrenceGenerator<typeof StandardDateAdapter>[] = [];
+  readonly generators: unknown[] = [];
 
   protected readonly [STANDARD_DATE_ADAPTER_ID] = true;
 

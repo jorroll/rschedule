@@ -1,6 +1,13 @@
+import { Include } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
+import {
+  CollectionIterator,
+  ICollectionsArgs,
+  IOccurrencesArgs,
+  OccurrenceIterator,
+} from '../iterators';
 import { OccurrenceStream, OperatorFnOutput, pipeFn } from '../operators';
 import { RScheduleConfig } from '../rschedule-config';
 import { PipeController } from './pipes';
@@ -13,13 +20,18 @@ import {
 
 const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45');
 
+type GetRuleType<T> = Include<T, Rule<any, any>> extends never
+  ? Rule<any, any>
+  : Include<T, Rule<any, any>>;
+
 export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T> {
   /**
    * Similar to `Array.isArray()`, `isRule()` provides a surefire method
    * of determining if an object is a `Rule` by checking against the
    * global symbol registry.
    */
-  static isRule(object: unknown): object is Rule<any> {
+  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
+  static isRule<T>(object: T): object is GetRuleType<T> {
     return !!(object && typeof object === 'object' && (object as any)[RULE_ID]);
   }
 
@@ -66,6 +78,14 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
       this.processedOptions.end === undefined && this.processedOptions.count === undefined;
   }
 
+  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T, [this]> {
+    return new OccurrenceIterator(this, this.normalizeOccurrencesArgs(args));
+  }
+
+  collections(args: ICollectionsArgs<T> = {}): CollectionIterator<T, [this]> {
+    return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
+  }
+
   /**
    * Rule's are immutable. This allows you to create a new Rule with an updated timezone
    * or rule option.
@@ -88,7 +108,7 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
   set<O extends keyof IProvidedRuleOptions<T> | 'timezone' | 'options'>(
     prop: O,
     value: IProvidedRuleOptions<T>[Exclude<O, 'timezone' | 'options'>] | string | null,
-  ): Rule<T, D> {
+  ) {
     let options = cloneRuleOptions(this.options);
     let timezone = this.timezone;
 
@@ -125,7 +145,7 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
     while (date && (args.take === undefined || index < args.take)) {
       index++;
 
-      date.generators.push(this);
+      date.generators.unshift(this);
 
       const yieldArgs = yield this.normalizeRunOutput(date);
 

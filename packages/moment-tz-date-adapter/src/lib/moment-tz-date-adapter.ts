@@ -25,7 +25,7 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
    * of determining if an object is a `MomentTZDateAdapter` by checking against the
    * global symbol registry.
    */
-  static isInstance(object: any): object is MomentTZDateAdapter {
+  static isInstance(object: unknown): object is MomentTZDateAdapter {
     return !!(super.isInstance(object) && (object as any)[MOMENT_TZ_DATE_ADAPTER_ID]);
   }
 
@@ -62,7 +62,7 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
   readonly date: moment.Moment;
   readonly timezone: string | null;
   readonly duration: number | undefined;
-  readonly generators: OccurrenceGenerator<typeof MomentTZDateAdapter>[] = [];
+  readonly generators: unknown[] = [];
 
   protected readonly [MOMENT_TZ_DATE_ADAPTER_ID] = true;
 

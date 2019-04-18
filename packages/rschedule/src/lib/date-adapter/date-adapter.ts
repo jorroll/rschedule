@@ -33,6 +33,10 @@ export class DateAdapter implements IDateAdapter<unknown> {
   readonly timezone!: string | null;
   readonly duration: number | undefined;
 
+  // using `unknown[]` instead of `never[]` to support convenient generator typing in `Calendar`.
+  // If `never[]` is used, then `Calendar#schedules` *must* be typed as a tuple in order to
+  // access any values in `generators` beyond the first (Calendar) value (the rest of the values
+  // get typed as `never`). This would prevent passing a variable to `Calendar#schedules`.
   readonly generators: unknown[] = [];
 
   protected readonly [DATE_ADAPTER_ID] = true;
