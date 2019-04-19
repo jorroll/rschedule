@@ -88,7 +88,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
 
     if (!args.operators || args.operators.length === 0) {
       this.operators = [];
-    } else if (args.operators[0] instanceof Operator) {
+    } else if (Operator.isOperator<T>(args.operators[0])) {
       this.operators = args.operators as Operator<T>[];
     } else {
       const operatorFns = args.operators as OperatorFnOutput<T>[];
