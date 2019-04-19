@@ -15,16 +15,12 @@ import { DateInput } from '../utilities';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500');
 
-type GetScheduleType<T> = Include<T, Schedule<any, any, any, any>> extends never
-  ? Schedule<any, any, any, any>
-  : Include<T, Schedule<any, any, any, any>>;
+type GetScheduleType<T> = Include<T, Schedule<any, any>> extends never
+  ? Schedule<any, any>
+  : Include<T, Schedule<any, any>>;
 
-export class Schedule<
-  T extends typeof DateAdapter,
-  D = any,
-  RR extends Rule<T> = Rule<T>,
-  RD extends Dates<T> = Dates<T>
-> extends OccurrenceGenerator<T> implements IScheduleLike<T>, IDataContainer<D> {
+export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T>
+  implements IScheduleLike<T>, IDataContainer<D> {
   /**
    * Similar to `Array.isArray`, `isSchedule` provides a surefire method
    * of determining if an object is a `Schedule` by checking against the
@@ -36,9 +32,9 @@ export class Schedule<
   }
 
   // For some reason, error is thrown if typed as `readonly Rule<T>[]`
-  readonly rrules: ReadonlyArray<RR> = [];
+  readonly rrules: ReadonlyArray<Rule<T>> = [];
   readonly exrules: ReadonlyArray<Rule<T>> = [];
-  readonly rdates: RD;
+  readonly rdates: Dates<T>;
   readonly exdates: Dates<T>;
 
   pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
@@ -61,9 +57,9 @@ export class Schedule<
       dateAdapter?: T;
       timezone?: string | null;
       data?: D;
-      rrules?: ReadonlyArray<IProvidedRuleOptions<T> | RR>;
+      rrules?: ReadonlyArray<IProvidedRuleOptions<T> | Rule<T>>;
       exrules?: ReadonlyArray<IProvidedRuleOptions<T> | Rule<T>>;
-      rdates?: ReadonlyArray<DateInput<T>> | RD;
+      rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
       exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
     } = {},
   ) {
@@ -74,12 +70,12 @@ export class Schedule<
     if (args.rrules) {
       this.rrules = args.rrules.map(ruleArgs => {
         if (Rule.isRule(ruleArgs)) {
-          return ruleArgs.set('timezone', this.timezone) as RR;
+          return ruleArgs.set('timezone', this.timezone);
         } else {
           return new Rule(ruleArgs as IProvidedRuleOptions<T>, {
             dateAdapter: this.dateAdapter as any,
             timezone: this.timezone,
-          }) as RR;
+          });
         }
       });
     }
@@ -99,17 +95,17 @@ export class Schedule<
 
     if (args.rdates) {
       this.rdates = Dates.isDates(args.rdates)
-        ? (args.rdates.set('timezone', this.timezone) as RD)
-        : (new Dates({
+        ? args.rdates.set('timezone', this.timezone)
+        : new Dates({
             dates: args.rdates as ReadonlyArray<DateInput<T>>,
             dateAdapter: this.dateAdapter as any,
             timezone: this.timezone,
-          }) as RD);
+          });
     } else {
       this.rdates = new Dates({
         dateAdapter: this.dateAdapter as any,
         timezone: this.timezone,
-      }) as RD;
+      });
     }
 
     if (args.exdates) {
@@ -145,16 +141,16 @@ export class Schedule<
     });
   }
 
-  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T, [this, RR | RD]> {
+  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T, [this, Rule<T> | Dates<T>]> {
     return new OccurrenceIterator(this, this.normalizeOccurrencesArgs(args));
   }
 
-  collections(args: ICollectionsArgs<T> = {}): CollectionIterator<T, [this, RR | RD]> {
+  collections(args: ICollectionsArgs<T> = {}): CollectionIterator<T, [this, Rule<T> | Dates<T>]> {
     return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
   }
 
-  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D, RR, RD>;
-  add(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D, RR, RD>;
+  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
   add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule<T, unknown> | DateInput<T>) {
     const rrules = this.rrules.slice();
     const exrules = this.exrules.slice();
@@ -163,13 +159,13 @@ export class Schedule<
 
     switch (prop) {
       case 'rrule':
-        rrules.push(value as RR);
+        rrules.push(value as Rule<T>);
         break;
       case 'exrule':
-        exrules.push(value as Rule<T, unknown>);
+        exrules.push(value as Rule<T>);
         break;
       case 'rdate':
-        rdates = this.rdates.add(value as DateInput<T>) as RD;
+        rdates = this.rdates.add(value as DateInput<T>);
         break;
       case 'exdate':
         exdates = this.exdates.add(value as DateInput<T>);
@@ -187,8 +183,8 @@ export class Schedule<
     });
   }
 
-  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D, RR, RD>;
-  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D, RR, RD>;
+  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
   remove(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule<T, unknown> | DateInput<T>) {
     let rrules = this.rrules;
     let exrules = this.exrules;
@@ -203,7 +199,7 @@ export class Schedule<
         exrules = exrules.filter(rule => rule !== value);
         break;
       case 'rdate':
-        rdates = this.rdates.remove(value as DateInput<T>) as RD;
+        rdates = this.rdates.remove(value as DateInput<T>);
         break;
       case 'exdate':
         exdates = this.exdates.remove(value as DateInput<T>);
@@ -221,9 +217,9 @@ export class Schedule<
     });
   }
 
-  set(prop: 'timezone', value: string | null): Schedule<T, D, RR, RD>;
-  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): Schedule<T, D, RR, RD>;
-  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): Schedule<T, D, RR, RD>;
+  set(prop: 'timezone', value: string | null): Schedule<T, D>;
+  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): Schedule<T, D>;
+  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): Schedule<T, D>;
   set(
     prop: 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
     value: string | null | Rule<T, unknown>[] | Dates<T, unknown>,
@@ -240,16 +236,16 @@ export class Schedule<
         timezone = value as string | null;
         break;
       case 'rrules':
-        rrules = value as RR[];
+        rrules = value as Rule<T>[];
         break;
       case 'exrules':
-        exrules = value as Rule<T, unknown>[];
+        exrules = value as Rule<T>[];
         break;
       case 'rdates':
-        rdates = value as RD;
+        rdates = value as Dates<T>;
         break;
       case 'exdates':
-        exdates = value as Dates<T, unknown>;
+        exdates = value as Dates<T>;
         break;
     }
 
