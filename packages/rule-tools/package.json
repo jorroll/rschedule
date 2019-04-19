@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/rule-tools",
-  "version": "0.11.0-next.5",
+  "version": "0.11.0-next.6",
   "description": "Utility functions for manipulating rSchedule Rule objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
