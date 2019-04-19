@@ -28,7 +28,7 @@ import { buildRecurrencePattern, isRecurrencePattern } from './rule';
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function scheduleHasPattern<S extends IScheduleLike<typeof DateAdapter>>(
+export function scheduleHasPattern<S extends IScheduleLike<any>>(
   pattern: Pattern,
   date: DateInput<DateAdapterFor<S>>,
   schedule: S,
@@ -51,7 +51,7 @@ export function scheduleHasPattern<S extends IScheduleLike<typeof DateAdapter>>(
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function addSchedulePattern<S extends IScheduleLike<typeof DateAdapter>>(
+export function addSchedulePattern<S extends IScheduleLike<any>>(
   pattern: Pattern,
   date: DateInput<DateAdapterFor<S>>,
   schedule: S,
@@ -75,7 +75,7 @@ export function addSchedulePattern<S extends IScheduleLike<typeof DateAdapter>>(
  *
  * _See the `rule-tools` docs for more information on available RecurrencePatterns._
  */
-export function endScheduleRecurrencePattern<S extends IScheduleLike<typeof DateAdapter>>(
+export function endScheduleRecurrencePattern<S extends IScheduleLike<any>>(
   pattern: RecurrencePattern,
   date: DateInput<DateAdapterFor<S>>,
   schedule: S,
@@ -105,7 +105,7 @@ export function endScheduleRecurrencePattern<S extends IScheduleLike<typeof Date
  *  _See the `rule-tools` docs for more information on available `OccurrencePattern`_
  * _and `RecurrencePatterns`._
  */
-export function removeSchedulePattern<S extends IScheduleLike<typeof DateAdapter>>(
+export function removeSchedulePattern<S extends IScheduleLike<any>>(
   pattern: Pattern,
   date: DateInput<DateAdapterFor<S>>,
   schedule: S,
@@ -132,9 +132,9 @@ export function removeSchedulePattern<S extends IScheduleLike<typeof DateAdapter
  * Remove all of the schedule's `exdates` which do not intersect the schedule's
  * occurrences.
  */
-export function cleanScheduleEXDates<S extends IScheduleLike<typeof DateAdapter>>(schedule: S): S {
+export function cleanScheduleEXDates<S extends IScheduleLike<any>>(schedule: S): S {
   const options = {
-    dateAdapter: schedule.dateAdapter,
+    dateAdapter: schedule.dateAdapter as typeof DateAdapter,
     timezone: schedule.timezone,
   };
 
