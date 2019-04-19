@@ -17,6 +17,8 @@ import {
 } from '../utilities';
 import { IRunArgs, IRunnable } from './runnable';
 
+export type DateAdapterFor<S> = S extends IOccurrenceGenerator<infer A> ? A : never;
+
 export interface IOccurrenceGenerator<T extends typeof DateAdapter> extends IRunnable<T> {
   readonly dateAdapter: T;
   readonly timezone: string | null;
