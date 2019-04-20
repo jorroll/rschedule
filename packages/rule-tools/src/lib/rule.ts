@@ -103,13 +103,13 @@ export function validRecurrencePatternsOnDate<T extends typeof DateAdapter>(
  * _See the `rule-tools` docs for more information on available RecurrencePatterns._
  */
 export function buildRecurrencePattern<T extends typeof DateAdapter>(
-  type: RecurrencePattern,
+  pattern: RecurrencePattern,
   start: DateInput<T>,
   options: { dateAdapter?: T } = {},
 ): IProvidedRuleOptions<T> {
   const datetime = dateInputToDateAdapter(start, options.dateAdapter).toDateTime();
 
-  switch (type) {
+  switch (pattern) {
     case 'every [WEEKDAY]':
       return {
         start,
@@ -141,6 +141,6 @@ export function buildRecurrencePattern<T extends typeof DateAdapter>(
 
 function normalizeRuleOptions<T extends typeof DateAdapter>(
   rule: Rule<T> | IProvidedRuleOptions<T>,
-) {
+): IProvidedRuleOptions<T> {
   return Rule.isRule(rule) ? rule.options : (rule as IProvidedRuleOptions<T>);
 }

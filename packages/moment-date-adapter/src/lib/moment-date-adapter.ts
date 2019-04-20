@@ -71,7 +71,7 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
   readonly date: moment.Moment;
   readonly timezone: string | null;
   readonly duration: number | undefined;
-  readonly generators: OccurrenceGenerator<typeof MomentDateAdapter>[] = [];
+  readonly generators: unknown[] = [];
 
   protected readonly [MOMENT_DATE_ADAPTER_ID] = true;
 

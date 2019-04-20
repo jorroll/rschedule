@@ -14,5 +14,5 @@ export * from './dates/public_api';
 export * from './rule/public_api';
 export * from './schedule/public_api';
 
-export { ArgumentError, Omit, InfiniteLoopError } from './basic-utilities';
+export { ArgumentError, Omit, Include, InfiniteLoopError } from './basic-utilities';
 export * from './utilities';

@@ -1,14 +1,19 @@
 import {
   add,
   ArgumentError,
+  CollectionIterator,
   DateAdapter,
   DateInput,
   Dates,
   DateTime,
+  ICollectionsArgs,
+  Include,
+  IOccurrencesArgs,
   IProvidedRuleOptions,
   IRunArgs,
   IScheduleLike,
   OccurrenceGenerator,
+  OccurrenceIterator,
   OccurrenceStream,
   Omit,
   OperatorFnOutput,
@@ -19,6 +24,10 @@ import {
 } from '@rschedule/rschedule';
 
 const VEVENT_ID = Symbol.for('b1666600-db88-4d8e-9e40-05fdbc48d650');
+
+type GetVEventType<T> = Include<T, VEvent<any, any>> extends never
+  ? VEvent<any, any>
+  : Include<T, VEvent<any, any>>;
 
 export type IVEventRuleOptions<T extends typeof DateAdapter> = Omit<
   Omit<IProvidedRuleOptions<T>, 'start'>,
@@ -32,7 +41,8 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
    * of determining if an object is a `VEvent` by checking against the
    * global symbol registry.
    */
-  static isVEvent(object: any): object is VEvent<any> {
+  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
+  static isVEvent<T>(object: T): object is GetVEventType<T> {
     return !!(object && typeof object === 'object' && (object as any)[VEVENT_ID]);
   }
 
@@ -95,8 +105,8 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
           return ruleArgs;
         } else {
-          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
-            dateAdapter: this.dateAdapter as any,
+          return new Rule(standardizeVEventRuleOptions(ruleArgs, args), {
+            dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });
         }
@@ -120,8 +130,8 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
           return ruleArgs;
         } else {
-          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
-            dateAdapter: this.dateAdapter as any,
+          return new Rule(standardizeVEventRuleOptions(ruleArgs, args), {
+            dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });
         }
@@ -177,6 +187,14 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
     });
   }
 
+  occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T, [this, Rule<T> | Dates<T>]> {
+    return new OccurrenceIterator(this, this.normalizeOccurrencesArgs(args));
+  }
+
+  collections(args: ICollectionsArgs<T> = {}): CollectionIterator<T, [this, Rule<T> | Dates<T>]> {
+    return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
+  }
+
   add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): VEvent<T, D>;
   add(prop: 'rdate' | 'exdate', value: DateInput<T>): VEvent<T, D>;
   add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule<T, unknown> | DateInput<T>) {
@@ -187,10 +205,10 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
     switch (prop) {
       case 'rrule':
-        rrules.push(value as Rule<T, unknown>);
+        rrules.push(value as Rule<T>);
         break;
       case 'exrule':
-        exrules.push(value as Rule<T, unknown>);
+        exrules.push(value as Rule<T>);
         break;
       case 'rdate':
         rdates = this.rdates.add(value as DateInput<T>);
@@ -276,16 +294,16 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
         break;
       }
       case 'rrules':
-        rrules = value as Rule<T, unknown>[];
+        rrules = value as Rule<T>[];
         break;
       case 'exrules':
-        exrules = value as Rule<T, unknown>[];
+        exrules = value as Rule<T>[];
         break;
       case 'rdates':
-        rdates = value as Dates<T, unknown>;
+        rdates = value as Dates<T>;
         break;
       case 'exdates':
-        exdates = value as Dates<T, unknown>;
+        exdates = value as Dates<T>;
         break;
     }
 
@@ -312,7 +330,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
     let index = 0;
 
     while (date && (count === undefined || count > index)) {
-      date.generators.push(this);
+      date.generators.unshift(this);
 
       const yieldArgs = yield this.normalizeRunOutput(date);
 

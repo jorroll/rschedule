@@ -7,7 +7,9 @@ import { DateInput, dateInputToDateTime } from '../utilities';
 const OPERATOR_ID = Symbol.for('aa6007dc-1d7f-4955-b7f1-86a226463f7e');
 
 export abstract class Operator<T extends typeof DateAdapter> implements IRunnable<T> {
-  static isOperator(object: unknown): object is Operator<any> {
+  static isOperator<T extends typeof DateAdapter = typeof DateAdapter>(
+    object: unknown,
+  ): object is Operator<T> {
     return !!(object && typeof object === 'object' && (object as any)[OPERATOR_ID]);
   }
 

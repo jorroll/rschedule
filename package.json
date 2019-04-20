@@ -7,6 +7,7 @@
     "packages/*"
   ],
   "scripts": {
+    "pub": "yarn build && yarn lerna publish",
     "build": "yarn clean:build && yarn prebuild:rschedule && run-p build:*",
     "prebuild:rschedule": "yarn --cwd='./packages/rschedule' build",
     "build:standard-date-adapter": "yarn --cwd='./packages/standard-date-adapter' build",

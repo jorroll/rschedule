@@ -20,7 +20,9 @@ export function subtract<T extends typeof DateAdapter>(
 }
 
 export class SubtractOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isSubtractOperator(object: any): object is SubtractOperator<any> {
+  static isSubtractOperator<T extends typeof DateAdapter = any>(
+    object: unknown,
+  ): object is SubtractOperator<T> {
     return !!(super.isOperator(object) && (object as any)[SUBTRACT_OPERATOR_ID]);
   }
 

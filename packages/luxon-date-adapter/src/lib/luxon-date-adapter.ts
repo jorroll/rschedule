@@ -76,7 +76,7 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
   readonly date: LuxonDateTime;
   readonly timezone: string | null;
   readonly duration: number | undefined;
-  readonly generators: OccurrenceGenerator<typeof LuxonDateAdapter>[] = [];
+  readonly generators: unknown[] = [];
 
   protected readonly [LUXON_DATE_ADAPTER_ID] = true;
 

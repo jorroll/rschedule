@@ -15,7 +15,9 @@ export function unique<T extends typeof DateAdapter>(): OperatorFnOutput<T> {
 }
 
 export class UniqueOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isUniqueOperator(object: any): object is UniqueOperator<any> {
+  static isUniqueOperator<T extends typeof DateAdapter = any>(
+    object: unknown,
+  ): object is UniqueOperator<T> {
     return !!(super.isOperator(object) && (object as any)[UNIQUE_OPERATOR_ID]);
   }
 

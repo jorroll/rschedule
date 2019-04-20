@@ -1,4 +1,3 @@
-import { ArgumentError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IRunArgs, OccurrenceGenerator } from '../interfaces';
@@ -58,7 +57,9 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
    * of determining if an object is an `OccurrenceStream` by checking against the
    * global symbol registry.
    */
-  static isOccurrenceStream(object: unknown): object is OccurrenceStream<any> {
+  static isOccurrenceStream<T extends typeof DateAdapter = any>(
+    object: unknown,
+  ): object is OccurrenceStream<T> {
     return !!(object && typeof object === 'object' && (object as any)[OCCURRENCE_STREAM_ID]);
   }
 
@@ -87,7 +88,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
 
     if (!args.operators || args.operators.length === 0) {
       this.operators = [];
-    } else if (args.operators[0] instanceof Operator) {
+    } else if (Operator.isOperator<T>(args.operators[0])) {
       this.operators = args.operators as Operator<T>[];
     } else {
       const operatorFns = args.operators as OperatorFnOutput<T>[];

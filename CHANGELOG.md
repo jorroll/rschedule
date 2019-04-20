@@ -12,15 +12,23 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
     - There is no longer the option to provide `maxFailedIterations` to `parseJSON()`.
   - The `serializeToJSON()` interface has changed
 - replace `ConstructorReturnType` with typescript builtin `InstanceType`
+- reversed the order of the `DateAdapter#generators` property.
+- changed the default type of `DateAdapter#generators` to `unknown[]`
+- fixed type inference in some `@rschedule/rule-tools` methods which involved changing the type arguments.
 
 ### Features
 
 - added `@rschedule/rule-tools` package.
 - ability to set all `Rule#options` via `Rule#set()`.
 - added `IScheduleLike<T extends typeof DateAdapter>` interface.
+- added `IDataContainer<D>` interface
 - added `RScheduleConfig.Rule.defaultWeekStart` config option.
 - added `Operator.isOperator()`
 - added support for serializing / parsing the `data` property to `@rschedule/json-tools`.
+- when iterating through a `Schedule`, `Calendar`, `VEvent`, `Dates`, or `Rule` object, the `generators` property now receives some proper typing. This will make accessing the `data` property on occurrence generators easier.
+- improved typing of many `isInstance` methods.
+- added `DateAdapterFor<O extends IOccurrenceGenerator>`
+- added `DataFor<O extends IDataContainer>`
 
 ### Fixes
 

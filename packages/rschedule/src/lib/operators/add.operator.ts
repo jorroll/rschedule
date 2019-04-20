@@ -24,7 +24,9 @@ export function add<T extends typeof DateAdapter>(
 }
 
 export class AddOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isAddOperator(object: any): object is AddOperator<any> {
+  static isAddOperator<T extends typeof DateAdapter = any>(
+    object: unknown,
+  ): object is AddOperator<T> {
     return !!(super.isOperator(object) && (object as any)[ADD_OPERATOR_ID]);
   }
 
