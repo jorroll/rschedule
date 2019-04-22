@@ -55,7 +55,11 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
       this._streams.every(stream => stream.hasDuration);
   }
 
-  abstract set(_: 'timezone', value: string | null): Operator<T>;
+  abstract set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): Operator<T>;
 
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 

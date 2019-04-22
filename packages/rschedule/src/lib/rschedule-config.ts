@@ -11,7 +11,6 @@ export class RuleConfig {
 
 export class RScheduleConfig {
   static defaultDateAdapter: typeof DateAdapter;
-  static defaultTimezone: string | null = null;
   static readonly IntersectionOperator = IntersectionOperatorConfig;
   static readonly Rule = RuleConfig;
 }

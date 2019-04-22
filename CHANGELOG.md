@@ -30,6 +30,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 - added `DateAdapterFor<O extends IOccurrenceGenerator>`
 - added `DataFor<O extends IDataContainer>`
 - added `DateAdapter#end`
+- ability to keep local time when calling `IOccurrenceGenerator#set('timezone')`
 
 ### Fixes
 

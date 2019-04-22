@@ -47,7 +47,25 @@ export interface IOccurrenceGenerator<T extends typeof DateAdapter> extends IRun
 
   pipe(...operators: unknown[]): IOccurrenceGenerator<T>;
 
-  set(prop: 'timezone', value: string | null): IOccurrenceGenerator<T>;
+  /**
+   * Allows setting the timezone associated with this `IOccurrenceGenerator`.
+   * If `keepLocalTime === true`, then any `Rule` objects associated
+   * with this occurrence generator will be changed so that their `start` time
+   * is in this timezone while retaining the same local time. This fundamentally changes
+   * the rule. Similarly, any `Dates` objects associated with this occurrence generator
+   * will have their underlying dates updated so that they are in this timezone while
+   * retaining the same local time (fundamentally changing the dates).
+   *
+   * You might use `keepLocalTime === true` if this occurrence generator was created in
+   * another timezone with `timezone === null`. In this case, you may wish to specify the timezone
+   * for the occurrence generator while retaining the local time associated with the underlying
+   * `Rule` / `Dates`.
+   */
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): IOccurrenceGenerator<T>;
 }
 
 export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
@@ -87,12 +105,16 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
       );
     }
 
-    this.timezone = args.timezone !== undefined ? args.timezone : RScheduleConfig.defaultTimezone;
+    this.timezone = args.timezone !== undefined ? args.timezone : null;
   }
 
   abstract pipe(...operators: unknown[]): OccurrenceGenerator<T>;
 
-  abstract set(prop: 'timezone', value: string | null): OccurrenceGenerator<T>;
+  abstract set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): OccurrenceGenerator<T>;
 
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 

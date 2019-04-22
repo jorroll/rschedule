@@ -135,14 +135,26 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
    * this `Dates` is wrapping, you must update the `dates` property.
    *
    */
-  set(prop: 'timezone', value: string | null): Dates<T, D>;
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): Dates<T, D>;
   set(prop: 'dates', value: DateInput<T>[]): Dates<T, D>;
-  set(prop: 'timezone' | 'dates', value: DateInput<T>[] | string | null) {
+  set(
+    prop: 'timezone' | 'dates',
+    value: DateInput<T>[] | string | null,
+    options: { keepLocalTime?: boolean } = {},
+  ) {
     let timezone = this.timezone;
     let dates: DateInput<T>[] = this.adapters.slice();
 
     if (prop === 'timezone') {
-      if (value === this.timezone) return this;
+      if (value === this.timezone && !options.keepLocalTime) return this;
+      else if (options.keepLocalTime) {
+        dates = this.adapters.map(adapter => {
+          const json = adapter.toJSON();
+          json.timezone = value as string | null;
+          return this.dateAdapter.fromJSON(json);
+        });
+      }
+
       timezone = value as string | null;
     } else if (prop === 'dates') {
       dates = value as DateInput<T>[];

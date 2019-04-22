@@ -103,7 +103,7 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
    * to update the timezone associated with the rule options, change the rule's
    * `start` time.
    */
-  set(prop: 'timezone', value: string | null): Rule<T, D>;
+  set(prop: 'timezone', value: string | null, tzoptions?: { keepLocalTime?: boolean }): Rule<T, D>;
   set(prop: 'options', value: IProvidedRuleOptions<T>): Rule<T, D>;
   set<O extends keyof IProvidedRuleOptions<T>>(
     prop: O,
@@ -112,12 +112,25 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
   set<O extends keyof IProvidedRuleOptions<T> | 'timezone' | 'options'>(
     prop: O,
     value: IProvidedRuleOptions<T>[Exclude<O, 'timezone' | 'options'>] | string | null,
+    tzoptions: { keepLocalTime?: boolean } = {},
   ) {
     let options = cloneRuleOptions(this.options);
     let timezone = this.timezone;
 
     if (prop === 'timezone') {
-      if (value === this.timezone) return this;
+      if (value === this.timezone && !tzoptions.keepLocalTime) return this;
+      else if (tzoptions.keepLocalTime) {
+        const json = this.normalizeDateInput(options.start).toJSON();
+        json.timezone = value as string | null;
+        const adapter = this.dateAdapter.fromJSON(json);
+
+        // prettier-ignore
+        options.start =
+          this.dateAdapter.isInstance(options.start) ? adapter :
+          DateTime.isInstance(options.start) ? adapter.toDateTime() :
+          adapter.date;
+      }
+
       timezone = value as string | null;
     } else if (prop === 'options') {
       options = value as IProvidedRuleOptions<T>;

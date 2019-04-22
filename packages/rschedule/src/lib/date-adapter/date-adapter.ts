@@ -41,7 +41,7 @@ export class DateAdapter implements IDateAdapter<unknown> {
 
   protected readonly [DATE_ADAPTER_ID] = true;
 
-  constructor(_date: unknown, options?: unknown) {}
+  constructor(_date: unknown, _options?: unknown) {}
 
   /**
    * Returns `undefined` if `this.duration` is falsey. Else returns

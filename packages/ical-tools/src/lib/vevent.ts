@@ -263,13 +263,14 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
     });
   }
 
-  set(prop: 'timezone', value: string | null): VEvent<T, D>;
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): VEvent<T, D>;
   set(prop: 'start', value: DateInput<T>): VEvent<T, D>;
   set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): VEvent<T, D>;
   set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): VEvent<T, D>;
   set(
     prop: 'start' | 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
     value: DateInput<T> | string | null | Rule<T, unknown>[] | Dates<T, unknown>,
+    options: { keepLocalTime?: boolean } = {},
   ) {
     let start = this.start;
     let rrules = this.rrules;
@@ -279,8 +280,14 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
     switch (prop) {
       case 'timezone': {
-        if (value === this.timezone) return this;
-        start = start.set('timezone', value as string | null) as InstanceType<T>;
+        if (value === this.timezone && !options.keepLocalTime) return this;
+        else if (options.keepLocalTime) {
+          const json = start.toJSON();
+          json.timezone = value as string | null;
+          start = this.dateAdapter.fromJSON(json) as InstanceType<T>;
+        } else {
+          start = start.set('timezone', value as string | null) as InstanceType<T>;
+        }
         break;
       }
       case 'start': {
