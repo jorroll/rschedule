@@ -43,6 +43,14 @@ export class DateAdapter implements IDateAdapter<unknown> {
 
   constructor(_date: unknown, options?: unknown) {}
 
+  /**
+   * Returns `undefined` if `this.duration` is falsey. Else returns
+   * the `end` date.
+   */
+  get end(): unknown | undefined {
+    throw unimplementedError('end');
+  }
+
   set(_prop: 'timezone', _value: string | null): DateAdapter {
     throw unimplementedError('set()');
   }

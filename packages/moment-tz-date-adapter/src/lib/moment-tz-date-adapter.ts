@@ -66,6 +66,8 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
 
   protected readonly [MOMENT_TZ_DATE_ADAPTER_ID] = true;
 
+  private _end: moment.Moment | undefined;
+
   constructor(date: moment.Moment, options: { duration?: number } = {}) {
     super(undefined);
 
@@ -74,6 +76,18 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
     this.duration = options.duration;
 
     this.assertIsValid();
+  }
+
+  get end(): moment.Moment | undefined {
+    if (!this.duration) return;
+
+    if (this._end) return this._end;
+
+    this._end = MomentTZDateAdapter.fromDateTime(
+      this.toDateTime().add(this.duration, 'millisecond'),
+    ).date;
+
+    return this._end;
   }
 
   set(_: 'timezone', value: string | null) {

@@ -70,6 +70,8 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
 
   protected readonly [STANDARD_DATE_ADAPTER_ID] = true;
 
+  private _end: Date | undefined;
+
   constructor(date: Date, options: { timezone?: string | null; duration?: number } = {}) {
     super(undefined);
 
@@ -79,6 +81,18 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
     this.duration = options.duration;
 
     this.assertIsValid();
+  }
+
+  get end(): Date | undefined {
+    if (!this.duration) return;
+
+    if (this._end) return this._end;
+
+    this._end = StandardDateAdapter.fromDateTime(
+      this.toDateTime().add(this.duration, 'millisecond'),
+    ).date;
+
+    return this._end;
   }
 
   set(_: 'timezone', value: string | null) {
