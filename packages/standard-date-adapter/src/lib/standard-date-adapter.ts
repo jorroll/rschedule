@@ -76,8 +76,7 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
     super(undefined);
 
     this.date = new Date(date);
-    this.timezone =
-      options.timezone !== undefined ? options.timezone : RScheduleConfig.defaultTimezone;
+    this.timezone = options.timezone !== undefined ? options.timezone : null;
     this.duration = options.duration;
 
     this.assertIsValid();

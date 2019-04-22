@@ -116,9 +116,13 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
     this.hasDuration = (this.lastOperator && this.lastOperator.hasDuration) || false;
   }
 
-  set(_: 'timezone', value: string | null): OccurrenceStream<T> {
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): OccurrenceStream<T> {
     return new OccurrenceStream({
-      operators: this.operators.map(operator => operator.set('timezone', value)),
+      operators: this.operators.map(operator => operator.set(prop, value, options)),
       dateAdapter: this.dateAdapter,
       timezone: value,
     });

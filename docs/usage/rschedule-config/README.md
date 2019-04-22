@@ -5,7 +5,6 @@ The `RScheduleConfig` class holds global config values for rSchedule.
 ```typescript
 class RScheduleConfig {
   static defaultDateAdapter: typeof DateAdapter | undefined;
-  static defaultTimezone: string | null = null;
   static IntersectionOperator: IntersectionOperatorConfig;
   static Rule: RuleConfig;
 }
@@ -29,16 +28,6 @@ A convenience property which allows you to define a global default `IDateAdapter
 import { RScheduleConfig } from '@rschedule/rschedule';
 
 RScheduleConfig.defaultDateAdapter = MomentTZDateAdapter;
-```
-
-### `defaultTimezone`
-
-A convenience property which allows you to define a global default `timezone` value which all rSchedule classes should use. By default, the default `timezone` for rSchedule classes is the local (`null`) time zone. For example, if you create a `Schedule` object and don't specify a specific timezone, it will return dates in the local time zone. If you wish to change this default globally, you can use this property.
-
-```typescript
-import { RScheduleConfig } from '@rschedule/rschedule';
-
-RScheduleConfig.defaultTimezone = 'America/Los_Angeles';
 ```
 
 ## IntersectionOperatorConfig class

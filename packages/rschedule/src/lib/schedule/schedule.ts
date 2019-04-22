@@ -217,12 +217,17 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
     });
   }
 
-  set(prop: 'timezone', value: string | null): Schedule<T, D>;
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): Schedule<T, D>;
   set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): Schedule<T, D>;
   set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): Schedule<T, D>;
   set(
     prop: 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
     value: string | null | Rule<T, unknown>[] | Dates<T, unknown>,
+    options: { keepLocalTime?: boolean } = {},
   ) {
     let timezone = this.timezone;
     let rrules = this.rrules;
@@ -232,7 +237,14 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
     switch (prop) {
       case 'timezone':
-        if (value === this.timezone) return this;
+        if (value === this.timezone && !options.keepLocalTime) return this;
+        else if (options.keepLocalTime) {
+          rrules = rrules.map(rule => rule.set('timezone', value as string | null, options));
+          exrules = exrules.map(rule => rule.set('timezone', value as string | null, options));
+          rdates = rdates.set('timezone', value as string | null, options);
+          exdates = exdates.set('timezone', value as string | null, options);
+        }
+
         timezone = value as string | null;
         break;
       case 'rrules':

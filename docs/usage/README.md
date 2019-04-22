@@ -169,6 +169,19 @@ interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
 
   pipe(...operators: unknown[]): IOccurrenceGenerator<T>;
 
-  set(prop: 'timezone', value: string | null): IOccurrenceGenerator<T>;
+  /**
+   * Allows setting the timezone associated with this `IOccurrenceGenerator`.
+   * If `keepLocalTime === true`, then any `Rule` objects associated
+   * with this occurrence generator will be changed so that their `start` time
+   * is in this timezone while retaining the same local time. This fundamentally changes
+   * the rule. Similarly, any `Dates` objects associated with this occurrence generator
+   * will have their underlying dates updated so that they are in this timezone while
+   * retaining the same local time (fundamentally changing the dates).
+   */
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): IOccurrenceGenerator<T>;
 }
 ````

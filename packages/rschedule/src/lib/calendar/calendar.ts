@@ -77,9 +77,9 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
     return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
   }
 
-  set(_prop: 'timezone', value: string | null) {
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }) {
     return new Calendar({
-      schedules: this.schedules.map(schedule => schedule.set('timezone', value)),
+      schedules: this.schedules.map(schedule => schedule.set(prop, value, options)),
       data: this.data,
       dateAdapter: this.dateAdapter,
       timezone: value,
