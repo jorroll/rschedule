@@ -29,6 +29,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 - improved typing of many `isInstance` methods.
 - added `DateAdapterFor<O extends IOccurrenceGenerator>`
 - added `DataFor<O extends IDataContainer>`
+- added `DateAdapter#end`
 
 ### Fixes
 

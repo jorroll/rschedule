@@ -80,6 +80,8 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
 
   protected readonly [LUXON_DATE_ADAPTER_ID] = true;
 
+  private _end: LuxonDateTime | undefined;
+
   constructor(date: LuxonDateTime, options: { duration?: number } = {}) {
     super(undefined);
 
@@ -88,6 +90,18 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
     this.duration = options.duration;
 
     this.assertIsValid();
+  }
+
+  get end(): LuxonDateTime | undefined {
+    if (!this.duration) return;
+
+    if (this._end) return this._end;
+
+    this._end = LuxonDateAdapter.fromDateTime(
+      this.toDateTime().add(this.duration, 'millisecond'),
+    ).date;
+
+    return this._end;
   }
 
   set(_: 'timezone', value: string | null) {

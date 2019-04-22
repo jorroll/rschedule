@@ -109,6 +109,12 @@ export interface IDateAdapter<D = unknown> {
   readonly duration: number | undefined;
 
   /**
+   * Returns `undefined` if `this.duration` is falsey. Else returns
+   * the `end` date.
+   */
+  readonly end: D | undefined;
+
+  /**
    * This property contains an ordered array of the generator objects
    * responsible for creating this IDateAdapter.
    *
@@ -122,6 +128,8 @@ export interface IDateAdapter<D = unknown> {
    *   or `Dates` object which generated it.
    */
   readonly generators: unknown[];
+
+  set(prop: 'timezone', value: string | null): DateAdapter;
 
   valueOf(): number;
 
