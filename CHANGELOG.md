@@ -11,6 +11,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
   - So that `IntersectionOperator#maxFailedIterations` is serialized.
     - There is no longer the option to provide `maxFailedIterations` to `parseJSON()`.
   - The `serializeToJSON()` interface has changed
+  - The `parseJSON()` interface has changed to improve typing
 - replace `ConstructorReturnType` with typescript builtin `InstanceType`
 - reversed the order of the `DateAdapter#generators` property.
 - changed the default type of `DateAdapter#generators` to `unknown[]`

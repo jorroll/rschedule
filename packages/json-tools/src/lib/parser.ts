@@ -16,7 +16,12 @@ import {
 } from '@rschedule/rschedule';
 
 import {
+  ICalendarJSON,
+  IDatesJSON,
+  IOccurrenceStreamJSON,
   IOperatorJSON,
+  IRuleJSON,
+  IScheduleJSON,
   RScheduleObject,
   RScheduleObjectJSON,
   SerializeJSONError,
@@ -29,18 +34,35 @@ export interface IParseJSONOptions<T extends typeof DateAdapter> {
   parseData?: (data?: unknown) => unknown;
 }
 
-export function parseJSON<T extends typeof DateAdapter>(
-  input: RScheduleObjectJSON,
-  options?: IParseJSONOptions<T>,
-): RScheduleObject<T>;
-export function parseJSON<T extends typeof DateAdapter>(
-  input: RScheduleObjectJSON[],
-  options?: IParseJSONOptions<T>,
-): RScheduleObject<T>[];
-export function parseJSON<T extends typeof DateAdapter>(
-  input: RScheduleObjectJSON | RScheduleObjectJSON[],
+export function parseJSON<
+  I extends RScheduleObjectJSON | RScheduleObjectJSON[],
+  T extends typeof DateAdapter
+>(
+  input: I,
   options: IParseJSONOptions<T> = {},
-): RScheduleObject<T> | RScheduleObject<T>[] {
+): I extends Array<infer O>
+  ? (O extends IRuleJSON
+      ? Rule<T>[]
+      : O extends IDatesJSON
+      ? Dates<T>[]
+      : O extends IScheduleJSON
+      ? Schedule<T>[]
+      : O extends ICalendarJSON
+      ? Calendar<T>[]
+      : O extends IOccurrenceStreamJSON
+      ? OccurrenceStream<T>[]
+      : RScheduleObject<T>[])
+  : (I extends IRuleJSON
+      ? Rule<T>
+      : I extends IDatesJSON
+      ? Dates<T>
+      : I extends IScheduleJSON
+      ? Schedule<T>
+      : I extends ICalendarJSON
+      ? Calendar<T>
+      : I extends IOccurrenceStreamJSON
+      ? OccurrenceStream<T>
+      : RScheduleObject<T>) {
   const dateAdapter = options.dateAdapter || (RScheduleConfig.defaultDateAdapter as T);
 
   if (!dateAdapter) {
@@ -50,21 +72,23 @@ export function parseJSON<T extends typeof DateAdapter>(
     );
   }
 
-  const inputs = Array.isArray(input) ? input : [input];
+  const inputs: I[] = Array.isArray(input) ? input : [input];
 
   let result: Array<RScheduleObject<T>>;
 
   try {
-    result = inputs.map(json => {
+    result = inputs.map(input => {
+      const json = input as RScheduleObjectJSON;
+
       switch (json.type) {
         case 'Schedule':
           return new Schedule({
             ...json,
-            rrules: json.rrules.map(
-              rule => parseJSON({ ...rule, timezone: json.timezone }, options) as Rule<T>,
+            rrules: json.rrules.map(rule =>
+              parseJSON({ ...rule, timezone: json.timezone }, options),
             ),
-            exrules: json.exrules.map(
-              rule => parseJSON({ ...rule, timezone: json.timezone }, options) as Rule<T>,
+            exrules: json.exrules.map(rule =>
+              parseJSON({ ...rule, timezone: json.timezone }, options),
             ),
             rdates: json.rdates.dates.map(date => dateAdapter.fromJSON(date)),
             exdates: json.exdates.dates.map(date => dateAdapter.fromJSON(date)),
@@ -119,10 +143,10 @@ export function parseJSON<T extends typeof DateAdapter>(
   }
 
   if (result.length < 2) {
-    return result[0] as RScheduleObject<T>;
+    return result[0] as any;
   }
 
-  return result as RScheduleObject<T>[];
+  return result as any;
 }
 
 function parseOperatorJSON<T extends typeof DateAdapter>(
