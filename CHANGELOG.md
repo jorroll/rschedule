@@ -40,6 +40,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 - `IntersectionOperator.isIntersectionOperator()`
 - `UniqueOperator.isUniqueOperator()`
 - `OccurrenceStream.isOccurrenceStream()`
+- ensure `DateAdapter#date` is immutable
 
 ## 0.10.0 BREAKING (2019/4/15)
 

@@ -63,7 +63,10 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
     return StandardDateAdapter.fromJSON(datetime.toJSON());
   }
 
-  readonly date: Date;
+  get date() {
+    return new Date(this._date);
+  }
+
   readonly timezone: string | null;
   readonly duration: number | undefined;
   readonly generators: unknown[] = [];
@@ -71,11 +74,12 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   protected readonly [STANDARD_DATE_ADAPTER_ID] = true;
 
   private _end: Date | undefined;
+  private _date: Date;
 
   constructor(date: Date, options: { timezone?: string | null; duration?: number } = {}) {
     super(undefined);
 
-    this.date = new Date(date);
+    this._date = new Date(date);
     this.timezone = options.timezone !== undefined ? options.timezone : null;
     this.duration = options.duration;
 
@@ -98,9 +102,9 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
     if (this.timezone === value) return this;
 
     if (value === 'UTC') {
-      return new StandardDateAdapter(this.date, { timezone: 'UTC', duration: this.duration });
+      return new StandardDateAdapter(this._date, { timezone: 'UTC', duration: this.duration });
     } else if (value === null) {
-      return new StandardDateAdapter(this.date, { timezone: null, duration: this.duration });
+      return new StandardDateAdapter(this._date, { timezone: null, duration: this.duration });
     }
 
     throw new InvalidDateAdapterError(
@@ -110,11 +114,11 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   }
 
   valueOf() {
-    return this.date.valueOf();
+    return this._date.valueOf();
   }
 
   toISOString() {
-    return this.date.toISOString();
+    return this._date.toISOString();
   }
 
   toDateTime(): DateTime {
@@ -126,31 +130,31 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
       return {
         timezone: this.timezone,
         duration: this.duration,
-        year: this.date.getUTCFullYear(),
-        month: this.date.getUTCMonth() + 1,
-        day: this.date.getUTCDate(),
-        hour: this.date.getUTCHours(),
-        minute: this.date.getUTCMinutes(),
-        second: this.date.getUTCSeconds(),
-        millisecond: this.date.getUTCMilliseconds(),
+        year: this._date.getUTCFullYear(),
+        month: this._date.getUTCMonth() + 1,
+        day: this._date.getUTCDate(),
+        hour: this._date.getUTCHours(),
+        minute: this._date.getUTCMinutes(),
+        second: this._date.getUTCSeconds(),
+        millisecond: this._date.getUTCMilliseconds(),
       };
     }
 
     return {
       timezone: this.timezone,
       duration: this.duration,
-      year: this.date.getFullYear(),
-      month: this.date.getMonth() + 1,
-      day: this.date.getDate(),
-      hour: this.date.getHours(),
-      minute: this.date.getMinutes(),
-      second: this.date.getSeconds(),
-      millisecond: this.date.getMilliseconds(),
+      year: this._date.getFullYear(),
+      month: this._date.getMonth() + 1,
+      day: this._date.getDate(),
+      hour: this._date.getHours(),
+      minute: this._date.getMinutes(),
+      second: this._date.getSeconds(),
+      millisecond: this._date.getMilliseconds(),
     };
   }
 
   assertIsValid() {
-    if (!StandardDateAdapter.isDate(this.date) || isNaN(this.date.valueOf())) {
+    if (!StandardDateAdapter.isDate(this._date) || isNaN(this._date.valueOf())) {
       throw new InvalidDateAdapterError('StandardDateAdapter has invalid date.');
     } else if (![null, 'UTC'].includes(this.timezone)) {
       throw new InvalidDateAdapterError(

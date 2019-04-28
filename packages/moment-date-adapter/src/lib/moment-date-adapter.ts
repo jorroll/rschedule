@@ -68,7 +68,9 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
     return MomentDateAdapter.fromJSON(datetime.toJSON());
   }
 
-  readonly date: moment.Moment;
+  get date() {
+    return this._date.clone();
+  }
   readonly timezone: string | null;
   readonly duration: number | undefined;
   readonly generators: unknown[] = [];
@@ -76,12 +78,13 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
   protected readonly [MOMENT_DATE_ADAPTER_ID] = true;
 
   private _end: moment.Moment | undefined;
+  private _date: moment.Moment;
 
   constructor(date: moment.Moment, options: { duration?: number } = {}) {
     super(undefined);
 
-    this.date = date.clone();
-    this.timezone = this.date.isUTC() ? 'UTC' : null;
+    this._date = date.clone();
+    this.timezone = date.isUTC() ? 'UTC' : null;
     this.duration = options.duration;
 
     this.assertIsValid();
@@ -103,9 +106,9 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
     if (this.timezone === value) return this;
 
     if (value === 'UTC') {
-      return new MomentDateAdapter(this.date.clone().utc(), { duration: this.duration });
+      return new MomentDateAdapter(this._date.clone().utc(), { duration: this.duration });
     } else if (value === null) {
-      return new MomentDateAdapter(this.date.clone().local(), { duration: this.duration });
+      return new MomentDateAdapter(this._date.clone().local(), { duration: this.duration });
     }
 
     throw new InvalidDateAdapterError(
@@ -116,11 +119,11 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
   }
 
   valueOf() {
-    return this.date.valueOf();
+    return this._date.valueOf();
   }
 
   toISOString() {
-    return this.date.toISOString();
+    return this._date.toISOString();
   }
 
   toDateTime(): DateTime {
@@ -131,18 +134,18 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
     return {
       timezone: this.timezone,
       duration: this.duration,
-      year: this.date.get('year'),
-      month: this.date.get('month') + 1,
-      day: this.date.get('date'),
-      hour: this.date.get('hour'),
-      minute: this.date.get('minute'),
-      second: this.date.get('second'),
-      millisecond: this.date.get('millisecond'),
+      year: this._date.get('year'),
+      month: this._date.get('month') + 1,
+      day: this._date.get('date'),
+      hour: this._date.get('hour'),
+      minute: this._date.get('minute'),
+      second: this._date.get('second'),
+      millisecond: this._date.get('millisecond'),
     };
   }
 
   assertIsValid() {
-    if (!this.date.isValid()) {
+    if (!this._date.isValid()) {
       throw new InvalidDateAdapterError();
     } else if (![null, 'UTC'].includes(this.timezone)) {
       throw new InvalidDateAdapterError(
