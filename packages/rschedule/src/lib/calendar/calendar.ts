@@ -86,7 +86,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
     });
   }
 
-  /**  @private use collections() instead */
+  /** @internal */
   *_run(args: ICollectionsRunArgs = {}): IterableIterator<DateTime> {
     const count = args.take;
 

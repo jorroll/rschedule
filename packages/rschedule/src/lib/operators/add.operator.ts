@@ -41,6 +41,7 @@ export class AddOperator<T extends typeof DateAdapter> extends Operator<T> {
     });
   }
 
+  /** @internal */
   *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
     const streams = this._streams.map(input => new IterableWrapper(input._run(args)));
 

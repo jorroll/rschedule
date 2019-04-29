@@ -32,6 +32,7 @@ export class UniqueOperator<T extends typeof DateAdapter> extends Operator<T> {
     });
   }
 
+  /** @internal */
   *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
     if (!this.config.base) return;
 

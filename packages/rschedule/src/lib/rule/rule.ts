@@ -147,7 +147,7 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
     });
   }
 
-  /**  @private use `occurrences()` instead */
+  /**  @internal use `occurrences()` instead */
   *_run(rawArgs: IRunArgs = {}): IterableIterator<DateTime> {
     const args = this.normalizeRunArgs(rawArgs);
 

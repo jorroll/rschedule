@@ -71,6 +71,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
 
   readonly operators: ReadonlyArray<Operator<T>> = [];
 
+  /** @internal */
   get _run() {
     return this.lastOperator ? this.lastOperator._run.bind(this.lastOperator) : this.emptyIterator;
   }

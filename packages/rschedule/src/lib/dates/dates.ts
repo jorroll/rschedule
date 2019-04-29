@@ -183,6 +183,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     });
   }
 
+  /** @internal */
   *_run(args: IRunArgs = {}) {
     let dates = this.datetimes.sort(dateTimeSortComparer);
 

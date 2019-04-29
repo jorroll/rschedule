@@ -272,7 +272,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
     });
   }
 
-  /**  @private use occurrences() instead */
+  /**  @internal use occurrences() instead */
   *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
     const count = args.take;
 

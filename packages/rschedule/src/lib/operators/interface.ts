@@ -61,6 +61,7 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
     options?: { keepLocalTime?: boolean },
   ): Operator<T>;
 
+  /** @internal */
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 
   protected normalizeDateInput(date: DateInput<T>): DateTime;

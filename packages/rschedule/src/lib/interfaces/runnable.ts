@@ -7,6 +7,7 @@ export interface IRunnable<T extends typeof DateAdapter> {
   readonly hasDuration: boolean;
   firstDate: InstanceType<T> | null;
   lastDate: InstanceType<T> | undefined | null;
+  /** @internal */
   _run(args?: any): IterableIterator<DateTime>;
   set(prop: 'timezone', value: string | null): IRunnable<T>;
 }

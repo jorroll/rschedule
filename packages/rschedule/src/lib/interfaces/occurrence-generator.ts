@@ -116,6 +116,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     options?: { keepLocalTime?: boolean },
   ): OccurrenceGenerator<T>;
 
+  /** @internal */
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 
   /**

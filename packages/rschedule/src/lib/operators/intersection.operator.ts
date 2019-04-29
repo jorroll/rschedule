@@ -103,6 +103,7 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
     );
   }
 
+  /** @internal */
   *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
     const streams = this._streams.map(stream => new IterableWrapper(stream._run(args)));
 
