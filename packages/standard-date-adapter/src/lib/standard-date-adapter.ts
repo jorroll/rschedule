@@ -126,10 +126,11 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   }
 
   toJSON(): IDateAdapter.JSON {
+    let json: IDateAdapter.JSON;
+
     if (this.timezone === 'UTC') {
-      return {
+      json = {
         timezone: this.timezone,
-        duration: this.duration,
         year: this._date.getUTCFullYear(),
         month: this._date.getUTCMonth() + 1,
         day: this._date.getUTCDate(),
@@ -138,19 +139,24 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
         second: this._date.getUTCSeconds(),
         millisecond: this._date.getUTCMilliseconds(),
       };
+    } else {
+      json = {
+        timezone: this.timezone,
+        year: this._date.getFullYear(),
+        month: this._date.getMonth() + 1,
+        day: this._date.getDate(),
+        hour: this._date.getHours(),
+        minute: this._date.getMinutes(),
+        second: this._date.getSeconds(),
+        millisecond: this._date.getMilliseconds(),
+      };
     }
 
-    return {
-      timezone: this.timezone,
-      duration: this.duration,
-      year: this._date.getFullYear(),
-      month: this._date.getMonth() + 1,
-      day: this._date.getDate(),
-      hour: this._date.getHours(),
-      minute: this._date.getMinutes(),
-      second: this._date.getSeconds(),
-      millisecond: this._date.getMilliseconds(),
-    };
+    if (this.duration) {
+      json.duration = this.duration;
+    }
+
+    return json;
   }
 
   assertIsValid() {
