@@ -121,9 +121,8 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
   }
 
   toJSON(): IDateAdapter.JSON {
-    return {
+    const json: IDateAdapter.JSON = {
       timezone: this.timezone,
-      duration: this.duration,
       year: this._date.get('year'),
       month: this._date.get('month') + 1,
       day: this._date.get('date'),
@@ -132,6 +131,12 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
       second: this._date.get('second'),
       millisecond: this._date.get('millisecond'),
     };
+
+    if (this.duration) {
+      json.duration = this.duration;
+    }
+
+    return json;
   }
 
   assertIsValid() {
