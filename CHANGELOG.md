@@ -41,6 +41,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 - `UniqueOperator.isUniqueOperator()`
 - `OccurrenceStream.isOccurrenceStream()`
 - ensure `DateAdapter#date` is immutable
+- don't include `undefined` properties in `DateAdapter#toJSON()`
 
 ## 0.10.0 BREAKING (2019/4/15)
 
