@@ -127,9 +127,8 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
   }
 
   toJSON(): IDateAdapter.JSON {
-    return {
+    const json: IDateAdapter.JSON = {
       timezone: this.timezone,
-      duration: this.duration,
       year: this.date.get('year'),
       month: this.date.get('month'),
       day: this.date.get('day'),
@@ -138,6 +137,12 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
       second: this.date.get('second'),
       millisecond: this.date.get('millisecond'),
     };
+
+    if (this.duration) {
+      json.duration = this.duration;
+    }
+
+    return json;
   }
 
   assertIsValid() {
