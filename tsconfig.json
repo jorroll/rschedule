@@ -7,16 +7,16 @@
     "lib": ["es2017", "dom"],
     "strict": true,
     "declaration": true,
-    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "declarationMap": true,
+    "stripInternal": true,
+    "downlevelIteration": true,
     "moduleResolution": "node",
     "typeRoots": ["node_modules/@types", "src/types"],
     "paths": {
       "@rschedule/*": ["packages/*/src"]
     },
-    "inlineSourceMap": true,
-    "removeComments": false,
-    "downlevelIteration": true,
-    "stripInternal": true,
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
   },
   "include": ["packages", "tests"],
