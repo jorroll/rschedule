@@ -1,4 +1,3 @@
-import { Include } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { Dates } from '../dates';
@@ -15,10 +14,6 @@ import { DateInput } from '../utilities';
 
 const SCHEDULE_ID = Symbol.for('35d5d3f8-8924-43d2-b100-48e04b0cf500');
 
-type GetScheduleType<T> = Include<T, Schedule<any, any>> extends never
-  ? Schedule<any, any>
-  : Include<T, Schedule<any, any>>;
-
 export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T>
   implements IScheduleLike<T>, IDataContainer<D> {
   /**
@@ -26,12 +21,10 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
    * of determining if an object is a `Schedule` by checking against the
    * global symbol registry.
    */
-  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
-  static isSchedule<T>(object: T): object is GetScheduleType<T> {
+  static isSchedule(object: unknown): object is Schedule<any> {
     return !!(object && typeof object === 'object' && (object as any)[SCHEDULE_ID]);
   }
 
-  // For some reason, error is thrown if typed as `readonly Rule<T>[]`
   readonly rrules: ReadonlyArray<Rule<T>> = [];
   readonly exrules: ReadonlyArray<Rule<T>> = [];
   readonly rdates: Dates<T>;

@@ -7,7 +7,6 @@ import {
   Dates,
   DateTime,
   ICollectionsArgs,
-  Include,
   IOccurrencesArgs,
   IProvidedRuleOptions,
   IRunArgs,
@@ -25,13 +24,9 @@ import {
 
 const VEVENT_ID = Symbol.for('b1666600-db88-4d8e-9e40-05fdbc48d650');
 
-type GetVEventType<T> = Include<T, VEvent<any, any>> extends never
-  ? VEvent<any, any>
-  : Include<T, VEvent<any, any>>;
-
 export type IVEventRuleOptions<T extends typeof DateAdapter> = Omit<
-  Omit<IProvidedRuleOptions<T>, 'start'>,
-  'duration'
+  IProvidedRuleOptions<T>,
+  'start' | 'duration'
 >;
 
 export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T>
@@ -41,8 +36,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
    * of determining if an object is a `VEvent` by checking against the
    * global symbol registry.
    */
-  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
-  static isVEvent<T>(object: T): object is GetVEventType<T> {
+  static isVEvent(object: unknown): object is VEvent<any> {
     return !!(object && typeof object === 'object' && (object as any)[VEVENT_ID]);
   }
 
@@ -105,7 +99,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
           return ruleArgs;
         } else {
-          return new Rule(standardizeVEventRuleOptions(ruleArgs, args), {
+          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });
@@ -130,7 +124,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
           return ruleArgs;
         } else {
-          return new Rule(standardizeVEventRuleOptions(ruleArgs, args), {
+          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });

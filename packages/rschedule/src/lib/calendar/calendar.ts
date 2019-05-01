@@ -1,4 +1,3 @@
-import { Include } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IDataContainer, IOccurrenceGenerator, OccurrenceGenerator } from '../interfaces';
@@ -13,10 +12,6 @@ import { add, OccurrenceStream, OperatorFnOutput, pipeFn } from '../operators';
 
 const CALENDAR_ID = Symbol.for('5e83caab-8318-43d9-bf3d-cb24fe152246');
 
-type GetCalendarType<T> = Include<T, Calendar<any, any>> extends never
-  ? Calendar<any, any>
-  : Include<T, Calendar<any, any>>;
-
 export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T>
   implements IDataContainer<D> {
   /**
@@ -24,8 +19,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
    * of determining if an object is a `Calendar` by checking against the
    * global symbol registry.
    */
-  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
-  static isCalendar<T>(object: T): object is GetCalendarType<T> {
+  static isCalendar(object: unknown): object is Calendar<any> {
     return !!(object && typeof object === 'object' && (object as any)[CALENDAR_ID]);
   }
 

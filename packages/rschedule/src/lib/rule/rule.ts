@@ -1,4 +1,3 @@
-import { Include } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IDataContainer, IRunArgs, OccurrenceGenerator } from '../interfaces';
@@ -20,10 +19,6 @@ import {
 
 const RULE_ID = Symbol.for('c551fc52-0d8c-4fa7-a199-0ac417565b45');
 
-type GetRuleType<T> = Include<T, Rule<any, any>> extends never
-  ? Rule<any, any>
-  : Include<T, Rule<any, any>>;
-
 export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T>
   implements IDataContainer<D> {
   /**
@@ -31,8 +26,7 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
    * of determining if an object is a `Rule` by checking against the
    * global symbol registry.
    */
-  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
-  static isRule<T>(object: T): object is GetRuleType<T> {
+  static isRule(object: unknown): object is Rule<any> {
     return !!(object && typeof object === 'object' && (object as any)[RULE_ID]);
   }
 

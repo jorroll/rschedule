@@ -1,15 +1,12 @@
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
-import { RScheduleConfig } from '../rschedule-config';
 import { DateInput, dateInputToDateTime, normalizeDateTimeTimezone } from '../utilities';
 
 const OPERATOR_ID = Symbol.for('aa6007dc-1d7f-4955-b7f1-86a226463f7e');
 
 export abstract class Operator<T extends typeof DateAdapter> implements IRunnable<T> {
-  static isOperator<T extends typeof DateAdapter = typeof DateAdapter>(
-    object: unknown,
-  ): object is Operator<T> {
+  static isOperator(object: unknown): object is Operator<any> {
     return !!(object && typeof object === 'object' && (object as any)[OPERATOR_ID]);
   }
 

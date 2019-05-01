@@ -57,9 +57,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
    * of determining if an object is an `OccurrenceStream` by checking against the
    * global symbol registry.
    */
-  static isOccurrenceStream<T extends typeof DateAdapter = any>(
-    object: unknown,
-  ): object is OccurrenceStream<T> {
+  static isOccurrenceStream(object: unknown): object is OccurrenceStream<any> {
     return !!(object && typeof object === 'object' && (object as any)[OCCURRENCE_STREAM_ID]);
   }
 
@@ -89,7 +87,7 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
 
     if (!args.operators || args.operators.length === 0) {
       this.operators = [];
-    } else if (Operator.isOperator<T>(args.operators[0])) {
+    } else if (Operator.isOperator(args.operators[0])) {
       this.operators = args.operators as Operator<T>[];
     } else {
       const operatorFns = args.operators as OperatorFnOutput<T>[];
@@ -136,8 +134,8 @@ export class OccurrenceStream<T extends typeof DateAdapter> extends OccurrenceGe
 
 export function pipeFn<T extends typeof DateAdapter>(self: OccurrenceGenerator<T>) {
   return (...operatorFns: OperatorFnOutput<T>[]) =>
-    new OccurrenceStream({
-      operators: [add<T>(self), ...operatorFns],
+    new OccurrenceStream<T>({
+      operators: [add(self), ...operatorFns],
       dateAdapter: self.dateAdapter,
       timezone: self.timezone,
     });

@@ -42,9 +42,7 @@ export function intersection<T extends typeof DateAdapter>(args: {
 }
 
 export class IntersectionOperator<T extends typeof DateAdapter> extends Operator<T> {
-  static isIntersectionOperator<T extends typeof DateAdapter = any>(
-    object: unknown,
-  ): object is IntersectionOperator<T> {
+  static isIntersectionOperator(object: unknown): object is IntersectionOperator<any> {
     return !!(super.isOperator(object) && (object as any)[INTERSECTION_OPERATOR_ID]);
   }
 

@@ -1,4 +1,4 @@
-import { ArgumentError, Include } from '../basic-utilities';
+import { ArgumentError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime, dateTimeSortComparer } from '../date-time';
 import { IDataContainer, IRunArgs, OccurrenceGenerator } from '../interfaces';
@@ -13,10 +13,6 @@ import { DateInput } from '../utilities';
 
 const DATES_ID = Symbol.for('1a872780-b812-4991-9ca7-00c47cfdeeac');
 
-type GetDatesType<T> = Include<T, Dates<any, any>> extends never
-  ? Dates<any, any>
-  : Include<T, Dates<any, any>>;
-
 export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGenerator<T>
   implements IDataContainer<D> {
   /**
@@ -24,8 +20,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
    * of determining if an object is a `Dates` by checking against the
    * global symbol registry.
    */
-  // @ts-ignore the check is working as intended but typescript doesn't like it for some reason
-  static isDates<T>(object: T): object is GetDatesType<T> {
+  static isDates(object: unknown): object is Dates<any> {
     return !!(object && typeof object === 'object' && (object as any)[DATES_ID]);
   }
 
