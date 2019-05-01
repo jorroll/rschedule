@@ -58,7 +58,7 @@ describe('Operators', () => {
       //   ? [null]
       //   : ['UTC'];
 
-      const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
+      const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
       timezones.forEach(zone => {
         context(zone, timezone => {

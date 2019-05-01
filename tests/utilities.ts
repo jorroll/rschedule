@@ -66,7 +66,7 @@ export const TIMEZONES = [
   'Asia/Shanghai',
   'Asia/Jakarta',
   'Australia/Melbourne',
-] as const;
+];
 
 export interface DatetimeFn<R> {
   (): R;

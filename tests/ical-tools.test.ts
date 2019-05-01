@@ -240,7 +240,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
     ];
 
     // const zones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
-    const zones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
+    const zones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
     zones.forEach(zone => {
       // function to create new dateAdapter instances
