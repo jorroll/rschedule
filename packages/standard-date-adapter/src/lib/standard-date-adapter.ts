@@ -60,7 +60,9 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   }
 
   static fromDateTime(datetime: DateTime) {
-    return StandardDateAdapter.fromJSON(datetime.toJSON());
+    const date = StandardDateAdapter.fromJSON(datetime.toJSON());
+    date.generators.push(...datetime.generators);
+    return date;
   }
 
   get date() {
@@ -119,10 +121,6 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
 
   toISOString() {
     return this._date.toISOString();
-  }
-
-  toDateTime(): DateTime {
-    return DateTime.fromJSON(this.toJSON());
   }
 
   toJSON(): IDateAdapter.JSON {

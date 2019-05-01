@@ -2,7 +2,7 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
 import { RScheduleConfig } from '../rschedule-config';
-import { DateInput, dateInputToDateTime } from '../utilities';
+import { DateInput, dateInputToDateTime, normalizeDateTimeTimezone } from '../utilities';
 
 const OPERATOR_ID = Symbol.for('aa6007dc-1d7f-4955-b7f1-86a226463f7e');
 
@@ -73,14 +73,7 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
   }
 
   protected normalizeRunOutput(date: DateTime) {
-    if (date.timezone !== this.timezone) {
-      return this.config.dateAdapter
-        .fromDateTime(date)
-        .set('timezone', this.timezone)
-        .toDateTime();
-    }
-
-    return date;
+    return normalizeDateTimeTimezone(date, this.timezone, this.config.dateAdapter);
   }
 }
 

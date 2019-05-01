@@ -65,7 +65,9 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
   }
 
   static fromDateTime(datetime: DateTime) {
-    return MomentDateAdapter.fromJSON(datetime.toJSON());
+    const date = MomentDateAdapter.fromJSON(datetime.toJSON());
+    date.generators.push(...datetime.generators);
+    return date;
   }
 
   get date() {
@@ -124,10 +126,6 @@ export class MomentDateAdapter extends DateAdapter implements IDateAdapter<momen
 
   toISOString() {
     return this._date.toISOString();
-  }
-
-  toDateTime(): DateTime {
-    return DateTime.fromJSON(this.toJSON());
   }
 
   toJSON(): IDateAdapter.JSON {

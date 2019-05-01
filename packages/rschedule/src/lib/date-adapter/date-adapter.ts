@@ -64,7 +64,9 @@ export class DateAdapter implements IDateAdapter<unknown> {
   }
 
   toDateTime(): DateTime {
-    throw unimplementedError('toDateTime()');
+    const date = DateTime.fromJSON(this.toJSON());
+    date.generators.push(...this.generators);
+    return date;
   }
 
   toJSON(): IDateAdapter.JSON {

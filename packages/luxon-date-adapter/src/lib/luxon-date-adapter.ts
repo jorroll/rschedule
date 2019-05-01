@@ -70,7 +70,9 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
    * @param datetime rSchedule DateTime object
    */
   static fromDateTime(datetime: DateTime) {
-    return LuxonDateAdapter.fromJSON(datetime.toJSON());
+    const date = LuxonDateAdapter.fromJSON(datetime.toJSON());
+    date.generators.push(...datetime.generators);
+    return date;
   }
 
   readonly date: LuxonDateTime;
@@ -120,10 +122,6 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
 
   toISOString() {
     return this.date.toUTC().toISO();
-  }
-
-  toDateTime(): DateTime {
-    return DateTime.fromJSON(this.toJSON());
   }
 
   toJSON(): IDateAdapter.JSON {

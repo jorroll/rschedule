@@ -12,6 +12,7 @@ import {
   IOccurrencesArgs,
   IProvidedRuleOptions,
   OccurrenceGenerator,
+  Rule,
   Schedule,
 } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
@@ -212,7 +213,7 @@ describe('Calendar', () => {
         DatetimeFn<any>
       ];
 
-      // const timezones = !DateAdapter.hasTimezoneSupport ? ['UTC'] as const : ['UTC'] as const;
+      // const timezones = !DateAdapter.hasTimezoneSupport ? (['UTC'] as const) : (['UTC'] as const);
 
       const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] as const) : TIMEZONES;
 
@@ -556,6 +557,63 @@ describe('Calendar', () => {
               },
             },
           );
+
+          it('retains generators', () => {
+            // YearlyByMonthAndMonthDay
+            const rule1 = new Rule(
+              {
+                frequency: 'YEARLY',
+                count: 3,
+                byMonthOfYear: [1, 3],
+                byDayOfMonth: [5, 7],
+                start: dateAdapter(1997, 9, 2, 9),
+              },
+              { dateAdapter: DateAdapter, data: 'rule 1' },
+            );
+
+            const schedule1 = new Schedule({
+              rrules: [rule1],
+              dateAdapter: DateAdapter,
+              data: 'schedule 1',
+              timezone,
+            });
+
+            const dates1 = new Dates({
+              dates: [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(2000, 1, 1, 9, 0)],
+              data: 'dates 1',
+              dateAdapter: DateAdapter,
+              timezone,
+            });
+
+            const schedule2 = new Schedule({
+              rdates: dates1,
+              exdates: [dateAdapter(1998, 1, 20, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
+              dateAdapter: DateAdapter,
+              data: 'schedule 2',
+              timezone,
+            });
+
+            const calendar = new Calendar({
+              schedules: [schedule1, schedule2],
+              dateAdapter: DateAdapter,
+              timezone,
+              data: 'calendar 1',
+            });
+
+            let adapter = calendar.occurrences({ start: dateAdapter(), take: 1 }).toArray()[0];
+
+            // expect(adapter.generators).toEqual([
+            //   calendar,
+            //   schedule1,
+            //   rule1,
+            // ])
+
+            adapter = calendar
+              .occurrences({ start: dateAdapter(2000, 1, 1, 9, 0), take: 1 })
+              .toArray()[0];
+
+            expect(adapter.generators).toEqual([calendar, schedule2, dates1]);
+          });
         });
       });
     });
