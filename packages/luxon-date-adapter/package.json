@@ -28,7 +28,7 @@
     "clean:build": "rm -rf build && rm -rf .rpt2_cache"
   },
   "peerDependencies": {
-    "@rschedule/rschedule": "^0.10.0",
+    "@rschedule/rschedule": "^0.11.0",
     "luxon": "^1.3.3"
   },
   "devDependencies": {

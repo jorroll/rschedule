@@ -29,7 +29,7 @@
     "clean:build": "rm -rf build && rm -rf .rpt2_cache"
   },
   "peerDependencies": {
-    "@rschedule/rschedule": "^0.10.0",
+    "@rschedule/rschedule": "^0.11.0",
     "moment": "^2.0.0"
   },
   "devDependencies": {
