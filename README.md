@@ -6,7 +6,7 @@
 
 A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol. The library is "date agnostic" and usable with standard `Date`, [`Moment`](https://momentjs.com), or luxon [`DateTime`](https://moment.github.io/luxon/) objects through a [`IDateAdapter` interface](./docs/date-adapter).
 
-At this point, the library's core functionality is feature complete and the tests are passing. This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app. See the [1.0 roadmap](#roadmap-to-10) below. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule).
+At this point, the library's core functionality is feature complete and the tests are passing. This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app. See the [roadmap to 1.0](#roadmap-to-10) below. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule).
 
 ### Example usage:
 
@@ -78,7 +78,7 @@ rule
 - Flesh out `duration` support in the library.
   - Basic `duration` support for dates currently exists (which _may_ be sufficient for 1.0), but I think I'd like to create one or two operators that manipulate durations before 1.0--just to make sure the current API is sufficient/future proofed.
 - Make sure the `ical-tools` covers the important ICAL use cases.
-  - I'm currently not familiar with the `VTIMEZONE` ICAL component. I want to do some research to understand its effect on `VEVENT` and how rSchedule can represent this.
+  - I'm currently not familiar with the `VTIMEZONE` ICAL component. I want to do some research to understand its effect on `VEVENT` and what rSchedule might need to do to represent this.
 - Revisit decision not to support `ByDayOfYear`, `ByPositionInSet`, and `ByWeekOfYear` rules.
 - **Most important:** more real world testing to make sure the API is appropriate and everything works as expected.
 
