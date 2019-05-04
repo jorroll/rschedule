@@ -4,6 +4,8 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## 0.11.0 BREAKING (2019/5/4)
+
 ### Breaking
 
 - updated `RScheduleConfig` so that config options are namespaced.
