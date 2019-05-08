@@ -1,5 +1,3 @@
-// Import here Polyfills if needed.
-
 export * from './rschedule-config';
 
 export * from './date-adapter';
