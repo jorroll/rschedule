@@ -8,6 +8,23 @@ A javascript library, written in typescript, for working with recurring dates. R
 
 At this point, the library's core functionality is feature complete and the tests are passing. This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app. See the [roadmap to 1.0](#roadmap-to-10) below. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule).
 
+```bash
+# To install both the main package and the `StandardDateAdapter` for standard javascript dates */
+
+yarn add @rschedule/rschedule @rschedule/standard-date-adapter
+
+# or
+
+npm install @rschedule/rschedule @rschedule/standard-date-adapter
+
+# Current DateAdapter packages
+
+@rschedule/standard-date-adapter
+@rschedule/moment-date-adapter
+@rschedule/moment-tz-date-adapter
+@rschedule/luxon-date-adapter
+```
+
 ### Example usage:
 
 #### Iterate using standard javascript syntax
@@ -74,40 +91,26 @@ rule
 
 [Master branch docs (unreleased)](./docs#brief-overview)
 
-## Roadmap to 1.0
-
-- Flesh out `duration` support in the library.
-  - Basic `duration` support for dates currently exists (which _may_ be sufficient for 1.0), but I think I'd like to create one or two operators that manipulate durations before 1.0--just to make sure the current API is sufficient/future proofed.
-- Make sure the `ical-tools` covers the important ICAL use cases.
-  - I'm currently not familiar with the `VTIMEZONE` ICAL component. I want to do some research to understand its effect on `VEVENT` and what rSchedule might need to do to represent this.
-- Revisit decision not to support `ByDayOfYear`, `ByPositionInSet`, and `ByWeekOfYear` rules.
-- **Most important:** more real world testing to make sure the API is appropriate and everything works as expected.
-
-## Installation
-
-```bash
-# To install both the main package and the `StandardDateAdapter` for standard javascript dates */
-
-yarn add @rschedule/rschedule @rschedule/standard-date-adapter
-
-# or
-
-npm install @rschedule/rschedule @rschedule/standard-date-adapter
-
-# Current DateAdapter packages
-
-@rschedule/standard-date-adapter
-@rschedule/moment-date-adapter
-@rschedule/moment-tz-date-adapter
-@rschedule/luxon-date-adapter
-```
-
 ## Known Limitations
 
-- No [`BYWEEKNO`](https://gitlab.com/john.carroll.p/rschedule/issues/2), [`BYYEARDAY`](https://gitlab.com/john.carroll.p/rschedule/issues/3), or [`BYSETPOS`](https://gitlab.com/john.carroll.p/rschedule/issues/4) rule support. "By day of year" and "by position in set" should both be pretty straightforward to implement (if someone else wants to), they're just not something I need so not on my todo list.
-  - "By week of year" is different though. I spent a fair bit trying to get it to work and its just SUPER annoying (because it can create a valid date for year A in year B. e.g. the Saturday of the last week of 1998 _is in the year 1999_). Anyway, obviously doable, I have no plans to implement it though.
-- No `VCALENDAR` iCal support.
-- `VEVENT` iCal support includes iteration logic, but it doesn't include all of the spec. For example, it doesn't support the `VTIMEZONE` component.
+- `@rschedule/rschedule`
+  - No [`BYWEEKNO`](https://gitlab.com/john.carroll.p/rschedule/issues/2), [`BYYEARDAY`](https://gitlab.com/john.carroll.p/rschedule/issues/3), or [`BYSETPOS`](https://gitlab.com/john.carroll.p/rschedule/issues/4) rule support.
+- `@rschedule/ical-tools`
+  - `VEVENT` supports `RRULE`, `EXRULE`, `RDATE`, `EXDATE`, and `DTSTART` properties. Currently does not support `VTIMEZONE` component or `DTEND` / `DURATION` properties.
+    - Unlikely to ever support `VTIMEZONE` component. `VTIMEZONE` is intended to inline time zone data inside an ICAL string. In `rSchedule`, date libraries (e.g. `moment-timezone`) provide their own time zone data.
+  - No `VCALENDAR` iCal support.
+
+## Roadmap to 1.0
+
+- [ ] Flesh out `duration` support in the library.
+  - [ ] Create `mergeDuration` operator
+  - [ ] Create `splitDuration` operator
+- [x] Flesh out `ical-tools`.
+  - [x] Support `VEVENT`
+  - [x] Research `VTIMEZONE` to understand its effect on `VEVENT` and possibly add support.
+    - rSchedule not be supporting `VTIMEZONE` (feel free to open an issue on this topic).
+- [ ] Revisit decision not to support `ByDayOfYear`, `ByPositionInSet`, and `ByWeekOfYear` rules.
+- [ ] **Most important:** more real world testing to make sure the API is appropriate and everything works as expected.
 
 ## About
 

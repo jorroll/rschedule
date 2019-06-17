@@ -124,7 +124,7 @@ new Calendar().pipe(
 
 Internally, some rSchedule objects rely on occurrence stream operators to handle their recurrence logic (e.g. `Schedule`).
 
-Finally, there are [`Rule` objects](./usage/rule) which process recurrence rules. You probably won't need to use `Rule` object's direction though, instead using making use of `Schedule` objects.
+Finally, there are [`Rule` objects](./usage/rule) which process recurrence rules. You probably won't need to use `Rule` object's direction though, instead making use of `Schedule` objects.
 
 ## [Usage Overview](./usage)
 
