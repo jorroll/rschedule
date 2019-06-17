@@ -2,10 +2,10 @@
 
 This library has four main occurrence generating classes which each implement `OccurrenceGenerator`:
 
-- [Schedule](./schedule-class)
-- [Calendar](./calendar-class)
-- [Rule](./rule-class)
-- [Dates](./dates-class)
+- [Schedule](./schedule)
+- [Calendar](./calendar)
+- [Rule](./rule)
+- [Dates](./dates)
 
 If you plan on using rSchedule with the iCalendar spec, it also has a fifth `VEvent` object which replaces the `Schedule` object. [See the `@rschedule/ical-tools` docs for more info.](../serialization/ical)
 
