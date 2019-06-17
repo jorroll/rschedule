@@ -4,6 +4,8 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## 0.11.1 FEATURE (2019/6/17)
+
 ### Features
 
 - added `MergeDurationOperator`.
