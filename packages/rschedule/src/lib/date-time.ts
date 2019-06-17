@@ -267,12 +267,28 @@ export class DateTime implements IDateAdapter<unknown> {
 
   readonly duration: number | undefined;
 
+  private _end: DateTime | undefined;
+
   private constructor(date: Date, timezone?: string | null, duration?: number) {
     this.date = new Date(date);
     this.timezone = timezone || null;
     this.duration = duration;
 
     this.assertIsValid();
+  }
+
+  /**
+   * Returns `undefined` if `this.duration` is falsey. Else returns
+   * the `end` date.
+   */
+  get end(): DateTime | undefined {
+    if (!this.duration) return;
+
+    if (this._end) return this._end;
+
+    this._end = this.add(this.duration, 'millisecond');
+
+    return this._end;
   }
 
   // While we constrain the argument to be another DateAdapter in typescript

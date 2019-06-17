@@ -75,8 +75,8 @@ export function streamPastEnd(
   return (
     stream.done ||
     !!(options.reverse
-      ? options.start && options.start.isAfter(stream.value)
-      : options.end && options.end.isBefore(stream.value))
+      ? options.end && stream.value.isBefore(options.end)
+      : options.end && stream.value.isAfter(options.end))
   );
 }
 

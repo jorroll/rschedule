@@ -6,6 +6,7 @@ import {
   IDateAdapter,
   IntersectionOperator,
   IProvidedRuleOptions,
+  MergeDurationOperator,
   OccurrenceStream,
   Operator,
   Rule,
@@ -88,7 +89,8 @@ export type IOperatorJSON =
   | IAddOperatorJSON
   | ISubtractOperatorJSON
   | IIntersectionOperatorJSON
-  | IUniqueOperatorJSON;
+  | IUniqueOperatorJSON
+  | IMergeDurationOperatorJSON;
 
 export interface IAddOperatorJSON {
   type: 'AddOperator';
@@ -108,6 +110,11 @@ export interface IIntersectionOperatorJSON {
 
 export interface IUniqueOperatorJSON {
   type: 'UniqueOperator';
+}
+
+export interface IMergeDurationOperatorJSON {
+  type: 'MergeDurationOperator';
+  maxDuration: number;
 }
 
 export interface ISerializeToJSONOptions<T extends typeof DateAdapter> {
@@ -244,28 +251,33 @@ function serializeOperatorToJSON<T extends typeof DateAdapter>(
   if (AddOperator.isAddOperator(input)) {
     return {
       type: 'AddOperator',
-      streams: (input as AddOperator<T>)._streams.map(stream =>
+      streams: input._streams.map(stream =>
         serializeToJSON(stream as RScheduleObject<T>, serializationOptions),
       ),
     };
   } else if (SubtractOperator.isSubtractOperator(input)) {
     return {
       type: 'SubtractOperator',
-      streams: (input as SubtractOperator<T>)._streams.map(stream =>
+      streams: input._streams.map(stream =>
         serializeToJSON(stream as RScheduleObject<T>, serializationOptions),
       ),
     };
   } else if (IntersectionOperator.isIntersectionOperator(input)) {
     return {
       type: 'IntersectionOperator',
-      streams: (input as IntersectionOperator<T>)._streams.map(stream =>
+      streams: input._streams.map(stream =>
         serializeToJSON(stream as RScheduleObject<T>, serializationOptions),
       ),
-      maxFailedIterations: (input as IntersectionOperator<T>).maxFailedIterations,
+      maxFailedIterations: input.maxFailedIterations,
     };
   } else if (UniqueOperator.isUniqueOperator(input)) {
     return {
       type: 'UniqueOperator',
+    };
+  } else if (MergeDurationOperator.isMergeDurationOperator(input)) {
+    return {
+      type: 'MergeDurationOperator',
+      maxDuration: input.maxDuration,
     };
   } else {
     throw new SerializeJSONError(`Unknown operator object: ${JSON.stringify(input)}`);

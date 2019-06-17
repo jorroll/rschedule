@@ -268,10 +268,10 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         ];
 
         if (options.timezone) {
-          (result as any).processedValue = dateAdapter(y, m, d, h, mm, s, options.timezone);
+          (result as any).processedValue = dateAdapter(y, m, d, h, mm, s, options);
           result[1].tzid = options.timezone;
         } else if (options.timezone === null) {
-          (result as any).processedValue = dateAdapter(y, m, d, h, mm, s, options.timezone);
+          (result as any).processedValue = dateAdapter(y, m, d, h, mm, s, options);
         } else {
           (result as any).processedValue = dateAdapter(y, m, d, h, mm, s);
         }
@@ -294,7 +294,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   DateAdapter,
                   buildDTSTART(2010, 10, 10, 0, 0, 0, { timezone: 'UTC' }),
                 ).toISOString(),
-              ).toEqual(dateAdapter(2010, 10, 10, 0, 0, 0, 'UTC').toISOString());
+              ).toEqual(dateAdapter(2010, 10, 10, 0, 0, 0, { timezone: 'UTC' }).toISOString());
             });
 
             test('1997-09-02T09:00:00', () => {
@@ -304,7 +304,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   DateAdapter,
                   buildDTSTART(1997, 9, 2, 9, 0, 0, { timezone: null }),
                 ).toISOString(),
-              ).toEqual(dateAdapter(1997, 9, 2, 9, 0, 0, null).toISOString());
+              ).toEqual(dateAdapter(1997, 9, 2, 9, 0, 0, { timezone: null }).toISOString());
             });
 
             test('1997-09-05T09:00:00Z', () => {
@@ -314,7 +314,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   DateAdapter,
                   buildDTSTART(1997, 9, 2, 9, 0, 0),
                 ).toISOString(),
-              ).toEqual(dateAdapter(1997, 9, 5, 9, 0, 0, 'UTC').toISOString());
+              ).toEqual(dateAdapter(1997, 9, 5, 9, 0, 0, { timezone: 'UTC' }).toISOString());
             });
           });
 
@@ -691,14 +691,18 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                       [],
                     ],
                   },
-                  start: dateAdapter(1997, 9, 2, 9, 0, 0, 'America/New_York').toJSON(),
+                  start: dateAdapter(1997, 9, 2, 9, 0, 0, {
+                    timezone: 'America/New_York',
+                  }).toJSON(),
                   rrules: [
                     {
                       byDayOfWeek: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
                       byMonthOfYear: [1],
                       frequency: 'YEARLY',
-                      start: dateAdapter(1997, 9, 2, 9, 0, 0, 'America/New_York').toJSON(),
-                      end: dateAdapter(2000, 1, 31, 14, 0, 0, 'UTC')
+                      start: dateAdapter(1997, 9, 2, 9, 0, 0, {
+                        timezone: 'America/New_York',
+                      }).toJSON(),
+                      end: dateAdapter(2000, 1, 31, 14, 0, 0, { timezone: 'UTC' })
                         .set('timezone', 'America/New_York')
                         .toJSON(),
                     },
@@ -774,18 +778,18 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                     [],
                   ],
                 },
-                start: dateAdapter(1997, 9, 2, 9, 0, 0, null).toJSON(),
-                exdates: [dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC').toJSON()],
+                start: dateAdapter(1997, 9, 2, 9, 0, 0, { timezone: null }).toJSON(),
+                exdates: [dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' }).toJSON()],
                 rdates: [
-                  dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC').toJSON(),
-                  dateAdapter(1997, 7, 14, 12, 30, 0, 'UTC').toJSON(),
+                  dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' }).toJSON(),
+                  dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' }).toJSON(),
                 ],
                 rrules: [
                   {
                     byDayOfWeek: ['TU', 'TH'],
                     frequency: 'WEEKLY',
-                    start: dateAdapter(1997, 9, 2, 9, 0, 0, null).toJSON(),
-                    end: dateAdapter(1997, 10, 7, 0, 0, 0, null).toJSON(),
+                    start: dateAdapter(1997, 9, 2, 9, 0, 0, { timezone: null }).toJSON(),
+                    end: dateAdapter(1997, 10, 7, 0, 0, 0, { timezone: null }).toJSON(),
                     weekStart: 'SU',
                   },
                 ],
@@ -852,11 +856,13 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                       [],
                     ],
                   },
-                  start: dateAdapter(2018, 10, 8, 9, 0, 0, 'Europe/London').toJSON(),
+                  start: dateAdapter(2018, 10, 8, 9, 0, 0, { timezone: 'Europe/London' }).toJSON(),
                   rrules: [
                     {
                       frequency: 'DAILY',
-                      start: dateAdapter(2018, 10, 8, 9, 0, 0, 'Europe/London').toJSON(),
+                      start: dateAdapter(2018, 10, 8, 9, 0, 0, {
+                        timezone: 'Europe/London',
+                      }).toJSON(),
                     },
                   ],
                 },

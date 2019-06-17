@@ -9,8 +9,13 @@ export class RuleConfig {
   static defaultWeekStart?: IDateAdapter.Weekday;
 }
 
+export class MergeDurationOperatorConfig {
+  static defaultMaxDuration?: number;
+}
+
 export class RScheduleConfig {
   static defaultDateAdapter: typeof DateAdapter;
-  static readonly IntersectionOperator = IntersectionOperatorConfig;
   static readonly Rule = RuleConfig;
+  static readonly IntersectionOperator = IntersectionOperatorConfig;
+  static readonly MergeDurationOperator = MergeDurationOperatorConfig;
 }

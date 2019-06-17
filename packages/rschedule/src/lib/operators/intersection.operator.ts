@@ -162,10 +162,14 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
   }
 
   protected calculateIsInfinite() {
-    return (
-      (!this.config.base || this.config.base.isInfinite) &&
-      this._streams.every(stream => stream.isInfinite)
-    );
+    // Note: Array#every() === true when length === 0
+    if (!this.config.base) {
+      if (this._streams.length === 0) return false;
+
+      return this._streams.every(stream => stream.isInfinite);
+    } else if (this._streams.length === 0) return this.config.base.isInfinite;
+
+    return this.config.base.isInfinite && this._streams.every(stream => stream.isInfinite);
   }
 
   protected calculateHasDuration() {

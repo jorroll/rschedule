@@ -10,6 +10,7 @@ import {
   intersection,
   IOccurrencesArgs,
   IRunnable,
+  mergeDuration,
   OccurrenceGenerator,
   subtract,
   unique,
@@ -35,14 +36,14 @@ import {
 } from './utilities';
 
 const DATE_ADAPTERS = [
-  [StandardDateAdapter, standardDatetimeFn],
-  [MomentDateAdapter, momentDatetimeFn],
-  [MomentTZDateAdapter, momentTZDatetimeFn],
+  // [StandardDateAdapter, standardDatetimeFn],
+  // [MomentDateAdapter, momentDatetimeFn],
+  // [MomentTZDateAdapter, momentTZDatetimeFn],
   [LuxonDateAdapter, luxonDatetimeFn],
 ] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>],
-  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
-  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
+  // [typeof StandardDateAdapter, DatetimeFn<Date>],
+  // [typeof MomentDateAdapter, DatetimeFn<MomentST>],
+  // [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
   [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>]
 ];
 
@@ -54,11 +55,9 @@ describe('Operators', () => {
         DatetimeFn<any>
       ];
 
-      // const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport
-      //   ? [null]
-      //   : ['UTC'];
+      const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport ? [null] : ['UTC'];
 
-      const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
+      // const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
       timezones.forEach(zone => {
         context(zone, timezone => {
@@ -218,6 +217,49 @@ describe('Operators', () => {
                     ].reverse(),
                   );
                 });
+
+                it('reverse start', () => {
+                  const iterable = add(datesA)({
+                    dateAdapter: DateAdapter,
+                    timezone,
+                  })._run({ reverse: true, start: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                  const results: string[] = [];
+
+                  for (const date of iterable) {
+                    results.push(toAdapter(date).toISOString());
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      isoString(2017, 9, 9, 9, 9, 9, 9),
+                      isoString(2018, 11, 11, 11, 11, 11, 11),
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse end', () => {
+                  const iterable = add(datesA)({
+                    dateAdapter: DateAdapter,
+                    timezone,
+                  })._run({ reverse: true, end: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                  const results: string[] = [];
+
+                  for (const date of iterable) {
+                    results.push(toAdapter(date).toISOString());
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2020, 3, 3, 3, 3, 3, 3),
+                    ].reverse(),
+                  );
+                });
               });
             });
 
@@ -334,6 +376,55 @@ describe('Operators', () => {
                     ].reverse(),
                   );
                 });
+
+                it('reverse start', () => {
+                  const iterable = intersection({
+                    maxFailedIterations: 50,
+                    streams: [datesA],
+                  })({
+                    dateAdapter: DateAdapter,
+                    timezone,
+                  })._run({ reverse: true, start: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                  const results: string[] = [];
+
+                  for (const date of iterable) {
+                    results.push(toAdapter(date).toISOString());
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      isoString(2017, 9, 9, 9, 9, 9, 9),
+                      isoString(2018, 11, 11, 11, 11, 11, 11),
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse end', () => {
+                  const iterable = intersection({
+                    maxFailedIterations: 50,
+                    streams: [datesA],
+                  })({
+                    dateAdapter: DateAdapter,
+                    timezone,
+                  })._run({ reverse: true, end: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                  const results: string[] = [];
+
+                  for (const date of iterable) {
+                    results.push(toAdapter(date).toISOString());
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2020, 3, 3, 3, 3, 3, 3),
+                    ].reverse(),
+                  );
+                });
               });
             });
 
@@ -418,6 +509,225 @@ describe('Operators', () => {
                       isoString(2018, 11, 11, 11, 11, 11, 11),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
                       isoString(2020, 3, 3, 3, 3, 3, 3),
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse start', () => {
+                  const iterable = unique()({
+                    dateAdapter: DateAdapter,
+                    base: datesA,
+                    timezone,
+                  })._run({ reverse: true, start: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                  const results: string[] = [];
+
+                  for (const date of iterable) {
+                    results.push(toAdapter(date).toISOString());
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      isoString(2017, 9, 9, 9, 9, 9, 9),
+                      isoString(2018, 11, 11, 11, 11, 11, 11),
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse end', () => {
+                  const iterable = unique()({
+                    dateAdapter: DateAdapter,
+                    base: datesA,
+                    timezone,
+                  })._run({ reverse: true, end: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                  const results: string[] = [];
+
+                  for (const date of iterable) {
+                    results.push(toAdapter(date).toISOString());
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2020, 3, 3, 3, 3, 3, 3),
+                    ].reverse(),
+                  );
+                });
+              });
+            });
+
+            describe('MergeDurationOperator', () => {
+              const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
+
+              const datesA = new Dates({
+                dates: [
+                  dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 1 }),
+                  dateAdapter(2010, 10, 11, 13, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
+                  dateAdapter(2010, 10, 11, 14, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
+                  dateAdapter(2010, 10, 12, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
+                ],
+                dateAdapter: DateAdapter,
+                timezone,
+              });
+
+              it('mergeDuration()', () => {
+                const iterable = mergeDuration({
+                  maxDuration: MILLISECONDS_IN_HOUR * 3,
+                })({
+                  dateAdapter: DateAdapter,
+                  base: datesA,
+                  timezone,
+                })._run();
+
+                const results: [string, number][] = [];
+
+                for (const date of iterable) {
+                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                }
+
+                expect(results).toEqual([
+                  [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                  [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                ]);
+              });
+
+              describe('args', () => {
+                const offset = new Date().getTimezoneOffset();
+
+                // The CI runners have local as UTC so need to work around this
+                const doTest =
+                  offset === 0 ? ![null, 'UTC'].includes(timezone) : timezone !== 'UTC';
+
+                if (doTest) {
+                  it('timezone', () => {
+                    const iterableUTC = mergeDuration({
+                      maxDuration: MILLISECONDS_IN_HOUR * 3,
+                    })({
+                      dateAdapter: DateAdapter,
+                      base: datesA,
+                      timezone: 'UTC',
+                    })._run();
+
+                    const iterableOriginal = mergeDuration({
+                      maxDuration: MILLISECONDS_IN_HOUR * 3,
+                    })({
+                      dateAdapter: DateAdapter,
+                      base: datesA,
+                      timezone,
+                    })._run();
+
+                    const jsonUTC: any[] = [];
+                    const jsonOriginal: any[] = [];
+
+                    const stringUTC: string[] = [];
+                    const stringOriginal: string[] = [];
+
+                    for (const date of iterableUTC) {
+                      expect(date.timezone).toEqual('UTC');
+                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      delete json.timezone;
+                      jsonUTC.push(json);
+                      stringUTC.push(toAdapter(date, { keepZone: true }).toISOString());
+                    }
+
+                    for (const date of iterableOriginal) {
+                      expect(date.timezone).not.toEqual('UTC');
+                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      delete json.timezone;
+                      jsonOriginal.push(json);
+                      stringOriginal.push(toAdapter(date, { keepZone: true }).toISOString());
+                    }
+
+                    expect(jsonUTC).not.toEqual(jsonOriginal);
+                    expect(stringUTC).toEqual(stringOriginal);
+                  });
+                }
+
+                it('maxDuration', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 3 - 1,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: datesA,
+                    timezone,
+                  })._run();
+
+                  const results: [string, number][] = [];
+
+                  expect(() => {
+                    for (const date of iterable) {
+                      results.push([toAdapter(date).toISOString(), date.duration!]);
+                    }
+                  }).toThrowError();
+                });
+              });
+
+              describe('runArgs', () => {
+                it('start', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 3,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: datesA,
+                    timezone,
+                  })._run({ start: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                    [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                  ]);
+                });
+
+                it('end', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 3,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: datesA,
+                    timezone,
+                  })._run({ end: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                  ]);
+                });
+
+                it('reverse', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 3,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: datesA,
+                    timezone,
+                  })._run({ reverse: true });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
                     ].reverse(),
                   );
                 });
@@ -585,6 +895,48 @@ describe('Operators', () => {
                       [
                         isoString(2017, 10, 10, 10, 10, 10, 10),
                         isoString(2018, 12, 12, 12, 12, 12, 12),
+                        isoString(2019, 2, 2, 2, 2, 2, 2),
+                        isoString(2020, 4, 4, 4, 4, 4, 4),
+                      ].reverse(),
+                    );
+                  });
+
+                  it('reverse start', () => {
+                    const iterable = subtract(datesA)({
+                      dateAdapter: DateAdapter,
+                      base: datesB,
+                      timezone,
+                    })._run({ reverse: true, start: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                    const results: string[] = [];
+
+                    for (const date of iterable) {
+                      results.push(toAdapter(date).toISOString());
+                    }
+
+                    expect(results).toEqual(
+                      [
+                        isoString(2017, 10, 10, 10, 10, 10, 10),
+                        isoString(2018, 12, 12, 12, 12, 12, 12),
+                      ].reverse(),
+                    );
+                  });
+
+                  it('reverse end', () => {
+                    const iterable = subtract(datesA)({
+                      dateAdapter: DateAdapter,
+                      base: datesB,
+                      timezone,
+                    })._run({ reverse: true, end: dateTime(2019, 1, 1, 1, 1, 1, 1) });
+
+                    const results: string[] = [];
+
+                    for (const date of iterable) {
+                      results.push(toAdapter(date).toISOString());
+                    }
+
+                    expect(results).toEqual(
+                      [
                         isoString(2019, 2, 2, 2, 2, 2, 2),
                         isoString(2020, 4, 4, 4, 4, 4, 4),
                       ].reverse(),
@@ -876,6 +1228,217 @@ describe('Operators', () => {
                       ].reverse(),
                     );
                   });
+                });
+              });
+            });
+
+            describe('MergeDurationOperator', () => {
+              const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
+
+              const datesA = new Dates({
+                dates: [
+                  dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 1 }),
+                  dateAdapter(2010, 10, 11, 13, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
+                  dateAdapter(2010, 10, 11, 14, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
+                  dateAdapter(2010, 10, 12, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
+                ],
+                dateAdapter: DateAdapter,
+                timezone,
+              });
+
+              const datesB = new Dates({
+                dates: [
+                  dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 2 }),
+                  dateAdapter(2010, 10, 11, 14, 11, 11, 11, {
+                    duration: MILLISECONDS_IN_HOUR * 0.5,
+                  }),
+                  dateAdapter(2010, 10, 12, 14, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 20 }),
+                  dateAdapter(2010, 10, 13, 6, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 10 }),
+                  dateAdapter(2010, 10, 13, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
+                  dateAdapter(2010, 10, 14, 13, 1, 1, 1, { duration: 1000 }),
+                ],
+                dateAdapter: DateAdapter,
+                timezone,
+              });
+
+              it('mergeDuration()', () => {
+                const iterable = mergeDuration({
+                  maxDuration: MILLISECONDS_IN_HOUR * 27,
+                })({
+                  dateAdapter: DateAdapter,
+                  base: add(datesA, datesB)({
+                    dateAdapter: DateAdapter,
+                    timezone,
+                  }),
+                  timezone,
+                })._run();
+
+                const results: [string, number][] = [];
+
+                for (const date of iterable) {
+                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                }
+
+                expect(results).toEqual([
+                  [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 2],
+                  [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                  [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                  [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                ]);
+              });
+
+              describe('args', () => {
+                it('maxDuration', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 27 - 1,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: add(datesA, datesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run();
+
+                  const results: [string, number][] = [];
+
+                  expect(() => {
+                    for (const date of iterable) {
+                      results.push([toAdapter(date).toISOString(), date.duration!]);
+                    }
+                  }).toThrowError();
+                });
+              });
+
+              describe('runArgs', () => {
+                it('start', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 27,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: add(datesA, datesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ start: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                    [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                  ]);
+                });
+
+                it('end', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 27,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: add(datesA, datesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ end: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 2],
+                    [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                    [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                  ]);
+                });
+
+                it('reverse', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 27,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: add(datesA, datesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ reverse: true });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 2],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse start', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 27,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: add(datesA, datesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ reverse: true, start: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 2],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse end', () => {
+                  const iterable = mergeDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 27,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: add(datesA, datesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ reverse: true, end: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                    ].reverse(),
+                  );
                 });
               });
             });
