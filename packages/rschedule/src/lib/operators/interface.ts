@@ -43,13 +43,8 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
       stream instanceof Operator ? stream : stream.set('timezone', this.timezone),
     );
 
-    this.isInfinite =
-      (!this.config.base || this.config.base.isInfinite) &&
-      this._streams.every(stream => stream.isInfinite);
-
-    this.hasDuration =
-      (!this.config.base || this.config.base.hasDuration) &&
-      this._streams.every(stream => stream.hasDuration);
+    this.isInfinite = this.calculateIsInfinite();
+    this.hasDuration = this.calculateHasDuration();
   }
 
   abstract set(
@@ -60,6 +55,9 @@ export abstract class Operator<T extends typeof DateAdapter> implements IRunnabl
 
   /** @internal */
   abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
+
+  protected abstract calculateIsInfinite(): boolean;
+  protected abstract calculateHasDuration(): boolean;
 
   protected normalizeDateInput(date: DateInput<T>): DateTime;
   protected normalizeDateInput(date?: DateInput<T>): undefined;

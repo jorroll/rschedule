@@ -73,4 +73,19 @@ export class AddOperator<T extends typeof DateAdapter> extends Operator<T> {
       if (streamPastEnd(stream, args)) return;
     }
   }
+
+  protected calculateIsInfinite() {
+    return (
+      (this.config.base && this.config.base.isInfinite) ||
+      this._streams.some(stream => stream.isInfinite)
+    );
+  }
+
+  protected calculateHasDuration() {
+    const streamsDuration = this._streams.every(stream => stream.hasDuration);
+
+    if (!this.config.base) return streamsDuration;
+
+    return this.config.base.hasDuration && streamsDuration;
+  }
 }
