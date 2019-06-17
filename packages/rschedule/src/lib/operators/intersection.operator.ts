@@ -46,7 +46,6 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
     return !!(super.isOperator(object) && (object as any)[INTERSECTION_OPERATOR_ID]);
   }
 
-  readonly isInfinite: boolean;
   readonly maxFailedIterations?: number;
 
   protected readonly [INTERSECTION_OPERATOR_ID] = true;
@@ -59,11 +58,6 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
     config: IOperatorConfig<T>,
   ) {
     super(args.streams, config);
-
-    this.isInfinite =
-      this.config.base && this.config.base.isInfinite === false
-        ? false
-        : !this._streams.some(stream => !stream.isInfinite);
 
     if (this.isInfinite) {
       this.maxFailedIterations =
@@ -165,6 +159,21 @@ export class IntersectionOperator<T extends typeof DateAdapter> extends Operator
         }
       }
     }
+  }
+
+  protected calculateIsInfinite() {
+    return (
+      (!this.config.base || this.config.base.isInfinite) &&
+      this._streams.every(stream => stream.isInfinite)
+    );
+  }
+
+  protected calculateHasDuration() {
+    const streamsDuration = this._streams.every(stream => stream.hasDuration);
+
+    if (!this.config.base) return streamsDuration;
+
+    return this.config.base.hasDuration && streamsDuration;
   }
 }
 

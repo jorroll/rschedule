@@ -71,6 +71,14 @@ export class SubtractOperator<T extends typeof DateAdapter> extends Operator<T> 
       if (streamPastEnd(inclusion, args)) return;
     }
   }
+
+  protected calculateIsInfinite() {
+    return !!(this.config.base && this.config.base.isInfinite);
+  }
+
+  protected calculateHasDuration() {
+    return !!(this.config.base && this.config.base.hasDuration);
+  }
 }
 
 function cycleStreams(

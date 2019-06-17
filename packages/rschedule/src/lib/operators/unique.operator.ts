@@ -57,4 +57,12 @@ export class UniqueOperator<T extends typeof DateAdapter> extends Operator<T> {
       }
     }
   }
+
+  protected calculateIsInfinite() {
+    return !!(this.config.base && this.config.base.isInfinite);
+  }
+
+  protected calculateHasDuration() {
+    return !!(this.config.base && this.config.base.hasDuration);
+  }
 }
