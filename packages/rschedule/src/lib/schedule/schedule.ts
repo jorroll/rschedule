@@ -9,6 +9,7 @@ import {
   OccurrenceIterator,
 } from '../iterators';
 import { add, OccurrenceStream, OperatorFnOutput, pipeFn, subtract, unique } from '../operators';
+import { RScheduleConfig } from '../rschedule-config';
 import { IProvidedRuleOptions, Rule } from '../rule';
 import { DateInput } from '../utilities';
 
@@ -40,6 +41,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
+  readonly maxDuration: number | undefined;
 
   protected readonly [SCHEDULE_ID] = true;
 
@@ -54,6 +56,7 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
       exrules?: ReadonlyArray<IProvidedRuleOptions<T> | Rule<T>>;
       rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
       exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
+      maxDuration?: number;
     } = {},
   ) {
     super(args);
@@ -121,14 +124,16 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
     this.isInfinite = this.rrules.some(rule => rule.isInfinite);
 
+    const operators = [
+      add<T>(...this.rrules),
+      subtract<T>(...this.exrules),
+      add<T>(this.rdates),
+      subtract<T>(this.exdates),
+      unique<T>(),
+    ];
+
     this.occurrenceStream = new OccurrenceStream({
-      operators: [
-        add<T>(...this.rrules),
-        subtract<T>(...this.exrules),
-        add<T>(this.rdates),
-        subtract<T>(this.exdates),
-        unique<T>(),
-      ],
+      operators,
       dateAdapter: this.dateAdapter,
       timezone: this.timezone,
     });

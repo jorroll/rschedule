@@ -6,6 +6,7 @@ import {
   Dates,
   intersection,
   IProvidedRuleOptions,
+  mergeDuration,
   OccurrenceStream,
   OperatorFnOutput,
   RScheduleConfig,
@@ -168,6 +169,10 @@ function parseOperatorJSON<T extends typeof DateAdapter>(
       });
     case 'UniqueOperator':
       return unique();
+    case 'MergeDurationOperator':
+      return mergeDuration({
+        maxDuration: json.maxDuration,
+      });
     default:
       throw new SerializeJSONError(`Unknown operator type: "${(json as any).type}"`);
   }

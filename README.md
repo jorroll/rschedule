@@ -105,7 +105,7 @@ rule
 ## Roadmap to 1.0
 
 - [ ] Flesh out `duration` support in the library.
-  - [ ] Create `mergeDuration` operator
+  - [x] Create `mergeDuration` operator
   - [ ] Create `splitDuration` operator
 - [x] Flesh out `ical-tools`.
   - [x] Support `VEVENT`

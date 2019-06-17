@@ -2,10 +2,11 @@
 
 This library exports a selection of occurrence stream operators for manipulating a stream of occurrences. Current operators are:
 
-- [Add](#add)
-- [Subtract](#subtract)
-- [Intersection](#intersection)
-- [Unique](#unique)
+- [Add](#Add)
+- [Subtract](#Subtract)
+- [Intersection](#Intersection)
+- [Unique](#Unique)
+- [MergeDuration](#MergeDuration)
 
 Each of these operator functions is used as an argument to `IOccurrenceGenerator#pipe()`.
 
@@ -91,4 +92,36 @@ Example:
 new Calendar({
   schedules: [scheduleOne, scheduleTwo],
 }).pipe(unique());
+```
+
+#### MergeDuration
+
+_Note: only usable on streams where all occurrences have a duration_
+
+An operator function which takes an occurrence stream with `hasDuration === true` and merges occurrences which have overlapping start and end times.
+
+Example:
+
+```typescript
+const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
+
+const dates = new Dates({
+  dates: [
+    new StandardDateAdapter(new Date(2010, 10, 10, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+    new StandardDateAdapter(new Date(2010, 10, 11, 13), { duration: MILLISECONDS_IN_HOUR * 2 }),
+    new StandardDateAdapter(new Date(2010, 10, 11, 14), { duration: MILLISECONDS_IN_HOUR * 2 }),
+    new StandardDateAdapter(new Date(2010, 10, 12, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+  ],
+  dateAdpter: StandardDateAdapter,
+}).pipe(
+  mergeDuration({
+    maxDuration: MILLISECONDS_IN_HOUR * 24,
+  }),
+);
+
+expect(dates.occurrences().toArray()).toEqual([
+  new StandardDateAdapter(new Date(2010, 10, 10, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+  new StandardDateAdapter(new Date(2010, 10, 11, 13), { duration: MILLISECONDS_IN_HOUR * 3 }),
+  new StandardDateAdapter(new Date(2010, 10, 12, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+]);
 ```

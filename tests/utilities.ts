@@ -342,20 +342,22 @@ export function timezoneDateAdapterFn(
   dateAdapterConstructor: typeof DateAdapter,
   datetimeFn: (...args: any[]) => any,
   timezone: string | null,
-): (...args: (number | string | null)[]) => DateAdapter {
-  return (...args: (number | string | null)[]) => {
-    let tzArg = timezone;
-    const dateAdapterArgs: (string | number | null)[] = args;
+): (...args: (number | { duration?: number; timezone?: string | null })[]) => DateAdapter {
+  return (...args: (number | { duration?: number; timezone?: string | null })[]) => {
+    let options: { duration?: number; timezone?: string | null } = { timezone };
 
-    if (args.length !== 0 && typeof args[args.length - 1] !== 'number') {
-      tzArg = args.pop() as string | null;
+    if (args.length !== 0 && typeof args[args.length - 1] === 'object') {
+      options = {
+        ...options,
+        ...(args.pop() as { duration?: number; timezone?: string | null }),
+      };
     }
 
-    if (tzArg !== null) {
-      dateAdapterArgs.push(tzArg);
-    }
+    const dateAdapterArgs: (string | number | null)[] = args as number[];
 
-    return new dateAdapterConstructor(datetimeFn(...dateAdapterArgs), { timezone: tzArg });
+    dateAdapterArgs.push(options.timezone!);
+
+    return new dateAdapterConstructor(datetimeFn(...dateAdapterArgs), options);
   };
 }
 

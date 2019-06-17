@@ -4,6 +4,7 @@ import { DateTime } from '../date-time';
 export interface IRunnable<T extends typeof DateAdapter> {
   readonly timezone: string | null;
   readonly isInfinite: boolean;
+  /** note: an iterator without any occurrences hasDuration === true */
   readonly hasDuration: boolean;
   firstDate: InstanceType<T> | null;
   lastDate: InstanceType<T> | undefined | null;

@@ -4,6 +4,15 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Features
+
+- added `MergeDurationOperator`.
+
+### Fixes
+
+- fixed bug in the calculation of `Operator#isInfinite`.
+- fixed bug in `AddOperator#_run()` and `IntersectionOperator#_run()` when iterating with `reverse: true` and a `start` / `end` time.
+
 ## 0.11.0 BREAKING (2019/5/4)
 
 ### Breaking
