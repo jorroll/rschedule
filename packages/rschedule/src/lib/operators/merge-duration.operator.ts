@@ -147,16 +147,12 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
     // `start` time even if they begin before the provided `start`
     // time. Because of this, we must begin iterating `maxDuration`
     // before the provided start time.
-    const start = args.start;
     let checkFromStart = args.start;
-
     if (args.start) {
       checkFromStart = args.start.subtract(this.maxDuration, 'millisecond');
     }
 
-    const end = args.end;
     let checkFromEnd = args.end;
-
     if (args.end) {
       checkFromEnd = args.end.add(this.maxDuration, 'millisecond');
     }
@@ -193,10 +189,14 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
 
       // check to make sure the occurrence we are about to yield ends after the
       // provided start time.
-      if (start && stream.workingValue.end!.isBeforeOrEqual(start)) {
+      if (args.start && stream.workingValue.end!.isBefore(args.start)) {
+        stream.workingValue = stream.value;
+        stream.picked();
         continue;
       }
 
+      // make sure the occurrence we are about to yield ends after the
+      // provided skipToDate
       if (
         yieldArgs &&
         yieldArgs.skipToDate &&
@@ -205,6 +205,11 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
         stream.workingValue = stream.value;
         stream.picked();
         continue;
+      }
+
+      // make sure we are not after the user requested `end` time.
+      if (args.end && stream.workingValue && stream.workingValue.isAfter(args.end)) {
+        break;
       }
 
       if (stream.workingValue.duration! > this.maxDuration) {
@@ -218,12 +223,6 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
 
       stream.workingValue = stream.value;
       stream.picked();
-
-      // after a date has been yielded, make sure we are not after the user
-      // requested `end` time.
-      if (end && stream.workingValue && stream.workingValue.isAfterOrEqual(end)) {
-        break;
-      }
     }
   }
 
@@ -234,16 +233,12 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
     // `start` time even if they begin before the provided `start`
     // time. Because of this, we must begin iterating `maxDuration`
     // before the provided start time.
-    const start = args.start;
     let checkFromStart = args.start;
-
     if (args.start) {
       checkFromStart = args.start.add(this.maxDuration, 'millisecond');
     }
 
-    const end = args.end;
     let checkFromEnd = args.end;
-
     if (args.end) {
       checkFromEnd = args.end.subtract(this.maxDuration, 'millisecond');
     }
@@ -290,14 +285,21 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
 
       // check to make sure the occurrence we are about to yield starts before the
       // provided start time.
-      if (start && stream.workingValue.isAfterOrEqual(start)) {
-        continue;
-      }
-
-      if (yieldArgs && yieldArgs.skipToDate && stream.workingValue.isBefore(yieldArgs.skipToDate)) {
+      if (args.start && stream.workingValue.isAfter(args.start)) {
         stream.workingValue = stream.value;
         stream.picked();
         continue;
+      }
+
+      if (yieldArgs && yieldArgs.skipToDate && stream.workingValue.isAfter(yieldArgs.skipToDate)) {
+        stream.workingValue = stream.value;
+        stream.picked();
+        continue;
+      }
+
+      // make sure we are not after the user requested `end` time.
+      if (args.end && stream.workingValue && stream.workingValue.end!.isBefore(args.end)) {
+        break;
       }
 
       if (stream.workingValue.duration! > this.maxDuration) {
@@ -311,12 +313,6 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
 
       stream.workingValue = stream.value;
       stream.picked();
-
-      // after a date has been yielded, make sure we are not after the user
-      // requested `end` time.
-      if (end && stream.workingValue && stream.workingValue.end!.isBeforeOrEqual(end)) {
-        break;
-      }
     }
   }
 }

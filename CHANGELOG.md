@@ -4,6 +4,15 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Features
+
+- added `SplitDurationOperator`.
+
+### Fixes
+
+- fixed `MergeDurationOperator#_run()` not returning all relevant occurrences when provided a `start` or `end` arg.
+- make the ordering of all ordered date arrays `duration` aware (for resolving order of otherwise identical dates).
+
 ## 0.11.1 FEATURE (2019/6/17)
 
 ### Features

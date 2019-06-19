@@ -106,13 +106,21 @@ rule
 
 - [ ] Flesh out `duration` support in the library.
   - [x] Create `mergeDuration` operator
-  - [ ] Create `splitDuration` operator
+  - [x] Create `splitDuration` operator
+  - [ ] Create `subtractDuration` operator
+  - [ ] Add `duration` awareness to `OccurrenceGenerator` `occursBetween()`, `occursOn()`, `occursAfter()`, and `occursBefore()`.
 - [x] Flesh out `ical-tools`.
   - [x] Support `VEVENT`
   - [x] Research `VTIMEZONE` to understand its effect on `VEVENT` and possibly add support.
     - rSchedule not be supporting `VTIMEZONE` (feel free to open an issue on this topic).
 - [ ] Revisit decision not to support `ByDayOfYear`, `ByPositionInSet`, and `ByWeekOfYear` rules.
 - [ ] **Most important:** more real world testing to make sure the API is appropriate and everything works as expected.
+
+## Features that will come after 1.0
+
+- [ ] Explore rearranging library exports and build to better support tree shaking and reduce minimum bundle size.
+- [ ] Natural language package for converting rSchedule objects into human readable strings
+  - [ ] Internationalization of human readable strings
 
 ## About
 
