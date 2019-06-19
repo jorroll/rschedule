@@ -112,7 +112,7 @@ rule
 - [x] Flesh out `ical-tools`.
   - [x] Support `VEVENT`
   - [x] Research `VTIMEZONE` to understand its effect on `VEVENT` and possibly add support.
-    - rSchedule not be supporting `VTIMEZONE` (feel free to open an issue on this topic).
+    - rSchedule will not be supporting `VTIMEZONE` (feel free to open an issue on this topic).
 - [ ] Revisit decision not to support `ByDayOfYear`, `ByPositionInSet`, and `ByWeekOfYear` rules.
 - [ ] **Most important:** more real world testing to make sure the API is appropriate and everything works as expected.
 
