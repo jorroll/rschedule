@@ -1,7 +1,8 @@
 import { DateTime } from '../../date-time';
 import { INormalizedRuleOptions } from '../rule-options';
 
-import { ArgumentError } from '../../basic-utilities';
+import { ArgumentError, Omit } from '../../basic-utilities';
+import { IRunArgs } from '../../interfaces';
 import { FrequencyPipe } from './01-frequency.pipe';
 import { ByMonthOfYearPipe } from './02-by-month-of-year.pipe';
 import { ByDayOfMonthPipe } from './05-by-day-of-month.pipe';
@@ -38,7 +39,7 @@ export class PipeController implements IPipeController {
 
   constructor(
     readonly options: INormalizedRuleOptions,
-    private readonly args: { start?: DateTime; end?: DateTime; reverse?: boolean },
+    private readonly args: Omit<IRunArgs, 'take'>,
   ) {
     this.reverse = !!args.reverse;
     this.reversePipes = (this.options.count === undefined && args.reverse) || false;

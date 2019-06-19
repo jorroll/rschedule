@@ -12,6 +12,7 @@ import {
   IRunnable,
   mergeDuration,
   OccurrenceGenerator,
+  splitDuration,
   subtract,
   unique,
 } from '@rschedule/rschedule';
@@ -36,14 +37,14 @@ import {
 } from './utilities';
 
 const DATE_ADAPTERS = [
-  // [StandardDateAdapter, standardDatetimeFn],
-  // [MomentDateAdapter, momentDatetimeFn],
-  // [MomentTZDateAdapter, momentTZDatetimeFn],
+  [StandardDateAdapter, standardDatetimeFn],
+  [MomentDateAdapter, momentDatetimeFn],
+  [MomentTZDateAdapter, momentTZDatetimeFn],
   [LuxonDateAdapter, luxonDatetimeFn],
 ] as [
-  // [typeof StandardDateAdapter, DatetimeFn<Date>],
-  // [typeof MomentDateAdapter, DatetimeFn<MomentST>],
-  // [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
+  [typeof StandardDateAdapter, DatetimeFn<Date>],
+  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
   [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>]
 ];
 
@@ -55,9 +56,9 @@ describe('Operators', () => {
         DatetimeFn<any>
       ];
 
-      const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport ? [null] : ['UTC'];
+      // const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport ? [null] : ['UTC'];
 
-      // const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
+      const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
       timezones.forEach(zone => {
         context(zone, timezone => {
@@ -86,6 +87,34 @@ describe('Operators', () => {
               dateAdapter(2019, 2, 2, 2, 2, 2, 2),
               dateAdapter(2020, 3, 3, 3, 3, 3, 3),
               dateAdapter(2020, 4, 4, 4, 4, 4, 4),
+            ],
+            dateAdapter: DateAdapter,
+            timezone,
+          });
+
+          const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
+
+          const durDatesA = new Dates({
+            dates: [
+              dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 1 }),
+              dateAdapter(2010, 10, 11, 13, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
+              dateAdapter(2010, 10, 11, 14, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
+              dateAdapter(2010, 10, 12, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
+            ],
+            dateAdapter: DateAdapter,
+            timezone,
+          });
+
+          const durDatesB = new Dates({
+            dates: [
+              dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 2 }),
+              dateAdapter(2010, 10, 11, 14, 11, 11, 11, {
+                duration: MILLISECONDS_IN_HOUR * 0.5,
+              }),
+              dateAdapter(2010, 10, 12, 14, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 20 }),
+              dateAdapter(2010, 10, 13, 6, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 10 }),
+              dateAdapter(2010, 10, 13, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
+              dateAdapter(2010, 10, 14, 13, 1, 1, 1, { duration: 1000 }),
             ],
             dateAdapter: DateAdapter,
             timezone,
@@ -559,25 +588,12 @@ describe('Operators', () => {
             });
 
             describe('MergeDurationOperator', () => {
-              const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
-
-              const datesA = new Dates({
-                dates: [
-                  dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 1 }),
-                  dateAdapter(2010, 10, 11, 13, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
-                  dateAdapter(2010, 10, 11, 14, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
-                  dateAdapter(2010, 10, 12, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
-                ],
-                dateAdapter: DateAdapter,
-                timezone,
-              });
-
               it('mergeDuration()', () => {
                 const iterable = mergeDuration({
                   maxDuration: MILLISECONDS_IN_HOUR * 3,
                 })({
                   dateAdapter: DateAdapter,
-                  base: datesA,
+                  base: durDatesA,
                   timezone,
                 })._run();
 
@@ -607,7 +623,7 @@ describe('Operators', () => {
                       maxDuration: MILLISECONDS_IN_HOUR * 3,
                     })({
                       dateAdapter: DateAdapter,
-                      base: datesA,
+                      base: durDatesA,
                       timezone: 'UTC',
                     })._run();
 
@@ -615,7 +631,7 @@ describe('Operators', () => {
                       maxDuration: MILLISECONDS_IN_HOUR * 3,
                     })({
                       dateAdapter: DateAdapter,
-                      base: datesA,
+                      base: durDatesA,
                       timezone,
                     })._run();
 
@@ -651,7 +667,7 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 3 - 1,
                   })({
                     dateAdapter: DateAdapter,
-                    base: datesA,
+                    base: durDatesA,
                     timezone,
                   })._run();
 
@@ -671,9 +687,9 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 3,
                   })({
                     dateAdapter: DateAdapter,
-                    base: datesA,
+                    base: durDatesA,
                     timezone,
-                  })._run({ start: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+                  })._run({ start: dateTime(2010, 10, 11, 16, 11, 11, 11) });
 
                   const results: [string, number][] = [];
 
@@ -692,9 +708,9 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 3,
                   })({
                     dateAdapter: DateAdapter,
-                    base: datesA,
+                    base: durDatesA,
                     timezone,
-                  })._run({ end: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+                  })._run({ end: dateTime(2010, 10, 11, 16, 11, 11, 11) });
 
                   const results: [string, number][] = [];
 
@@ -713,7 +729,7 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 3,
                   })({
                     dateAdapter: DateAdapter,
-                    base: datesA,
+                    base: durDatesA,
                     timezone,
                   })._run({ reverse: true });
 
@@ -727,6 +743,240 @@ describe('Operators', () => {
                     [
                       [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                    ].reverse(),
+                  );
+                });
+              });
+            });
+
+            describe('SplitDurationOperator', () => {
+              const splitFn = (date: DateTime) => {
+                if (date.add(1, 'hour').isBefore(date.end!)) {
+                  const diff = date.duration! / 2;
+
+                  return [
+                    date.set('duration', diff),
+                    date.add(diff, 'millisecond').set('duration', diff),
+                  ];
+                }
+
+                return [date];
+              };
+
+              const maxDuration = MILLISECONDS_IN_HOUR * 3;
+
+              it('splitDuration()', () => {
+                const iterable = splitDuration({ maxDuration, splitFn })({
+                  dateAdapter: DateAdapter,
+                  base: durDatesA.add(
+                    dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                      duration: MILLISECONDS_IN_HOUR * 0.5,
+                    }),
+                  ),
+                  timezone,
+                })._run();
+
+                const results: [string, number][] = [];
+
+                for (const date of iterable) {
+                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                }
+
+                expect(results).toEqual([
+                  [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 14, 15, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                  [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                ]);
+              });
+
+              describe('args', () => {
+                const offset = new Date().getTimezoneOffset();
+
+                // The CI runners have local as UTC so need to work around this
+                const doTest =
+                  offset === 0 ? ![null, 'UTC'].includes(timezone) : timezone !== 'UTC';
+
+                if (doTest) {
+                  it('timezone', () => {
+                    const iterableUTC = splitDuration({ maxDuration, splitFn })({
+                      dateAdapter: DateAdapter,
+                      base: durDatesA,
+                      timezone: 'UTC',
+                    })._run();
+
+                    const iterableOriginal = splitDuration({ maxDuration, splitFn })({
+                      dateAdapter: DateAdapter,
+                      base: durDatesA,
+                      timezone,
+                    })._run();
+
+                    const jsonUTC: any[] = [];
+                    const jsonOriginal: any[] = [];
+
+                    const stringUTC: string[] = [];
+                    const stringOriginal: string[] = [];
+
+                    for (const date of iterableUTC) {
+                      expect(date.timezone).toEqual('UTC');
+                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      delete json.timezone;
+                      jsonUTC.push(json);
+                      stringUTC.push(toAdapter(date, { keepZone: true }).toISOString());
+                    }
+
+                    for (const date of iterableOriginal) {
+                      expect(date.timezone).not.toEqual('UTC');
+                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      delete json.timezone;
+                      jsonOriginal.push(json);
+                      stringOriginal.push(toAdapter(date, { keepZone: true }).toISOString());
+                    }
+
+                    expect(jsonUTC).not.toEqual(jsonOriginal);
+                    expect(stringUTC).toEqual(stringOriginal);
+                  });
+                }
+
+                it('maxDuration', () => {
+                  const iterable = splitDuration({
+                    maxDuration: MILLISECONDS_IN_HOUR * 1 - 1,
+                    splitFn,
+                  })({
+                    dateAdapter: DateAdapter,
+                    base: durDatesA,
+                    timezone,
+                  })._run();
+
+                  const results: [string, number][] = [];
+
+                  expect(() => {
+                    for (const date of iterable) {
+                      results.push([toAdapter(date).toISOString(), date.duration!]);
+                    }
+                  }).toThrowError();
+                });
+              });
+
+              describe('runArgs', () => {
+                it('start', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: durDatesA,
+                    timezone,
+                  })._run({ start: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                  ]);
+                });
+
+                it('end', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: durDatesA,
+                    timezone,
+                  })._run({ end: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  ]);
+                });
+
+                it('reverse', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: durDatesA.add(
+                      dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                        duration: MILLISECONDS_IN_HOUR * 0.5,
+                      }),
+                    ),
+                    timezone,
+                  })._run({ reverse: true });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 15, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse start', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: durDatesA,
+                    timezone,
+                  })._run({ reverse: true, start: dateTime(2010, 10, 11, 14, 12, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse end', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: durDatesA,
+                    timezone,
+                  })._run({ reverse: true, end: dateTime(2010, 10, 11, 14, 12, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
                     ].reverse(),
                   );
@@ -1233,40 +1483,12 @@ describe('Operators', () => {
             });
 
             describe('MergeDurationOperator', () => {
-              const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
-
-              const datesA = new Dates({
-                dates: [
-                  dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 1 }),
-                  dateAdapter(2010, 10, 11, 13, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
-                  dateAdapter(2010, 10, 11, 14, 11, 11, 11, { duration: MILLISECONDS_IN_HOUR * 2 }),
-                  dateAdapter(2010, 10, 12, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
-                ],
-                dateAdapter: DateAdapter,
-                timezone,
-              });
-
-              const datesB = new Dates({
-                dates: [
-                  dateAdapter(2010, 10, 10, 13, 9, 9, 9, { duration: MILLISECONDS_IN_HOUR * 2 }),
-                  dateAdapter(2010, 10, 11, 14, 11, 11, 11, {
-                    duration: MILLISECONDS_IN_HOUR * 0.5,
-                  }),
-                  dateAdapter(2010, 10, 12, 14, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 20 }),
-                  dateAdapter(2010, 10, 13, 6, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 10 }),
-                  dateAdapter(2010, 10, 13, 13, 1, 1, 1, { duration: MILLISECONDS_IN_HOUR * 1 }),
-                  dateAdapter(2010, 10, 14, 13, 1, 1, 1, { duration: 1000 }),
-                ],
-                dateAdapter: DateAdapter,
-                timezone,
-              });
-
               it('mergeDuration()', () => {
                 const iterable = mergeDuration({
                   maxDuration: MILLISECONDS_IN_HOUR * 27,
                 })({
                   dateAdapter: DateAdapter,
-                  base: add(datesA, datesB)({
+                  base: add(durDatesA, durDatesB)({
                     dateAdapter: DateAdapter,
                     timezone,
                   }),
@@ -1293,7 +1515,7 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 27 - 1,
                   })({
                     dateAdapter: DateAdapter,
-                    base: add(datesA, datesB)({
+                    base: add(durDatesA, durDatesB)({
                       dateAdapter: DateAdapter,
                       timezone,
                     }),
@@ -1316,12 +1538,12 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 27,
                   })({
                     dateAdapter: DateAdapter,
-                    base: add(datesA, datesB)({
+                    base: add(durDatesA, durDatesB)({
                       dateAdapter: DateAdapter,
                       timezone,
                     }),
                     timezone,
-                  })._run({ start: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+                  })._run({ start: dateTime(2010, 10, 13, 16, 1, 1, 1) });
 
                   const results: [string, number][] = [];
 
@@ -1340,12 +1562,12 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 27,
                   })({
                     dateAdapter: DateAdapter,
-                    base: add(datesA, datesB)({
+                    base: add(durDatesA, durDatesB)({
                       dateAdapter: DateAdapter,
                       timezone,
                     }),
                     timezone,
-                  })._run({ end: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+                  })._run({ end: dateTime(2010, 10, 12, 13, 1, 1, 1) });
 
                   const results: [string, number][] = [];
 
@@ -1365,7 +1587,7 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 27,
                   })({
                     dateAdapter: DateAdapter,
-                    base: add(datesA, datesB)({
+                    base: add(durDatesA, durDatesB)({
                       dateAdapter: DateAdapter,
                       timezone,
                     }),
@@ -1393,12 +1615,12 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 27,
                   })({
                     dateAdapter: DateAdapter,
-                    base: add(datesA, datesB)({
+                    base: add(durDatesA, durDatesB)({
                       dateAdapter: DateAdapter,
                       timezone,
                     }),
                     timezone,
-                  })._run({ reverse: true, start: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+                  })._run({ reverse: true, start: dateTime(2010, 10, 12, 13, 1, 1, 1) });
 
                   const results: [string, number][] = [];
 
@@ -1420,12 +1642,12 @@ describe('Operators', () => {
                     maxDuration: MILLISECONDS_IN_HOUR * 27,
                   })({
                     dateAdapter: DateAdapter,
-                    base: add(datesA, datesB)({
+                    base: add(durDatesA, durDatesB)({
                       dateAdapter: DateAdapter,
                       timezone,
                     }),
                     timezone,
-                  })._run({ reverse: true, end: dateTime(2010, 10, 13, 0, 1, 1, 1) });
+                  })._run({ reverse: true, end: dateTime(2010, 10, 13, 16, 1, 1, 1) });
 
                   const results: [string, number][] = [];
 
@@ -1436,6 +1658,239 @@ describe('Operators', () => {
                   expect(results).toEqual(
                     [
                       [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                    ].reverse(),
+                  );
+                });
+              });
+            });
+
+            describe('SplitDurationOperator', () => {
+              const splitFn = (date: DateTime) => {
+                if (date.add(1, 'hour').isBefore(date.end!)) {
+                  const diff = date.duration! / 2;
+
+                  return [
+                    date.set('duration', diff),
+                    date.add(diff, 'millisecond').set('duration', diff),
+                  ];
+                }
+
+                return [date];
+              };
+
+              const maxDuration = MILLISECONDS_IN_HOUR * 10;
+
+              it('splitDuration()', () => {
+                const iterable = splitDuration({ maxDuration, splitFn })({
+                  dateAdapter: DateAdapter,
+                  base: add(durDatesA, durDatesB)({
+                    dateAdapter: DateAdapter,
+                    timezone,
+                  }),
+                  timezone,
+                })._run();
+
+                const results: [string, number][] = [];
+
+                for (const date of iterable) {
+                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                }
+
+                expect(results).toEqual([
+                  [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 10, 14, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                  [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 12, 14, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                  [isoString(2010, 10, 13, 0, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                  [isoString(2010, 10, 13, 6, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                  [isoString(2010, 10, 13, 11, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                  [isoString(2010, 10, 13, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                  [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                ]);
+              });
+
+              describe('args', () => {
+                it('maxDuration', () => {
+                  const iterable = splitDuration({ maxDuration: maxDuration - 1, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: add(durDatesA, durDatesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run();
+
+                  const results: [string, number][] = [];
+
+                  expect(() => {
+                    for (const date of iterable) {
+                      results.push([toAdapter(date).toISOString(), date.duration!]);
+                    }
+                  }).toThrowError();
+                });
+              });
+
+              describe('runArgs', () => {
+                it('start', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: add(durDatesA, durDatesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ start: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 12, 14, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                    [isoString(2010, 10, 13, 0, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                    [isoString(2010, 10, 13, 6, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                    [isoString(2010, 10, 13, 11, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                    [isoString(2010, 10, 13, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                  ]);
+                });
+
+                it('end', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: add(durDatesA, durDatesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ end: dateTime(2010, 10, 11, 14, 11, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual([
+                    [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 10, 14, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                  ]);
+                });
+
+                it('reverse', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: add(durDatesA, durDatesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ reverse: true });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 10, 14, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 14, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                      [isoString(2010, 10, 13, 0, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                      [isoString(2010, 10, 13, 6, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                      [isoString(2010, 10, 13, 11, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                      [isoString(2010, 10, 13, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse start', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: add(durDatesA, durDatesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ reverse: true, start: dateTime(2010, 10, 11, 14, 12, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 10, 14, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse end', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: add(durDatesA, durDatesB)({
+                      dateAdapter: DateAdapter,
+                      timezone,
+                    }),
+                    timezone,
+                  })._run({ reverse: true, end: dateTime(2010, 10, 11, 14, 12, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 14, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                      [isoString(2010, 10, 13, 0, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                      [isoString(2010, 10, 13, 6, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                      [isoString(2010, 10, 13, 11, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                      [isoString(2010, 10, 13, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
                     ].reverse(),
                   );

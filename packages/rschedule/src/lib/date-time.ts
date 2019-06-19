@@ -594,6 +594,10 @@ function setDateToEndOfWeek(date: DateTime, wkst: IDateAdapter.Weekday) {
 export function dateTimeSortComparer(a: DateTime, b: DateTime) {
   if (a.isAfter(b)) return 1;
   if (a.isBefore(b)) return -1;
+  if (a.duration && b.duration) {
+    if (a.duration > b.duration) return 1;
+    if (a.duration < b.duration) return -1;
+  }
   return 0;
 }
 
