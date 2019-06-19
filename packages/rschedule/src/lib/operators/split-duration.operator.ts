@@ -13,7 +13,7 @@ export class SplitDurationOperatorError extends Error {}
 /**
  * An operator function which takes an occurrence stream with
  * `hasDuration === true` and passes occurrences through a splitting
- * function. One use case for this operator is to dynamically break up
+ * function. One usecase for this operator is to dynamically break up
  * occurrences with a large duration into several smaller occurrences.
  *
  * You must provide a `maxDuration` argument that represents the

@@ -2,11 +2,12 @@
 
 This library exports a selection of occurrence stream operators for manipulating a stream of occurrences. Current operators are:
 
-- [Add](#Add)
-- [Subtract](#Subtract)
-- [Intersection](#Intersection)
-- [Unique](#Unique)
-- [MergeDuration](#MergeDuration)
+- [Add](#add)
+- [Subtract](#subtract)
+- [Intersection](#intersection)
+- [Unique](#unique)
+- [MergeDuration](#mergeduration)
+- [SplitDuration](#splitduration)
 
 Each of these operator functions is used as an argument to `IOccurrenceGenerator#pipe()`.
 
@@ -123,5 +124,50 @@ expect(dates.occurrences().toArray()).toEqual([
   new StandardDateAdapter(new Date(2010, 10, 10, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
   new StandardDateAdapter(new Date(2010, 10, 11, 13), { duration: MILLISECONDS_IN_HOUR * 3 }),
   new StandardDateAdapter(new Date(2010, 10, 12, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+]);
+```
+
+#### SplitDuration
+
+_Note: only usable on streams where all occurrences have a duration_
+
+An operator function which takes an occurrence stream with `hasDuration === true` and passes occurrences through a splitting function. One usecase for this operator is to dynamically break up occurrences with a large duration into several smaller occurrences.
+
+You must provide a `maxDuration` argument that represents the maximum possible duration for a single occurrence. If this duration is exceeded, a `SplitDurationOperatorError` will be thrown.
+
+- For your convenience, you can globally set a default `SplitDurationOperator#maxDuration` via `RScheduleConfig.SplitDurationOperator.defaultMaxDuration`.
+
+Usage example:
+
+```typescript
+const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
+
+const splitFn = (date: DateTime) => {
+  if (date.duration > MILLISECONDS_IN_HOUR) {
+    const diff = date.duration! / 2;
+
+    return [date.set('duration', diff), date.add(diff, 'millisecond').set('duration', diff)];
+  }
+
+  return [date];
+};
+
+const dates = new Dates({
+  dates: [
+    new StandardDateAdapter(new Date(2010, 10, 10, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+    new StandardDateAdapter(new Date(2010, 10, 11, 13), { duration: MILLISECONDS_IN_HOUR * 2 }),
+  ],
+  dateAdpter: StandardDateAdapter,
+}).pipe(
+  splitDuration({
+    splitFn,
+    maxDuration: MILLISECONDS_IN_HOUR * 1,
+  }),
+);
+
+expect(dates.occurrences().toArray()).toEqual([
+  new StandardDateAdapter(new Date(2010, 10, 10, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+  new StandardDateAdapter(new Date(2010, 10, 11, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
+  new StandardDateAdapter(new Date(2010, 10, 11, 14), { duration: MILLISECONDS_IN_HOUR * 1 }),
 ]);
 ```
