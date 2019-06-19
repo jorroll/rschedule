@@ -2,7 +2,7 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/rule-tools)](https://www.npmjs.com/package/@rschedule/rule-tools) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/rule-tools)](https://bundlephobia.com/result?p=@rschedule/rule-tools)
 
-The optional package `@rschedule/rule-tools` contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up rSchedule objects.
+The optional package `@rschedule/rule-tools` contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up immutable rSchedule objects.
 
 Example:
 
@@ -42,7 +42,7 @@ The `rule-tools` package is meant to make it easier to add these common rule opt
 
 In practical terms, here is an example workflow:
 
-1. A use clicks on a day on the calendar.
+1. A user clicks on a day on the calendar.
 2. The `validRecurrencePatternsOnDate()` function can be used to find what common recurrence patterns can be added for the clicked date.
 3. The `scheduleHasPattern()` function can be used to see if a specific `Schedule` object already has a specific occurrence pattern on the given date.
    - For all the rules existing in the `Schedule` for the given date, you can provide an option to the user to `end` that rule on that date, or remove the rule altogether.
