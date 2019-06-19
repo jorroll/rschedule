@@ -1,6 +1,6 @@
 # Schedule class
 
-**Schedule implements [IOccurrenceGenerator](../#IOccurrenceGenerator-Interface), IScheduleLike;**
+**Schedule implements [IOccurrenceGenerator](../#ioccurrencegenerator-interface), IScheduleLike;**
 
 `Schedule` objects allow iterating a occurrence schedule made up of RRULE, EXRULE, RDATE, and EXDATE components. Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out. As with other rSchedule objects, `Schedule` is immutable.
 

@@ -1,6 +1,6 @@
 # Dates class
 
-[**`Dates implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
+[**`Dates implements IOccurrenceGenerator`**](../#ioccurrencegenerator-interface)
 
 The `Dates` class provides a `IOccurrenceGenerator` wrapper for an array of dates. As with other rSchedule objects, `Dates` is immutable.
 

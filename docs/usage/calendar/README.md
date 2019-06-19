@@ -1,8 +1,8 @@
 # Calendar class
 
-[**`Calendar implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
+[**`Calendar implements IOccurrenceGenerator`**](../#ioccurrencegenerator-interface)
 
-While [`Schedule`](../schedule) objects are intended to represent the schedule of a single event, `Calendar` objects are intended to represent a group (calendar) of events. `Calendar` objects support iterating through _the union_ of a group of [`IOccurrenceGenerator`](../#IOccurrenceGenerator-Interface) objects. As with other rSchedule objects, `Calendar` is immutable.
+While [`Schedule`](../schedule) objects are intended to represent the schedule of a single event, `Calendar` objects are intended to represent a group (calendar) of events. `Calendar` objects support iterating through _the union_ of a group of [`IOccurrenceGenerator`](../#ioccurrencegenerator-interface) objects. As with other rSchedule objects, `Calendar` is immutable.
 
 Unlike `Schedule` or `Rule` objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different occurrence generator). Because `Calendar` objects are constructed from objects which implement the [`IOccurrenceGenerator` interface](../#shared-interfaces), you can construct calendars out of other `Calendars`, out of `Schedules`, `Rules`, etc.
 

@@ -1,6 +1,6 @@
 # Rule class
 
-[**`Rule implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
+[**`Rule implements IOccurrenceGenerator`**](../#ioccurrencegenerator-interface)
 
 `Rule` objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects. As with other rSchedule objects, `Rule` is immutable.
 
