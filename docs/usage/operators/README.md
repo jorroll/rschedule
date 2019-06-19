@@ -101,6 +101,10 @@ _Note: only usable on streams where all occurrences have a duration_
 
 An operator function which takes an occurrence stream with `hasDuration === true` and merges occurrences which have overlapping start and end times.
 
+You must provide a `maxDuration` argument that represents the maximum possible duration for a single occurrence. If this duration is exceeded, a `MergeDurationOperatorError` will be thrown.
+
+- For your convenience, you can globally set a default `MergeDurationOperator#maxDuration` via `RScheduleConfig.MergeDurationOperator.defaultMaxDuration`.
+
 Example:
 
 ```typescript
