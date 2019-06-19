@@ -2,11 +2,11 @@
 
 [**`Rule implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
 
-`Rule` objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects.
+`Rule` objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects. As with other rSchedule objects, `Rule` is immutable.
 
 Rule objects are created with a variety of [iCAL spec](https://tools.ietf.org/html/rfc5545) options which are summarized below. If you're not familiar, you can read the [recurrence rule section of the ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10) to really familiarize yourself with the concepts (its not long).
 
-There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up rSchedule objects. [See the `rule-tools` docs for more information.](../rule-tools)
+There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up the immutable rSchedule objects. [See the `rule-tools` docs for more information.](../rule-tools)
 
 Rule objects support:
 
@@ -267,6 +267,9 @@ class Rule<T extends typeof DateAdapter, D = any> {
     options: IProvidedRuleOptions<T>,
     args?: {
       // The data property holds arbitrary data associated with the `Rule`.
+      // The data property is also the one exception to rSchedule's immutability:
+      // the data property is mutable.
+      //
       // When iterating through a Rule, you can access a list of the generator objects (i.e. this Rule)
       // which generated any yielded date by accessing the `IDateAdapter#generators` property.
       // In this way, for a given, yielded date, you can access the object which generated

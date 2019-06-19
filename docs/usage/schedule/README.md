@@ -2,7 +2,7 @@
 
 **Schedule implements [IOccurrenceGenerator](../#IOccurrenceGenerator-Interface), IScheduleLike;**
 
-`Schedule` objects allow iterating a occurrence schedule made up of RRULE, EXRULE, RDATE, and EXDATE components. Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
+`Schedule` objects allow iterating a occurrence schedule made up of RRULE, EXRULE, RDATE, and EXDATE components. Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out. As with other rSchedule objects, `Schedule` is immutable.
 
 Example usage:
 
@@ -61,6 +61,9 @@ class Schedule<T extends typeof DateAdapter, D = any> {
     dateAdapter?: T;
     timezone?: string | null;
     // The data property holds arbitrary data associated with the `Schedule`.
+    // The data property is also the one exception to rSchedule's immutability:
+    // the data property is mutable.
+    //
     // When iterating through a Schedule, you can access a list of the generator objects (i.e. Rules / Dates)
     // which generated any yielded date by accessing the `IDateAdapter#generators` property.
     // In this way, for a given, yielded date, you can access the objects which generated

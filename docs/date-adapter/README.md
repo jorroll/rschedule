@@ -1,6 +1,6 @@
 # Date adapters
 
-rSchedule is date library agnostic. It needs a `IDateAdapter` constructor to process dates. A selection of DateAdapters already exist. Additionally, it should be pretty easy for you to create your own date adapter for whatever date library you wish.
+rSchedule is date library agnostic. It needs a `IDateAdapter` constructor to process dates. A selection of DateAdapters already exist. Additionally, it should be pretty easy for you to create your own date adapter for whatever date library you wish. As with other rSchedule objects, date adapters are immutable.
 
 - [StandardDateAdapter](./standard-date-adapter)
   - For use with the standard javascript `Date` object. Supports local and UTC timezones.

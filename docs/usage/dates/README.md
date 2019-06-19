@@ -2,7 +2,7 @@
 
 [**`Dates implements IOccurrenceGenerator`**](../#IOccurrenceGenerator-Interface)
 
-The `Dates` class provides a `IOccurrenceGenerator` wrapper for an array of dates.
+The `Dates` class provides a `IOccurrenceGenerator` wrapper for an array of dates. As with other rSchedule objects, `Dates` is immutable.
 
 Example usage:
 
@@ -30,6 +30,9 @@ class Dates<T extends typeof DateAdapter, D = any> {
     timezone?: string | null;
     dates?: Array<DateInput<T>>;
     // The data property holds arbitrary data associated with the `Dates`.
+    // The data property is also the one exception to rSchedule's immutability:
+    // the data property is mutable.
+    //
     // When iterating through a Dates, you can access a list of the generator objects (i.e. this Dates)
     // which generated any yielded date by accessing the `IDateAdapter#generators` property.
     // In this way, for a given, yielded date, you can access the object which generated
