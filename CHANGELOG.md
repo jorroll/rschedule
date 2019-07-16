@@ -4,6 +4,8 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## Releases
+
 ## 0.11.2 FEATURE (2019/7/15)
 
 ### Features
