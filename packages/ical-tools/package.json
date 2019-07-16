@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/ical-tools",
-  "version": "0.11.0",
+  "version": "0.11.2",
   "description": "Utility functions for parsing/serializing rSchedule objects in iCalendar format.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
