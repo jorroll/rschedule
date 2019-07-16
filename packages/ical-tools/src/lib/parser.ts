@@ -3,6 +3,11 @@ import {
   DateAdapter,
   IDateAdapter,
   IProvidedRuleOptions,
+  MILLISECONDS_IN_DAY,
+  MILLISECONDS_IN_HOUR,
+  MILLISECONDS_IN_MINUTE,
+  MILLISECONDS_IN_SECOND,
+  MILLISECONDS_IN_WEEK,
   RScheduleConfig,
   RuleOption,
   WEEKDAYS,
@@ -21,6 +26,7 @@ type IDtstartProperty<T extends typeof DateAdapter> = IJCalProperty & {
 
 export interface IVEventArgs<T extends typeof DateAdapter> {
   start: InstanceType<T>;
+  duration?: number | InstanceType<T>;
   rrules?: IVEventRuleOptions<T>[];
   exrules?: IVEventRuleOptions<T>[];
   rdates?: InstanceType<T>[];
@@ -140,8 +146,21 @@ function parseVEvent<T extends typeof DateAdapter>(rawInput: IJCalComponent, dat
 
   dtstartProperty.processedValue = parseDTSTART(dtstartProperty, dateAdapter);
 
+  let dtend: InstanceType<T> | undefined;
+  let duration: number | undefined;
+
+  const dtendIndex = input[1].findIndex(property => property[0] === 'dtend');
+  const durationIndex = input[1].findIndex(property => property[0] === 'duration');
+
+  if (dtendIndex !== -1) {
+    dtend = parseDTEND(input[1].splice(dtendIndex, 1)[0], dateAdapter);
+  } else if (durationIndex !== -1) {
+    duration = parseDURATION(input[1].splice(durationIndex, 1)[0]);
+  }
+
   const params: IVEventArgs<T> = {
     start: dtstartProperty.processedValue,
+    duration: dtend || duration,
     rrules: [],
     exrules: [],
     rdates: [],
@@ -259,6 +278,62 @@ export function parseDTSTART<T extends typeof DateAdapter>(
   }
 
   return dates[0];
+}
+
+export function parseDTEND<T extends typeof DateAdapter>(
+  input: IJCalProperty,
+  dateAdapterConstructor: T,
+): InstanceType<T> {
+  const type = input[2];
+
+  if (!['date-time', 'date'].includes(type)) {
+    throw new ParseICalError(`Invalid DTEND value type "${type}".`);
+  }
+
+  const dates = jCalDateTimeToDateAdapter(input, dateAdapterConstructor);
+
+  if (dates.length !== 1) {
+    throw new ParseICalError(`Invalid DTEND: must have exactly 1 value.`);
+  }
+
+  return dates[0];
+}
+
+export function parseDURATION(input: IJCalProperty) {
+  const durationString = input[3];
+  let weeks = 0;
+  let days = 0;
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
+  let match: RegExpMatchArray | null = null;
+
+  const [date, time] = durationString.split('T');
+
+  match = date.match(/\d+[Ww]/);
+  if (match) weeks = parseInt(match[0].match(/\d+/)![0], 10);
+
+  match = date.match(/\d+[Dd]/);
+  if (match) days = parseInt(match[0].match(/\d+/)![0], 10);
+
+  if (time) {
+    time.match(/\d+[Hh]/);
+    if (match) hours = parseInt(match[0].match(/\d+/)![0], 10);
+
+    time.match(/\d+[Mm]/);
+    if (match) minutes = parseInt(match[0].match(/\d+/)![0], 10);
+
+    time.match(/\d+[Ss]/);
+    if (match) seconds = parseInt(match[0].match(/\d+/)![0], 10);
+  }
+
+  return (
+    weeks * MILLISECONDS_IN_WEEK +
+    days * MILLISECONDS_IN_DAY +
+    hours * MILLISECONDS_IN_HOUR +
+    minutes * MILLISECONDS_IN_MINUTE +
+    seconds * MILLISECONDS_IN_SECOND
+  );
 }
 
 export function parseRule<T extends typeof DateAdapter>(

@@ -7,6 +7,9 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 ### Features
 
 - added `SplitDurationOperator`.
+- added `VEvent#duration` support
+- `ical-tools` can parse/serialize VEVENTs with `duration`/`dtend` property.
+- `Dates#set()` can be used to set all the `duration` values of the underlying dates.
 
 ### Fixes
 

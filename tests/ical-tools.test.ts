@@ -2,7 +2,10 @@ import { IJCalProperty, serializeToICal, serializeToJCal, VEvent } from '@rsched
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-import { DateAdapter as DateAdapterConstructor } from '@rschedule/rschedule';
+import {
+  DateAdapter as DateAdapterConstructor,
+  MILLISECONDS_IN_MINUTE,
+} from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
 import { Moment as MomentST } from 'moment';
@@ -829,6 +832,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                 cloneJSON(
                   result.vEvents.map(event => ({
                     start: event.start,
+                    duration: event.duration,
                     rrules: event.rrules.map(rule => rule.options),
                     data: event.data,
                   })),
@@ -857,12 +861,16 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                     ],
                   },
                   start: dateAdapter(2018, 10, 8, 9, 0, 0, { timezone: 'Europe/London' }).toJSON(),
+                  duration: dateAdapter(2018, 10, 8, 9, 30, 0, {
+                    timezone: 'Europe/London',
+                  }).toJSON(),
                   rrules: [
                     {
                       frequency: 'DAILY',
                       start: dateAdapter(2018, 10, 8, 9, 0, 0, {
                         timezone: 'Europe/London',
                       }).toJSON(),
+                      duration: 30 * MILLISECONDS_IN_MINUTE,
                     },
                   ],
                 },
@@ -1737,11 +1745,13 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           });
         });
 
-        it('serializes and deserializes Schedule to VEVENT', () => {
+        it('serializes VEvent to VEVENT w/ DTEND', () => {
           const now = dateAdapter(2010, 10, 10, 7);
+          const durEnd = dateAdapter(2010, 10, 10, 7, 30);
 
           const schedule = new VEvent({
             start: now,
+            duration: durEnd,
             rrules: [
               {
                 frequency: 'DAILY',
@@ -1756,6 +1766,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           const ical = [
             'BEGIN:VEVENT',
             null,
+            null,
             'RRULE:FREQ=DAILY;COUNT=3;BYHOUR=7,16',
             null,
             'END:VEVENT',
@@ -1763,13 +1774,59 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
           if (timezone === 'UTC') {
             ical[1] = 'DTSTART:20101010T070000Z';
-            ical[3] = 'RDATE:20101011T000000Z';
+            ical[2] = 'DTEND:20101010T073000Z';
+            ical[4] = 'RDATE:20101011T000000Z';
           } else if (timezone === null) {
             ical[1] = 'DTSTART:20101010T070000';
-            ical[3] = 'RDATE:20101011T000000';
+            ical[2] = 'DTEND:20101010T073000';
+            ical[4] = 'RDATE:20101011T000000';
           } else {
             ical[1] = `DTSTART;TZID=${timezone}:20101010T070000`;
-            ical[3] = `RDATE;TZID=${timezone}:20101011T000000`;
+            ical[2] = `DTEND;TZID=${timezone}:20101010T073000`;
+            ical[4] = `RDATE;TZID=${timezone}:20101011T000000`;
+          }
+
+          const serialized = serializeToICal(schedule);
+
+          expect(serialized).toBe(ical.join('\n').concat('\n'));
+        });
+
+        it('serializes VEvent to VEVENT w/ DURATION', () => {
+          const now = dateAdapter(2010, 10, 10, 7);
+          const duration = 30 * MILLISECONDS_IN_MINUTE;
+
+          const schedule = new VEvent({
+            start: now,
+            duration,
+            rrules: [
+              {
+                frequency: 'DAILY',
+                count: 3,
+                byHourOfDay: [7, 16],
+              },
+            ],
+            rdates: [dateAdapter(2010, 10, 11, 0)],
+            dateAdapter: DateAdapter,
+          });
+
+          const ical = [
+            'BEGIN:VEVENT',
+            null,
+            'DURATION:PT30M',
+            'RRULE:FREQ=DAILY;COUNT=3;BYHOUR=7,16',
+            null,
+            'END:VEVENT',
+          ];
+
+          if (timezone === 'UTC') {
+            ical[1] = 'DTSTART:20101010T070000Z';
+            ical[4] = 'RDATE:20101011T000000Z';
+          } else if (timezone === null) {
+            ical[1] = 'DTSTART:20101010T070000';
+            ical[4] = 'RDATE:20101011T000000';
+          } else {
+            ical[1] = `DTSTART;TZID=${timezone}:20101010T070000`;
+            ical[4] = `RDATE;TZID=${timezone}:20101011T000000`;
           }
 
           const serialized = serializeToICal(schedule);
