@@ -175,6 +175,21 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
 
             expect(dates.timezone).toBe('UTC');
           });
+
+          it('duration', () => {
+            const dates = new Dates({
+              dates: [
+                dateAdapter(1998, 1, 1, 9, 0),
+                dateAdapter(1998, 1, 1, 9, 0),
+                dateAdapter(2000, 1, 1, 9, 0),
+                dateAdapter(2017, 1, 1, 9, 0),
+              ],
+              timezone,
+              dateAdapter: DateAdapter,
+            }).set('duration', 30);
+
+            expect(dates.adapters.every(date => date.duration === 30)).toBe(true);
+          });
         });
 
         describe('occurrences', () => {

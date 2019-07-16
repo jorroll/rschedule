@@ -4,7 +4,10 @@
 
 `VEvent` objects allow iterating a occurrence schedule made up of an RRULE and/or EXRULE as well as RDATEs and EXDATEs. Each `VEvent` object follows the iCalendar `VEVENT` spec. As such, duplicate occurrences are filtered out. As with other rSchedule objects, `VEvent` is immutable.
 
-- Note: not all iCal rules are currently supported. See the [`Rule` object section](../../../usage/rule) for more info.
+Some limitations:
+
+- Not all iCal rules are currently supported. See the [`Rule` object section](../../../usage/rule) for more info.
+- Not all VEVENT properies of the ICAL spec are supported. The supported properties are `RRULE`, `EXRULE`, `RDATE`, `EXDATE`, `DTSTART`, `DTEND` and `DURATION`. Other properties are not supported.
 
 Example usage:
 
@@ -36,6 +39,10 @@ vEvent
 class VEvent<T extends typeof DateAdapter, D = any> {
   constructor(args: {
     start: DateInput<T>;
+    // accepts either the number of milliseconds of the duration or the end
+    // datetime of the first occurrence (which will be used to calculate the
+    // duration in milliseconds)
+    duration?: number | DateInput<T>;
     dateAdapter?: T;
     // The data property holds arbitrary data associated with the `VEvent`.
     // The data property is also the one exception to rSchedule's immutability:

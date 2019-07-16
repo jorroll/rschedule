@@ -64,6 +64,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
   constructor(
     args: {
       timezone?: string | null;
+      duration?: number;
       dates?: ReadonlyArray<DateInput<T>>;
       data?: D;
       dateAdapter?: T;
@@ -74,7 +75,19 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     this.data = args.data as D;
 
     if (args.dates) {
-      this.adapters = args.dates.map(date => this.normalizeDateInputToAdapter(date));
+      this.adapters = args.dates.map(date => {
+        const adapter = this.normalizeDateInputToAdapter(date);
+
+        if (args.duration && adapter.duration !== args.duration) {
+          return this.dateAdapter.fromJSON({
+            ...adapter.toJSON(),
+            duration: args.duration,
+          }) as InstanceType<T>;
+        }
+
+        return adapter;
+      });
+
       this.datetimes = this.adapters.map(adapter =>
         adapter.set('timezone', this.timezone).toDateTime(),
       );
@@ -118,23 +131,36 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
   }
 
   /**
-   * Dates are immutable. This allows you to create a new Dates with an updated timezone
-   * or `dates` property.
+   * Dates are immutable. This allows you to create a new `Dates` with the
+   * specified property changed.
    *
    * ### Important!
-   * When updating the dates' timezone, this does not change the *`dates`* associated with this
-   * `Dates`. Instead, when the `Dates` object is processed and a specific date is found to be
-   * valid, only then is that date converted to the timezone you specify here are returned to
-   * you. This distinction might matter when viewing the timezone associated with
+   *
+   * #### Timezone
+   *
+   * When updating `Dates#timezone`, this does not actually change the timezone of the
+   * underlying date objects wrapped by this `Dates` instance. Instead, when this `Dates`
+   * object is iterated and a specific date is found to be
+   * valid, only then is that date converted to the timezone you specify here and returned to
+   * you.
+   *
+   * This distinction might matter when viewing the timezone associated with
    * `Dates#adapters`. If you wish to update the timezone associated with the `date` objects
-   * this `Dates` is wrapping, you must update the `dates` property.
+   * this `Dates` is wrapping, you must update the individual dates themselves by setting
+   * the `dates` property.
+   *
+   * #### Duration
+   *
+   * Setting the duration will update all of the underlying date objects to have the specified
+   * duration.
    *
    */
   set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): Dates<T, D>;
   set(prop: 'dates', value: DateInput<T>[]): Dates<T, D>;
+  set(prop: 'duration', value: number | undefined): Dates<T, D>;
   set(
-    prop: 'timezone' | 'dates',
-    value: DateInput<T>[] | string | null,
+    prop: 'timezone' | 'dates' | 'duration',
+    value: DateInput<T>[] | string | number | null | undefined,
     options: { keepLocalTime?: boolean } = {},
   ) {
     let timezone = this.timezone;
@@ -153,6 +179,13 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
       timezone = value as string | null;
     } else if (prop === 'dates') {
       dates = value as DateInput<T>[];
+    } else if (prop === 'duration') {
+      dates = dates.map(date =>
+        this.dateAdapter.fromJSON({
+          ...(date as InstanceType<T>).toJSON(),
+          duration: value as number | undefined,
+        }),
+      );
     } else {
       throw new ArgumentError(
         `Unexpected prop argument "${prop}". Accepted values are "timezone" or "dates"`,

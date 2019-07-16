@@ -98,8 +98,7 @@ rule
 - `@rschedule/rschedule`
   - No [`BYWEEKNO`](https://gitlab.com/john.carroll.p/rschedule/issues/2), [`BYYEARDAY`](https://gitlab.com/john.carroll.p/rschedule/issues/3), or [`BYSETPOS`](https://gitlab.com/john.carroll.p/rschedule/issues/4) rule support.
 - `@rschedule/ical-tools`
-  - `VEVENT` supports `RRULE`, `EXRULE`, `RDATE`, `EXDATE`, and `DTSTART` properties. Currently does not support `VTIMEZONE` component or `DTEND` / `DURATION` properties.
-    - Unlikely to ever support `VTIMEZONE` component. `VTIMEZONE` is intended to inline time zone data inside an ICAL string. In `rSchedule`, date libraries (e.g. `moment-timezone`) provide their own time zone data.
+  - `VEVENT` supports `RRULE`, `EXRULE`, `RDATE`, `EXDATE`, `DTSTART`, `DTEND` and `DURATION` properties. Other properties are not supported.
   - No `VCALENDAR` iCal support.
 
 ## Roadmap to 1.0
@@ -107,12 +106,11 @@ rule
 - [ ] Flesh out `duration` support in the library.
   - [x] Create `mergeDuration` operator
   - [x] Create `splitDuration` operator
-  - [ ] Create `subtractDuration` operator
   - [ ] Add `duration` awareness to `OccurrenceGenerator` `occursBetween()`, `occursOn()`, `occursAfter()`, and `occursBefore()`.
 - [x] Flesh out `ical-tools`.
   - [x] Support `VEVENT`
   - [x] Research `VTIMEZONE` to understand its effect on `VEVENT` and possibly add support.
-    - rSchedule will not be supporting `VTIMEZONE` (feel free to open an issue on this topic).
+    - rSchedule will not be supporting `VTIMEZONE` (feel free to open an issue on this topic). `VTIMEZONE` is intended to inline time zone data inside an ICAL string. In `rSchedule`, date libraries (e.g. `moment-timezone`) provide their own time zone data.
 - [ ] Revisit decision not to support `ByDayOfYear`, `ByPositionInSet`, and `ByWeekOfYear` rules.
 - [ ] **Most important:** more real world testing to make sure the API is appropriate and everything works as expected.
 
@@ -121,6 +119,7 @@ rule
 - [ ] Explore rearranging library exports and build to better support tree shaking and reduce minimum bundle size.
 - [ ] Natural language package for converting rSchedule objects into human readable strings
   - [ ] Internationalization of human readable strings
+- [ ] Create `subtractDuration` operator
 
 ## About
 

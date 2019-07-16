@@ -28,6 +28,7 @@ dates.occursOn({ date: new Date(2003) }); // false
 class Dates<T extends typeof DateAdapter, D = any> {
   constructor(args: {
     timezone?: string | null;
+    duration?: number;
     dates?: Array<DateInput<T>>;
     // The data property holds arbitrary data associated with the `Dates`.
     // The data property is also the one exception to rSchedule's immutability:

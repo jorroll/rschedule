@@ -3,6 +3,11 @@ import {
   Dates,
   DateTime,
   IProvidedRuleOptions,
+  MILLISECONDS_IN_DAY,
+  MILLISECONDS_IN_HOUR,
+  MILLISECONDS_IN_MINUTE,
+  MILLISECONDS_IN_SECOND,
+  MILLISECONDS_IN_WEEK,
   normalizeDateInput,
   RuleOption,
   WEEKDAYS,
@@ -152,6 +157,10 @@ function ruleOptionsToJCalProp<T extends typeof DateAdapter>(
 function vEventToJCal<T extends typeof DateAdapter>(vevent: VEvent<T>): IJCalComponent {
   return wrapInVEVENT(
     dateToJCalDTSTART(vevent.start.toDateTime()),
+    // prettier-ignore
+    ...(typeof vevent.duration === 'number' ? numberToJCalDURATION(vevent.duration)
+      : vevent.duration ? dateToJCalDTEND(vevent.duration.toDateTime())
+      : []),
     ...vevent.rrules.map(rule => ruleOptionsToJCalProp('RRULE', vevent.dateAdapter, rule.options)),
     ...vevent.exrules.map(rule =>
       ruleOptionsToJCalProp('EXRULE', vevent.dateAdapter, rule.options),
@@ -209,6 +218,43 @@ function dateToJCalDTSTART(date: DateTime) {
     'date-time',
     dateTimeToJCal(date),
   ];
+}
+
+function dateToJCalDTEND(date: DateTime) {
+  const timezone = date.timezone || 'UTC';
+
+  return [
+    ['dtend', timezone !== 'UTC' ? { tzid: timezone } : {}, 'date-time', dateTimeToJCal(date)],
+  ];
+}
+
+function numberToJCalDURATION(duration: number) {
+  const weeks = Math.floor(duration / MILLISECONDS_IN_WEEK);
+  duration = duration - weeks * MILLISECONDS_IN_WEEK;
+  const days = Math.floor(duration / MILLISECONDS_IN_DAY);
+  duration = duration - days * MILLISECONDS_IN_DAY;
+  const hours = Math.floor(duration / MILLISECONDS_IN_HOUR);
+  duration = duration - hours * MILLISECONDS_IN_HOUR;
+  const minutes = Math.floor(duration / MILLISECONDS_IN_MINUTE);
+  duration = duration - minutes * MILLISECONDS_IN_MINUTE;
+  const seconds = Math.ceil(duration / MILLISECONDS_IN_SECOND);
+
+  let val = 'P';
+
+  if (weeks > 0) val += `${weeks}W`;
+  if (days > 0) val += `${days}D`;
+  if (hours > 0 || minutes > 0 || seconds > 0) {
+    val += 'T';
+    if (hours > 0) val += `${hours}H`;
+    if (minutes > 0) val += `${minutes}M`;
+    if (seconds > 0) val += `${seconds}S`;
+  }
+
+  if (val === 'P') {
+    return [];
+  }
+
+  return [['duration', {}, 'duration', val]];
 }
 
 function dateTimeToJCal(input: DateTime) {

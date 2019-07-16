@@ -11,6 +11,7 @@ import {
   IProvidedRuleOptions,
   IRunArgs,
   IScheduleLike,
+  MILLISECONDS_IN_SECOND,
   OccurrenceGenerator,
   OccurrenceIterator,
   OccurrenceStream,
@@ -53,17 +54,42 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
   readonly start: InstanceType<T>;
   readonly isInfinite: boolean;
-  readonly duration?: number;
+  readonly duration?: number | InstanceType<T>;
   readonly hasDuration: boolean;
   readonly timezone: string | null;
 
   protected readonly [VEVENT_ID] = true;
 
   private readonly _start: DateTime;
+  private readonly _duration?: number;
   private readonly occurrenceStream: OccurrenceStream<T>;
 
+  /**
+   * Option descriptions:
+   *
+   * #### Duration
+   *
+   * Accepts either the number of milliseconds of the
+   * duration or the end datetime of the first occurrence
+   * (which will be used to calculate the duration in milliseconds)
+   *
+   * #### Data
+   *
+   * The data property holds arbitrary data associated with the `VEvent`.
+   * Unlike the other properties of a VEvent, the data property is mutable.
+   *
+   * When iterating through a VEvent, you can access a list of the
+   * generator objects (i.e. Rules / Dates) which generated any yielded
+   * date by accessing the `IDateAdapter#generators` property. In this way,
+   * for a given, yielded date, you can access the objects which generated
+   * the date as well as the arbitrary data associated with those objects.
+   *
+   * The data property is ignored when serializing to iCal.
+   *
+   */
   constructor(args: {
     start: DateInput<T>;
+    duration?: number | DateInput<T>;
     dateAdapter?: T;
     data?: D;
     rrules?: ReadonlyArray<IVEventRuleOptions<T> | Rule<T>>;
@@ -82,24 +108,49 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       this.data = args.data;
     }
 
+    if (typeof args.duration === 'object') {
+      this.duration = this.normalizeDateInputToAdapter(args.duration);
+
+      if ((this.duration as InstanceType<T>).timezone !== this.start.timezone) {
+        this.duration = (this.duration as InstanceType<T>).set(
+          'timezone',
+          this.start.timezone,
+        ) as InstanceType<T>;
+      }
+
+      this._duration =
+        (this.duration as InstanceType<T>).toDateTime().valueOf() - this._start.valueOf();
+
+      if (this._duration < 0) {
+        throw new ArgumentError(
+          `When providing an datetime argument to VEvent#duration, ` +
+            `the datetime must be after the start time`,
+        );
+      }
+    } else if (args.duration && args.duration > 0) {
+      this.duration = args.duration as number;
+      this._duration = this.duration;
+    }
+
+    if (this._duration && this._duration % MILLISECONDS_IN_SECOND !== 0) {
+      throw new ArgumentError(`A VEvent's duration cannot include fractions of a second`);
+    }
+
+    this.hasDuration = !!this._duration;
+
     if (args.rrules) {
       this.rrules = args.rrules.map(ruleArgs => {
         if (Rule.isRule(ruleArgs)) {
           if (!this.normalizeDateInput(ruleArgs.options.start).isEqual(this._start)) {
             throw new ArgumentError(
-              'When passing a `Rule` object to the `VEvent` constructor, ' +
-                'the rule `start` time must equal the `VEvent` start time.',
-            );
-          } else if (ruleArgs.timezone !== this.timezone) {
-            throw new ArgumentError(
-              'When passing a `Rule` object to the `VEvent` constructor, ' +
-                "the rule `timezone` time must equal the timezone of the VEvent's `start` time.",
+              'RRULE: When passing a `Rule` object to the `VEvent` constructor, ' +
+                'the rule `start` property must be equal to `VEvent#start`.',
             );
           }
 
-          return ruleArgs;
+          return ruleArgs.set('timezone', this.timezone).set('duration', this._duration);
         } else {
-          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
+          return new Rule(this.standardizeRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });
@@ -112,19 +163,14 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
         if (Rule.isRule(ruleArgs)) {
           if (!this.normalizeDateInput(ruleArgs.options.start).isEqual(this._start)) {
             throw new ArgumentError(
-              'When passing a `Rule` object to the `VEvent` constructor, ' +
-                'the rule `start` time must equal the `VEvent` start time.',
-            );
-          } else if (ruleArgs.timezone !== this.timezone) {
-            throw new ArgumentError(
-              'When passing a `Rule` object to the `VEvent` constructor, ' +
-                "the rule `timezone` time must equal the timezone of the VEvent's `start` time.",
+              'EXRULE: When passing a `Rule` object to the `VEvent` constructor, ' +
+                'the rule `start` property must be equal to `VEvent#start`.',
             );
           }
 
-          return ruleArgs;
+          return ruleArgs.set('timezone', this.timezone).set('duration', this._duration);
         } else {
-          return new Rule(standardizeVEventRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
+          return new Rule(this.standardizeRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });
@@ -134,30 +180,29 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
     if (args.rdates) {
       this.rdates = Dates.isDates(args.rdates)
-        ? args.rdates.set('timezone', this.timezone)
+        ? args.rdates.set('timezone', this.timezone).set('duration', this._duration)
         : new Dates({
             dates: args.rdates as ReadonlyArray<DateInput<T>>,
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
-          });
+            duration: this._duration,
+          }).set('duration', this._duration);
     } else {
       this.rdates = new Dates({ dateAdapter: this.dateAdapter, timezone: this.timezone });
     }
 
     if (args.exdates) {
       this.exdates = Dates.isDates(args.exdates)
-        ? args.exdates.set('timezone', this.timezone)
+        ? args.exdates.set('timezone', this.timezone).set('duration', this._duration)
         : new Dates({
             dates: args.exdates as ReadonlyArray<DateInput<T>>,
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
+            duration: this._duration,
           });
     } else {
       this.exdates = new Dates({ dateAdapter: this.dateAdapter, timezone: this.timezone });
     }
-
-    // this.duration = args.duration;
-    this.hasDuration = !!this.duration;
 
     this.isInfinite = this.rrules.some(rule => rule.isInfinite);
 
@@ -342,27 +387,26 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
   }
 
   protected normalizeRunOutput(date: DateTime) {
-    if (this.duration) {
-      return super.normalizeRunOutput(date).set('duration', this.duration);
+    if (this._duration) {
+      return super.normalizeRunOutput(date).set('duration', this._duration);
     }
 
     return super.normalizeRunOutput(date);
   }
-}
 
-function standardizeVEventRuleOptions<T extends typeof DateAdapter>(
-  options: IVEventRuleOptions<T>,
-  args: {
-    start: DateInput<T>;
-    duration?: number;
-  },
-): IProvidedRuleOptions<T> {
-  options = { ...options };
-  delete (options as any).duration;
-  return {
-    ...options,
-    ...pluckProperties(args, 'start', 'duration'),
-  };
+  protected standardizeRuleOptions(
+    options: IVEventRuleOptions<T>,
+    args: {
+      start: DateInput<T>;
+    },
+  ): IProvidedRuleOptions<T> {
+    options = { ...options };
+    return {
+      ...options,
+      ...pluckProperties(args, 'start'),
+      duration: this._duration,
+    };
+  }
 }
 
 function pluckProperties<T extends { [key: string]: unknown }>(obj: T, ...props: string[]) {
