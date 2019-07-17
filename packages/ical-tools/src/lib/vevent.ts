@@ -65,29 +65,132 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
   private readonly occurrenceStream: OccurrenceStream<T>;
 
   /**
-   * Option descriptions:
+   * Create a new VEvent object with the specified options.
    *
-   * #### Duration
+   * The order of precidence for rrules, rdates, exrules, and exdates is:
    *
-   * Accepts either the number of milliseconds of the
-   * duration or the end datetime of the first occurrence
-   * (which will be used to calculate the duration in milliseconds)
+   * 1. rrules are included
+   * 2. exrules are excluded
+   * 3. rdates are included
+   * 4. exdates are excluded
    *
-   * #### Data
+   * ### Options
    *
-   * The data property holds arbitrary data associated with the `VEvent`.
-   * Unlike the other properties of a VEvent, the data property is mutable.
+   * - **start**: the dtstart of this VEvent. Will also be equal to the first
+   *   occurrence of the VEvent. If the provided start date has a timezone,
+   *   the VEvent will be in that timezone.
+   * - **duration**: a length of time expressed in milliseconds or the end
+   *   datetime (dtend) of the first occurrence (which will be used to calculate
+   *   the duration in milliseconds).
+   * - **data**: arbitrary data you can associate with this VEvent. This
+   *   is the only mutable property of `VEvent` objects. The data property is
+   *   ignored when serializing to ICal.
+   * - **dateAdapter**: the DateAdapter class that should be used for this VEvent.
+   * - **rrules**: rules specifying when occurrences happen. See the "Rule Config"
+   *   section below.
+   * - **rdates**: individual dates that should be _included_ in the VEvent.
+   * - **exdates**: individual dates that should be _excluded_ from the VEvent.
+   * - **exrules**: rules specifying when occurrences shouldn't happen. See the
+   *   "Rule Config" section below.
    *
-   * When iterating through a VEvent, you can access a list of the
-   * generator objects (i.e. Rules / Dates) which generated any yielded
-   * date by accessing the `IDateAdapter#generators` property. In this way,
-   * for a given, yielded date, you can access the objects which generated
-   * the date as well as the arbitrary data associated with those objects.
+   * ### Rule Config
    *
-   * The data property is ignored when serializing to iCal.
+   * - #### frequency
+   *
+   *   The frequency rule part identifies the type of recurrence rule. Valid values
+   *   include `"SECONDLY"`, `"MINUTELY"`, `"HOURLY"`, `"DAILY"`, `"WEEKLY"`,
+   *   `"MONTHLY"`, or `"YEARLY"`.
+   *
+   * - #### end?
+   *
+   *   The end ("until" in ICal) of the rule (not necessarily the last occurrence).
+   *   Either a `DateAdapter` instance, date object, or `DateTime` object.
+   *   The type of date object depends on the `DateAdapter` class used for this
+   *   `Rule`.
+   *
+   * - #### interval?
+   *
+   *   The interval rule part contains a positive integer representing at
+   *   which intervals the recurrence rule repeats. The default value is
+   *   `1`, meaning every second for a SECONDLY rule, every minute for a
+   *   MINUTELY rule, every hour for an HOURLY rule, every day for a
+   *   DAILY rule, every week for a WEEKLY rule, every month for a
+   *   MONTHLY rule, and every year for a YEARLY rule. For example,
+   *   within a DAILY rule, a value of `8` means every eight days.
+   *
+   * - #### count?
+   *
+   *   The count rule part defines the number of occurrences at which to
+   *   range-bound the recurrence. `count` and `end` are both two different
+   *   ways of specifying how a recurrence completes.
+   *
+   * - #### weekStart?
+   *
+   *   The weekStart rule part specifies the day on which the workweek starts.
+   *   Valid values are `"MO"`, `"TU"`, `"WE"`, `"TH"`, `"FR"`, `"SA"`, and `"SU"`.
+   *   This is significant when a WEEKLY rule has an interval greater than 1,
+   *   and a `byDayOfWeek` rule part is specified. The
+   *   default value is `"MO"`.
+   *
+   * - #### bySecondOfMinute?
+   *
+   *   The bySecondOfMinute rule part expects an array of seconds
+   *   within a minute. Valid values are 0 to 60.
+   *
+   * - #### byMinuteOfHour?
+   *
+   *   The byMinuteOfHour rule part expects an array of minutes within an hour.
+   *   Valid values are 0 to 59.
+   *
+   * - #### byHourOfDay?
+   *
+   *   The byHourOfDay rule part expects an array of hours of the day.
+   *   Valid values are 0 to 23.
+   *
+   * - #### byDayOfWeek?
+   *
+   *   *note: the byDayOfWeek rule part is kinda complex. Blame the ICAL spec.*
+   *
+   *   The byDayOfWeek rule part expects an array. Each array entry can
+   *   be a day of the week (`"SU"`, `"MO"` , `"TU"`, `"WE"`, `"TH"`,
+   *   `"FR"`, `"SA"`). If the rule's `frequency` is either MONTHLY or YEARLY,
+   *   Any entry can also be a tuple where the first value of the tuple is a
+   *   day of the week and the second value is an positive/negative integer
+   *   (e.g. `["SU", 1]`). In this case, the number indicates the nth occurrence of
+   *   the specified day within the MONTHLY or YEARLY rule.
+   *
+   *   The behavior of byDayOfWeek changes depending on the `frequency`
+   *   of the rule.
+   *
+   *   Within a MONTHLY rule, `["MO", 1]` represents the first Monday
+   *   within the month, whereas `["MO", -1]` represents the last Monday
+   *   of the month.
+   *
+   *   Within a YEARLY rule, the numeric value in a byDayOfWeek tuple entry
+   *   corresponds to an offset within the month when the byMonthOfYear rule part is
+   *   present, and corresponds to an offset within the year otherwise.
+   *
+   *   Regardless of rule `frequency`, if a byDayOfWeek entry is a string
+   *   (rather than a tuple), it means "all of these days" within the specified
+   *   frequency (e.g. within a MONTHLY rule, `"MO"` represents all Mondays within
+   *   the month).
+   *
+   * - #### byDayOfMonth?
+   *
+   *   The byDayOfMonth rule part expects an array of days
+   *   of the month. Valid values are 1 to 31 or -31 to -1.
+   *
+   *   For example, -10 represents the tenth to the last day of the month.
+   *   The byDayOfMonth rule part *must not* be specified when the rule's
+   *   `frequency` is set to WEEKLY.
+   *
+   * - #### byMonthOfYear?
+   *
+   *   The byMonthOfYear rule part expects an array of months
+   *   of the year. Valid values are 1 to 12.
    *
    */
-  constructor(args: {
+  constructor(options: {
     start: DateInput<T>;
     duration?: number | DateInput<T>;
     dateAdapter?: T;
@@ -97,19 +200,19 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
     rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
     exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
   }) {
-    super(args);
+    super(options);
 
-    this.start = this.normalizeDateInputToAdapter(args.start);
+    this.start = this.normalizeDateInputToAdapter(options.start);
     this._start = this.start.toDateTime();
 
     this.timezone = this.start.timezone;
 
-    if (args.data) {
-      this.data = args.data;
+    if (options.data) {
+      this.data = options.data;
     }
 
-    if (typeof args.duration === 'object') {
-      this.duration = this.normalizeDateInputToAdapter(args.duration);
+    if (typeof options.duration === 'object') {
+      this.duration = this.normalizeDateInputToAdapter(options.duration);
 
       if ((this.duration as InstanceType<T>).timezone !== this.start.timezone) {
         this.duration = (this.duration as InstanceType<T>).set(
@@ -127,8 +230,8 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
             `the datetime must be after the start time`,
         );
       }
-    } else if (args.duration && args.duration > 0) {
-      this.duration = args.duration as number;
+    } else if (options.duration && options.duration > 0) {
+      this.duration = options.duration as number;
       this._duration = this.duration;
     }
 
@@ -138,8 +241,8 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
     this.hasDuration = !!this._duration;
 
-    if (args.rrules) {
-      this.rrules = args.rrules.map(ruleArgs => {
+    if (options.rrules) {
+      this.rrules = options.rrules.map(ruleArgs => {
         if (Rule.isRule(ruleArgs)) {
           if (!this.normalizeDateInput(ruleArgs.options.start).isEqual(this._start)) {
             throw new ArgumentError(
@@ -150,7 +253,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
           return ruleArgs.set('timezone', this.timezone).set('duration', this._duration);
         } else {
-          return new Rule(this.standardizeRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
+          return new Rule(this.standardizeRuleOptions(ruleArgs as IVEventRuleOptions<T>, options), {
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });
@@ -158,8 +261,8 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       });
     }
 
-    if (args.exrules) {
-      this.exrules = args.exrules.map(ruleArgs => {
+    if (options.exrules) {
+      this.exrules = options.exrules.map(ruleArgs => {
         if (Rule.isRule(ruleArgs)) {
           if (!this.normalizeDateInput(ruleArgs.options.start).isEqual(this._start)) {
             throw new ArgumentError(
@@ -170,7 +273,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
           return ruleArgs.set('timezone', this.timezone).set('duration', this._duration);
         } else {
-          return new Rule(this.standardizeRuleOptions(ruleArgs as IVEventRuleOptions<T>, args), {
+          return new Rule(this.standardizeRuleOptions(ruleArgs as IVEventRuleOptions<T>, options), {
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
           });
@@ -178,11 +281,11 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       });
     }
 
-    if (args.rdates) {
-      this.rdates = Dates.isDates(args.rdates)
-        ? args.rdates.set('timezone', this.timezone).set('duration', this._duration)
+    if (options.rdates) {
+      this.rdates = Dates.isDates(options.rdates)
+        ? options.rdates.set('timezone', this.timezone).set('duration', this._duration)
         : new Dates({
-            dates: args.rdates as ReadonlyArray<DateInput<T>>,
+            dates: options.rdates as ReadonlyArray<DateInput<T>>,
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
             duration: this._duration,
@@ -191,11 +294,11 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
       this.rdates = new Dates({ dateAdapter: this.dateAdapter, timezone: this.timezone });
     }
 
-    if (args.exdates) {
-      this.exdates = Dates.isDates(args.exdates)
-        ? args.exdates.set('timezone', this.timezone).set('duration', this._duration)
+    if (options.exdates) {
+      this.exdates = Dates.isDates(options.exdates)
+        ? options.exdates.set('timezone', this.timezone).set('duration', this._duration)
         : new Dates({
-            dates: args.exdates as ReadonlyArray<DateInput<T>>,
+            dates: options.exdates as ReadonlyArray<DateInput<T>>,
             dateAdapter: this.dateAdapter,
             timezone: this.timezone,
             duration: this._duration,
