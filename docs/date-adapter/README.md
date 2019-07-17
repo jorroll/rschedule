@@ -106,7 +106,7 @@ export interface IDateAdapter<D = unknown> {
   /** Returns the date object this DateAdapter is wrapping */
   readonly date: D;
   readonly timezone: string | null;
-  readonly duration: number | undefined;
+  readonly duration: number | undefined; // a length of time in milliseconds
 
   /**
    * Returns `undefined` if `this.duration` is falsey. Else returns

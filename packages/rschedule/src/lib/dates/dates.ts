@@ -136,8 +136,6 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
    *
    * ### Important!
    *
-   * #### Timezone
-   *
    * When updating `Dates#timezone`, this does not actually change the timezone of the
    * underlying date objects wrapped by this `Dates` instance. Instead, when this `Dates`
    * object is iterated and a specific date is found to be
@@ -149,14 +147,17 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
    * this `Dates` is wrapping, you must update the individual dates themselves by setting
    * the `dates` property.
    *
-   * #### Duration
-   *
-   * Setting the duration will update all of the underlying date objects to have the specified
-   * duration.
-   *
    */
   set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): Dates<T, D>;
+  /**
+   * Dates are immutable. This allows you to create a new `Dates` with new date objects.
+   */
   set(prop: 'dates', value: DateInput<T>[]): Dates<T, D>;
+  /**
+   * Dates are immutable. This allows you to create a new `Dates` with all of the underlying
+   * date objects set to have the specified `duration`. Duration is a length of time,
+   * expressed in milliseconds.
+   */
   set(prop: 'duration', value: number | undefined): Dates<T, D>;
   set(
     prop: 'timezone' | 'dates' | 'duration',

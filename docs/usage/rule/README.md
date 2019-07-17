@@ -36,6 +36,7 @@ export namespace RuleOption {
   export type Start<T extends typeof DateAdapter> = DateInput<T>;
   // Either a date object or a date adapter object.
   export type End<T extends typeof DateAdapter> = DateInput<T>;
+  // A length of time in milliseconds
   export type Duration = number;
   export type Interval = number;
   export type Count = number;
