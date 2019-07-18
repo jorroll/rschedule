@@ -1,9 +1,12 @@
 import { DateTime } from '../../date-time';
-import { RuleOption } from '../rule-options';
+import { INormalizedRuleOptions, RuleOption } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeError, PipeRule } from './interfaces';
 import { getNthWeekdayOfMonth } from './utilities';
 
-export class ByDayOfMonthPipe extends PipeRule implements IPipeRule {
+type ByDayOfMonthOptions = Pick<INormalizedRuleOptions, 'byDayOfMonth' | 'byDayOfWeek'>;
+
+export class ByDayOfMonthPipe extends PipeRule<ByDayOfMonthOptions>
+  implements IPipeRule<ByDayOfMonthOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);

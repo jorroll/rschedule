@@ -1,7 +1,9 @@
 import { DateTime } from '../../date-time';
 import { IPipeRule, IPipeRunFn, PipeError, PipeRule } from './interfaces';
 
-export class RevResultPipe extends PipeRule implements IPipeRule {
+export class RevResultPipe extends PipeRule<unknown> implements IPipeRule<unknown> {
+  firstPipe!: IPipeRule<unknown>;
+
   private invalidIterationCount = 0;
   private previousIterationDate?: DateTime;
 

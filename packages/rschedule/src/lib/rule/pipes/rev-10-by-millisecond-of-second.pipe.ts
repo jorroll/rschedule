@@ -1,6 +1,10 @@
+import { INormalizedRuleOptions } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-export class RevByMillisecondOfSecondPipe extends PipeRule implements IPipeRule {
+type ByMillisecondOfSecondOptions = Pick<INormalizedRuleOptions, 'byMillisecondOfSecond'>;
+
+export class RevByMillisecondOfSecondPipe extends PipeRule<ByMillisecondOfSecondOptions>
+  implements IPipeRule<ByMillisecondOfSecondOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);

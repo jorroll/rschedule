@@ -1,9 +1,16 @@
 import { DateTime, dateTimeSortComparer, IDateAdapter } from '../../date-time';
+import { INormalizedRuleOptions } from '../rule-options';
 import { getNextWeekdaysOfMonth, getNextWeekdaysOfYear } from './06-by-day-of-week.pipe';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 import { getPreviousWeekday } from './utilities';
 
-export class RevByDayOfWeekPipe extends PipeRule implements IPipeRule {
+type ByDayOfWeekOptions = Pick<
+  INormalizedRuleOptions,
+  'byDayOfWeek' | 'frequency' | 'byMonthOfYear'
+>;
+
+export class RevByDayOfWeekPipe extends PipeRule<ByDayOfWeekOptions>
+  implements IPipeRule<ByDayOfWeekOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);

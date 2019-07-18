@@ -1,7 +1,7 @@
 import { DateTime } from '../../date-time';
 import { INormalizedRuleOptions } from '../rule-options';
 
-import { ArgumentError, Omit } from '../../basic-utilities';
+import { ArgumentError, cloneJSON, Omit } from '../../basic-utilities';
 import { IRunArgs } from '../../interfaces';
 import { FrequencyPipe } from './01-frequency.pipe';
 import { ByMonthOfYearPipe } from './02-by-month-of-year.pipe';
@@ -12,7 +12,7 @@ import { ByMinuteOfHourPipe } from './08-by-minute-of-hour.pipe';
 import { BySecondOfMinutePipe } from './09-by-second-of-minute.pipe';
 import { ByMillisecondOfSecondPipe } from './10-by-millisecond-of-second.pipe';
 import { ResultPipe } from './11-result.pipe';
-import { IPipeController, IPipeRule } from './interfaces';
+import { IPipeRule } from './interfaces';
 import { RevFrequencyPipe } from './rev-01-frequency.pipe';
 import { RevByMonthOfYearPipe } from './rev-02-by-month-of-year.pipe';
 import { RevByDayOfMonthPipe } from './rev-05-by-day-of-month.pipe';
@@ -23,7 +23,7 @@ import { RevBySecondOfMinutePipe } from './rev-09-by-second-of-minute.pipe';
 import { RevByMillisecondOfSecondPipe } from './rev-10-by-millisecond-of-second.pipe';
 import { RevResultPipe } from './rev-11-result.pipe';
 
-export class PipeController implements IPipeController {
+export class PipeController {
   get firstPipe() {
     return this.pipes[0] as FrequencyPipe | RevFrequencyPipe;
   }
@@ -35,12 +35,13 @@ export class PipeController implements IPipeController {
   readonly hasDuration: boolean;
 
   private readonly reversePipes: boolean;
-  private readonly pipes: IPipeRule[] = [];
+  private readonly pipes: IPipeRule<unknown>[] = [];
 
   constructor(
     readonly options: INormalizedRuleOptions,
     private readonly args: Omit<IRunArgs, 'take'>,
   ) {
+    this.options = { ...cloneJSON(options), start: options.start, end: options.end };
     this.reverse = !!args.reverse;
     this.reversePipes = (this.options.count === undefined && args.reverse) || false;
 
@@ -54,6 +55,10 @@ export class PipeController implements IPipeController {
       this.start = options.start;
     }
 
+    // It's possible that the start date gets returned to the user,
+    // so clone it (generators prop is mutable).
+    this.start = DateTime.fromJSON(this.start.toJSON());
+
     if (args.end && options.end) {
       this.end = args.end.isBeforeOrEqual(options.end) ? args.end : options.end;
     } else if (args.end) {
@@ -61,6 +66,10 @@ export class PipeController implements IPipeController {
     } else if (options.end) {
       this.end = options.end;
     }
+
+    // It's possible that the end date gets returned to the user,
+    // so clone it (generators prop is mutable).
+    this.end = this.end && DateTime.fromJSON(this.end.toJSON());
 
     if (this.reverse && !(options.count !== undefined || this.end)) {
       throw new ArgumentError(
@@ -189,7 +198,6 @@ export class PipeController implements IPipeController {
     let startingDate = this.start;
 
     if (this.reversePipes) startingDate = this.end!;
-    else if (this.options.count) startingDate = this.options.start;
 
     let date = this.firstPipe.run({
       date: startingDate, // <- just present to satisfy interface
@@ -202,6 +210,8 @@ export class PipeController implements IPipeController {
       if (args && args.skipToDate) {
         date = this.firstPipe.run({ date, skipToDate: args.skipToDate });
       } else if (args && args.reset) {
+        // TODO: verify that args.reset isn't currently used and this `if` branch
+        //       can be removed
         this.initialize();
 
         date = this.firstPipe.run({
@@ -254,7 +264,11 @@ export class PipeController implements IPipeController {
         this.options.byMillisecondOfSecond.reverse();
       }
 
-      this.addPipe(new RevResultPipe(this));
+      const revResultPipe = new RevResultPipe(this);
+
+      revResultPipe.firstPipe = this.firstPipe;
+
+      this.addPipe(revResultPipe);
 
       return;
     }
@@ -289,7 +303,11 @@ export class PipeController implements IPipeController {
       this.addPipe(new ByMillisecondOfSecondPipe(this));
     }
 
-    this.addPipe(new ResultPipe(this));
+    const resultPipe = new ResultPipe(this);
+
+    resultPipe.firstPipe = this.firstPipe;
+
+    this.addPipe(resultPipe);
   }
 
   private addPipe(pipe: any) {
