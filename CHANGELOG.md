@@ -12,8 +12,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - fixed iterating `Dates` in reverse with either the `start`/`end` arg
 - fixed `OccurrenceGenerator#occursBefore()`
-- fixed `SplitDurationOperator` in reverse
-- fixed `MergeDurationOperator` in reverse
+- fixed iterating occurrence operators in reverse
 - added tests to help ensure a similar issue doesn't happen in the future.
 
 ## 0.11.2 FEATURE (2019/7/15)
