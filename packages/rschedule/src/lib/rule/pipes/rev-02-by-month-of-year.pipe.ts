@@ -1,6 +1,10 @@
+import { INormalizedRuleOptions } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-export class RevByMonthOfYearPipe extends PipeRule implements IPipeRule {
+type ByMonthOfYearOptions = Pick<INormalizedRuleOptions, 'byMonthOfYear'>;
+
+export class RevByMonthOfYearPipe extends PipeRule<ByMonthOfYearOptions>
+  implements IPipeRule<ByMonthOfYearOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);

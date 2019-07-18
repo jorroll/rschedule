@@ -1,6 +1,10 @@
+import { INormalizedRuleOptions } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-export class RevByHourOfDayPipe extends PipeRule implements IPipeRule {
+type ByHourOfDayOptions = Pick<INormalizedRuleOptions, 'byHourOfDay'>;
+
+export class RevByHourOfDayPipe extends PipeRule<ByHourOfDayOptions>
+  implements IPipeRule<ByHourOfDayOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);

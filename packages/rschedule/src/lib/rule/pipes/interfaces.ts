@@ -30,46 +30,29 @@ export interface IPipeRunFn {
   skipToDate?: DateTime;
 }
 
-export interface IPipeRule {
-  nextPipe: IPipeRule | null;
-  controller: IPipeController;
+export interface IPipeRule<T> {
+  nextPipe?: IPipeRule<unknown>;
+  start: DateTime;
+  end?: DateTime;
+  options: T;
 
   run(args: IPipeRunFn): DateTime | null;
 }
 
-export interface IPipeController {
+export abstract class PipeRuleBase<T> {
+  nextPipe!: IPipeRule<unknown>;
   start: DateTime;
   end?: DateTime;
-  count?: number;
-  reverse: boolean;
-  options: INormalizedRuleOptions;
+  options: T;
 
-  firstPipe: IPipeRule;
-}
-
-export abstract class PipeRuleBase {
-  nextPipe!: IPipeRule;
-
-  constructor(public controller: IPipeController) {}
-
-  get options() {
-    return this.controller.options;
-  }
-  get start() {
-    return this.controller.start;
-  }
-  get end() {
-    return this.controller.end;
-  }
-  get count() {
-    return this.controller.count;
-  }
-  get firstPipe() {
-    return this.controller.firstPipe;
+  constructor(args: { start: DateTime; end?: DateTime; options: T }) {
+    this.start = args.start;
+    this.end = args.end;
+    this.options = args.options;
   }
 }
 
-export abstract class PipeRule extends PipeRuleBase {
+export abstract class PipeRule<T> extends PipeRuleBase<T> {
   protected nextValidDate(args: IPipeRunFn, skipToDate: DateTime) {
     return this.nextPipe.run({
       date: args.date,

@@ -8,14 +8,18 @@ import {
   MILLISECONDS_IN_SECOND,
   MILLISECONDS_IN_WEEK,
 } from '../../date-time';
+import { INormalizedRuleOptions } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
+
+type FrequencyOptions = Pick<INormalizedRuleOptions, 'frequency' | 'interval' | 'weekStart'>;
 
 /**
  * The `FrequencyPipe` is the first pipe in the chain of rule pipes. It is
  * responsible for incrementing the date, as appropriate, while taking into
  * account the `RRULE` frequency and interval.
  */
-export class FrequencyPipe extends PipeRule implements IPipeRule {
+export class FrequencyPipe extends PipeRule<FrequencyOptions>
+  implements IPipeRule<FrequencyOptions> {
   private readonly intervalUnit = freqToGranularity(this.options.frequency);
 
   private intervalStartDate = this.normalizedStartDate(this.start);
