@@ -43,6 +43,8 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
     }
   }
 
+  options = cloneJSON(options);
+
   if (options.interval !== undefined && options.interval < 1) {
     throw new RuleValidationError('"interval" cannot be less than 1');
   }
@@ -136,8 +138,6 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
     ...options,
     start,
     end,
-    count: options.count,
-    frequency: options.frequency,
     interval: options.interval || 1,
     weekStart: options.weekStart || 'MO',
   };
@@ -202,13 +202,10 @@ export function cloneRuleOptions<
   T extends typeof DateAdapter,
   O extends IProvidedRuleOptions<T> | INormalizedRuleOptions
 >(options: O): O {
-  const obj = { ...options };
-  delete obj.start;
-  delete obj.end;
-  const clone = cloneJSON(obj);
-  clone.start = options.start;
-  clone.end = options.end;
-  return clone;
+  const obj = cloneJSON(options);
+  obj.start = options.start;
+  if (options.end) obj.end = options.end;
+  return obj;
 }
 
 export class RuleValidationError extends Error {}
