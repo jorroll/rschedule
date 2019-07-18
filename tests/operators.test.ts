@@ -56,7 +56,7 @@ describe('Operators', () => {
         DatetimeFn<any>
       ];
 
-      // const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport ? [null] : ['UTC'];
+      // const timezones: (string | null)[] = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
 
       const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
@@ -261,10 +261,9 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
-                      isoString(2017, 9, 9, 9, 9, 9, 9),
-                      isoString(2018, 11, 11, 11, 11, 11, 11),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2020, 3, 3, 3, 3, 3, 3),
                     ].reverse(),
                   );
                 });
@@ -283,9 +282,10 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
+                      isoString(2017, 9, 9, 9, 9, 9, 9),
+                      isoString(2018, 11, 11, 11, 11, 11, 11),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
-                      isoString(2020, 3, 3, 3, 3, 3, 3),
                     ].reverse(),
                   );
                 });
@@ -423,10 +423,9 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
-                      isoString(2017, 9, 9, 9, 9, 9, 9),
-                      isoString(2018, 11, 11, 11, 11, 11, 11),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2020, 3, 3, 3, 3, 3, 3),
                     ].reverse(),
                   );
                 });
@@ -448,9 +447,10 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
+                      isoString(2017, 9, 9, 9, 9, 9, 9),
+                      isoString(2018, 11, 11, 11, 11, 11, 11),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
-                      isoString(2020, 3, 3, 3, 3, 3, 3),
                     ].reverse(),
                   );
                 });
@@ -557,9 +557,8 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
-                      isoString(2017, 9, 9, 9, 9, 9, 9),
-                      isoString(2018, 11, 11, 11, 11, 11, 11),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
+                      isoString(2020, 3, 3, 3, 3, 3, 3),
                     ].reverse(),
                   );
                 });
@@ -579,8 +578,9 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
+                      isoString(2017, 9, 9, 9, 9, 9, 9),
+                      isoString(2018, 11, 11, 11, 11, 11, 11),
                       isoString(2019, 1, 1, 1, 1, 1, 1),
-                      isoString(2020, 3, 3, 3, 3, 3, 3),
                     ].reverse(),
                   );
                 });
@@ -939,9 +939,41 @@ describe('Operators', () => {
                 it('reverse start', () => {
                   const iterable = splitDuration({ maxDuration, splitFn })({
                     dateAdapter: DateAdapter,
-                    base: durDatesA,
+                    base: durDatesA.add(
+                      dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                        duration: MILLISECONDS_IN_HOUR * 0.5,
+                      }),
+                    ),
                     timezone,
                   })._run({ reverse: true, start: dateTime(2010, 10, 11, 14, 12, 11, 11) });
+
+                  const results: [string, number][] = [];
+
+                  for (const date of iterable) {
+                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                  }
+
+                  expect(results).toEqual(
+                    [
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 14, 15, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
+                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                    ].reverse(),
+                  );
+                });
+
+                it('reverse end', () => {
+                  const iterable = splitDuration({ maxDuration, splitFn })({
+                    dateAdapter: DateAdapter,
+                    base: durDatesA.add(
+                      dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                        duration: MILLISECONDS_IN_HOUR * 0.5,
+                      }),
+                    ),
+                    timezone,
+                  })._run({ reverse: true, end: dateTime(2010, 10, 11, 14, 12, 11, 11) });
 
                   const results: [string, number][] = [];
 
@@ -955,29 +987,6 @@ describe('Operators', () => {
                       [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
-                    ].reverse(),
-                  );
-                });
-
-                it('reverse end', () => {
-                  const iterable = splitDuration({ maxDuration, splitFn })({
-                    dateAdapter: DateAdapter,
-                    base: durDatesA,
-                    timezone,
-                  })._run({ reverse: true, end: dateTime(2010, 10, 11, 14, 12, 11, 11) });
-
-                  const results: [string, number][] = [];
-
-                  for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
-                  }
-
-                  expect(results).toEqual(
-                    [
-                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
                     ].reverse(),
                   );
                 });
@@ -1166,8 +1175,8 @@ describe('Operators', () => {
 
                     expect(results).toEqual(
                       [
-                        isoString(2017, 10, 10, 10, 10, 10, 10),
-                        isoString(2018, 12, 12, 12, 12, 12, 12),
+                        isoString(2019, 2, 2, 2, 2, 2, 2),
+                        isoString(2020, 4, 4, 4, 4, 4, 4),
                       ].reverse(),
                     );
                   });
@@ -1187,8 +1196,8 @@ describe('Operators', () => {
 
                     expect(results).toEqual(
                       [
-                        isoString(2019, 2, 2, 2, 2, 2, 2),
-                        isoString(2020, 4, 4, 4, 4, 4, 4),
+                        isoString(2017, 10, 10, 10, 10, 10, 10),
+                        isoString(2018, 12, 12, 12, 12, 12, 12),
                       ].reverse(),
                     );
                   });
@@ -1630,9 +1639,8 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
-                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 2],
-                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
                       [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
+                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
                     ].reverse(),
                   );
                 });
@@ -1657,8 +1665,9 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 2],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
                       [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 27],
-                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
                     ].reverse(),
                   );
                 });
@@ -1852,13 +1861,17 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
-                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 10, 14, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 12, 14, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                      [isoString(2010, 10, 13, 0, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
+                      [isoString(2010, 10, 13, 6, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                      [isoString(2010, 10, 13, 11, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
+                      [isoString(2010, 10, 13, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
                     ].reverse(),
                   );
                 });
@@ -1881,17 +1894,13 @@ describe('Operators', () => {
 
                   expect(results).toEqual(
                     [
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 10, 13, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 10, 14, 9, 9, 9), MILLISECONDS_IN_HOUR * 1],
+                      [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 0.5],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                       [isoString(2010, 10, 11, 14, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 12, 14, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
-                      [isoString(2010, 10, 13, 0, 1, 1, 1), MILLISECONDS_IN_HOUR * 10],
-                      [isoString(2010, 10, 13, 6, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
-                      [isoString(2010, 10, 13, 11, 1, 1, 1), MILLISECONDS_IN_HOUR * 5],
-                      [isoString(2010, 10, 13, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
-                      [isoString(2010, 10, 14, 13, 1, 1, 1), 1000],
                     ].reverse(),
                   );
                 });

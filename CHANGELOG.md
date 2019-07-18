@@ -6,6 +6,15 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Releases
 
+## 0.11.3 FIX (2019/7/17)
+
+### Fixes
+
+- fixed iterating `Dates` in reverse with either the `start`/`end` arg
+- fixed `OccurrenceGenerator#occursBefore()`
+- fixed iterating occurrence operators in reverse
+- added tests to help ensure a similar issue doesn't happen in the future.
+
 ## 0.11.2 FEATURE (2019/7/15)
 
 ### Features

@@ -139,20 +139,14 @@ export class SplitDurationOperator<T extends typeof DateAdapter> extends Operato
     // time. Because of this, we add `maxDuration` to
     // the provided start time.
     let checkFromStart = args.start;
-
     if (args.start) {
-      checkFromStart = reverse
-        ? args.start.add(this.maxDuration, 'millisecond')
-        : args.start.subtract(this.maxDuration, 'millisecond');
+      checkFromStart = args.start.subtract(this.maxDuration, 'millisecond');
     }
 
     // same goes for `end` time as with `start` time.
     let checkFromEnd = args.end;
-
     if (args.end) {
-      checkFromEnd = reverse
-        ? args.end.subtract(this.maxDuration, 'millisecond')
-        : args.end.add(this.maxDuration, 'millisecond');
+      checkFromEnd = args.end.add(this.maxDuration, 'millisecond');
     }
 
     const stream = new IterableWrapper(
@@ -202,13 +196,19 @@ export class SplitDurationOperator<T extends typeof DateAdapter> extends Operato
         for (const date of bucket) {
           dateIndex++;
 
-          if (
-            (reverse ? date.isAfter(selectedDate) : date.isBefore(selectedDate)) ||
-            (date.isEqual(selectedDate) &&
-              (reverse
-                ? date.duration! > selectedDate.duration!
-                : date.duration! < selectedDate.duration!))
-          ) {
+          let dateShouldComeNext: boolean;
+
+          if (reverse) {
+            dateShouldComeNext =
+              date.isAfter(selectedDate) ||
+              (date.isEqual(selectedDate) && date.duration! > selectedDate.duration!);
+          } else {
+            dateShouldComeNext =
+              date.isBefore(selectedDate) ||
+              (date.isEqual(selectedDate) && date.duration! < selectedDate.duration!);
+          }
+
+          if (dateShouldComeNext) {
             selectedDate = date;
             selectedBucketIndex = bucketIndex;
             selectedDateIndex = dateIndex;
@@ -240,10 +240,8 @@ export class SplitDurationOperator<T extends typeof DateAdapter> extends Operato
       // check to make sure the selectedDate we are about to yield should
       // actually be yielded (it may be before the provided `start` time).
       // If not, discard the selectedDate.
-      if (
-        args.start &&
-        (reverse ? selectedDate.isAfter(args.start) : selectedDate.end!.isBefore(args.start!))
-      ) {
+      if (args.start && selectedDate.end!.isBefore(args.start!)) {
+        if (reverse) break;
         continue;
       }
 
@@ -251,10 +249,8 @@ export class SplitDurationOperator<T extends typeof DateAdapter> extends Operato
       // check to make sure the selectedDate we are about to yield should
       // actually be yielded (it may be after the provided `end` time).
       // If not, end iteration.
-      if (
-        args.end &&
-        (reverse ? selectedDate.end!.isBefore(args.end) : selectedDate.isAfter(args.end!))
-      ) {
+      if (args.end && selectedDate.isAfter(args.end)) {
+        if (reverse) continue;
         break;
       }
 
@@ -314,7 +310,7 @@ function datePastEnd(
   options: { reverse?: boolean; start?: DateTime; end?: DateTime },
 ) {
   return !!(options.reverse
-    ? options.end && date.isBefore(options.end)
+    ? options.start && date.isBefore(options.start)
     : options.end && date.isAfter(options.end));
 }
 

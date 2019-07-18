@@ -216,24 +216,16 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
   *_run(args: IRunArgs = {}) {
     let dates = this.datetimes.sort(dateTimeSortComparer);
 
+    if (args.start) {
+      dates = dates.filter(date => date.isAfterOrEqual(args.start!));
+    }
+
+    if (args.end) {
+      dates = dates.filter(date => date.isBeforeOrEqual(args.end!));
+    }
+
     if (args.reverse) {
-      if (args.start) {
-        dates = dates.filter(date => date.isBeforeOrEqual(args.start!));
-      }
-
-      if (args.end) {
-        dates = dates.filter(date => date.isAfterOrEqual(args.end!));
-      }
-
-      dates.reverse();
-    } else {
-      if (args.start) {
-        dates = dates.filter(date => date.isAfterOrEqual(args.start!));
-      }
-
-      if (args.end) {
-        dates = dates.filter(date => date.isBeforeOrEqual(args.end!));
-      }
+      dates = dates.slice().reverse();
     }
 
     if (args.take) {

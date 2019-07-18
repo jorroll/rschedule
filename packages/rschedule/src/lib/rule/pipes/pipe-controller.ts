@@ -62,7 +62,7 @@ export class PipeController implements IPipeController {
       this.end = options.end;
     }
 
-    if (this.reverse && !(options.count || this.end)) {
+    if (this.reverse && !(options.count !== undefined || this.end)) {
       throw new ArgumentError(
         'When iterating in reverse, the rule must have an `end` or `count` ' +
           'property or you must provide an `end` argument.',

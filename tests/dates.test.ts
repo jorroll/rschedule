@@ -115,6 +115,18 @@ function testOccurrences(
           toISOStrings(expectation.slice(0, index + 1)),
         );
       });
+
+      it('reverse start', () => {
+        expect(toISOStrings(dates, { reverse: true, start: expectation[index] })).toEqual(
+          toISOStrings(expectation.slice(index).reverse()),
+        );
+      });
+
+      it('reverse end', () => {
+        expect(toISOStrings(dates, { reverse: true, end: expectation[index] })).toEqual(
+          toISOStrings(expectation.slice(0, index + 1).reverse()),
+        );
+      });
     }
 
     it('take', () => {
@@ -146,7 +158,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       DatetimeFn<any>
     ];
 
-    // const zones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : [null];
+    // const zones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
     const zones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
     zones.forEach(zone => {
