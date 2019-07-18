@@ -235,12 +235,12 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
     // before the provided start time.
     let checkFromStart = args.start;
     if (args.start) {
-      checkFromStart = args.start.add(this.maxDuration, 'millisecond');
+      checkFromStart = args.start.subtract(this.maxDuration, 'millisecond');
     }
 
     let checkFromEnd = args.end;
     if (args.end) {
-      checkFromEnd = args.end.subtract(this.maxDuration, 'millisecond');
+      checkFromEnd = args.end.add(this.maxDuration, 'millisecond');
     }
 
     const stream = new DurationIterableWrapper(
@@ -285,21 +285,25 @@ export class MergeDurationOperator<T extends typeof DateAdapter> extends Operato
 
       // check to make sure the occurrence we are about to yield starts before the
       // provided start time.
-      if (args.start && stream.workingValue.isAfter(args.start)) {
-        stream.workingValue = stream.value;
-        stream.picked();
-        continue;
+      if (args.start && stream.workingValue.end!.isBefore(args.start)) {
+        break;
       }
 
-      if (yieldArgs && yieldArgs.skipToDate && stream.workingValue.isAfter(yieldArgs.skipToDate)) {
+      if (
+        yieldArgs &&
+        yieldArgs.skipToDate &&
+        stream.workingValue.end!.isBefore(yieldArgs.skipToDate)
+      ) {
         stream.workingValue = stream.value;
         stream.picked();
         continue;
       }
 
       // make sure we are not after the user requested `end` time.
-      if (args.end && stream.workingValue && stream.workingValue.end!.isBefore(args.end)) {
-        break;
+      if (args.end && stream.workingValue && stream.workingValue.isAfter(args.end)) {
+        stream.workingValue = stream.value;
+        stream.picked();
+        continue;
       }
 
       if (stream.workingValue.duration! > this.maxDuration) {

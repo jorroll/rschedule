@@ -323,6 +323,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
       if (options.excludeStart && day.isEqual(adapter)) {
         continue;
       }
+
       return true;
     }
 
@@ -332,10 +333,11 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
   occursBefore(date: DateInput<T>, options: { excludeStart?: boolean } = {}) {
     const adapter = this.normalizeDateInput(date);
 
-    for (const day of this._run({ start: adapter, reverse: true })) {
+    for (const day of this._run({ end: adapter, reverse: true })) {
       if (options.excludeStart && day.isEqual(adapter)) {
         continue;
       }
+
       return true;
     }
 

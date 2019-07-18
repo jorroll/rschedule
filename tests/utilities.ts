@@ -188,11 +188,11 @@ export function momentTZDatetimeFn(...args: Array<number | string>): MomentTZ {
 export function luxonDatetimeFn(...args: Array<number | string>): LuxonDateTime {
   if (args.length === 0 || typeof args[0] !== 'number') {
     const tz = args[0];
-    return tz === 'UTC'
-      ? LuxonDateTime.utc()
-      : [null, undefined].includes((tz as unknown) as null | undefined)
-      ? LuxonDateTime.local()
-      : LuxonDateTime.local().setZone(tz as string);
+
+    // prettier-ignore
+    return tz === 'UTC' ? LuxonDateTime.utc()
+      : [null, undefined].includes((tz as unknown) as null | undefined) ? LuxonDateTime.local()
+      : LuxonDateTime.fromObject({zone: tz as string});
   }
 
   if (args.length === 0) {
@@ -211,8 +211,15 @@ export function luxonDatetimeFn(...args: Array<number | string>): LuxonDateTime 
   });
 
   if (timezone) {
-    return LuxonDateTime.local(...numbers).setZone(timezone, {
-      keepLocalTime: true,
+    return LuxonDateTime.fromObject({
+      year: numbers[0],
+      month: numbers[1],
+      day: numbers[2],
+      hour: numbers[3],
+      minute: numbers[4],
+      second: numbers[5],
+      millisecond: numbers[6],
+      zone: timezone,
     });
   } else {
     return LuxonDateTime.local(...numbers);

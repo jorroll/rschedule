@@ -10,7 +10,7 @@ import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
 import {
   DateAdapter as DateAdapterConstructor,
   IProvidedRuleOptions,
-  Rule,
+  Schedule,
 } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
@@ -67,9 +67,13 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
           return dateAdapter(...parts);
         };
 
-        describe('Rule', () => {
+        describe('Schedule', () => {
           const buildGenerator = (config: IProvidedRuleOptions<any>) =>
-            new Rule(config, { dateAdapter: DateAdapter, timezone });
+            new Schedule({
+              rrules: [config],
+              dateAdapter: DateAdapter,
+              timezone,
+            });
 
           ruleTests(DateAdapter, dateAdapter, parse, buildGenerator);
         });
