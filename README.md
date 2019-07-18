@@ -25,9 +25,9 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 @rschedule/luxon-date-adapter
 ```
 
-### Usage ([online demo](https://codesandbox.io/s/rschedule-starter-pxezu?codemirror=1&highlights=18,19,20,21,22,23,24,25,26,27,28,29,30,31,32))
+### Usage ([online demo](https://codesandbox.io/s/rschedule-starter-pxezu?fontsize=14&module=/src/index.ts))
 
-You can play around with a demo of rSchedule on [codesandbox here](https://codesandbox.io/s/rschedule-starter-pxezu?codemirror=1&highlights=18,19,20,21,22,23,24,25,26,27,28,29,30,31,32).
+You can play around with a demo of rSchedule on [codesandbox here](https://codesandbox.io/s/rschedule-starter-pxezu?fontsize=14&module=/src/index.ts).
 
 #### Iterate using standard javascript syntax
 
