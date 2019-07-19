@@ -29,180 +29,223 @@ function testIteration(args: {
   result: DateTime[];
 }) {
   describe(args.name, () => {
-    let controller: PipeController;
-    let rules: INormalizedRuleOptions;
-    let options: { start?: DateTime; end?: DateTime; reverse?: boolean };
-    let result: DateTime[];
+    const optionVariations: [string, IProvidedRuleOptions<any>, DateTime[]][] = [
+      ['default', args.rules, args.result],
+      [
+        'duration',
+        { ...args.rules, duration: 100 },
+        args.result.map(date => date.set('duration', 100)),
+      ],
+    ];
 
-    beforeEach(() => {
-      // don't need date adapter because we're passing in DateTime objects
-      rules = normalizeRuleOptions(0 as any, args.rules);
-      options = {};
-      controller = build(rules, options);
-      result = args.result.slice();
-    });
+    if (args.rules.count !== undefined) {
+      const endVariation = { ...args.rules, end: args.result[args.result.length - 1] };
+      delete endVariation.count;
+      optionVariations.push(['end instead of count', endVariation, args.result]);
+    }
 
-    it('', () => {
-      expect(Array.from(controller._run())).toEqual(result);
-    });
+    optionVariations.forEach(([name, ruleVariation, resultsVariation]) => {
+      describe(name, () => {
+        let controller: PipeController;
+        let rules: INormalizedRuleOptions;
+        let options: { start?: DateTime; end?: DateTime; reverse?: boolean };
+        let result: DateTime[];
 
-    it('duration', () => {
-      rules.duration = 100;
-      controller = build(rules);
-      const expectations = result.map(date => date.set('duration', 100));
-
-      expect(Array.from(controller._run())).toEqual(expectations);
-    });
-
-    describe('options', () => {
-      if (args.result.length > 1) {
-        it('start', () => {
-          options.start = result.shift()!.add(1, 'millisecond');
+        beforeEach(() => {
+          // don't need date adapter because we're passing in DateTime objects
+          rules = normalizeRuleOptions(0 as any, ruleVariation);
+          options = {};
           controller = build(rules, options);
+          result = resultsVariation.slice();
+        });
 
+        it('', () => {
           expect(Array.from(controller._run())).toEqual(result);
         });
 
-        it('end', () => {
-          options.end = result.pop()!.subtract(1, 'millisecond');
-          controller = build(rules, options);
+        describe('options', () => {
+          if (args.result.length > 1) {
+            it('start', () => {
+              options.start = result.shift()!.add(1, 'millisecond');
+              controller = build(rules, options);
 
-          expect(Array.from(controller._run())).toEqual(result);
+              expect(Array.from(controller._run())).toEqual(result);
+            });
+
+            it('end', () => {
+              options.end = result.pop()!.subtract(1, 'millisecond');
+              controller = build(rules, options);
+
+              expect(Array.from(controller._run())).toEqual(result);
+            });
+          }
+
+          if (args.result.length > 2) {
+            it('start,end', () => {
+              options.start = result.shift()!.add(1, 'millisecond');
+              options.end = result.pop()!.subtract(1, 'millisecond');
+              controller = build(rules, options);
+
+              expect(Array.from(controller._run())).toEqual(result);
+            });
+          }
+
+          it('reverse', () => {
+            options.reverse = true;
+            controller = build(rules, options);
+
+            expect(Array.from(controller._run())).toEqual(result.reverse());
+          });
+
+          if (args.result.length > 1) {
+            it('reverse,start', () => {
+              options.reverse = true;
+              options.start = result.shift()!.add(1, 'millisecond');
+              controller = build(rules, options);
+
+              expect(Array.from(controller._run())).toEqual(result.reverse());
+            });
+
+            it('reverse,end', () => {
+              options.reverse = true;
+              options.end = result.pop()!.subtract(1, 'millisecond');
+              controller = build(rules, options);
+
+              expect(Array.from(controller._run())).toEqual(result.reverse());
+            });
+          }
+
+          if (args.result.length > 2) {
+            it('reverse,start,end', () => {
+              options.reverse = true;
+              options.start = result.shift()!.add(1, 'millisecond');
+              options.end = result.pop()!.subtract(1, 'millisecond');
+              controller = build(rules, options);
+
+              expect(Array.from(controller._run())).toEqual(result.reverse());
+            });
+          }
         });
-      }
-
-      if (args.result.length > 2) {
-        it('start,end', () => {
-          options.start = result.shift()!.add(1, 'millisecond');
-          options.end = result.pop()!.subtract(1, 'millisecond');
-          controller = build(rules, options);
-
-          expect(Array.from(controller._run())).toEqual(result);
-        });
-      }
-
-      it('reverse', () => {
-        options.reverse = true;
-        controller = build(rules, options);
-
-        expect(Array.from(controller._run())).toEqual(result.reverse());
       });
-
-      if (args.result.length > 1) {
-        it('reverse,start', () => {
-          options.reverse = true;
-          options.start = result.shift()!.add(1, 'millisecond');
-          controller = build(rules, options);
-
-          expect(Array.from(controller._run())).toEqual(result.reverse());
-        });
-
-        it('reverse,end', () => {
-          options.reverse = true;
-          options.end = result.pop()!.subtract(1, 'millisecond');
-          controller = build(rules, options);
-
-          expect(Array.from(controller._run())).toEqual(result.reverse());
-        });
-      }
-
-      if (args.result.length > 2) {
-        it('reverse,start,end', () => {
-          options.reverse = true;
-          options.start = result.shift()!.add(1, 'millisecond');
-          options.end = result.pop()!.subtract(1, 'millisecond');
-          controller = build(rules, options);
-
-          expect(Array.from(controller._run())).toEqual(result.reverse());
-        });
-      }
     });
   });
 }
 
 describe('PipeController', () => {
-  it('init', () => {
-    const options: INormalizedRuleOptions = {
-      start: dateTime(2019),
-      frequency: 'YEARLY',
-      interval: 1,
-      weekStart: 'MO',
-      byDayOfMonth: [1],
-      byDayOfWeek: ['TU'],
-    };
+  describe('init', () => {
+    let options: INormalizedRuleOptions;
 
-    let controller = build(options);
+    beforeEach(() => {
+      options = {
+        start: dateTime(2019),
+        frequency: 'YEARLY',
+        interval: 1,
+        weekStart: 'MO',
+        byDayOfMonth: [1],
+        byDayOfWeek: ['TU'],
+      }
+    })
 
-    expect(controller).toBeInstanceOf(PipeController);
-    expect(controller.start).toEqual(dateTime(2019));
-    expect(controller.end).toEqual(undefined);
-    expect(controller.reverse).toEqual(false);
-    expect(controller.isInfinite).toEqual(true);
-    expect(controller.hasDuration).toEqual(false);
-    expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);
+    it('1', () => {
+      const controller = build(options);
 
-    controller = build(options, {
-      start: dateTime(2018),
-      end: dateTime(2020),
-      reverse: true,
-    });
+      expect(controller).toBeInstanceOf(PipeController);
+      expect(controller.start).toEqual(dateTime(2019));
+      expect(controller.end).toEqual(undefined);
+      expect(controller.reverse).toEqual(false);
+      expect(controller.isInfinite).toEqual(true);
+      expect(controller.hasDuration).toEqual(false);
+      expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);  
+    })
 
-    expect(controller).toBeInstanceOf(PipeController);
-    expect(controller.start).toEqual(dateTime(2019));
-    expect(controller.end).toEqual(dateTime(2020));
-    expect(controller.reverse).toEqual(true);
-    expect(controller.isInfinite).toEqual(false);
-    expect(controller.hasDuration).toEqual(false);
-    expect(controller.firstPipe).toBeInstanceOf(RevFrequencyPipe);
+    it('2', () => {
+      const controller = build(options, {
+        start: dateTime(2018),
+        end: dateTime(2020),
+        reverse: true,
+      });
+  
+      expect(controller).toBeInstanceOf(PipeController);
+      expect(controller.start).toEqual(dateTime(2019));
+      expect(controller.end).toEqual(dateTime(2020));
+      expect(controller.reverse).toEqual(true);
+      expect(controller.isInfinite).toEqual(false);
+      expect(controller.hasDuration).toEqual(false);
+      expect(controller.firstPipe).toBeInstanceOf(RevFrequencyPipe);
+    })
 
-    controller = build(options, {
-      start: dateTime(2020),
-      end: dateTime(2020),
-    });
+    it('3', () => {
+      const controller = build(options, {
+        start: dateTime(2020),
+        end: dateTime(2020),
+      });
+  
+      expect(controller.start).toEqual(dateTime(2020));
+      expect(controller.end).toEqual(dateTime(2020));
+    })
 
-    expect(controller.start).toEqual(dateTime(2020));
-    expect(controller.end).toEqual(dateTime(2020));
+    it('4', () => {
+      options.count = 10;
+      const controller = build(options, {
+        start: dateTime(2020),
+        end: dateTime(2021),
+        reverse: true,
+      });
 
-    options.count = 10;
+      expect(controller).toBeInstanceOf(PipeController);
+      expect(controller.start).toEqual(dateTime(2019));
+      expect(controller.end).toEqual(dateTime(2021));
+      expect(controller.reverse).toEqual(true);
+      expect(controller.isInfinite).toEqual(false);
+      expect(controller.hasDuration).toEqual(false);
+      expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);
+    })
 
-    controller = build(options, {
-      start: dateTime(2020),
-      end: dateTime(2021),
-      reverse: true,
-    });
+    it('5', () => {
+      options.count = 10;
+      const controller = build(options);
 
-    expect(controller).toBeInstanceOf(PipeController);
-    expect(controller.start).toEqual(dateTime(2019));
-    expect(controller.end).toEqual(dateTime(2021));
-    expect(controller.reverse).toEqual(true);
-    expect(controller.isInfinite).toEqual(false);
-    expect(controller.hasDuration).toEqual(false);
-    expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);
+      expect(controller).toBeInstanceOf(PipeController);
+      expect(controller.start).toEqual(dateTime(2019));
+      expect(controller.end).toEqual(undefined);
+      expect(controller.reverse).toEqual(false);
+      expect(controller.isInfinite).toEqual(false);
+      expect(controller.hasDuration).toEqual(false);
+      expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);
+    })
 
-    controller = build(options);
+    it('6', () => {
+      options.duration = 10;
+      options.count = 10;
+      const controller = build(options);
 
-    expect(controller).toBeInstanceOf(PipeController);
-    expect(controller.start).toEqual(dateTime(2019));
-    expect(controller.end).toEqual(undefined);
-    expect(controller.reverse).toEqual(false);
-    expect(controller.isInfinite).toEqual(false);
-    expect(controller.hasDuration).toEqual(false);
-    expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);
-
-    options.duration = 10;
-
-    controller = build(options);
-
-    expect(controller).toBeInstanceOf(PipeController);
-    expect(controller.start).toEqual(dateTime(2019));
-    expect(controller.end).toEqual(undefined);
-    expect(controller.reverse).toEqual(false);
-    expect(controller.isInfinite).toEqual(false);
-    expect(controller.hasDuration).toEqual(true);
-    expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);
+      expect(controller).toBeInstanceOf(PipeController);
+      expect(controller.start).toEqual(dateTime(2019));
+      expect(controller.end).toEqual(undefined);
+      expect(controller.reverse).toEqual(false);
+      expect(controller.isInfinite).toEqual(false);
+      expect(controller.hasDuration).toEqual(true);
+      expect(controller.firstPipe).toBeInstanceOf(FrequencyPipe);
+    })
   });
 
   describe('_run()', () => {
+    it('testMaxYear', () => {
+      const controller = build({
+        frequency: 'YEARLY',
+        count: 3,
+        byMonthOfYear: [2],
+        byDayOfMonth: [31],
+        start: parse('99970902T090000'),
+        interval: 1,
+        weekStart: 'MO',
+      });
+
+      expect(() => {
+        Array.from(controller._run());
+      }).toThrowError();
+    });
+
     context('YEARLY' as RuleOption.Frequency, frequency => {
       testIteration({
         name: 'testYearly',
@@ -691,7 +734,7 @@ describe('PipeController', () => {
           count: 3,
           byMonthOfYear: [1, 3],
           byDayOfWeek: [['TU', 1], ['TH', -1]],
-          start: parse('19970902T090000'),
+          start: dateTime(1997, 9, 2, 9),
         },
         result: [
           dateTime(1998, 1, 6, 9, 0),
@@ -1115,6 +1158,40 @@ describe('PipeController', () => {
           byDayOfWeek: ['SU', 'WE'],
         },
         result: [dateTime(2018, 10, 3), dateTime(2018, 10, 7)],
+      });
+
+      testIteration({
+        name: 'testWkStIntervalMO',
+        rules: {
+          frequency: 'WEEKLY',
+          count: 3,
+          interval: 2,
+          byDayOfWeek: ['TU', 'SU'],
+          weekStart: 'MO',
+          start: parse('19970902T090000'),
+        },
+        result: [
+          dateTime(1997, 9, 2, 9, 0),
+          dateTime(1997, 9, 7, 9, 0),
+          dateTime(1997, 9, 16, 9, 0),
+        ],
+      });
+
+      testIteration({
+        name: 'testWkStIntervalSU',
+        rules: {
+          frequency: 'WEEKLY',
+          count: 3,
+          interval: 2,
+          byDayOfWeek: ['TU', 'SU'],
+          weekStart: 'SU',
+          start: parse('19970902T090000'),
+        },
+        result: [
+          dateTime(1997, 9, 2, 9, 0),
+          dateTime(1997, 9, 14, 9, 0),
+          dateTime(1997, 9, 16, 9, 0),
+        ],
       });
     });
 
@@ -2195,6 +2272,37 @@ describe('PipeController', () => {
           dateTime(1997, 9, 2, 18, 6, 6),
           dateTime(1997, 9, 2, 18, 6, 18),
           dateTime(1997, 9, 2, 18, 18, 6),
+        ],
+      });
+    });
+
+    describe('MILLISECONDLY', () => {
+      testIteration({
+        name: 'testMillisecondly',
+        rules: {
+          frequency: 'MILLISECONDLY',
+          count: 3,
+          start: dateTime(2000, 9, 2, 9, 0, 1, 0),
+        },
+        result: [
+          dateTime(2000, 9, 2, 9, 0, 1, 0),
+          dateTime(2000, 9, 2, 9, 0, 1, 1),
+          dateTime(2000, 9, 2, 9, 0, 1, 2),
+        ],
+      });
+
+      testIteration({
+        name: 'testMillisecondlyInterval',
+        rules: {
+          frequency: 'MILLISECONDLY',
+          count: 3,
+          interval: 2,
+          start: dateTime(2000, 9, 2, 9, 0, 1, 0),
+        },
+        result: [
+          dateTime(2000, 9, 2, 9, 0, 1, 0),
+          dateTime(2000, 9, 2, 9, 0, 1, 2),
+          dateTime(2000, 9, 2, 9, 0, 1, 4),
         ],
       });
     });

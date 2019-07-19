@@ -1,6 +1,5 @@
 import { freqToGranularity } from '../../basic-utilities';
 import { DateTime, IDateAdapter } from '../../date-time';
-import { RuleOption } from '../rule-options';
 import { IFrequencyRuleOptions, intervalDifferenceBetweenDates } from './01-frequency.pipe';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
@@ -16,33 +15,25 @@ export class RevFrequencyPipe extends PipeRule<IFrequencyRuleOptions>
   private intervalEndDate = this.normalizedEndDate(this.end!);
   private intervalStartDate = this.normalizedStartDate(this.intervalEndDate);
 
-  /**
-   * The problem is that DateTime is ignoring daylight savings time.
-   *
-   * When you pass in a new "skip to date" that date has been adjusted for
-   * daylight savings and the pipe thinks it is invalid
-   */
-
   run(args: IPipeRunFn) {
     let date: DateTime = args.date;
 
-    if (args.invalidDate) {
-      date = args.skipToDate!;
+    // if a date is invalid, skipToDate will always be present
+    // skipToDate may also be passed by a user on an otherwise valid date
+    if (args.skipToDate) {
+      date = args.skipToDate;
 
       this.skipToIntervalOnOrBefore(date);
 
       if (!this.dateIsWithinInterval(date)) {
+        // this only applies when the interval is not 1
         date = this.intervalEndDate;
       }
-    } else if (args.skipToDate) {
-      this.skipToIntervalOnOrBefore(args.skipToDate);
-
-      date = this.dateIsWithinInterval(args.skipToDate) ? args.skipToDate : this.intervalEndDate;
     } else if (
       this.dateIsWithinInterval(date) &&
-      this.dateIsWithinInterval(date.subtract(1, 'second'))
+      this.dateIsWithinInterval(date.subtract(1, 'millisecond'))
     ) {
-      date = date.subtract(1, 'second');
+      date = date.subtract(1, 'millisecond');
     } else {
       this.decrementInterval(this.options.interval);
 
@@ -76,11 +67,16 @@ export class RevFrequencyPipe extends PipeRule<IFrequencyRuleOptions>
         return start.subtract(1, 'minute');
       case 'SECONDLY':
         return start.subtract(1, 'second');
+      case 'MILLISECONDLY':
+        return start.subtract(1, 'millisecond');
     }
   }
 
   private decrementInterval(amount: number) {
-    this.intervalEndDate = this.intervalEndDate.subtract(amount, this.intervalUnit);
+    this.intervalEndDate = this.normalizedEndDate(
+      this.intervalEndDate.subtract(amount, this.intervalUnit),
+    );
+
     this.intervalStartDate = this.normalizedStartDate(this.intervalEndDate);
   }
 

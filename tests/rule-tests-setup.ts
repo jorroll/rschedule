@@ -12,7 +12,7 @@ import {
 
 function testRecurring(
   testName: string,
-  rule: OccurrenceGenerator<typeof DateAdapterConstructor>,
+  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
   expectedDates: DateAdapterConstructor[],
 ) {
   describe(testName, () => {
@@ -63,7 +63,6 @@ function testRecurring(
       it('END', () => {
         let newExpectedDates: DateAdapterConstructor[];
         let end: DateAdapterConstructor | undefined;
-
         if (expectedDates.length > 2) {
           end = expectedDates[1];
           newExpectedDates = expectedDates.slice(0, 2);
@@ -73,14 +72,11 @@ function testRecurring(
         } else {
           newExpectedDates = expectedDates.slice();
         }
-
         const expected = newExpectedDates.map(date => date.toISOString());
-
         const actual = rule
           .occurrences({ end })
           .toArray()!
           .map(date => date.toISOString());
-
         expect(actual).toEqual(expected);
       });
 
@@ -89,14 +85,12 @@ function testRecurring(
           // can't generate a start date in this scenerio so simply return
           return;
         }
-
         const newExpectedDates = expectedDates.slice().reverse();
         const expected = newExpectedDates.map(date => date.toISOString());
         const actual = rule
           .occurrences({ end: newExpectedDates[0], reverse: true })
           .toArray()!
           .map(date => date.toISOString());
-
         expect(actual).toEqual(expected);
       });
     });
@@ -111,14 +105,6 @@ function testRecurring(
             describe('weekday', () => {
               it('no options', () =>
                 expect(rule.occursOn({ weekday: date.get('weekday') })).toBeTruthy());
-
-              // it.skip('excludeDates', () =>
-              //   expect(
-              //     rule.occursOn({
-              //       weekday: date.get('weekday'),
-              //       excludeDates: expectedDates,
-              //     }),
-              //   ).toBeFalsy());
             });
           });
         });
@@ -198,7 +184,7 @@ function testRecurring(
 
 function testRecurringBetween(
   testName: string,
-  rule: OccurrenceGenerator<typeof DateAdapterConstructor>,
+  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
   start: DateAdapterConstructor,
   end: DateAdapterConstructor,
   inclusive: boolean,
@@ -227,7 +213,7 @@ function testRecurringBetween(
 
 function testPreviousOccurrence(
   testName: string,
-  rule: OccurrenceGenerator<typeof DateAdapterConstructor>,
+  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
   end: DateAdapterConstructor,
   inclusive: boolean,
   expectedDate: DateAdapterConstructor,
@@ -252,7 +238,7 @@ function testPreviousOccurrence(
 
 function testNextOccurrence(
   testName: string,
-  rule: OccurrenceGenerator<typeof DateAdapterConstructor>,
+  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
   start: DateAdapterConstructor,
   inclusive: boolean,
   expectedDate: DateAdapterConstructor,
@@ -279,7 +265,7 @@ export function ruleTests(
     ...args: (number | { duration?: number; timezone?: string | null })[]
   ) => DateAdapterConstructor,
   parse: (str: string) => DateAdapterConstructor,
-  buildGenerator: (config: IProvidedRuleOptions<any>) => OccurrenceGenerator<any>,
+  buildGenerator: (config: IProvidedRuleOptions<any>) => Readonly<OccurrenceGenerator<any>>,
 ) {
   describe('specific bugs', () => {
     if (DateAdapter.hasTimezoneSupport) {
@@ -399,6 +385,31 @@ export function ruleTests(
         dateAdapter(1998, 9, 2, 9, 0, 0, 0),
         dateAdapter(1999, 9, 2, 9, 0, 0, 0),
       ],
+    );
+
+    testRecurring(
+      'testYearlyWithEndDate',
+      buildGenerator({
+        frequency: 'YEARLY',
+        start: dateAdapter(1997, 9, 2, 9, 0, 0, 0),
+        end: dateAdapter(1999, 9, 2, 9, 0, 0, 0),
+      }),
+      [
+        dateAdapter(1997, 9, 2, 9, 0, 0, 0),
+        dateAdapter(1998, 9, 2, 9, 0, 0, 0),
+        dateAdapter(1999, 9, 2, 9, 0, 0, 0),
+      ],
+    );
+
+    testRecurring(
+      'testYearlyBySecondWithEndDate',
+      buildGenerator({
+        frequency: 'YEARLY',
+        bySecondOfMinute: [2, 4],
+        start: dateAdapter(2010, 10, 10, 0, 0, 0),
+        end: dateAdapter(2010, 10, 10, 0, 2, 0),
+      }),
+      [dateAdapter(2010, 10, 10, 0, 0, 2), dateAdapter(2010, 10, 10, 0, 0, 4)],
     );
 
     testRecurring(
@@ -690,6 +701,19 @@ export function ruleTests(
       ],
     );
 
+    // This is testing a bug I found while iterating in reverse
+    testRecurring(
+      'testYearlyByMonthAndByWeekWithEndDate',
+      buildGenerator({
+        frequency: 'YEARLY',
+        byMonthOfYear: [2, 6],
+        byDayOfWeek: ['SU', ['MO', 3]],
+        start: dateAdapter(2010, 2, 7),
+        end: dateAdapter(2010, 2, 15),
+      }),
+      [dateAdapter(2010, 2, 7), dateAdapter(2010, 2, 14), dateAdapter(2010, 2, 15)],
+    );
+
     testRecurringBetween(
       'testYearlyBetweenInc',
       buildGenerator({
@@ -734,6 +758,20 @@ export function ruleTests(
         frequency: 'MONTHLY',
         count: 3,
         start: parse('19970902T090000'),
+      }),
+      [
+        dateAdapter(1997, 9, 2, 9, 0),
+        dateAdapter(1997, 10, 2, 9, 0),
+        dateAdapter(1997, 11, 2, 9, 0),
+      ],
+    );
+
+    testRecurring(
+      'testMonthlyWithEndDate',
+      buildGenerator({
+        frequency: 'MONTHLY',
+        start: parse('19970902T090000'),
+        end: dateAdapter(1997, 11, 2, 9, 0),
       }),
       [
         dateAdapter(1997, 9, 2, 9, 0),
@@ -1075,6 +1113,20 @@ export function ruleTests(
     );
 
     testRecurring(
+      'testWeeklyWithEndDate',
+      buildGenerator({
+        frequency: 'WEEKLY',
+        start: parse('19970902T090000'),
+        end: dateAdapter(1997, 9, 16, 9, 0),
+      }),
+      [
+        dateAdapter(1997, 9, 2, 9, 0),
+        dateAdapter(1997, 9, 9, 9, 0),
+        dateAdapter(1997, 9, 16, 9, 0),
+      ],
+    );
+
+    testRecurring(
       'testWeeklyInterval',
       buildGenerator({
         frequency: 'WEEKLY',
@@ -1273,10 +1325,7 @@ export function ruleTests(
         end: parse('20181009T000000'),
         byDayOfWeek: ['SU', 'WE'],
       }),
-      [
-        dateAdapter(2018, 10, 3),
-        dateAdapter(2018, 10, 7),
-      ],
+      [dateAdapter(2018, 10, 3), dateAdapter(2018, 10, 7)],
     );
   });
 
@@ -1287,6 +1336,16 @@ export function ruleTests(
         frequency: 'DAILY',
         count: 3,
         start: parse('19970902T090000'),
+      }),
+      [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)],
+    );
+
+    testRecurring(
+      'testDailyWithEndDate',
+      buildGenerator({
+        frequency: 'DAILY',
+        start: parse('19970902T090000'),
+        end: dateAdapter(1997, 9, 4, 9, 0),
       }),
       [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 3, 9, 0), dateAdapter(1997, 9, 4, 9, 0)],
     );
@@ -1547,6 +1606,20 @@ export function ruleTests(
     );
 
     testRecurring(
+      'testHourlyWithEndDate',
+      buildGenerator({
+        frequency: 'HOURLY',
+        start: parse('19970902T090000'),
+        end: dateAdapter(1997, 9, 2, 11, 0),
+      }),
+      [
+        dateAdapter(1997, 9, 2, 9, 0),
+        dateAdapter(1997, 9, 2, 10, 0),
+        dateAdapter(1997, 9, 2, 11, 0),
+      ],
+    );
+
+    testRecurring(
       'testHourlyInterval',
       buildGenerator({
         frequency: 'HOURLY',
@@ -1785,6 +1858,16 @@ export function ruleTests(
     );
 
     testRecurring(
+      'testMinutelyWithEndDate',
+      buildGenerator({
+        frequency: 'MINUTELY',
+        start: parse('19970902T090000'),
+        end: dateAdapter(1997, 9, 2, 9, 2),
+      }),
+      [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 1), dateAdapter(1997, 9, 2, 9, 2)],
+    );
+
+    testRecurring(
       'testMinutelyInterval',
       buildGenerator({
         frequency: 'MINUTELY',
@@ -2010,6 +2093,20 @@ export function ruleTests(
         frequency: 'SECONDLY',
         count: 3,
         start: parse('19970902T090000'),
+      }),
+      [
+        dateAdapter(1997, 9, 2, 9, 0, 0),
+        dateAdapter(1997, 9, 2, 9, 0, 1),
+        dateAdapter(1997, 9, 2, 9, 0, 2),
+      ],
+    );
+
+    testRecurring(
+      'testSecondlyWithEndDate',
+      buildGenerator({
+        frequency: 'SECONDLY',
+        start: parse('19970902T090000'),
+        end: dateAdapter(1997, 9, 2, 9, 0, 2),
       }),
       [
         dateAdapter(1997, 9, 2, 9, 0, 0),

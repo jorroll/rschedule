@@ -4,10 +4,16 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Features
+
+- added ability to set rule frequency to 'MILLISECONDLY'
+
 ### Fixes
 
-- added unit tests for `PipeController`
-  - fixed a bug that was discovered during this process. It affected reverse iteration of rules with a `count` property
+- added unit tests for `PipeController` and fixed bugs discovered during this process
+  - fixed bug that affected reverse iteration of rules with a `count` property
+  - fixed bug that affected reverse iteration with an interval > 1
+  - fixed `DateTime#set()` bug that could occur when setting months
 - added individual tests for each rule pipe
 - fixed a few bugs in the `RevByDayOfWeek` pipe
 

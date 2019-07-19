@@ -29,13 +29,6 @@ export class FrequencyPipe extends PipeRule<IFrequencyRuleOptions>
   private intervalStartDate = this.normalizedStartDate(this.start);
   private intervalEndDate = this.normalizedEndDate(this.intervalStartDate);
 
-  /**
-   * The problem is that DateTime is ignoring daylight savings time.
-   *
-   * When you pass in a new "skip to date" that date has been adjusted for
-   * daylight savings and the pipe thinks it is invalid
-   */
-
   run(args: IPipeRunFn) {
     let date: DateTime = args.date;
 
@@ -52,9 +45,9 @@ export class FrequencyPipe extends PipeRule<IFrequencyRuleOptions>
       }
     } else if (
       this.dateIsWithinInterval(date) &&
-      this.dateIsWithinInterval(date.add(1, 'second'))
+      this.dateIsWithinInterval(date.add(1, 'millisecond'))
     ) {
-      date = date.add(1, 'second');
+      date = date.add(1, 'millisecond');
     } else {
       this.incrementInterval(this.options.interval);
 
@@ -88,11 +81,16 @@ export class FrequencyPipe extends PipeRule<IFrequencyRuleOptions>
         return start.add(1, 'minute');
       case 'SECONDLY':
         return start.add(1, 'second');
+      case 'MILLISECONDLY':
+        return start.add(1, 'millisecond');
     }
   }
 
   private incrementInterval(amount: number) {
-    this.intervalStartDate = this.intervalStartDate.add(amount, this.intervalUnit);
+    this.intervalStartDate = this.normalizedStartDate(
+      this.intervalStartDate.add(amount, this.intervalUnit),
+    );
+
     this.intervalEndDate = this.normalizedEndDate(this.intervalStartDate);
   }
 

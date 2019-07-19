@@ -424,29 +424,43 @@ export class DateTime implements IDateAdapter<unknown> {
       return new DateTime(this.date, this.timezone, value);
     }
 
-    const date = new Date(this.date);
+    let date = new Date(this.date);
 
     switch (unit) {
       case 'year':
-        date.setUTCFullYear(value as number);
+        date.setUTCFullYear(value);
         break;
-      case 'month':
-        date.setUTCMonth((value as number) - 1);
+      case 'month': {
+        // If the current day of the month
+        // is greater than days in the month we are moving to, we need to also
+        // set the day to the end of that month.
+        const length = monthLength(value, date.getUTCFullYear());
+        const day = date.getUTCDate();
+
+        if (day > length) {
+          date.setUTCDate(1);
+          date.setUTCMonth(value);
+          date = subUTCDays(date, 1);
+        } else {
+          date.setUTCMonth(value - 1);
+        }
+
         break;
+      }
       case 'day':
-        date.setUTCDate(value as number);
+        date.setUTCDate(value);
         break;
       case 'hour':
-        date.setUTCHours(value as number);
+        date.setUTCHours(value);
         break;
       case 'minute':
-        date.setUTCMinutes(value as number);
+        date.setUTCMinutes(value);
         break;
       case 'second':
-        date.setUTCSeconds(value as number);
+        date.setUTCSeconds(value);
         break;
       case 'millisecond':
-        date.setUTCMilliseconds(value as number);
+        date.setUTCMilliseconds(value);
         break;
       default:
         throw new ArgumentError('Invalid unit provided to `DateTime#set`');

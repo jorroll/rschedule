@@ -19,8 +19,6 @@ function dateTime(...args: Array<number | string>) {
       second: date.getUTCSeconds(),
       millisecond: date.getUTCMilliseconds(),
     });
-  } else if (args.length > 1 && typeof args[1] === 'number') {
-    args[1] = (args[1] as number) - 1;
   }
 
   return DateTime.fromJSON({
@@ -470,6 +468,16 @@ describe('DateTime', () => {
       const date1 = new Date(date);
 
       expect(adapter.granularity('millisecond').toISOString()).toBe(date1.toISOString());
+    });
+  });
+
+  describe('specific bugs', () => {
+    it('set month from last day in Dec to Sep', () => {
+      expect(
+        dateTime(1997, 12, 31, 23, 59, 59, 999)
+          .set('month', 9)
+          .toISOString(),
+      ).toEqual('1997-09-30T23:59:59.999Z');
     });
   });
 });
