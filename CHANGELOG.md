@@ -4,6 +4,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## Releases
+
+## 0.11.4 FIX (2019/7/19)
+
 ### Features
 
 - added ability to set rule frequency to 'MILLISECONDLY'
@@ -16,8 +20,6 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
   - fixed `DateTime#set()` bug that could occur when setting months
 - added individual tests for each rule pipe
 - fixed a few bugs in the `RevByDayOfWeek` pipe
-
-## Releases
 
 ## 0.11.3 FIX (2019/7/17)
 
