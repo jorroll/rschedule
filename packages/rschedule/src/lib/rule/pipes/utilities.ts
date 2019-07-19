@@ -9,21 +9,17 @@ export function getDifferenceBetweenWeekdays(x: IDateAdapter.Weekday, y: IDateAd
 }
 
 export function getNextWeekday(date: DateTime, weekday: IDateAdapter.Weekday) {
-  const base = date.granularity('day');
-
-  return base.add(getDifferenceBetweenWeekdays(base.get('weekday'), weekday), 'day');
+  return date.add(getDifferenceBetweenWeekdays(date.get('weekday'), weekday), 'day');
 }
 
 export function getPreviousWeekday(date: DateTime, weekday: IDateAdapter.Weekday) {
-  const base = date.endGranularity('day');
+  const diff = getDifferenceBetweenWeekdays(date.get('weekday'), weekday);
 
-  const diff = getDifferenceBetweenWeekdays(base.get('weekday'), weekday);
-
-  return base.subtract(diff === 0 ? 0 : 7 - diff, 'day');
+  return date.subtract(diff === 0 ? 0 : 7 - diff, 'day');
 }
 
 export function getNthWeekdayOfMonth(date: DateTime, weekday: IDateAdapter.Weekday, nth: number) {
-  let base = date.granularity('month');
+  let base = date.set('day', 1);
 
   if (nth < 0) {
     base = base.add(1, 'month');
@@ -36,7 +32,7 @@ export function getNthWeekdayOfMonth(date: DateTime, weekday: IDateAdapter.Weekd
 }
 
 export function getNthWeekdayOfYear(date: DateTime, weekday: IDateAdapter.Weekday, nth: number) {
-  let base = date.granularity('year');
+  let base = date.set('month', 1).set('day', 1);
 
   if (nth < 0) {
     base = base.add(1, 'year');

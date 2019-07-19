@@ -4,7 +4,7 @@ import { INormalizedRuleOptions } from '../rule-options';
 import { ArgumentError, cloneJSON, Omit } from '../../basic-utilities';
 import { IRunArgs } from '../../interfaces';
 import { FrequencyPipe } from './01-frequency.pipe';
-import { ByMonthOfYearPipe } from './02-by-month-of-year.pipe';
+import { ByMonthOfYearPipe, IByMonthOfYearRuleOptions } from './02-by-month-of-year.pipe';
 import { ByDayOfMonthPipe } from './05-by-day-of-month.pipe';
 import { ByDayOfWeekPipe } from './06-by-day-of-week.pipe';
 import { ByHourOfDayPipe } from './07-by-hour-of-day.pipe';
@@ -228,43 +228,45 @@ export class PipeController {
     // Pipe ordering is defined in the ICAL spec
     // https://tools.ietf.org/html/rfc5545#section-3.3.10
 
+    const pipeOptions = { start: this.start, end: this.end, options: this.options };
+
     if (this.reversePipes) {
-      this.addPipe(new RevFrequencyPipe(this));
+      this.addPipe(new RevFrequencyPipe(pipeOptions));
 
-      if (this.options.byMonthOfYear !== undefined) {
-        this.addPipe(new RevByMonthOfYearPipe(this));
-        this.options.byMonthOfYear.reverse();
+      if (pipeOptions.options.byMonthOfYear !== undefined) {
+        this.addPipe(new RevByMonthOfYearPipe(pipeOptions as any));
+        pipeOptions.options.byMonthOfYear.reverse();
       }
 
-      if (this.options.byDayOfMonth !== undefined) {
-        this.addPipe(new RevByDayOfMonthPipe(this));
+      if (pipeOptions.options.byDayOfMonth !== undefined) {
+        this.addPipe(new RevByDayOfMonthPipe(pipeOptions as any));
       }
 
-      if (this.options.byDayOfWeek !== undefined) {
-        this.addPipe(new RevByDayOfWeekPipe(this));
+      if (pipeOptions.options.byDayOfWeek !== undefined) {
+        this.addPipe(new RevByDayOfWeekPipe(pipeOptions as any));
       }
 
-      if (this.options.byHourOfDay !== undefined) {
-        this.addPipe(new RevByHourOfDayPipe(this));
-        this.options.byHourOfDay.reverse();
+      if (pipeOptions.options.byHourOfDay !== undefined) {
+        this.addPipe(new RevByHourOfDayPipe(pipeOptions as any));
+        pipeOptions.options.byHourOfDay.reverse();
       }
 
-      if (this.options.byMinuteOfHour !== undefined) {
-        this.addPipe(new RevByMinuteOfHourPipe(this));
-        this.options.byMinuteOfHour.reverse();
+      if (pipeOptions.options.byMinuteOfHour !== undefined) {
+        this.addPipe(new RevByMinuteOfHourPipe(pipeOptions as any));
+        pipeOptions.options.byMinuteOfHour.reverse();
       }
 
-      if (this.options.bySecondOfMinute !== undefined) {
-        this.addPipe(new RevBySecondOfMinutePipe(this));
-        this.options.bySecondOfMinute.reverse();
+      if (pipeOptions.options.bySecondOfMinute !== undefined) {
+        this.addPipe(new RevBySecondOfMinutePipe(pipeOptions as any));
+        pipeOptions.options.bySecondOfMinute.reverse();
       }
 
-      if (this.options.byMillisecondOfSecond !== undefined) {
-        this.addPipe(new RevByMillisecondOfSecondPipe(this));
-        this.options.byMillisecondOfSecond.reverse();
+      if (pipeOptions.options.byMillisecondOfSecond !== undefined) {
+        this.addPipe(new RevByMillisecondOfSecondPipe(pipeOptions as any));
+        pipeOptions.options.byMillisecondOfSecond.reverse();
       }
 
-      const revResultPipe = new RevResultPipe(this);
+      const revResultPipe = new RevResultPipe(pipeOptions);
 
       revResultPipe.firstPipe = this.firstPipe;
 
@@ -273,37 +275,37 @@ export class PipeController {
       return;
     }
 
-    this.addPipe(new FrequencyPipe(this));
+    this.addPipe(new FrequencyPipe(pipeOptions));
 
-    if (this.options.byMonthOfYear !== undefined) {
-      this.addPipe(new ByMonthOfYearPipe(this));
+    if (pipeOptions.options.byMonthOfYear !== undefined) {
+      this.addPipe(new ByMonthOfYearPipe(pipeOptions as any));
     }
 
-    if (this.options.byDayOfMonth !== undefined) {
-      this.addPipe(new ByDayOfMonthPipe(this));
+    if (pipeOptions.options.byDayOfMonth !== undefined) {
+      this.addPipe(new ByDayOfMonthPipe(pipeOptions as any));
     }
 
-    if (this.options.byDayOfWeek !== undefined) {
-      this.addPipe(new ByDayOfWeekPipe(this));
+    if (pipeOptions.options.byDayOfWeek !== undefined) {
+      this.addPipe(new ByDayOfWeekPipe(pipeOptions as any));
     }
 
-    if (this.options.byHourOfDay !== undefined) {
-      this.addPipe(new ByHourOfDayPipe(this));
+    if (pipeOptions.options.byHourOfDay !== undefined) {
+      this.addPipe(new ByHourOfDayPipe(pipeOptions as any));
     }
 
-    if (this.options.byMinuteOfHour !== undefined) {
-      this.addPipe(new ByMinuteOfHourPipe(this));
+    if (pipeOptions.options.byMinuteOfHour !== undefined) {
+      this.addPipe(new ByMinuteOfHourPipe(pipeOptions as any));
     }
 
-    if (this.options.bySecondOfMinute !== undefined) {
-      this.addPipe(new BySecondOfMinutePipe(this));
+    if (pipeOptions.options.bySecondOfMinute !== undefined) {
+      this.addPipe(new BySecondOfMinutePipe(pipeOptions as any));
     }
 
-    if (this.options.byMillisecondOfSecond !== undefined) {
-      this.addPipe(new ByMillisecondOfSecondPipe(this));
+    if (pipeOptions.options.byMillisecondOfSecond !== undefined) {
+      this.addPipe(new ByMillisecondOfSecondPipe(pipeOptions as any));
     }
 
-    const resultPipe = new ResultPipe(this);
+    const resultPipe = new ResultPipe(pipeOptions);
 
     resultPipe.firstPipe = this.firstPipe;
 

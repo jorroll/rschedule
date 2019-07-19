@@ -1,12 +1,10 @@
 import { context } from '../../../../../../tests/utilities';
 import { DateTime } from '../../date-time';
-import { RuleOption } from '../rule-options';
 import { ResultPipe } from './11-result.pipe';
-import { IPipeRule } from './interfaces';
 import { dateTime, fakePipe } from './test-utilities';
 
 function buildPipe(start: DateTime, end?: DateTime) {
-  const pipe = new ResultPipe({ start, options: {} });
+  const pipe = new ResultPipe({ start, end, options: {} });
   pipe.firstPipe = fakePipe;
   return pipe;
 }
@@ -19,10 +17,16 @@ describe('ResultPipe', () => {
       expect(pipe.run({ date })).toEqual(date);
     });
 
-    it('end', () => {
+    it('end future', () => {
       const pipe = buildPipe(date, dateTime(2019, 1, 10));
 
       expect(pipe.run({ date })).toEqual(date);
+    });
+
+    it('end past', () => {
+      const pipe = buildPipe(date, dateTime(2018, 1, 10));
+
+      expect(pipe.run({ date })).toBe(null);
     });
 
     it('invalidDate', () => {

@@ -91,6 +91,7 @@ export class RevFrequencyPipe extends PipeRule<IFrequencyRuleOptions>
         second: this.intervalEndDate,
         unit: this.intervalUnit,
         interval: this.options.interval,
+        weekStart: this.options.weekStart,
       }),
     );
   }

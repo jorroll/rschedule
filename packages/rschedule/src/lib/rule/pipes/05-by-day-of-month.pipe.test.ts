@@ -153,4 +153,20 @@ describe('ByDayOfMonthPipe', () => {
       });
     });
   });
+
+  // test leap year
+  context(dateTime(2019, 7, 6), date => {
+    it('1 and 1TU', () => {
+      byDayOfMonth = [29];
+      byDayOfWeek = [['SA', 5]];
+
+      const pipe = buildPipe(date, { byDayOfMonth, byDayOfWeek });
+
+      expect(pipe.run({ date })).toEqual({
+        date,
+        invalidDate: true,
+        skipToDate: dateTime(2020, 2, 29),
+      });
+    });
+  });
 });

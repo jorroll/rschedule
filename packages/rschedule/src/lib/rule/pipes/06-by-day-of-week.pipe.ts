@@ -1,7 +1,12 @@
 import { DateTime, dateTimeSortComparer, IDateAdapter, uniqDateTimes } from '../../date-time';
 import { RuleOption } from '../rule-options';
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
-import { getNextWeekday, getNthWeekdayOfMonth, getNthWeekdayOfYear } from './utilities';
+import { IPipeRule, IPipeRunFn, PipeError, PipeRule } from './interfaces';
+import {
+  getDifferenceBetweenWeekdays,
+  getNextWeekday,
+  getNthWeekdayOfMonth,
+  getNthWeekdayOfYear,
+} from './utilities';
 
 export interface IByDayOfWeekRuleOptions {
   frequency: RuleOption.Frequency;
@@ -28,71 +33,79 @@ export class ByDayOfWeekPipe extends PipeRule<IByDayOfWeekRuleOptions>
   }
 
   private expandYearly(args: IPipeRunFn) {
-    let { date } = args;
+    const { date } = args;
 
-    const base = date.granularity('day');
+    let next: DateTime | undefined = getNextWeekdaysOfYear(date, this.options.byDayOfWeek)[0];
 
-    let next: DateTime | undefined = getNextWeekdaysOfYear(base, this.options.byDayOfWeek)[0];
+    let index = 0;
+    let base = date;
 
-    const index = 0;
-
-    while (!next && index < 30) {
-      date = date.granularity('year').add(1, 'year');
-
-      next = getNextWeekdaysOfYear(date, this.options.byDayOfWeek)[0];
+    // If we can't find a valid date this year,
+    // search next year. Only search the next 28 years.
+    // (the calendar repeats on a 28 year cycle, according
+    // to the internet).
+    while (!next && index < 28) {
+      index++;
+      base = base.granularity('year').add(1, 'year');
+      next = getNextWeekdaysOfYear(base, this.options.byDayOfWeek)[0];
     }
 
-    if (index >= 30) {
-      throw new Error('Infinite while loop');
+    if (!next) {
+      throw new PipeError('The byDayOfWeek rule appears to contain an impossible combination');
     }
 
-    if (next.isEqual(base)) {
+    if (next.isEqual(date)) {
       return this.nextPipe.run({ date });
     }
 
-    return this.nextValidDate(args, next);
+    return this.nextValidDate(args, next.granularity('day'));
   }
 
   private expandMonthly(args: IPipeRunFn) {
-    let { date } = args;
+    const { date } = args;
 
-    const base = date.granularity('day');
+    let next: DateTime | undefined = getNextWeekdaysOfMonth(date, this.options.byDayOfWeek)[0];
 
-    let next: DateTime | undefined = getNextWeekdaysOfMonth(base, this.options.byDayOfWeek)[0];
+    let index = 0;
+    let base = date;
 
-    const index = 0;
+    // TODO: performance improvment
+    // If, in the first year, a match isn't found, we should be able to
+    // jumpt to the next leap year and check that. Or, if already on
+    // a leap year, we can just error immediately.
 
-    while (!next && index < 30) {
-      date = date.granularity('month').add(1, 'month');
-
-      next = getNextWeekdaysOfMonth(date, this.options.byDayOfWeek)[0];
+    // If we can't find a valid date this month,
+    // search the next month. Only search the next 4 years
+    // (to account for leap year).
+    while (!next && index < 50) {
+      index++;
+      base = base.granularity('month').add(1, 'month');
+      next = getNextWeekdaysOfMonth(base, this.options.byDayOfWeek)[0];
     }
 
-    if (index >= 30) {
-      throw new Error('Infinite while loop');
+    if (!next) {
+      throw new PipeError('The byDayOfWeek rule appears to contain an impossible combination');
     }
 
-    if (next.isEqual(base)) {
+    if (next.isEqual(date)) {
       return this.nextPipe.run({ date });
     }
 
-    return this.nextValidDate(args, next);
+    return this.nextValidDate(args, next.granularity('day'));
   }
 
   private expand(args: IPipeRunFn) {
     const { date } = args;
 
-    const base = date.granularity('day');
-
     const next = this.options.byDayOfWeek
-      .map(weekday => getNextWeekday(base, weekday as IDateAdapter.Weekday))
+      .map(weekday => getNextWeekday(date, weekday as IDateAdapter.Weekday))
       .sort(dateTimeSortComparer)[0];
 
-    if (next.isEqual(base)) {
+    if (next.isEqual(date)) {
       return this.nextPipe.run({ date });
     }
 
-    return this.nextValidDate(args, next);
+    return this.nextValidDate(args, next.granularity('day'));
   }
 }
 
@@ -104,7 +117,8 @@ export function getNextWeekdaysOfYear(date: DateTime, byDayOfWeek: RuleOption.By
 
   const normalizedNextWeekdays = byDayOfWeek
     .filter(entry => typeof entry === 'string')
-    .map(weekday => getNextWeekday(date, weekday as IDateAdapter.Weekday));
+    .map(weekday => getNextWeekday(date, weekday as IDateAdapter.Weekday))
+    .filter(entry => entry.get('year') === date.get('year'));
 
   return uniqDateTimes([...normalizedNthWeekdaysOfYear, ...normalizedNextWeekdays])
     .filter(entry => entry.isAfterOrEqual(date))
@@ -119,7 +133,10 @@ export function getNextWeekdaysOfMonth(date: DateTime, byDayOfWeek: RuleOption.B
 
   const normalizedNextWeekdays = byDayOfWeek
     .filter(entry => typeof entry === 'string')
-    .map(weekday => getNextWeekday(date, weekday as IDateAdapter.Weekday));
+    .map(weekday => getNextWeekday(date, weekday as IDateAdapter.Weekday))
+    .filter(
+      entry => entry.get('year') === date.get('year') && entry.get('month') === date.get('month'),
+    );
 
   return uniqDateTimes([...normalizedNthWeekdaysOfMonth, ...normalizedNextWeekdays])
     .filter(entry => entry.isAfterOrEqual(date))
