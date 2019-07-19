@@ -1,10 +1,8 @@
-import { INormalizedRuleOptions } from '../rule-options';
+import { IByHourOfDayRuleOptions } from './07-by-hour-of-day.pipe';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-type ByHourOfDayOptions = Pick<INormalizedRuleOptions, 'byHourOfDay'>;
-
-export class RevByHourOfDayPipe extends PipeRule<ByHourOfDayOptions>
-  implements IPipeRule<ByHourOfDayOptions> {
+export class RevByHourOfDayPipe extends PipeRule<IByHourOfDayRuleOptions>
+  implements IPipeRule<IByHourOfDayRuleOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);
@@ -14,7 +12,7 @@ export class RevByHourOfDayPipe extends PipeRule<ByHourOfDayOptions>
 
     const currentHour = date.get('hour');
 
-    for (const hour of this.options.byHourOfDay!) {
+    for (const hour of this.options.byHourOfDay) {
       if (currentHour < hour) continue;
 
       if (currentHour === hour) return this.nextPipe.run({ date });
@@ -25,7 +23,7 @@ export class RevByHourOfDayPipe extends PipeRule<ByHourOfDayOptions>
     date = date
       .endGranularity('day')
       .subtract(1, 'day')
-      .set('hour', this.options.byHourOfDay![0]);
+      .set('hour', this.options.byHourOfDay[0]);
 
     return this.nextValidDate(args, date);
   }

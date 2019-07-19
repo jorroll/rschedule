@@ -1,15 +1,16 @@
 import { DateTime, dateTimeSortComparer, IDateAdapter, uniqDateTimes } from '../../date-time';
-import { INormalizedRuleOptions, RuleOption } from '../rule-options';
+import { RuleOption } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 import { getNextWeekday, getNthWeekdayOfMonth, getNthWeekdayOfYear } from './utilities';
 
-type ByDayOfWeekOptions = Pick<
-  INormalizedRuleOptions,
-  'byDayOfWeek' | 'frequency' | 'byMonthOfYear'
->;
+export interface IByDayOfWeekRuleOptions {
+  frequency: RuleOption.Frequency;
+  byDayOfWeek: RuleOption.ByDayOfWeek[];
+  byMonthOfYear?: IDateAdapter.Month[];
+}
 
-export class ByDayOfWeekPipe extends PipeRule<ByDayOfWeekOptions>
-  implements IPipeRule<ByDayOfWeekOptions> {
+export class ByDayOfWeekPipe extends PipeRule<IByDayOfWeekRuleOptions>
+  implements IPipeRule<IByDayOfWeekRuleOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);
@@ -31,14 +32,14 @@ export class ByDayOfWeekPipe extends PipeRule<ByDayOfWeekOptions>
 
     const base = date.granularity('day');
 
-    let next: DateTime | undefined = getNextWeekdaysOfYear(base, this.options.byDayOfWeek!)[0];
+    let next: DateTime | undefined = getNextWeekdaysOfYear(base, this.options.byDayOfWeek)[0];
 
     const index = 0;
 
     while (!next && index < 30) {
       date = date.granularity('year').add(1, 'year');
 
-      next = getNextWeekdaysOfYear(date, this.options.byDayOfWeek!)[0];
+      next = getNextWeekdaysOfYear(date, this.options.byDayOfWeek)[0];
     }
 
     if (index >= 30) {
@@ -57,14 +58,14 @@ export class ByDayOfWeekPipe extends PipeRule<ByDayOfWeekOptions>
 
     const base = date.granularity('day');
 
-    let next: DateTime | undefined = getNextWeekdaysOfMonth(base, this.options.byDayOfWeek!)[0];
+    let next: DateTime | undefined = getNextWeekdaysOfMonth(base, this.options.byDayOfWeek)[0];
 
     const index = 0;
 
     while (!next && index < 30) {
       date = date.granularity('month').add(1, 'month');
 
-      next = getNextWeekdaysOfMonth(date, this.options.byDayOfWeek!)[0];
+      next = getNextWeekdaysOfMonth(date, this.options.byDayOfWeek)[0];
     }
 
     if (index >= 30) {
@@ -83,8 +84,8 @@ export class ByDayOfWeekPipe extends PipeRule<ByDayOfWeekOptions>
 
     const base = date.granularity('day');
 
-    const next = this.options
-      .byDayOfWeek!.map(weekday => getNextWeekday(base, weekday as IDateAdapter.Weekday))
+    const next = this.options.byDayOfWeek
+      .map(weekday => getNextWeekday(base, weekday as IDateAdapter.Weekday))
       .sort(dateTimeSortComparer)[0];
 
     if (next.isEqual(base)) {
@@ -95,12 +96,13 @@ export class ByDayOfWeekPipe extends PipeRule<ByDayOfWeekOptions>
   }
 }
 
+/** For each byDayOfWeek entry, find the next DateTime */
 export function getNextWeekdaysOfYear(date: DateTime, byDayOfWeek: RuleOption.ByDayOfWeek[]) {
-  const normalizedNthWeekdaysOfYear = byDayOfWeek!
+  const normalizedNthWeekdaysOfYear = byDayOfWeek
     .filter(entry => Array.isArray(entry))
     .map(entry => getNthWeekdayOfYear(date, ...(entry as [IDateAdapter.Weekday, number])));
 
-  const normalizedNextWeekdays = byDayOfWeek!
+  const normalizedNextWeekdays = byDayOfWeek
     .filter(entry => typeof entry === 'string')
     .map(weekday => getNextWeekday(date, weekday as IDateAdapter.Weekday));
 
@@ -109,12 +111,13 @@ export function getNextWeekdaysOfYear(date: DateTime, byDayOfWeek: RuleOption.By
     .sort(dateTimeSortComparer);
 }
 
+/** For each byDayOfWeek entry, find the next DateTime */
 export function getNextWeekdaysOfMonth(date: DateTime, byDayOfWeek: RuleOption.ByDayOfWeek[]) {
-  const normalizedNthWeekdaysOfMonth = byDayOfWeek!
+  const normalizedNthWeekdaysOfMonth = byDayOfWeek
     .filter(entry => Array.isArray(entry))
     .map(entry => getNthWeekdayOfMonth(date, ...(entry as [IDateAdapter.Weekday, number])));
 
-  const normalizedNextWeekdays = byDayOfWeek!
+  const normalizedNextWeekdays = byDayOfWeek
     .filter(entry => typeof entry === 'string')
     .map(weekday => getNextWeekday(date, weekday as IDateAdapter.Weekday));
 

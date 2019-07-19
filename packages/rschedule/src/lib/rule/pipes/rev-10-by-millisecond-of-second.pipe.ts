@@ -1,10 +1,8 @@
-import { INormalizedRuleOptions } from '../rule-options';
+import { IByMillisecondOfSecondRuleOptions } from './10-by-millisecond-of-second.pipe';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-type ByMillisecondOfSecondOptions = Pick<INormalizedRuleOptions, 'byMillisecondOfSecond'>;
-
-export class RevByMillisecondOfSecondPipe extends PipeRule<ByMillisecondOfSecondOptions>
-  implements IPipeRule<ByMillisecondOfSecondOptions> {
+export class RevByMillisecondOfSecondPipe extends PipeRule<IByMillisecondOfSecondRuleOptions>
+  implements IPipeRule<IByMillisecondOfSecondRuleOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);
@@ -14,7 +12,7 @@ export class RevByMillisecondOfSecondPipe extends PipeRule<ByMillisecondOfSecond
 
     const currentMillisecond = date.get('millisecond');
 
-    for (const millisecond of this.options.byMillisecondOfSecond!) {
+    for (const millisecond of this.options.byMillisecondOfSecond) {
       if (currentMillisecond < millisecond) continue;
 
       if (currentMillisecond === millisecond) return this.nextPipe.run({ date });
@@ -28,7 +26,7 @@ export class RevByMillisecondOfSecondPipe extends PipeRule<ByMillisecondOfSecond
     date = date
       .endGranularity('second')
       .subtract(1, 'second')
-      .set('millisecond', this.options.byMillisecondOfSecond![0]);
+      .set('millisecond', this.options.byMillisecondOfSecond[0]);
 
     return this.nextValidDate(args, date);
   }

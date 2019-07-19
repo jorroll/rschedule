@@ -1,18 +1,16 @@
 import { freqToGranularity } from '../../basic-utilities';
 import { DateTime, IDateAdapter } from '../../date-time';
-import { INormalizedRuleOptions } from '../rule-options';
-import { intervalDifferenceBetweenDates } from './01-frequency.pipe';
+import { RuleOption } from '../rule-options';
+import { IFrequencyRuleOptions, intervalDifferenceBetweenDates } from './01-frequency.pipe';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
-
-type RevFrequencyOptions = Pick<INormalizedRuleOptions, 'frequency' | 'interval' | 'weekStart'>;
 
 /**
  * The `RevFrequencyPipe` is the first pipe in the chain of rule pipes. It is
  * responsible for incrementing the date, as appropriate, while taking into
  * account the `RRULE` frequency and interval.
  */
-export class RevFrequencyPipe extends PipeRule<RevFrequencyOptions>
-  implements IPipeRule<RevFrequencyOptions> {
+export class RevFrequencyPipe extends PipeRule<IFrequencyRuleOptions>
+  implements IPipeRule<IFrequencyRuleOptions> {
   private readonly intervalUnit = freqToGranularity(this.options.frequency);
 
   private intervalEndDate = this.normalizedEndDate(this.end!);
