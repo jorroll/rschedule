@@ -68,8 +68,9 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         };
 
         describe('Rule', () => {
-          const buildGenerator = (config: IProvidedRuleOptions<any>) =>
-            new Rule(config, { dateAdapter: DateAdapter, timezone });
+          function buildGenerator(config: IProvidedRuleOptions<any>) {
+            return new Rule(config, { dateAdapter: DateAdapter, timezone });
+          }
 
           ruleTests(DateAdapter, dateAdapter, parse, buildGenerator);
         });
