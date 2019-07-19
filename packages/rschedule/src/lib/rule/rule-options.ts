@@ -257,6 +257,7 @@ export namespace RuleOption {
   export type WeekStart = IDateAdapter.Weekday;
 
   export type Frequency =
+    | 'MILLISECONDLY'
     | 'SECONDLY'
     | 'MINUTELY'
     | 'HOURLY'

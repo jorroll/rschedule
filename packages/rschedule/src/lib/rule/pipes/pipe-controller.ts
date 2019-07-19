@@ -204,7 +204,13 @@ export class PipeController {
     // Pipe ordering is defined in the ICAL spec
     // https://tools.ietf.org/html/rfc5545#section-3.3.10
 
-    const pipeOptions = { start: this.start, end: this.end, options: this.options };
+    const pipeOptions = {
+      start: this.options.start,
+      // The ` || this.end` bit is for the RevFrequencyPipe
+      // but I can't think of any reason why it can't be added here
+      end: this.options.end || this.end,
+      options: this.options,
+    };
 
     if (this.reversePipes) {
       this.addPipe(new RevFrequencyPipe(pipeOptions));
@@ -242,7 +248,11 @@ export class PipeController {
         pipeOptions.options.byMillisecondOfSecond.reverse();
       }
 
-      const revResultPipe = new RevResultPipe(pipeOptions);
+      const revResultPipe = new RevResultPipe({
+        start: this.start,
+        end: this.end,
+        options: this.options,
+      });
 
       revResultPipe.firstPipe = this.firstPipe;
 
@@ -281,7 +291,11 @@ export class PipeController {
       this.addPipe(new ByMillisecondOfSecondPipe(pipeOptions as any));
     }
 
-    const resultPipe = new ResultPipe(pipeOptions);
+    const resultPipe = new ResultPipe({
+      start: this.start,
+      end: this.end,
+      options: this.options,
+    });
 
     resultPipe.firstPipe = this.firstPipe;
 

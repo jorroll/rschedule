@@ -28,7 +28,7 @@ describe('RevFrequencyPipe', () => {
           });
 
           it('nextDateIsWithinInterval', () => {
-            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'second') });
+            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'millisecond') });
           });
 
           it('skipToDate', () => {
@@ -71,7 +71,7 @@ describe('RevFrequencyPipe', () => {
           });
 
           it('nextDateIsWithinInterval', () => {
-            expect(pipe.run({ date: date.add(1, 'second') })).toEqual({ date });
+            expect(pipe.run({ date: date.add(1, 'millisecond') })).toEqual({ date });
           });
 
           it('skipToDate', () => {
@@ -117,7 +117,7 @@ describe('RevFrequencyPipe', () => {
           });
 
           it('nextDateIsWithinInterval', () => {
-            expect(pipe.run({ date: date.add(1, 'second') })).toEqual({ date });
+            expect(pipe.run({ date: date.add(1, 'millisecond') })).toEqual({ date });
           });
 
           it('skipToDate', () => {
@@ -147,6 +147,23 @@ describe('RevFrequencyPipe', () => {
     });
   });
 
+  context('MONTHLY' as RuleOption.Frequency, frequency => {
+    it('', () => {
+      const pipe = buildPipe(dateTime(1997, 9, 2, 9), {
+        frequency,
+        interval: 1,
+        weekStart: 'MO',
+      });
+
+      expect(
+        pipe.run({
+          date: dateTime(1998, 2, 26, 23, 59, 59, 999),
+          skipToDate: dateTime(1998, 1, 31, 23, 59, 59, 999),
+        }),
+      ).toEqual({ date: dateTime(1998, 1, 31, 23, 59, 59, 999) });
+    });
+  });
+
   context('WEEKLY', (frequency: 'WEEKLY') => {
     context('MO', (weekStart: RuleOption.WeekStart) => {
       context(1, interval => {
@@ -162,7 +179,7 @@ describe('RevFrequencyPipe', () => {
           });
 
           it('nextDateIsWithinInterval', () => {
-            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'second') });
+            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'millisecond') });
           });
 
           it('skipToDate', () => {
@@ -208,7 +225,7 @@ describe('RevFrequencyPipe', () => {
           });
 
           it('nextDateIsWithinInterval', () => {
-            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'second') });
+            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'millisecond') });
           });
 
           it('skipToDate', () => {
@@ -254,7 +271,7 @@ describe('RevFrequencyPipe', () => {
           });
 
           it('nextDateIsWithinInterval', () => {
-            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'second') });
+            expect(pipe.run({ date })).toEqual({ date: date.subtract(1, 'millisecond') });
           });
 
           it('skipToDate', () => {
