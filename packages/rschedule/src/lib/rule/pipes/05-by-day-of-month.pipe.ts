@@ -1,12 +1,15 @@
 import { DateTime } from '../../date-time';
-import { INormalizedRuleOptions, RuleOption } from '../rule-options';
+import { RuleOption } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeError, PipeRule } from './interfaces';
 import { getNthWeekdayOfMonth } from './utilities';
 
-type ByDayOfMonthOptions = Pick<INormalizedRuleOptions, 'byDayOfMonth' | 'byDayOfWeek'>;
+export interface IByDayOfMonthRuleOptions {
+  byDayOfMonth: RuleOption.ByDayOfMonth[];
+  byDayOfWeek?: RuleOption.ByDayOfWeek[];
+}
 
-export class ByDayOfMonthPipe extends PipeRule<ByDayOfMonthOptions>
-  implements IPipeRule<ByDayOfMonthOptions> {
+export class ByDayOfMonthPipe extends PipeRule<IByDayOfMonthRuleOptions>
+  implements IPipeRule<IByDayOfMonthRuleOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);
@@ -16,7 +19,7 @@ export class ByDayOfMonthPipe extends PipeRule<ByDayOfMonthOptions>
 
     const normalizedByDayOfMonth = normalizeByDayOfMonth(
       date,
-      this.options.byDayOfMonth!,
+      this.options.byDayOfMonth,
       this.options.byDayOfWeek,
     );
 
@@ -39,7 +42,7 @@ export class ByDayOfMonthPipe extends PipeRule<ByDayOfMonthOptions>
 
       next = normalizeByDayOfMonth(
         nextMonth,
-        this.options.byDayOfMonth!,
+        this.options.byDayOfMonth,
         this.options.byDayOfWeek,
       )[0];
 
@@ -55,6 +58,16 @@ export class ByDayOfMonthPipe extends PipeRule<ByDayOfMonthOptions>
     return this.nextValidDate(args, date);
   }
 }
+
+/**
+ * Does a few things:
+ *
+ * 1. filters out byDayOfMonth entries which are not applicable
+ *    to current month
+ * 2. negative entries to positive ones
+ * 3. if a byDayOfWeek option is given, removes days which are
+ *    not on the correct day of the week
+ */
 
 export function normalizeByDayOfMonth(
   date: DateTime,

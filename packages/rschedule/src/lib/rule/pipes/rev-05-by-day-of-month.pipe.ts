@@ -1,11 +1,8 @@
-import { INormalizedRuleOptions } from '../rule-options';
-import { normalizeByDayOfMonth } from './05-by-day-of-month.pipe';
+import { IByDayOfMonthRuleOptions, normalizeByDayOfMonth } from './05-by-day-of-month.pipe';
 import { IPipeRule, IPipeRunFn, PipeError, PipeRule } from './interfaces';
 
-type ByDayOfMonthOptions = Pick<INormalizedRuleOptions, 'byDayOfMonth' | 'byDayOfWeek'>;
-
-export class RevByDayOfMonthPipe extends PipeRule<ByDayOfMonthOptions>
-  implements IPipeRule<ByDayOfMonthOptions> {
+export class RevByDayOfMonthPipe extends PipeRule<IByDayOfMonthRuleOptions>
+  implements IPipeRule<IByDayOfMonthRuleOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);

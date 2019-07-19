@@ -1,10 +1,12 @@
-import { INormalizedRuleOptions } from '../rule-options';
+import { RuleOption } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-type ByMinuteOfHourOptions = Pick<INormalizedRuleOptions, 'byMinuteOfHour'>;
+export interface IByMinuteOfHourRulePipe {
+  byMinuteOfHour: RuleOption.ByMinuteOfHour[];
+}
 
-export class ByMinuteOfHourPipe extends PipeRule<ByMinuteOfHourOptions>
-  implements IPipeRule<ByMinuteOfHourOptions> {
+export class ByMinuteOfHourPipe extends PipeRule<IByMinuteOfHourRulePipe>
+  implements IPipeRule<IByMinuteOfHourRulePipe> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);
@@ -14,7 +16,7 @@ export class ByMinuteOfHourPipe extends PipeRule<ByMinuteOfHourOptions>
 
     const currentMinute = date.get('minute');
 
-    for (const minute of this.options.byMinuteOfHour!) {
+    for (const minute of this.options.byMinuteOfHour) {
       if (currentMinute > minute) continue;
 
       if (currentMinute === minute) return this.nextPipe.run({ date });
@@ -25,7 +27,7 @@ export class ByMinuteOfHourPipe extends PipeRule<ByMinuteOfHourOptions>
     date = date
       .granularity('hour')
       .add(1, 'hour')
-      .set('minute', this.options.byMinuteOfHour![0]);
+      .set('minute', this.options.byMinuteOfHour[0]);
 
     return this.nextValidDate(args, date);
   }

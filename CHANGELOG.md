@@ -4,6 +4,13 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Fixes
+
+- added unit tests for `PipeController`
+  - fixed a bug that was discovered during this process. It affected reverse iteration of rules with a `count` property
+- added individual tests for each rule pipe
+- fixed a few bugs in the `RevByDayOfWeek` pipe
+
 ## Releases
 
 ## 0.11.3 FIX (2019/7/17)

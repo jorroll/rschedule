@@ -1,10 +1,12 @@
-import { INormalizedRuleOptions } from '../rule-options';
+import { RuleOption } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-type ByMonthOfYearOptions = Pick<INormalizedRuleOptions, 'byMonthOfYear'>;
+export interface IByMonthOfYearRuleOptions {
+  byMonthOfYear: RuleOption.ByMonthOfYear[];
+}
 
-export class ByMonthOfYearPipe extends PipeRule<ByMonthOfYearOptions>
-  implements IPipeRule<ByMonthOfYearOptions> {
+export class ByMonthOfYearPipe extends PipeRule<IByMonthOfYearRuleOptions>
+  implements IPipeRule<IByMonthOfYearRuleOptions> {
   run(args: IPipeRunFn) {
     if (args.invalidDate) {
       return this.nextPipe.run(args);
@@ -14,7 +16,7 @@ export class ByMonthOfYearPipe extends PipeRule<ByMonthOfYearOptions>
 
     const currentMonth = date.get('month');
 
-    for (const month of this.options.byMonthOfYear!) {
+    for (const month of this.options.byMonthOfYear) {
       if (currentMonth > month) continue;
 
       if (currentMonth === month) return this.nextPipe.run({ date });
@@ -25,7 +27,7 @@ export class ByMonthOfYearPipe extends PipeRule<ByMonthOfYearOptions>
     date = date
       .granularity('year')
       .add(1, 'year')
-      .set('month', this.options.byMonthOfYear![0]);
+      .set('month', this.options.byMonthOfYear[0]);
 
     return this.nextValidDate(args, date);
   }

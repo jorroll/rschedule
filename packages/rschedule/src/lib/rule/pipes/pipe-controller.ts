@@ -119,44 +119,27 @@ export class PipeController {
   }
 
   private *iterateWithReverseCount() {
-    const iterable = this.iterate();
+    const dates = Array.from(this.iterateWithCount()).reverse();
 
-    let date: DateTime | undefined = iterable.next().value;
-    let args: { skipToDate?: DateTime } | undefined;
-    let index = 1;
-
-    const dates = [date];
-
-    for (date of iterable) {
-      if (index >= this.options.count!) break;
-
-      dates.push(date);
-
-      index++;
-    }
-
-    dates.reverse();
-
+    let yieldArgs: { skipToDate?: DateTime } | undefined;
     let dateCache = dates.slice();
-
-    date = dateCache.shift();
+    let date = dateCache.shift();
 
     while (date) {
-      if (args) {
-        if (args.skipToDate && args.skipToDate.isBefore(date)) {
+      if (yieldArgs) {
+        if (yieldArgs.skipToDate && yieldArgs.skipToDate.isBefore(date)) {
           date = dateCache.shift();
           continue;
         }
 
-        args = undefined;
+        yieldArgs = undefined;
       }
 
-      args = yield date;
+      yieldArgs = yield date;
 
-      if (args && args.skipToDate) {
-        // need to reset the date cache to allow the same date to be picked again.
-        // Also, I suppose it's possible someone might want to go back in time,
-        // which this allows.
+      if (yieldArgs && yieldArgs.skipToDate) {
+        // need to reset the date cache to allow the same (or past)
+        // date to be picked again.
         dateCache = dates.slice();
       }
 
@@ -168,29 +151,22 @@ export class PipeController {
     if (this.options.count === 0) return;
 
     const iterable = this.iterate();
+    const start = this.args.start || this.start;
 
     let date: DateTime | undefined = iterable.next().value;
     let index = 1;
-
-    const start = this.args.start || this.start;
-
-    while (date && date.isBefore(start) && index < this.options.count!) {
-      date = iterable.next().value;
-      index++;
-    }
-
-    if (date && date.isBefore(start)) {
-      return;
-    }
-
-    let args: { skipToDate?: DateTime } | undefined;
+    let yieldArgs: { skipToDate?: DateTime } | undefined;
 
     while (date && index <= this.options.count!) {
-      args = yield date;
-
-      date = iterable.next(args).value;
-
       index++;
+
+      if (date && date.isBefore(start)) {
+        date = iterable.next().value;
+        continue;
+      }
+
+      yieldArgs = yield date;
+      date = iterable.next(yieldArgs).value;
     }
   }
 
@@ -228,43 +204,45 @@ export class PipeController {
     // Pipe ordering is defined in the ICAL spec
     // https://tools.ietf.org/html/rfc5545#section-3.3.10
 
+    const pipeOptions = { start: this.start, end: this.end, options: this.options };
+
     if (this.reversePipes) {
-      this.addPipe(new RevFrequencyPipe(this));
+      this.addPipe(new RevFrequencyPipe(pipeOptions));
 
-      if (this.options.byMonthOfYear !== undefined) {
-        this.addPipe(new RevByMonthOfYearPipe(this));
-        this.options.byMonthOfYear.reverse();
+      if (pipeOptions.options.byMonthOfYear !== undefined) {
+        this.addPipe(new RevByMonthOfYearPipe(pipeOptions as any));
+        pipeOptions.options.byMonthOfYear.reverse();
       }
 
-      if (this.options.byDayOfMonth !== undefined) {
-        this.addPipe(new RevByDayOfMonthPipe(this));
+      if (pipeOptions.options.byDayOfMonth !== undefined) {
+        this.addPipe(new RevByDayOfMonthPipe(pipeOptions as any));
       }
 
-      if (this.options.byDayOfWeek !== undefined) {
-        this.addPipe(new RevByDayOfWeekPipe(this));
+      if (pipeOptions.options.byDayOfWeek !== undefined) {
+        this.addPipe(new RevByDayOfWeekPipe(pipeOptions as any));
       }
 
-      if (this.options.byHourOfDay !== undefined) {
-        this.addPipe(new RevByHourOfDayPipe(this));
-        this.options.byHourOfDay.reverse();
+      if (pipeOptions.options.byHourOfDay !== undefined) {
+        this.addPipe(new RevByHourOfDayPipe(pipeOptions as any));
+        pipeOptions.options.byHourOfDay.reverse();
       }
 
-      if (this.options.byMinuteOfHour !== undefined) {
-        this.addPipe(new RevByMinuteOfHourPipe(this));
-        this.options.byMinuteOfHour.reverse();
+      if (pipeOptions.options.byMinuteOfHour !== undefined) {
+        this.addPipe(new RevByMinuteOfHourPipe(pipeOptions as any));
+        pipeOptions.options.byMinuteOfHour.reverse();
       }
 
-      if (this.options.bySecondOfMinute !== undefined) {
-        this.addPipe(new RevBySecondOfMinutePipe(this));
-        this.options.bySecondOfMinute.reverse();
+      if (pipeOptions.options.bySecondOfMinute !== undefined) {
+        this.addPipe(new RevBySecondOfMinutePipe(pipeOptions as any));
+        pipeOptions.options.bySecondOfMinute.reverse();
       }
 
-      if (this.options.byMillisecondOfSecond !== undefined) {
-        this.addPipe(new RevByMillisecondOfSecondPipe(this));
-        this.options.byMillisecondOfSecond.reverse();
+      if (pipeOptions.options.byMillisecondOfSecond !== undefined) {
+        this.addPipe(new RevByMillisecondOfSecondPipe(pipeOptions as any));
+        pipeOptions.options.byMillisecondOfSecond.reverse();
       }
 
-      const revResultPipe = new RevResultPipe(this);
+      const revResultPipe = new RevResultPipe(pipeOptions);
 
       revResultPipe.firstPipe = this.firstPipe;
 
@@ -273,37 +251,37 @@ export class PipeController {
       return;
     }
 
-    this.addPipe(new FrequencyPipe(this));
+    this.addPipe(new FrequencyPipe(pipeOptions));
 
-    if (this.options.byMonthOfYear !== undefined) {
-      this.addPipe(new ByMonthOfYearPipe(this));
+    if (pipeOptions.options.byMonthOfYear !== undefined) {
+      this.addPipe(new ByMonthOfYearPipe(pipeOptions as any));
     }
 
-    if (this.options.byDayOfMonth !== undefined) {
-      this.addPipe(new ByDayOfMonthPipe(this));
+    if (pipeOptions.options.byDayOfMonth !== undefined) {
+      this.addPipe(new ByDayOfMonthPipe(pipeOptions as any));
     }
 
-    if (this.options.byDayOfWeek !== undefined) {
-      this.addPipe(new ByDayOfWeekPipe(this));
+    if (pipeOptions.options.byDayOfWeek !== undefined) {
+      this.addPipe(new ByDayOfWeekPipe(pipeOptions as any));
     }
 
-    if (this.options.byHourOfDay !== undefined) {
-      this.addPipe(new ByHourOfDayPipe(this));
+    if (pipeOptions.options.byHourOfDay !== undefined) {
+      this.addPipe(new ByHourOfDayPipe(pipeOptions as any));
     }
 
-    if (this.options.byMinuteOfHour !== undefined) {
-      this.addPipe(new ByMinuteOfHourPipe(this));
+    if (pipeOptions.options.byMinuteOfHour !== undefined) {
+      this.addPipe(new ByMinuteOfHourPipe(pipeOptions as any));
     }
 
-    if (this.options.bySecondOfMinute !== undefined) {
-      this.addPipe(new BySecondOfMinutePipe(this));
+    if (pipeOptions.options.bySecondOfMinute !== undefined) {
+      this.addPipe(new BySecondOfMinutePipe(pipeOptions as any));
     }
 
-    if (this.options.byMillisecondOfSecond !== undefined) {
-      this.addPipe(new ByMillisecondOfSecondPipe(this));
+    if (pipeOptions.options.byMillisecondOfSecond !== undefined) {
+      this.addPipe(new ByMillisecondOfSecondPipe(pipeOptions as any));
     }
 
-    const resultPipe = new ResultPipe(this);
+    const resultPipe = new ResultPipe(pipeOptions);
 
     resultPipe.firstPipe = this.firstPipe;
 

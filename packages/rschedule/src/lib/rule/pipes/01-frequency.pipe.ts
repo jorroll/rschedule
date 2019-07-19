@@ -8,18 +8,22 @@ import {
   MILLISECONDS_IN_SECOND,
   MILLISECONDS_IN_WEEK,
 } from '../../date-time';
-import { INormalizedRuleOptions } from '../rule-options';
+import { RuleOption } from '../rule-options';
 import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
 
-type FrequencyOptions = Pick<INormalizedRuleOptions, 'frequency' | 'interval' | 'weekStart'>;
+export interface IFrequencyRuleOptions {
+  frequency: RuleOption.Frequency;
+  interval: RuleOption.Interval;
+  weekStart: RuleOption.WeekStart;
+}
 
 /**
  * The `FrequencyPipe` is the first pipe in the chain of rule pipes. It is
  * responsible for incrementing the date, as appropriate, while taking into
  * account the `RRULE` frequency and interval.
  */
-export class FrequencyPipe extends PipeRule<FrequencyOptions>
-  implements IPipeRule<FrequencyOptions> {
+export class FrequencyPipe extends PipeRule<IFrequencyRuleOptions>
+  implements IPipeRule<IFrequencyRuleOptions> {
   private readonly intervalUnit = freqToGranularity(this.options.frequency);
 
   private intervalStartDate = this.normalizedStartDate(this.start);
@@ -35,18 +39,17 @@ export class FrequencyPipe extends PipeRule<FrequencyOptions>
   run(args: IPipeRunFn) {
     let date: DateTime = args.date;
 
-    if (args.invalidDate) {
-      date = args.skipToDate!;
+    // if a date is invalid, skipToDate will always be present
+    // skipToDate may also be passed by a user on an otherwise valid date
+    if (args.skipToDate) {
+      date = args.skipToDate;
 
       this.skipToIntervalOnOrAfter(date);
 
       if (!this.dateIsWithinInterval(date)) {
+        // this only applies when the interval is not 1
         date = this.intervalStartDate;
       }
-    } else if (args.skipToDate) {
-      this.skipToIntervalOnOrAfter(args.skipToDate);
-
-      date = this.dateIsWithinInterval(args.skipToDate) ? args.skipToDate : this.intervalStartDate;
     } else if (
       this.dateIsWithinInterval(date) &&
       this.dateIsWithinInterval(date.add(1, 'second'))
@@ -100,6 +103,7 @@ export class FrequencyPipe extends PipeRule<FrequencyOptions>
         second: date,
         unit: this.intervalUnit,
         interval: this.options.interval,
+        weekStart: this.options.weekStart,
       }),
     );
   }
@@ -109,16 +113,32 @@ export class FrequencyPipe extends PipeRule<FrequencyOptions>
   }
 }
 
+/**
+ * Given the frequency (unit) and interval, this function finds
+ * how many jumps forward the first date needs in order to equal
+ * or exceed the second date.
+ *
+ * For example:
+ *
+ * 1. Unit is daily and interval is 1. The second date is 3 days
+ *    after the first. This will return 3.
+ * 2. Unit is yearly and interval is 1. The second date is 3 days
+ *    after the first. This will return 0.
+ * 3. Unit is yearly and interval is 3. The second date is 4 years
+ *    after the first. This will return 6.
+ */
 export function intervalDifferenceBetweenDates({
   first,
   second,
   unit,
   interval,
+  weekStart,
 }: {
   first: DateTime;
   second: DateTime;
   unit: IDateAdapter.TimeUnit | 'week';
   interval: number;
+  weekStart: IDateAdapter.Weekday;
 }) {
   let difference = (() => {
     let intervalDuration: number;
@@ -133,6 +153,7 @@ export function intervalDifferenceBetweenDates({
         months = months + second.get('month') - first.get('month');
         return months;
       case 'week':
+        first = first.granularity('week', { weekStart });
         intervalDuration = MILLISECONDS_IN_WEEK;
         break;
       case 'day':

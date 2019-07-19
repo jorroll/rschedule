@@ -28,7 +28,7 @@ export function context<T>(name: T, fn: (name: T) => any) {
     describe(`${name[0]}`, () => {
       fn(name);
     });
-  } else if (DateAdapter.isInstance(name)) {
+  } else if (DateAdapter.isInstance(name) || DateTime.isInstance(name)) {
     describe(name.toISOString(), () => {
       fn(name);
     });
