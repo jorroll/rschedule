@@ -4,7 +4,7 @@ import { INormalizedRuleOptions } from '../rule-options';
 import { ArgumentError, cloneJSON, Omit } from '../../basic-utilities';
 import { IRunArgs } from '../../interfaces';
 import { FrequencyPipe } from './01-frequency.pipe';
-import { ByMonthOfYearPipe, IByMonthOfYearRuleOptions } from './02-by-month-of-year.pipe';
+import { ByMonthOfYearPipe } from './02-by-month-of-year.pipe';
 import { ByDayOfMonthPipe } from './05-by-day-of-month.pipe';
 import { ByDayOfWeekPipe } from './06-by-day-of-week.pipe';
 import { ByHourOfDayPipe } from './07-by-hour-of-day.pipe';
@@ -119,44 +119,27 @@ export class PipeController {
   }
 
   private *iterateWithReverseCount() {
-    const iterable = this.iterate();
+    const dates = Array.from(this.iterateWithCount()).reverse();
 
-    let date: DateTime | undefined = iterable.next().value;
-    let args: { skipToDate?: DateTime } | undefined;
-    let index = 1;
-
-    const dates = [date];
-
-    for (date of iterable) {
-      if (index >= this.options.count!) break;
-
-      dates.push(date);
-
-      index++;
-    }
-
-    dates.reverse();
-
+    let yieldArgs: { skipToDate?: DateTime } | undefined;
     let dateCache = dates.slice();
-
-    date = dateCache.shift();
+    let date = dateCache.shift();
 
     while (date) {
-      if (args) {
-        if (args.skipToDate && args.skipToDate.isBefore(date)) {
+      if (yieldArgs) {
+        if (yieldArgs.skipToDate && yieldArgs.skipToDate.isBefore(date)) {
           date = dateCache.shift();
           continue;
         }
 
-        args = undefined;
+        yieldArgs = undefined;
       }
 
-      args = yield date;
+      yieldArgs = yield date;
 
-      if (args && args.skipToDate) {
-        // need to reset the date cache to allow the same date to be picked again.
-        // Also, I suppose it's possible someone might want to go back in time,
-        // which this allows.
+      if (yieldArgs && yieldArgs.skipToDate) {
+        // need to reset the date cache to allow the same (or past)
+        // date to be picked again.
         dateCache = dates.slice();
       }
 
@@ -168,29 +151,22 @@ export class PipeController {
     if (this.options.count === 0) return;
 
     const iterable = this.iterate();
+    const start = this.args.start || this.start;
 
     let date: DateTime | undefined = iterable.next().value;
     let index = 1;
-
-    const start = this.args.start || this.start;
-
-    while (date && date.isBefore(start) && index < this.options.count!) {
-      date = iterable.next().value;
-      index++;
-    }
-
-    if (date && date.isBefore(start)) {
-      return;
-    }
-
-    let args: { skipToDate?: DateTime } | undefined;
+    let yieldArgs: { skipToDate?: DateTime } | undefined;
 
     while (date && index <= this.options.count!) {
-      args = yield date;
-
-      date = iterable.next(args).value;
-
       index++;
+
+      if (date && date.isBefore(start)) {
+        date = iterable.next().value;
+        continue;
+      }
+
+      yieldArgs = yield date;
+      date = iterable.next(yieldArgs).value;
     }
   }
 
