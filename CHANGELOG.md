@@ -4,6 +4,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Fixes
+
+- Prevent VEvent objects from being initialized with a rule specifying a `MILLISECONDLY` frequency.
+
 ## Releases
 
 ## 0.11.5 FEATURE (2019/7/19)
