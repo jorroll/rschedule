@@ -55,7 +55,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
   readonly start: InstanceType<T>;
   readonly isInfinite: boolean;
   readonly duration?: number | InstanceType<T>;
-  readonly maxDuration?: number;
+  readonly maxDuration!: number;
   readonly hasDuration: boolean;
   readonly timezone: string | null;
 
@@ -242,7 +242,7 @@ export class VEvent<T extends typeof DateAdapter, D = any> extends OccurrenceGen
 
     this.hasDuration = !!this._duration;
 
-    if (this.hasDuration) {
+    if (this._duration) {
       this.maxDuration = this._duration;
     }
 
