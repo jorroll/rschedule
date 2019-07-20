@@ -2,7 +2,6 @@ import {
   ArgumentError,
   DateAdapter,
   IDateAdapter,
-  IProvidedRuleOptions,
   MILLISECONDS_IN_DAY,
   MILLISECONDS_IN_HOUR,
   MILLISECONDS_IN_MINUTE,
@@ -14,7 +13,7 @@ import {
 } from '@rschedule/rschedule';
 import { parse } from 'ical.js';
 import { IJCalComponent, IJCalProperty } from './serializer';
-import { IVEventRuleOptions, VEvent } from './vevent';
+import { ICalRuleFrequency, IVEventRuleOptions, VEvent } from './vevent';
 
 export class ParseICalError extends Error {}
 
@@ -340,14 +339,13 @@ export function parseRule<T extends typeof DateAdapter>(
   input: IJCalProperty,
   dateAdapterConstructor: T,
   dtstart: IDtstartProperty<T>,
-): IProvidedRuleOptions<T> {
+): IVEventRuleOptions<T> {
   if (!(input[3] && input[3].freq)) {
     throw new ParseICalError(`Invalid RRULE/EXRULE property: must contain a "FREQ" value.`);
   }
 
-  const result: IProvidedRuleOptions<T> = {
+  const result: IVEventRuleOptions<T> & {} = {
     frequency: parseFrequency(input[3].freq),
-    start: dtstart.processedValue,
   };
 
   if (input[3].hasOwnProperty('until')) {
@@ -401,7 +399,7 @@ export function parseFrequency(text: string) {
   if (!['SECONDLY', 'MINUTELY', 'HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(text)) {
     throw new ParseICalError(`Invalid FREQ value "${text}"`);
   } else {
-    return text as RuleOption.Frequency;
+    return text as ICalRuleFrequency;
   }
 }
 

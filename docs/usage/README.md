@@ -33,7 +33,7 @@ There is also an optional `@rschedule/rule-tools` library which contains utility
 
 ### CR**UD** with rSchedule objects
 
-All of rSchedule's objects are immutable (the major exception is the `data` property that many of the occurrence generators have). This decision _greatly_ reduces the number of bugs and helps to optimize the performance of rSchedule objects for reading. The downside is that this can make updating the objects a bit strange and clumsey, compared to typical mutable javascript APIs. While each rSchedule object is different, this section provides a brief introduction on how to change rSchedule objects.
+All of rSchedule's objects are immutable (the major exception is the `data` property that many of the occurrence generators have). This decision _greatly_ reduces the number of bugs and helps to optimize the performance of rSchedule objects for reading. The downside is that this can make updating the objects a bit strange and clumsy compared to typical mutable javascript APIs. While each rSchedule object is different, this section provides a brief introduction on how to change rSchedule objects.
 
 As a reminder, you can check out the optional [`rule-tools` package](./rule-tools) that aims to provide convenient helper functions that simplify common tasks (feel free to contribute anything you feel is missing from this package).
 

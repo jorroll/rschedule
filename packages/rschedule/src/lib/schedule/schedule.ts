@@ -28,8 +28,8 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
   readonly rrules: ReadonlyArray<Rule<T>> = [];
   readonly exrules: ReadonlyArray<Rule<T>> = [];
-  readonly rdates: Dates<T>;
-  readonly exdates: Dates<T>;
+  readonly rdates!: Dates<T>;
+  readonly exdates!: Dates<T>;
 
   pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
 
@@ -195,57 +195,40 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
     this.data = options.data as D;
 
-    if (options.rrules) {
-      this.rrules = options.rrules.map(ruleArgs => {
-        if (Rule.isRule(ruleArgs)) {
-          return ruleArgs.set('timezone', this.timezone);
-        } else {
-          return new Rule(ruleArgs as IProvidedRuleOptions<T>, {
-            dateAdapter: this.dateAdapter as any,
-            timezone: this.timezone,
-          });
-        }
-      });
+    for (const prop of ['rrules', 'exrules'] as ['rrules', 'exrules']) {
+      const arg = options[prop];
+
+      if (arg) {
+        this[prop] = arg.map(ruleArgs => {
+          if (Rule.isRule(ruleArgs)) {
+            return ruleArgs.set('timezone', this.timezone);
+          } else {
+            return new Rule(ruleArgs as IProvidedRuleOptions<T>, {
+              dateAdapter: this.dateAdapter as any,
+              timezone: this.timezone,
+            });
+          }
+        });
+      }
     }
 
-    if (options.exrules) {
-      this.exrules = options.exrules.map(ruleArgs => {
-        if (Rule.isRule(ruleArgs)) {
-          return ruleArgs.set('timezone', this.timezone);
-        } else {
-          return new Rule(ruleArgs as IProvidedRuleOptions<T>, {
-            dateAdapter: this.dateAdapter as any,
-            timezone: this.timezone,
-          });
-        }
-      });
-    }
+    for (const prop of ['rdates', 'exdates'] as ['rdates', 'exdates']) {
+      const arg = options[prop];
 
-    if (options.rdates) {
-      this.rdates = Dates.isDates(options.rdates)
-        ? options.rdates.set('timezone', this.timezone)
-        : new Dates({
-            dates: options.rdates as ReadonlyArray<DateInput<T>>,
-            dateAdapter: this.dateAdapter as any,
-            timezone: this.timezone,
-          });
-    } else {
-      this.rdates = new Dates({
-        dateAdapter: this.dateAdapter as any,
-        timezone: this.timezone,
-      });
-    }
-
-    if (options.exdates) {
-      this.exdates = Dates.isDates(options.exdates)
-        ? options.exdates.set('timezone', this.timezone)
-        : new Dates({
-            dates: options.exdates as ReadonlyArray<DateInput<T>>,
-            dateAdapter: this.dateAdapter as any,
-            timezone: this.timezone,
-          });
-    } else {
-      this.exdates = new Dates({ dateAdapter: this.dateAdapter as any, timezone: this.timezone });
+      if (arg) {
+        this[prop] = Dates.isDates(arg)
+          ? arg.set('timezone', this.timezone)
+          : new Dates({
+              dates: arg as ReadonlyArray<DateInput<T>>,
+              dateAdapter: this.dateAdapter as any,
+              timezone: this.timezone,
+            });
+      } else {
+        this[prop] = new Dates({
+          dateAdapter: this.dateAdapter as any,
+          timezone: this.timezone,
+        });
+      }
     }
 
     this.hasDuration =
@@ -269,6 +252,11 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
       dateAdapter: this.dateAdapter,
       timezone: this.timezone,
     });
+
+    // for some reason, setting `rrules` / `rdates` / etc with `for` loops is
+    // removing the `SCHEDULE_ID` property from the constructed object...
+    // need to set it
+    this[SCHEDULE_ID] = true;
   }
 
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T, [this, Rule<T> | Dates<T>]> {
