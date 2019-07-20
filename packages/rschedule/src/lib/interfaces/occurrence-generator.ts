@@ -298,7 +298,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * **If there are infinite occurrences, you must include a `before` argument with
-   * the `weekday` argument.**
+   * the `weekday` argument.** Does not currently consider occurrence duration.
    *
    * Optional arguments:
    *
