@@ -86,7 +86,7 @@ rule
 
 ## Docs
 
-- [Version 0.11 docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/24f17bf68440ae99f33ea73837b467ce3e7e2bdd/docs)
+- [Version 0.11 docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/5a725b91641a6dc6cfc8e60fd377809d26114aa6/docs)
 - [Version 0.10 docs](https://gitlab.com/john.carroll.p/rschedule/tree/f46bf244370dd476633b944e424096a6ae629305/docs)
 - [Version 0.9 docs](https://gitlab.com/john.carroll.p/rschedule/tree/a80b576c981570710def8f83575a4932b12f8f34/docs)
 - [Version 0.7 docs](https://gitlab.com/john.carroll.p/rschedule/wikis/home)
