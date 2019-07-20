@@ -102,6 +102,8 @@ rule
 
 ## Roadmap to 1.0
 
+_related: see the [Release 1.0 issue](https://gitlab.com/john.carroll.p/rschedule/issues/26)_
+
 - [x] Flesh out `duration` support in the library.
   - [x] Create `mergeDuration` operator
   - [x] Create `splitDuration` operator
