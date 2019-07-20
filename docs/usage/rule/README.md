@@ -264,6 +264,16 @@ type BySecondOfMinute = 0 | 1 | 2 | // ... | 60
 
 ```typescript
 class Rule<T extends typeof DateAdapter, D = any> {
+  static isRule(object: unknown): object is Rule<any>;
+
+  data: D;
+  readonly isInfinite: boolean;
+  readonly hasDuration: boolean;
+  readonly maxDuration: number;
+  readonly duration: number | undefined;
+  readonly timezone: string | null;
+  readonly options: IProvidedRuleOptions<T>;
+
   constructor(
     options: IProvidedRuleOptions<T>,
     args?: {
@@ -278,7 +288,15 @@ class Rule<T extends typeof DateAdapter, D = any> {
       data?: D;
       dateAdapter?: T;
       timezone?: string | null;
+      maxDuration?: number; // see the OccurrenceGenerator interface for info
     },
   );
+
+  set(prop: 'timezone', value: string | null, tzoptions?: { keepLocalTime?: boolean }): Rule<T, D>;
+  set(prop: 'options', value: IProvidedRuleOptions<T>): Rule<T, D>;
+  set<O extends keyof IProvidedRuleOptions<T>>(
+    prop: O,
+    value: IProvidedRuleOptions<T>[O],
+  ): Rule<T, D>;
 }
 ```

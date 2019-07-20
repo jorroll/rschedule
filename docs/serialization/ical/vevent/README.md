@@ -37,6 +37,21 @@ vEvent
 
 ```typescript
 class VEvent<T extends typeof DateAdapter, D = any> {
+  static isVEvent(object: unknown): object is VEvent<any>;
+
+  data!: D;
+  readonly start: InstanceType<T>;
+  readonly isInfinite: boolean;
+  readonly duration?: number | InstanceType<T>;
+  readonly hasDuration: boolean;
+  readonly maxDuration?: number;
+  readonly timezone: string | null;
+
+  readonly rrules: ReadonlyArray<Rule<T>> = [];
+  readonly exrules: ReadonlyArray<Rule<T>> = [];
+  readonly rdates: Dates<T>;
+  readonly exdates: Dates<T>;
+
   constructor(args: {
     start: DateInput<T>;
     // accepts either the number of milliseconds of the duration or the end
@@ -59,5 +74,16 @@ class VEvent<T extends typeof DateAdapter, D = any> {
     rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
     exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
   });
+
+  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): VEvent<T, D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput<T>): VEvent<T, D>;
+
+  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): VEvent<T, D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): VEvent<T, D>;
+
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): VEvent<T, D>;
+  set(prop: 'start', value: DateInput<T>): VEvent<T, D>;
+  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): VEvent<T, D>;
+  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): VEvent<T, D>;
 }
 ```

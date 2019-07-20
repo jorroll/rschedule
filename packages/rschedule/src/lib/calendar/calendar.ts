@@ -1,3 +1,4 @@
+import { ArgumentError } from '../basic-utilities';
 import { DateAdapter } from '../date-adapter';
 import { DateTime } from '../date-time';
 import { IDataContainer, IOccurrenceGenerator, OccurrenceGenerator } from '../interfaces';
@@ -45,6 +46,7 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
       data?: D;
       dateAdapter?: T;
       timezone?: string | null;
+      maxDuration?: number;
     } = {},
   ) {
     super(args);
@@ -72,13 +74,45 @@ export class Calendar<T extends typeof DateAdapter, D = any> extends OccurrenceG
     return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
   }
 
-  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }) {
-    return new Calendar({
-      schedules: this.schedules.map(schedule => schedule.set(prop, value, options)),
-      data: this.data,
-      dateAdapter: this.dateAdapter,
-      timezone: value,
-    });
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): Calendar<T, D>;
+  set(
+    prop: 'schedules',
+    value: ReadonlyArray<IOccurrenceGenerator<T>> | IOccurrenceGenerator<T>,
+  ): Calendar<T, D>;
+  set(
+    prop: 'timezone' | 'schedules',
+    value: ReadonlyArray<IOccurrenceGenerator<T>> | IOccurrenceGenerator<T> | string | null,
+    options?: { keepLocalTime?: boolean },
+  ) {
+    if (prop === 'timezone') {
+      return new Calendar({
+        schedules: this.schedules.map(schedule =>
+          schedule.set(
+            prop,
+            value as string | null,
+            options as { keepLocalTime?: boolean } | undefined,
+          ),
+        ),
+        data: this.data,
+        dateAdapter: this.dateAdapter,
+        timezone: value as string | null,
+      });
+    } else if (prop === 'schedules') {
+      return new Calendar({
+        schedules: Array.isArray(value)
+          ? (value as IOccurrenceGenerator<T>[])
+          : [value as IOccurrenceGenerator<T>],
+        data: this.data,
+        dateAdapter: this.dateAdapter,
+        timezone: this.timezone,
+      });
+    }
+
+    throw new ArgumentError('Unknown value for `prop`: ' + `"${prop}"`);
   }
 
   /** @internal */

@@ -36,6 +36,14 @@ for (const collection of calendar.collections({ grandularity: 'MONTHLY' })) {
 
 ```typescript
 class Calendar<T extends typeof DateAdapter, D = any> {
+  static isCalendar(object: unknown): object is Calendar<any>;
+
+  data: D;
+  readonly schedules: ReadonlyArray<IOccurrenceGenerator<T>>;
+  readonly isInfinite: boolean;
+  readonly hasDuration: boolean;
+  readonly maxDuration: number;
+
   constructor(args: {
     schedules?: IOccurrenceGenerator<T>[] | IOccurrenceGenerator<T>;
     // The data property holds arbitrary data associated with the `Calendar`.
@@ -50,6 +58,17 @@ class Calendar<T extends typeof DateAdapter, D = any> {
     data?: D;
     dateAdapter?: T;
     timezone?: string | null;
+    maxDuration?: number; // see the OccurrenceGenerator interface for info
   });
+
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): Calendar<T, D>;
+  set(
+    prop: 'schedules',
+    value: ReadonlyArray<IOccurrenceGenerator<T>> | IOccurrenceGenerator<T>,
+  ): Calendar<T, D>;
 }
 ```

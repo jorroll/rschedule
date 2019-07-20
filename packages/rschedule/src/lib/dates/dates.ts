@@ -46,6 +46,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
 
   readonly isInfinite = false;
   readonly hasDuration: boolean;
+  readonly maxDuration!: number;
   readonly timezone!: string | null; // set by `OccurrenceGenerator`
 
   pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
@@ -94,6 +95,13 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     }
 
     this.hasDuration = this.datetimes.every(date => !!date.duration);
+
+    if (this.hasDuration) {
+      this.maxDuration = this.adapters.reduce(
+        (prev, curr) => (curr.duration! > prev ? curr.duration! : prev),
+        0,
+      )!;
+    }
   }
 
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T, [this]> {

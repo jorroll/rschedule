@@ -42,7 +42,6 @@ export class Schedule<T extends typeof DateAdapter, D = any> extends OccurrenceG
 
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
-  readonly maxDuration: number | undefined;
 
   protected readonly [SCHEDULE_ID] = true;
 

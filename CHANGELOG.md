@@ -6,6 +6,17 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Releases
 
+## 0.11.5 FEATURE (2019/7/19)
+
+### Features
+
+- upgraded `OccurrenceGenerator` methods to be duration aware
+  - `occursBetween`
+  - `occursOn`
+  - `occursAfter`
+  - `occursBefore`
+- add option to `Calendar#set()` to set `Calendar#schedules`
+
 ## 0.11.4 FIX (2019/7/19)
 
 ### Features

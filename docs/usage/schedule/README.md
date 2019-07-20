@@ -57,6 +57,17 @@ There is also an optional `@rschedule/rule-tools` library which contains utility
 
 ```typescript
 class Schedule<T extends typeof DateAdapter, D = any> {
+  static isSchedule(object: unknown): object is Schedule<any>;
+
+  data: D;
+  readonly rrules: ReadonlyArray<Rule<T>>;
+  readonly exrules: ReadonlyArray<Rule<T>>;
+  readonly rdates: Dates<T>;
+  readonly exdates: Dates<T>;
+  readonly isInfinite: boolean;
+  readonly hasDuration: boolean;
+  readonly maxDuration: number;
+
   constructor(args: {
     dateAdapter?: T;
     timezone?: string | null;
@@ -73,6 +84,21 @@ class Schedule<T extends typeof DateAdapter, D = any> {
     exrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
     rdates?: Array<DateInput<T>> | Dates<T>;
     exdates?: Array<DateInput<T>> | Dates<T>;
+    maxDuration?: number; // see the OccurrenceGenerator interface for info
   });
+
+  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
+
+  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
+
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): Schedule<T, D>;
+  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): Schedule<T, D>;
+  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): Schedule<T, D>;
 }
 ```

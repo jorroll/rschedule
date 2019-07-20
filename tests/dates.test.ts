@@ -6,6 +6,7 @@ import {
   DateInput,
   Dates,
   IOccurrencesArgs,
+  MILLISECONDS_IN_HOUR,
 } from '@rschedule/rschedule';
 import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
 import { DateTime as LuxonDateTime } from 'luxon';
@@ -167,7 +168,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
       const isoString = timezoneIsoStringFn(dateAdapter);
 
       context(zone, timezone => {
-        describe('RDatesClass', () => {
+        describe('DatesClass', () => {
           it('is instantiable', () =>
             expect(new Dates({ dateAdapter: DateAdapter, timezone })).toBeInstanceOf(Dates));
         });
@@ -201,6 +202,7 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
             }).set('duration', 30);
 
             expect(dates.adapters.every(date => date.duration === 30)).toBe(true);
+            expect(dates.hasDuration).toBe(true);
           });
         });
 
@@ -227,6 +229,164 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
         });
 
         describe('occurs? methods', () => {
+          describe('with duration', () => {
+            let dates: Dates<any>;
+
+            beforeEach(() => {
+              dates = new Dates({
+                dateAdapter: DateAdapter,
+                timezone,
+                dates: [
+                  dateAdapter(1998, 1, 1, 9, 0),
+                  dateAdapter(1998, 1, 1, 9, 0),
+                  dateAdapter(2000, 1, 1, 9, 0),
+                  dateAdapter(2017, 1, 1, 9, 0),
+                ],
+                duration: MILLISECONDS_IN_HOUR * 3,
+              });
+            });
+
+            it('occursOn', () => {
+              expect(dates.occursOn(dateAdapter(1998, 1, 1, 8, 59, 59, 999))).toBe(false);
+              expect(dates.occursOn(dateAdapter(1998, 1, 1, 9, 0))).toBe(true);
+              expect(dates.occursOn(dateAdapter(1998, 1, 1, 12, 0))).toBe(true);
+              expect(dates.occursOn(dateAdapter(1998, 1, 1, 12, 0, 0, 1))).toBe(false);
+            });
+
+            describe('occursAfter', () => {
+              it('', () => {
+                expect(dates.occursAfter(dateAdapter(2017, 1, 1, 8, 59, 59, 999))).toBe(true);
+                expect(dates.occursAfter(dateAdapter(2017, 1, 1, 9, 0))).toBe(true);
+                expect(dates.occursAfter(dateAdapter(2017, 1, 1, 12, 0))).toBe(true);
+                expect(dates.occursAfter(dateAdapter(2017, 1, 1, 12, 0, 0, 1))).toBe(false);
+              });
+
+              it('excludeStart', () => {
+                expect(
+                  dates.occursAfter(dateAdapter(2017, 1, 1, 8, 59, 59, 999), {
+                    excludeStart: true,
+                  }),
+                ).toBe(true);
+                expect(
+                  dates.occursAfter(dateAdapter(2017, 1, 1, 9, 0), { excludeStart: true }),
+                ).toBe(false);
+                expect(
+                  dates.occursAfter(dateAdapter(2017, 1, 1, 12, 0), { excludeStart: true }),
+                ).toBe(false);
+                expect(
+                  dates.occursAfter(dateAdapter(2017, 1, 1, 12, 0, 0, 1), { excludeStart: true }),
+                ).toBe(false);
+              });
+            });
+
+            describe('occursBefore', () => {
+              it('', () => {
+                expect(dates.occursBefore(dateAdapter(1998, 1, 1, 8, 59, 59, 999))).toBe(false);
+                expect(dates.occursBefore(dateAdapter(1998, 1, 1, 9, 0))).toBe(true);
+                expect(dates.occursBefore(dateAdapter(1998, 1, 1, 12, 0))).toBe(true);
+                expect(dates.occursBefore(dateAdapter(1998, 1, 1, 12, 0, 0, 1))).toBe(true);
+              });
+
+              it('excludeStart', () => {
+                expect(
+                  dates.occursBefore(dateAdapter(1998, 1, 1, 8, 59, 59, 999), {
+                    excludeStart: true,
+                  }),
+                ).toBe(false);
+                expect(
+                  dates.occursBefore(dateAdapter(1998, 1, 1, 9, 0), { excludeStart: true }),
+                ).toBe(false);
+                expect(
+                  dates.occursBefore(dateAdapter(1998, 1, 1, 12, 0), { excludeStart: true }),
+                ).toBe(false);
+                expect(
+                  dates.occursBefore(dateAdapter(1998, 1, 1, 12, 0, 0, 1), { excludeStart: true }),
+                ).toBe(true);
+              });
+            });
+
+            describe('occursBetween', () => {
+              it('', () => {
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 8, 59, 59, 999),
+                    dateAdapter(1998, 1, 1, 12, 0, 0, 1),
+                  ),
+                ).toBe(true);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 1, 12, 0),
+                  ),
+                ).toBe(true);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 8, 59, 59, 999),
+                    dateAdapter(1998, 1, 1, 12, 0),
+                  ),
+                ).toBe(true);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 1, 12, 0, 0, 1),
+                  ),
+                ).toBe(true);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1995, 1, 1, 9, 0),
+                    dateAdapter(1995, 1, 1, 12, 0, 0, 1),
+                  ),
+                ).toBe(false);
+              });
+
+              it('excludeEnds', () => {
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 8, 59, 59, 999),
+                    dateAdapter(1998, 1, 1, 12, 0, 0, 1),
+                    { excludeEnds: true },
+                  ),
+                ).toBe(true);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 1, 12, 0),
+                    { excludeEnds: true },
+                  ),
+                ).toBe(false);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 8, 59, 59, 999),
+                    dateAdapter(1998, 1, 1, 12, 0),
+                    { excludeEnds: false },
+                  ),
+                ).toBe(true);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1998, 1, 1, 9, 0),
+                    dateAdapter(1998, 1, 1, 12, 0, 0, 1),
+                    { excludeEnds: false },
+                  ),
+                ).toBe(true);
+
+                expect(
+                  dates.occursBetween(
+                    dateAdapter(1995, 1, 1, 9, 0),
+                    dateAdapter(1995, 1, 1, 12, 0, 0, 1),
+                    { excludeEnds: true },
+                  ),
+                ).toBe(false);
+              });
+            });
+          });
+
           testOccursMethods(
             'with Dates & duplicate',
             new Dates({
