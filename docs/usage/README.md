@@ -9,6 +9,8 @@ This library has four main occurrence generating classes which each implement `O
 
 If you plan on using rSchedule with the iCalendar spec, it also has a fifth `VEvent` object which replaces the `Schedule` object. [See the `@rschedule/ical-tools` docs for more info.](../serialization/ical)
 
+- [VEvent](../serialization/ical)
+
 Additionally, this library makes use of an [`IDateAdapter`](../date-adapter) interface which allows rSchedule to be used with the date library of your choosing. You must provide a date adapter for each `OccurrenceGenerator` object you create, usually as a `dateAdapter` argument.
 
 All of the `OccurrenceGenerator<T extends typeof DateAdapter>` objects are _generic_ and receive a `typeof DateAdapter` type argument. Type inference will often take care of typing these objects for you but, when it doesn't, **remember that the type you need to pass is for the constructor** (i.e. `Schedule<typeof StandardDateAdapter>`).
@@ -27,7 +29,88 @@ new Schedule<MomentTZDateAdapter>();
 
 Finally, this library has an assortment of [occurrence stream operators](./operators) which allow combining multiple occurrence generators into a single occurrence generator. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. See [`occurrence stream operators`](./operators) for more information.
 
-There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
+There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up immutable rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
+
+### CR**UD** with rSchedule objects
+
+All of rSchedule's objects are immutable (the major exception is the `data` property that many of the occurrence generators have). This decision _greatly_ reduces the number of bugs and helps to optimize the performance of rSchedule objects for reading. The downside is that this can make updating the objects a bit strange and clumsey, compared to typical mutable javascript APIs. While each rSchedule object is different, this section provides a brief introduction on how to change rSchedule objects.
+
+As a reminder, you can check out the optional [`rule-tools` package](./rule-tools) that aims to provide convenient helper functions that simplify common tasks (feel free to contribute anything you feel is missing from this package).
+
+#### Example: adding an rrule to a schedule
+
+```ts
+RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
+
+let schedule = new Schedule({
+  rrules: [
+    {
+      frequency: 'YEARLY',
+      byMonthOfYear: [2, 6],
+      byDayOfWeek: ['SU', ['MO', 3]],
+      start: new Date(2010, 1, 7),
+    },
+  ],
+});
+
+schedule = schedule.add(
+  'rrule',
+  new Rule({
+    frequency: 'DAILY',
+    byDayOfWeek: ['TU'],
+    start: new Date(2012, 1, 7),
+  }),
+);
+```
+
+#### Example: removing an rrule from a schedule
+
+```ts
+let schedule = new Schedule({
+  rrules: [
+    {
+      frequency: 'YEARLY',
+      byMonthOfYear: [2, 6],
+      byDayOfWeek: ['SU', ['MO', 3]],
+      start: new Date(2010, 1, 7),
+    },
+    {
+      frequency: 'DAILY',
+      byDayOfWeek: ['TU'],
+      start: new Date(2012, 1, 7),
+    },
+  ],
+});
+
+schedule = schedule.remove('rrule', schedule.rrules[1]);
+```
+
+#### Example: changing a rule associated with a schedule
+
+```ts
+let schedule = new Schedule({
+  rrules: [
+    {
+      frequency: 'YEARLY',
+      byMonthOfYear: [2, 6],
+      byDayOfWeek: ['SU', ['MO', 3]],
+      start: new Date(2010, 1, 7),
+    },
+  ],
+});
+
+const updatedRule = schedule.rrules[0].set('byMonthOfYear', [2, 7]);
+
+schedule = schedule.remove('rrule', schedule.rrules[0]).add('rrule', updatedRule);
+```
+
+#### Example: adding an rdate to a schedule
+
+```ts
+let schedule = new Schedule();
+
+schedule = schedule.add('rdate', new Date());
+```
 
 ### IOccurrenceGenerator Interface
 

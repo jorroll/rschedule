@@ -2,11 +2,11 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/rschedule)](https://www.npmjs.com/package/@rschedule/rschedule) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/rschedule)](https://bundlephobia.com/result?p=@rschedule/rschedule)
 
-### Still pre-1.0 release (i.e. Beta)
+### Still pre-1.0 release (i.e. Beta) [docs](#docs)
 
-A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol. The library is "date agnostic" and usable with standard `Date`, [`Moment`](https://momentjs.com), or luxon [`DateTime`](https://moment.github.io/luxon/) objects through a [`IDateAdapter` interface](./docs/date-adapter). All objects in rSchedule are immutable. rSchedule supports creating schedule's with durations (this might seem like a no-brainer, but I'm not aware of another recurrence library that has this feature).
+A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol. The library is "date agnostic" and usable with standard `Date`, [`Moment`](https://momentjs.com), or luxon [`DateTime`](https://moment.github.io/luxon/) objects through a [`IDateAdapter` interface](./docs/date-adapter). All objects in rSchedule are immutable. rSchedule supports creating schedules with durations (this might seem like a no-brainer, but I'm not aware of another recurrence library that has this feature).
 
-At this point, the library's core functionality is feature complete and the tests are passing. ~~This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app~~. The library is nearing 1.0 -- see the [roadmap to 1.0](#roadmap-to-10) below. If you're looking for something more mature, check out [rrulejs](https://github.com/jakubroztocil/rrule).
+At this point, the library's core functionality is feature complete and the tests are passing. ~~This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app~~. The library is nearing 1.0 -- see the [roadmap to 1.0](#roadmap-to-10) below.
 
 ```bash
 # To install both the main package and the `StandardDateAdapter` for standard javascript dates */
@@ -89,7 +89,6 @@ rule
 - [Version 0.11 docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/5a725b91641a6dc6cfc8e60fd377809d26114aa6/docs)
 - [Version 0.10 docs](https://gitlab.com/john.carroll.p/rschedule/tree/f46bf244370dd476633b944e424096a6ae629305/docs)
 - [Version 0.9 docs](https://gitlab.com/john.carroll.p/rschedule/tree/a80b576c981570710def8f83575a4932b12f8f34/docs)
-- [Version 0.7 docs](https://gitlab.com/john.carroll.p/rschedule/wikis/home)
 
 [Master branch docs (unreleased)](./docs)
 
@@ -132,9 +131,9 @@ _This project is not affiliated with any of these projects._
 ## Similar libraries
 
 - [rrulejs](https://github.com/jakubroztocil/rrule)
-  - Supports time zones via luxon and supports iCal. This library is older and more mature than rSchedule and I used it before making rSchedule.
-  - For most projects, rrulejs will probably do everything you need and you may feel more comfortable using something older and with a larger install base. Another reason you might want to choose rrule would be for it's NLP and internationalization support. Otherwise, at this point, rSchedule is probably the better choice for most projects (look at the docs to see why).
+  - Supports time zones via luxon and supports iCal. `rrulejs` is older and more mature than rSchedule and I used it before making rSchedule.
+  - For most projects, rrulejs will probably do everything you need and you may feel more comfortable using something older and with a larger install base. Another reason you might want to choose rrule would be for it's NLP, internationalization support, or support for `BYWEEKNO`, `BYYEARDAY`, and `BYSETPOS` ICal rules. By comparison, rSchedule has better timezone support, serialization support, duration support, calendar support, and more. See the docs of both projects to learn more.
 - [laterjs](https://github.com/bunkat/later) (currently unmaintained)
-  - Simpler API. Not ICAL compatible, but has support for chron jobs.
+  - Simpler API. Not ICAL compatible. Has support for chron jobs.
 - [dayspan](https://github.com/ClickerMonkey/dayspan)
   - Appears to be a pretty full featured recurring dates library (like rSchedule or rrulejs), but I don't know much about it. Interestingly, while rrulejs and rSchedule have somewhat similar APIs (borrowing heavily from the ICAL spec), dayspan's API seems to be very different and somewhat unique in places.
