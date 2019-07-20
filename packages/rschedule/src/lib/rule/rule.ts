@@ -176,7 +176,7 @@ export class Rule<T extends typeof DateAdapter, D = any> extends OccurrenceGener
    */
   constructor(
     config: IProvidedRuleOptions<T>,
-    options: { data?: D; dateAdapter?: T; timezone?: string | null } = {},
+    options: { data?: D; dateAdapter?: T; timezone?: string | null; maxDuration?: number } = {},
   ) {
     super(options);
 

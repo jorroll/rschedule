@@ -137,13 +137,33 @@ interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
    */
   collections(args: ICollectionsArgs<T>): CollectionIterator<T>;
 
+  /**
+   * Returns true if an occurrence starts on or between the provided start/end
+   * datetimes. If the `excludeEnds` option is provided, then occurrences
+   * equal to the start/end times are ignored.
+   *
+   * If the occurrence generator has a duration, and `excludeEnds !== true`,
+   * then any occurrence that's time overlaps with the start/end times
+   * return true.
+   */
   occursBetween(
     start: DateInput<T>,
     end: DateInput<T>,
-    options: { excludeEnds?: boolean },
+    options: { excludeEnds?: boolean; maxDuration?: number },
   ): boolean;
 
-  occursOn(args: { date: DateInput<T> }): boolean;
+  /**
+   * Checks to see if an occurrence exists which equals the given date.
+   *
+   * If this occurrence generator has a duration, then `occursOn()` will check
+   * to see if an occurrence is happening during the given datetime.
+   *
+   * Additionally, if this occurrence generator has a duration, then a maxDuration
+   * argument must be provided. This argument should be the max number of milliseconds
+   * that an occurrence's duration can be. When you create an occurrence
+   * generator, you can specify the maxDuration at that time.
+   */
+  occursOn(args: { date: DateInput<T>; maxDuration?: number }): boolean;
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * **If there are infinite occurrences, you must include a `before` argument with
@@ -163,9 +183,33 @@ interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
     excludeEnds?: boolean;
   }): boolean;
 
-  occursAfter(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
+  /**
+   * Returns true if an occurrence starts after the provided datetime.
+   * If the `excludeStart` option is provided, then occurrences
+   * equal to the provided datetime are ignored.
+   *
+   * If the occurrence generator has a duration, and `excludeStart !== true`,
+   * then any occurrence that's end time is after/equal to the provided
+   * datetime return true.
+   */
+  occursAfter(
+    date: DateInput<T>,
+    options: { excludeStart?: boolean; maxDuration?: number },
+  ): boolean;
 
-  occursBefore(date: DateInput<T>, options: { excludeStart?: boolean }): boolean;
+  /**
+   * Returns true if an occurrence starts before the provided datetime.
+   * If the `excludeStart` option is provided, then occurrences
+   * equal to the provided datetime are ignored.
+   *
+   * If the occurrence generator has a duration, and `excludeStart` is
+   * also provided, then this will only return true if an occurrence
+   * both starts and ends before the provided datetime.
+   */
+  occursBefore(
+    date: DateInput<T>,
+    options: { excludeStart?: boolean; maxDuration?: number },
+  ): boolean;
 
   pipe(...operators: unknown[]): IOccurrenceGenerator<T>;
 

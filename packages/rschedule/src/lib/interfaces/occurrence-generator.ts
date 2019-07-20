@@ -73,6 +73,11 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
   abstract readonly isInfinite: boolean;
   abstract readonly hasDuration: boolean;
 
+  /**
+   * The maximum duration of this generators occurrences. Necessary
+   * as part of the logic processing. By default it is 0.
+   */
+  readonly maxDuration: number;
   readonly timezone: string | null;
   readonly dateAdapter: T;
 
@@ -96,7 +101,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     return this.dateAdapter.fromDateTime(end) as InstanceType<T>;
   }
 
-  constructor(args: { dateAdapter?: T; timezone?: string | null }) {
+  constructor(args: { dateAdapter?: T; timezone?: string | null; maxDuration?: number }) {
     this.dateAdapter = args.dateAdapter || (RScheduleConfig.defaultDateAdapter as any);
 
     if (!this.dateAdapter) {
@@ -106,6 +111,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     }
 
     this.timezone = args.timezone !== undefined ? args.timezone : null;
+    this.maxDuration = args.maxDuration || 0;
   }
 
   abstract pipe(...operators: unknown[]): OccurrenceGenerator<T>;
@@ -222,13 +228,41 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
   }
 
+  /**
+   * Returns true if an occurrence starts on or between the provided start/end
+   * datetimes. If the `excludeEnds` option is provided, then occurrences
+   * equal to the start/end times are ignored.
+   *
+   * If the occurrence generator has a duration, and `excludeEnds !== true`,
+   * and a `maxDuration` argument is supplied (either in the constructor or
+   * here), then any occurrence that's time overlaps with the start/end times
+   * return true.
+   */
   occursBetween(
     startInput: DateInput<T>,
     endInput: DateInput<T>,
-    options: { excludeEnds?: boolean } = {},
+    options: { excludeEnds?: boolean; maxDuration?: number } = {},
   ) {
     const start = this.normalizeDateInput(startInput);
     const end = this.normalizeDateInput(endInput);
+
+    if (this.hasDuration && !options.excludeEnds) {
+      const maxDuration = this.getMaxDuration('occursBetween', options);
+
+      const iterator = this._run({
+        start: start.subtract(maxDuration, 'millisecond'),
+        end,
+        reverse: true,
+      });
+
+      for (const day of iterator) {
+        if (day.end!.isBefore(start)) continue;
+
+        return true;
+      }
+
+      return false;
+    }
 
     for (const day of this._run({ start, end })) {
       if (options.excludeEnds) {
@@ -243,13 +277,24 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
 
       return true;
     }
+
     return false;
   }
 
   /**
    * Checks to see if an occurrence exists which equals the given date.
+   *
+   * If this occurrence generator has a duration, and a `maxDuration`
+   * argument is supplied (either in the constructor or here),
+   * then `occursOn()` will check to see if an occurrence is happening
+   * during the given datetime.
+   *
+   * Additionally, if this occurrence generator has a duration, then a maxDuration
+   * argument must be provided. This argument should be the max number of milliseconds
+   * that an occurrence's duration can be. When you create an occurrence
+   * generator, you can specify the maxDuration at that time.
    */
-  occursOn(args: { date: DateInput<T> }): boolean;
+  occursOn(args: { date: DateInput<T>; maxDuration?: number }): boolean;
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * **If there are infinite occurrences, you must include a `before` argument with
@@ -274,6 +319,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     after?: DateInput<T>;
     before?: DateInput<T>;
     excludeEnds?: boolean;
+    maxDuration?: number;
   }): boolean {
     const args = this.normalizeOccursOnArgs(rawArgs);
 
@@ -309,6 +355,24 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
       return false;
     }
 
+    if (this.hasDuration) {
+      const maxDuration = this.getMaxDuration('occursOn', args);
+
+      const iterator = this._run({
+        start: args.date.subtract(maxDuration, 'millisecond'),
+        end: args.date,
+      });
+
+      for (const date of iterator) {
+        if (date.end!.isBefore(args.date)) continue;
+        if (date.isAfter(args.date)) return false;
+
+        return true;
+      }
+
+      return false;
+    }
+
     for (const day of this._run({ start: args.date, end: args.date })) {
       return !!day;
     }
@@ -316,8 +380,33 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     return false;
   }
 
-  occursAfter(date: DateInput<T>, options: { excludeStart?: boolean } = {}) {
+  /**
+   * Returns true if an occurrence starts after the provided datetime.
+   * If the `excludeStart` option is provided, then occurrences
+   * equal to the provided datetime are ignored.
+   *
+   * If the occurrence generator has a duration, and `excludeStart !== true`,
+   * and a `maxDuration` argument is supplied (either in the constructor or
+   * here), then any occurrence that's end time is after/equal to the provided
+   * datetime return true.
+   */
+  occursAfter(date: DateInput<T>, options: { excludeStart?: boolean; maxDuration?: number } = {}) {
     const adapter = this.normalizeDateInput(date);
+
+    if (this.hasDuration && !options.excludeStart) {
+      const maxDuration = this.getMaxDuration('occursAfter', options);
+
+      const iterator = this._run({
+        start: adapter.subtract(maxDuration, 'millisecond'),
+      });
+
+      for (const date of iterator) {
+        if (date.end!.isBefore(adapter)) continue;
+        return true;
+      }
+
+      return false;
+    }
 
     for (const day of this._run({ start: adapter })) {
       if (options.excludeStart && day.isEqual(adapter)) {
@@ -330,8 +419,27 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
     return false;
   }
 
+  /**
+   * Returns true if an occurrence starts before the provided datetime.
+   * If the `excludeStart` option is provided, then occurrences
+   * equal to the provided datetime are ignored.
+   *
+   * If the occurrence generator has a duration, and `excludeStart` is
+   * also provided, then this will only return true if an occurrence
+   * both starts and ends before the provided datetime.
+   */
   occursBefore(date: DateInput<T>, options: { excludeStart?: boolean } = {}) {
     const adapter = this.normalizeDateInput(date);
+
+    if (this.hasDuration && options.excludeStart) {
+      for (const day of this._run({ end: adapter, reverse: true })) {
+        if (day.end!.isAfterOrEqual(adapter)) continue;
+
+        return true;
+      }
+
+      return false;
+    }
 
     for (const day of this._run({ end: adapter, reverse: true })) {
       if (options.excludeStart && day.isEqual(adapter)) {
@@ -374,6 +482,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
       before?: DateInput<T>;
       excludeEnds?: boolean;
       excludeDates?: Array<DateInput<T>>;
+      maxDuration?: number;
     } = {},
   ) {
     return {
@@ -413,5 +522,19 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
 
   protected normalizeRunOutput(date: DateTime) {
     return normalizeDateTimeTimezone(date, this.timezone, this.dateAdapter);
+  }
+
+  private getMaxDuration(method: string, options: { maxDuration?: number }) {
+    const maxDuration = options.maxDuration || this.maxDuration;
+
+    if (!Number.isInteger(maxDuration!)) {
+      throw new ArgumentError(
+        `When an occurrence generator ` +
+          `has a duration, a 'maxDuration' argument must be supplied ` +
+          `to ${method}().`,
+      );
+    }
+
+    return maxDuration!;
   }
 }
