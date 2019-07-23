@@ -31,6 +31,32 @@ Finally, this library has an assortment of [occurrence stream operators](./opera
 
 There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up immutable rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
 
+### Setup
+
+In typescript, adding an optional rSchedule setup file to your project can make getting properly typed objects easier. Instead of importing rSchedule ocurrence generators (i.e. `Schedule`, `Calendar`, etc) directly from the `'@rschedule/rschedule'` package, create a local `rschedule.ts` file, do any configuration you'd like, and import the configured rSchedule objects from this file.
+
+For example, here we import the [`RScheduleConfig` object](./rschedule-config) and set `MomentTZDateAdapter` as our default date adapter. We also create four new classes that are specific to our app: `Rule<D=any>`, `Dates<D=any>`, `Schedule<D=any>`, `Calendar<D=any>`. These four classes each extend the rSchedule ones and only exist to simplify typing in typescript (as they are all predefined with the `typeof MomentTZDateAdapter` date adapter type). This way, we don't need to manually specify that objects are using the `typeof MomentTZDateAdapter`.
+
+```ts
+// rschedule.ts
+
+import {
+  Schedule as _Schedule,
+  Calendar as _Calendar,
+  Rule as _Rule,
+  Dates as _Dates,
+  RScheduleConfig,
+} from '@rschedule/rschedule';
+import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
+
+RScheduleConfig.defaultDateAdapter = MomentTZDateAdapter;
+
+export class Rule<D = any> extends _Rule<typeof MomentTZDateAdapter, D> {}
+export class Dates<D = any> extends _Dates<typeof MomentTZDateAdapter, D> {}
+export class Schedule<D = any> extends _Schedule<typeof MomentTZDateAdapter, D> {}
+export class Calendar<D = any> extends _Calendar<typeof MomentTZDateAdapter, D> {}
+```
+
 ### CR**UD** with rSchedule objects
 
 All of rSchedule's objects are immutable (the major exception is the `data` property that many of the occurrence generators have). This decision _greatly_ reduces the number of bugs and helps to optimize the performance of rSchedule objects for reading. The downside is that this can make updating the objects a bit strange and clumsy compared to typical mutable javascript APIs. While each rSchedule object is different, this section provides a brief introduction on how to change rSchedule objects.
@@ -42,7 +68,7 @@ As a reminder, you can check out the optional [`rule-tools` package](./rule-tool
 ```ts
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
-let schedule = new Schedule({
+let schedule = new Schedule<typeof StandardDateAdapter>({
   rrules: [
     {
       frequency: 'YEARLY',
@@ -66,7 +92,7 @@ schedule = schedule.add(
 #### Example: removing an rrule from a schedule
 
 ```ts
-let schedule = new Schedule({
+let schedule = new Schedule<typeof StandardDateAdapter>({
   rrules: [
     {
       frequency: 'YEARLY',
@@ -88,7 +114,7 @@ schedule = schedule.remove('rrule', schedule.rrules[1]);
 #### Example: changing a rule associated with a schedule
 
 ```ts
-let schedule = new Schedule({
+let schedule = new Schedule<typeof StandardDateAdapter>({
   rrules: [
     {
       frequency: 'YEARLY',
@@ -107,7 +133,7 @@ schedule = schedule.remove('rrule', schedule.rrules[0]).add('rrule', updatedRule
 #### Example: adding an rdate to a schedule
 
 ```ts
-let schedule = new Schedule();
+let schedule = new Schedule<typeof StandardDateAdapter>();
 
 schedule = schedule.add('rdate', new Date());
 ```
