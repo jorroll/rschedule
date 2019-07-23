@@ -20,6 +20,21 @@
     "array-type": false,
     "variable-name": false,
     "jsdoc-format": false,
-    "unified-signatures": false
+    "unified-signatures": false,
+    "trailing-comma": [
+      true,
+      {
+        "singleline": "never",
+        "multiline": {
+          "arrays": "always",
+          "objects": "always",
+          "functions": "always",
+          "imports": "always",
+          "exports": "always",
+          "typeLiterals": "always"
+        },
+        "esSpecCompliant": true
+      }
+    ]
   }
 }
