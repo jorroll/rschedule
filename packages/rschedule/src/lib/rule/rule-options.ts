@@ -1,6 +1,6 @@
 import { cloneJSON, numberSortComparer } from '../basic-utilities';
-import { DateAdapter } from '../date-adapter';
-import { DateTime, IDateAdapter } from '../date-time';
+import { DateAdapter, InvalidDateAdapterError } from '../date-adapter';
+import { DateTime, IDateAdapter, WEEKDAYS } from '../date-time';
 import { DateInput } from '../utilities';
 
 /**
@@ -45,73 +45,155 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
 
   options = cloneJSON(options);
 
-  if (options.interval !== undefined && options.interval < 1) {
-    throw new RuleValidationError('"interval" cannot be less than 1');
+  if (!FREQUENCIES.includes(options.frequency)) {
+    throw new RuleValidationError(`"frequency" must be one of ${JSON.stringify(FREQUENCIES)}`);
   }
 
-  if (options.duration !== undefined && options.duration <= 0) {
-    throw new RuleValidationError('"duration" must be greater than 0');
+  if (options.interval !== undefined) {
+    if (!Number.isInteger(options.interval)) {
+      throw new RuleValidationError('"interval" expects a whole number');
+    }
+
+    if (options.interval < 1) {
+      throw new RuleValidationError('"interval" cannot be less than 1');
+    }
   }
 
-  if (
-    options.bySecondOfMinute !== undefined &&
-    options.bySecondOfMinute.some(num => num < 0 || num > 60)
-  ) {
-    throw new RuleValidationError('"bySecondOfMinute" values must be >= 0 && <= 60');
+  if (options.duration !== undefined) {
+    if (!Number.isInteger(options.duration)) {
+      throw new RuleValidationError('"duration" expects a whole number');
+    }
+
+    if (options.duration <= 0) {
+      throw new RuleValidationError('"duration" must be greater than 0');
+    }
   }
 
-  if (
-    options.byMinuteOfHour !== undefined &&
-    options.byMinuteOfHour.some(num => num < 0 || num > 59)
-  ) {
-    throw new RuleValidationError('"byMinuteOfHour" values must be >= 0 && <= 59');
+  if (options.bySecondOfMinute !== undefined) {
+    if (!Array.isArray(options.bySecondOfMinute)) {
+      throw new RuleValidationError('"bySecondOfMinute" expects an array');
+    }
+
+    if (options.bySecondOfMinute.some(num => num < 0 || num > 60)) {
+      throw new RuleValidationError('"bySecondOfMinute" values must be >= 0 && <= 60');
+    }
   }
 
-  if (options.byHourOfDay !== undefined && options.byHourOfDay.some(num => num < 0 || num > 23)) {
-    throw new RuleValidationError('"byHourOfDay" values must be >= 0 && <= 23');
+  if (options.byMinuteOfHour !== undefined) {
+    if (!Array.isArray(options.byMinuteOfHour)) {
+      throw new RuleValidationError('"byMinuteOfHour" expects an array');
+    }
+
+    if (options.byMinuteOfHour.some(num => num < 0 || num > 59)) {
+      throw new RuleValidationError('"byMinuteOfHour" values must be >= 0 && <= 59');
+    }
   }
 
-  if (
-    !['YEARLY', 'MONTHLY'].includes(options.frequency) &&
-    options.byDayOfWeek !== undefined &&
-    options.byDayOfWeek.some(weekday => Array.isArray(weekday))
-  ) {
-    throw new RuleValidationError(
-      '"byDayOfWeek" can only include a numeric value when the "frequency" is ' +
-        'either "MONTHLY" or "YEARLY"',
+  if (options.byHourOfDay !== undefined) {
+    if (!Array.isArray(options.byHourOfDay)) {
+      throw new RuleValidationError('"byHourOfDay" expects an array');
+    }
+
+    if (options.byHourOfDay.some(num => num < 0 || num > 23)) {
+      throw new RuleValidationError('"byHourOfDay" values must be >= 0 && <= 23');
+    }
+  }
+
+  if (options.byDayOfWeek !== undefined) {
+    if (!Array.isArray(options.byDayOfWeek)) {
+      throw new RuleValidationError('"byDayOfWeek" expects an array');
+    }
+
+    const invalidWeeday = options.byDayOfWeek.find(day =>
+      Array.isArray(day) ? !WEEKDAYS.includes(day[0]) : !WEEKDAYS.includes(day),
     );
+
+    if (invalidWeeday) {
+      throw new RuleValidationError(
+        `"byDayOfWeek" expects weedays in the form ` +
+          `${JSON.stringify(WEEKDAYS)} but "${invalidWeeday}" was provided`,
+      );
+    }
+
+    if (
+      !['YEARLY', 'MONTHLY'].includes(options.frequency) &&
+      options.byDayOfWeek.some(weekday => Array.isArray(weekday))
+    ) {
+      throw new RuleValidationError(
+        '"byDayOfWeek" can only include a numeric value (i.e. `[string, number]`) when the "frequency" is ' +
+          'either "MONTHLY" or "YEARLY"',
+      );
+    }
+
+    if (
+      options.frequency === 'MONTHLY' &&
+      options.byDayOfWeek.some(
+        weekday =>
+          Array.isArray(weekday) && (weekday[1] < -31 || weekday[1] === 0 || weekday[1] > 31),
+      )
+    ) {
+      throw new RuleValidationError(
+        'when "frequency" is "MONTHLY", each "byDayOfWeek" can optionally only' +
+          ' have a numeric value >= -31 and <= 31 and !== 0',
+      );
+    }
+
+    if (
+      options.frequency === 'YEARLY' &&
+      options.byDayOfWeek.some(
+        weekday =>
+          Array.isArray(weekday) && (weekday[1] < -366 || weekday[1] === 0 || weekday[1] > 366),
+      )
+    ) {
+      throw new RuleValidationError(
+        'when "frequency" is "YEARLY", each "byDayOfWeek" can optionally only' +
+          ' have a numeric value >= -366 and <= 366 and !== 0',
+      );
+    }
   }
 
-  if (
-    options.frequency === 'MONTHLY' &&
-    options.byDayOfWeek !== undefined &&
-    options.byDayOfWeek.some(
-      weekday =>
-        Array.isArray(weekday) && (weekday[1] < -31 || weekday[1] === 0 || weekday[1] > 31),
-    )
-  ) {
-    throw new RuleValidationError(
-      'when "frequency" is "MONTHLY", each "byDayOfWeek" can optionally only' +
-        ' have a numeric value >= -31 and <= 31 and !== 0',
-    );
+  if (options.byDayOfMonth !== undefined) {
+    if (options.frequency === 'WEEKLY') {
+      throw new RuleValidationError(
+        'when "frequency" is "WEEKLY", "byDayOfMonth" cannot be present',
+      );
+    }
+
+    if (!Array.isArray(options.byDayOfMonth)) {
+      throw new RuleValidationError('"byDayOfMonth" expects an array');
+    }
+
+    if (options.byDayOfMonth.some((num: number) => num === 0 || num < -31 || num > 31)) {
+      throw new RuleValidationError(
+        '"byDayOfMonth" values must be `num !== 0 && num < 31 && num > -31`',
+      );
+    }
   }
 
-  if (
-    options.frequency === 'YEARLY' &&
-    options.byDayOfWeek !== undefined &&
-    options.byDayOfWeek.some(
-      weekday =>
-        Array.isArray(weekday) && (weekday[1] < -366 || weekday[1] === 0 || weekday[1] > 366),
-    )
-  ) {
-    throw new RuleValidationError(
-      'when "frequency" is "YEARLY", each "byDayOfWeek" can optionally only' +
-        ' have a numeric value >= -366 and <= 366 and !== 0',
-    );
+  if (options.byMonthOfYear !== undefined) {
+    if (!Array.isArray(options.byMonthOfYear)) {
+      throw new RuleValidationError('"byMonthOfYear" expects an array');
+    }
+
+    if (options.byMonthOfYear.some((num: number) => num < 1 || num > 12)) {
+      throw new RuleValidationError('"byMonthOfYear" values must be `num >= 1 && num >= 12`');
+    }
   }
 
-  if (options.frequency === 'WEEKLY' && options.byDayOfMonth !== undefined) {
-    throw new RuleValidationError('when "frequency" is "WEEKLY", "byDayOfMonth" cannot be present');
+  if (options.count !== undefined) {
+    if (!Number.isInteger(options.count)) {
+      throw new RuleValidationError('"count" must be a whole number');
+    }
+
+    if (options.count < 0) {
+      throw new RuleValidationError('"count" must be greater than 0');
+    }
+  }
+
+  if (options.weekStart !== undefined) {
+    if (!WEEKDAYS.includes(options.weekStart)) {
+      throw new RuleValidationError(`"weekStart" must be one of ${JSON.stringify(WEEKDAYS)}`);
+    }
   }
 
   if (options.end !== undefined && options.count !== undefined) {
@@ -186,6 +268,17 @@ export function normalizeRuleOptions<T extends typeof DateAdapter>(
 
   return normalizedOptions;
 }
+
+const FREQUENCIES = [
+  'MILLISECONDLY',
+  'SECONDLY',
+  'MINUTELY',
+  'HOURLY',
+  'DAILY',
+  'WEEKLY',
+  'MONTHLY',
+  'YEARLY',
+];
 
 export function normalizeDateInput<T extends typeof DateAdapter>(
   input: T['date'] | InstanceType<T> | IDateAdapter.JSON,

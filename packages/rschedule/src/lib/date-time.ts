@@ -1,6 +1,6 @@
 import { ArgumentError } from './basic-utilities';
 
-export const WEEKDAYS: Array<'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'> = [
+export const WEEKDAYS: ReadonlyArray<'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'> = [
   'SU',
   'MO',
   'TU',

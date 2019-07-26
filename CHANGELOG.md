@@ -4,6 +4,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Features
+
+- Rigorously assert that rule options are valid. Previously, the library assumed typescript would catch obvious type errors and wouldn't bother checking for them.
+
 ### Fixes
 
 - Prevent VEvent objects from being initialized with a rule specifying a `MILLISECONDLY` frequency.
