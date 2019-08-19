@@ -27,6 +27,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 ### Peformance
 
 - `OccurrenceGenerator#firstDate` and `OccurrenceGenerator#lastDate` now cache their value after the initial lazy evaluation.
+- Combine time-related rule pipe logic into a base class to reduce bundle size
 
 ## Releases
 

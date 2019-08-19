@@ -1,33 +1,8 @@
 import { IByMillisecondOfSecondRuleOptions } from './10-by-millisecond-of-second.pipe';
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
+import { IPipeRule } from './interfaces';
+import { RevByTimePipe } from './rev-by-time.pipe';
 
-export class RevByMillisecondOfSecondPipe extends PipeRule<IByMillisecondOfSecondRuleOptions>
+export class RevByMillisecondOfSecondPipe extends RevByTimePipe<IByMillisecondOfSecondRuleOptions>
   implements IPipeRule<IByMillisecondOfSecondRuleOptions> {
-  run(args: IPipeRunFn) {
-    if (args.invalidDate) {
-      return this.nextPipe.run(args);
-    }
-
-    let date = args.date;
-
-    const currentMillisecond = date.get('millisecond');
-
-    for (const millisecond of this.options.byMillisecondOfSecond) {
-      if (currentMillisecond < millisecond) continue;
-
-      if (currentMillisecond === millisecond) return this.nextPipe.run({ date });
-
-      return this.nextValidDate(
-        args,
-        date.endGranularity('second').set('millisecond', millisecond),
-      );
-    }
-
-    date = date
-      .endGranularity('second')
-      .subtract(1, 'second')
-      .set('millisecond', this.options.byMillisecondOfSecond[0]);
-
-    return this.nextValidDate(args, date);
-  }
+  run = this.runFn('second', 'millisecond', 'byMillisecondOfSecond');
 }
