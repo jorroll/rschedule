@@ -1,48 +1,21 @@
-/**
- * Credit:
- * The vast majority of these tests were taken from [rrulejs](https://github.com/jakubroztocil/rrule),
- * which itself credits the python library `dateutil.rrule` for first creating the tests.
- */
-
 import { ZonedDateTime as JodaDateTime } from '@js-joda/core';
-import { JodaDateAdapter } from '@rschedule/joda-date-adapter';
-import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
-import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
-import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-import {
-  DateAdapter as DateAdapterConstructor,
-  IProvidedRuleOptions,
-  Rule,
-} from '@rschedule/rschedule';
-import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
-import { DateTime as LuxonDateTime } from 'luxon';
-import { Moment as MomentST } from 'moment';
-import { Moment as MomentTZ } from 'moment-timezone';
-import { ruleTests } from './rule-tests-setup';
+import { ruleTests } from '@local-tests/rule-tests-setup';
 import {
   context,
   DatetimeFn,
   environment,
   jodaDatetimeFn,
-  luxonDatetimeFn,
-  momentDatetimeFn,
-  momentTZDatetimeFn,
-  standardDatetimeFn,
   timezoneDateAdapterFn,
   TIMEZONES,
-} from './utilities';
+} from '@local-tests/utilities';
+import { JodaDateAdapter } from '@rschedule/joda-date-adapter';
+import {
+  DateAdapter as DateAdapterConstructor,
+  IProvidedRuleOptions,
+  Rule,
+} from '@rschedule/rschedule';
 
-const DATE_ADAPTERS = [
-  [StandardDateAdapter, standardDatetimeFn],
-  [MomentDateAdapter, momentDatetimeFn],
-  [MomentTZDateAdapter, momentTZDatetimeFn],
-  [LuxonDateAdapter, luxonDatetimeFn],
-  [JodaDateAdapter, jodaDatetimeFn],
-] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>],
-  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
-  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
-  [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>],
+const DATE_ADAPTERS = [[JodaDateAdapter, jodaDatetimeFn]] as [
   [typeof JodaDateAdapter, DatetimeFn<JodaDateTime>]
 ];
 
