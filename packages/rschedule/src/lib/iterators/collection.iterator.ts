@@ -3,22 +3,25 @@ import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter } from '../date-time';
 import { IOccurrenceGenerator, IRunArgs, IRunnable } from '../interfaces';
 import { RuleOption } from '../rule';
-import { DateInput } from '../utilities';
 import { IOccurrencesArgs } from './occurrence.iterator';
 
 export class CollectionIterator<
   T extends typeof DateAdapter,
   G extends ReadonlyArray<IOccurrenceGenerator<T>> = ReadonlyArray<IOccurrenceGenerator<T>>
 > {
-  readonly granularity: CollectionsGranularity = 'INSTANTANIOUSLY';
+  readonly granularity: CollectionsGranularity = 'YEARLY';
   readonly weekStart?: IDateAdapter.Weekday;
   readonly startDate: InstanceType<T> | null;
 
-  private iterator: IterableIterator<Collection<T>>;
+  private iterator: IterableIterator<Collection<T, G>>;
 
   constructor(private iterable: IOccurrenceGenerator<T>, private args: ICollectionsRunArgs) {
     if (args.granularity) {
       this.granularity = args.granularity;
+
+      if (this.granularity === 'WEEKLY' && !args.weekStart) {
+        throw new ArgumentError('"WEEKLY" granularity requires `weekStart` arg');
+      }
     }
 
     if (args.weekStart) {
@@ -26,9 +29,9 @@ export class CollectionIterator<
     }
 
     if (args.reverse) {
-      throw new Error(
-        '`Calendar#collections()` does not support iterating in reverse. ' +
-          'Though `Calendar#occurrences()` does support iterating in reverse.',
+      throw new ArgumentError(
+        '`OccurrenceGenerator#collections()` does not support iterating in reverse. ' +
+          'Though `OccurrenceGenerator#occurrences()` does support iterating in reverse.',
       );
     }
 
@@ -85,7 +88,7 @@ export class CollectionIterator<
   private *_run() {
     if (!this.startDate) return;
 
-    let iterator = this.occurrenceIterator(this.iterable, this.args);
+    let iterator = this.occurrenceIterator();
 
     let date = iterator.next().value;
 
@@ -96,7 +99,7 @@ export class CollectionIterator<
     // period holds a date === the first of the current month while
     // periodStart holds a date === the beginning of the first week of the month
     // (which might be in the the previous month). Read the
-    // `Calendar#collections()` description for more info.
+    // `OccurrenceGenerator#collections()` description for more info.
     let period = this.getPeriod(this.args.start!);
 
     let dates: DateTime[] = [];
@@ -120,13 +123,13 @@ export class CollectionIterator<
 
       dates = [];
 
-      period = this.args.incrementLinearly
+      period = !this.args.skipEmptyPeriods
         ? this.getPeriod(this.incrementPeriod(period.period))
         : this.getPeriod(date);
 
       // With these args, periods may overlap and the same date may show up
       // in two periods. Because of this, we need to reset the iterator
-      // (otherwise it won't spit out a date it has already spit out).
+      // (otherwise it won't return a date it has already returned).
       if (this.granularity === 'MONTHLY' && this.weekStart) {
         iterator = this.iterable._run({
           start: period.start,
@@ -149,12 +152,8 @@ export class CollectionIterator<
     if (this.granularity === 'MONTHLY' && this.weekStart) {
       start = date.granularity('month').granularity('week', { weekStart: this.weekStart });
       end = date.endGranularity('month').endGranularity('week', { weekStart: this.weekStart });
-      period = start;
+      period = date.granularity('month');
     } else if (this.granularity === 'WEEKLY') {
-      if (!this.weekStart) {
-        throw new ArgumentError('"WEEKLY" granularity requires `weekStart` arg');
-      }
-
       start = date.granularity('week', { weekStart: this.weekStart });
       end = date.endGranularity('week', { weekStart: this.weekStart });
       period = start;
@@ -183,25 +182,23 @@ export class CollectionIterator<
         return date.add(1, 'minute');
       case 'SECONDLY':
         return date.add(1, 'second');
-      case 'INSTANTANIOUSLY':
-      default:
+      case 'MILLISECONDLY':
         return date.add(1, 'millisecond');
+      default:
+        throw new ArgumentError(`Unknown CollectionIterator granularity "${this.granularity}"`);
     }
   }
 
-  private occurrenceIterator(
-    iterable: IRunnable<T>,
-    args: ICollectionsRunArgs,
-  ): IterableIterator<DateTime> {
-    let start = args.start || iterable._run().next().value;
+  private occurrenceIterator(): IterableIterator<DateTime> {
+    let start = this.args.start || this.iterable._run().next().value;
 
-    if (!start) return iterable._run(args);
+    if (!start) return this.iterable._run(this.args);
 
     start = this.getPeriod(start).start;
 
-    return iterable._run({
+    return this.iterable._run({
       start,
-      end: args.end,
+      end: this.args.end,
     });
   }
 }
@@ -218,16 +215,16 @@ export class Collection<
   ) {}
 }
 
-export type CollectionsGranularity = 'INSTANTANIOUSLY' | RuleOption.Frequency;
+export type CollectionsGranularity = RuleOption.Frequency;
 
 export interface ICollectionsArgs<T extends typeof DateAdapter> extends IOccurrencesArgs<T> {
   granularity?: CollectionsGranularity;
   weekStart?: IDateAdapter.Weekday;
-  incrementLinearly?: boolean;
+  skipEmptyPeriods?: boolean;
 }
 
 export interface ICollectionsRunArgs extends IRunArgs {
   granularity?: CollectionsGranularity;
   weekStart?: IDateAdapter.Weekday;
-  incrementLinearly?: boolean;
+  skipEmptyPeriods?: boolean;
 }
