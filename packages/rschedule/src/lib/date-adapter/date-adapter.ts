@@ -32,7 +32,7 @@ export class DateAdapter implements IDateAdapter<unknown> {
   readonly date!: unknown;
   readonly timezone!: string | null;
   /** A length of time in milliseconds */
-  readonly duration: number | undefined;
+  readonly duration!: number;
 
   /**
    * An array of OccurrenceGenerator objects which produced this DateAdapter.
@@ -67,7 +67,13 @@ export class DateAdapter implements IDateAdapter<unknown> {
 
   protected readonly [DATE_ADAPTER_ID] = true;
 
-  constructor(_date: unknown, _options?: unknown) {}
+  constructor(_date: unknown, options?: { duration?: number }) {
+    this.duration = (options && options.duration) || 0;
+
+    if (!Number.isInteger(this.duration) || this.duration < 0) {
+      throw new InvalidDateAdapterError('duration must be a non-negative integer');
+    }
+  }
 
   /**
    * Returns `undefined` if `this.duration` is falsey. Else returns
@@ -77,7 +83,9 @@ export class DateAdapter implements IDateAdapter<unknown> {
     throw unimplementedError('end');
   }
 
-  set(_prop: 'timezone', _value: string | null): DateAdapter {
+  set(prop: 'timezone', value: string | null): DateAdapter;
+  set(prop: 'duration', value: number): DateAdapter;
+  set(_prop: 'timezone' | 'duration', _value: number | string | null): DateAdapter {
     throw unimplementedError('set()');
   }
 

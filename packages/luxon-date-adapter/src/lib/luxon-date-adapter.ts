@@ -1,9 +1,9 @@
 import {
+  ArgumentError,
   DateAdapter,
   DateTime,
   IDateAdapter,
   InvalidDateAdapterError,
-  OccurrenceGenerator,
 } from '@rschedule/rschedule';
 import { DateTime as LuxonDateTime, LocalZone } from 'luxon';
 
@@ -77,7 +77,6 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
 
   readonly date: LuxonDateTime;
   readonly timezone: string | null;
-  readonly duration: number | undefined;
   readonly generators: unknown[] = [];
 
   protected readonly [LUXON_DATE_ADAPTER_ID] = true;
@@ -85,11 +84,10 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
   private _end: LuxonDateTime | undefined;
 
   constructor(date: LuxonDateTime, options: { duration?: number } = {}) {
-    super(undefined);
+    super(undefined, options);
 
     this.date = date;
     this.timezone = date.zone instanceof LocalZone ? null : date.zoneName;
-    this.duration = options.duration;
 
     this.assertIsValid();
   }
@@ -106,14 +104,28 @@ export class LuxonDateAdapter extends DateAdapter implements IDateAdapter<LuxonD
     return this._end;
   }
 
-  set(_: 'timezone', value: string | null) {
-    if (this.timezone === value) return this;
-
-    if (value === null) {
-      return new LuxonDateAdapter(this.date.toLocal(), { duration: this.duration });
+  set(prop: 'timezone', value: string | null): LuxonDateAdapter;
+  set(prop: 'duration', value: number): LuxonDateAdapter;
+  set(prop: 'timezone' | 'duration', value: number | string | null) {
+    if (prop === 'timezone') {
+      if (this.timezone === value) return this;
+      else if (value === null) {
+        return new LuxonDateAdapter(this.date.toLocal(), { duration: this.duration });
+      } else {
+        return new LuxonDateAdapter(this.date.setZone(value as string), {
+          duration: this.duration,
+        });
+      }
+    } else if (prop === 'duration') {
+      if (this.duration === value) return this;
+      else {
+        return new LuxonDateAdapter(this.date, {
+          duration: value as number,
+        });
+      }
     }
 
-    return new LuxonDateAdapter(this.date.setZone(value), { duration: this.duration });
+    throw new ArgumentError(`Unknown prop "${prop}" for LuxonDateAdapter#set()`);
   }
 
   valueOf() {

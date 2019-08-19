@@ -20,7 +20,7 @@ export interface IDateAdapter<D = unknown> {
   /** Returns the date object this DateAdapter is wrapping */
   readonly date: D;
   readonly timezone: string | null;
-  readonly duration: number | undefined;
+  readonly duration: number;
 
   /**
    * This property contains an ordered array of the generator objects
@@ -265,20 +265,24 @@ export class DateTime implements IDateAdapter<unknown> {
 
   readonly timezone: string | null;
 
-  readonly duration: number | undefined;
+  readonly duration: number;
 
   private _end: DateTime | undefined;
 
   private constructor(date: Date, timezone?: string | null, duration?: number) {
     this.date = new Date(date);
     this.timezone = timezone || null;
-    this.duration = duration;
+    this.duration = duration || 0;
+
+    if (!Number.isInteger(this.duration) || this.duration < 0) {
+      throw new InvalidDateTimeError('duration must be a non-negative integer');
+    }
 
     this.assertIsValid();
   }
 
   /**
-   * Returns `undefined` if `this.duration` is falsey. Else returns
+   * Returns `undefined` if `duration` is `0`. Else returns
    * the `end` date.
    */
   get end(): DateTime | undefined {
@@ -552,9 +556,8 @@ export class DateTime implements IDateAdapter<unknown> {
   }
 
   toJSON(): IDateAdapter.JSON {
-    return {
+    const json: IDateAdapter.JSON = {
       timezone: this.timezone,
-      duration: this.duration,
       year: this.get('year'),
       month: this.get('month'),
       day: this.get('day'),
@@ -563,6 +566,12 @@ export class DateTime implements IDateAdapter<unknown> {
       second: this.get('second'),
       millisecond: this.get('millisecond'),
     };
+
+    if (this.duration) {
+      json.duration = this.duration;
+    }
+
+    return json;
   }
 
   valueOf() {
