@@ -6,14 +6,18 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ### Breaking
 
+- `Dates` `duration` constructor argument now only applies the duration to provided dates which do not already have a duration. Put another way, the `duration` option for the dates constructor now acts as a default duration for provided dates, rather than _the duration_ of all dates.
+- `DateAdapter#duration` type changed from `number | undefined` to `number`. A duration of `0` is treated as no duration.
 - `OccurrenceGenerator#collections()` arguments changed. Specifically, CollectionIterator `ICollectionArgs` interface changed.
-
   - `incrementLinearly` option removed
   - `skipEmptyPeriods` option added
   - `granularity` `"INSTANTANIOUS"` option removed. Use `"MILLISECONDLY"` instead (which does the same thing).
   - By default, `OccurrenceGenerator#collections()` now increments linearly. You can use `skipEmptyPeriods: true` to get the old default behavior.
-
 - Default granularity for `OccurrenceGenerator#collections()` is now `"YEARLY"`. This change was made to accomidate the other changes to CollectionIterator.
+
+### Feature
+
+- Added `DateAdapter#set('duration', number)` option for setting a date adapters duration.
 
 ### Fixes
 
