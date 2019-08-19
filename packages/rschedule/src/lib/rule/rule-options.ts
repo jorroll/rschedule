@@ -1,5 +1,5 @@
 import { cloneJSON, numberSortComparer } from '../basic-utilities';
-import { DateAdapter, InvalidDateAdapterError } from '../date-adapter';
+import { DateAdapter } from '../date-adapter';
 import { DateTime, IDateAdapter, WEEKDAYS } from '../date-time';
 import { DateInput } from '../utilities';
 

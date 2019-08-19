@@ -14,7 +14,7 @@ UTC:
     - apk add yarn
     - yarn install
   script:
-    - TZ='UTC' yarn test --ci=true
+    - TZ='UTC' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 Africa/Johannesburg:
@@ -29,7 +29,7 @@ Africa/Johannesburg:
     - apk add yarn
     - yarn install
   script:
-    - TZ='Africa/Johannesburg' yarn test --ci=true
+    - TZ='Africa/Johannesburg' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 America/Los_Angeles:
@@ -44,7 +44,7 @@ America/Los_Angeles:
     - apk add yarn
     - yarn install
   script:
-    - TZ='America/Los_Angeles' yarn test --ci=true
+    - TZ='America/Los_Angeles' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 America/New_York:
@@ -59,7 +59,7 @@ America/New_York:
     - apk add yarn
     - yarn install
   script:
-    - TZ='America/New_York' yarn test --ci=true
+    - TZ='America/New_York' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 America/Santiago:
@@ -74,7 +74,7 @@ America/Santiago:
     - apk add yarn
     - yarn install
   script:
-    - TZ='America/Santiago' yarn test --ci=true
+    - TZ='America/Santiago' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 Europe/London:
@@ -89,7 +89,7 @@ Europe/London:
     - apk add yarn
     - yarn install
   script:
-    - TZ='Europe/London' yarn test --ci=true
+    - TZ='Europe/London' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 Asia/Shanghai:
@@ -104,7 +104,7 @@ Asia/Shanghai:
     - apk add yarn
     - yarn install
   script:
-    - TZ='Asia/Shanghai' yarn test --ci=true
+    - TZ='Asia/Shanghai' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 Asia/Jakarta:
@@ -119,7 +119,7 @@ Asia/Jakarta:
     - apk add yarn
     - yarn install
   script:
-    - TZ='Asia/Jakarta' yarn test --ci=true
+    - TZ='Asia/Jakarta' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 Australia/Melbourne:
@@ -134,7 +134,7 @@ Australia/Melbourne:
     - apk add yarn
     - yarn install
   script:
-    - TZ='Australia/Melbourne' yarn test --ci=true
+    - TZ='Australia/Melbourne' yarn test --ci=true --reporters="<rootDir>/jest-ci-reporter.js"
   coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 dependency_scanning:

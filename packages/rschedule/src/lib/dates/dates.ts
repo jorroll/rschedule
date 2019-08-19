@@ -157,7 +157,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
    * date objects set to have the specified `duration`. Duration is a length of time,
    * expressed in milliseconds.
    */
-  set(prop: 'duration', value: number): Dates<T, D>;
+  set(prop: 'duration', value: number | undefined): Dates<T, D>;
   set(
     prop: 'timezone' | 'dates' | 'duration',
     value: DateInput<T>[] | string | number | null | undefined,
@@ -180,7 +180,9 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     } else if (prop === 'dates') {
       dates = value as DateInput<T>[];
     } else if (prop === 'duration') {
-      dates = (dates as InstanceType<T>[]).map(date => date.set('duration', value as number));
+      dates = (dates as InstanceType<T>[]).map(date =>
+        date.set('duration', (value as number | undefined) || 0),
+      );
     } else {
       throw new ArgumentError(
         `Unexpected prop argument "${prop}". Accepted values are "timezone" or "dates"`,
