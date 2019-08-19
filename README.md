@@ -42,12 +42,10 @@ const rule = new Rule<typeof StandardDateAdapter>({
   start: new Date(2010, 1, 7),
 });
 
-let index = 0;
-for (const date of rule.occurrences()) {
+for (const { date } of rule.occurrences({ take: 10 })) {
   date.toISOString();
-  index++;
 
-  if (index > 10) break;
+  // do stuff...
 }
 ```
 
