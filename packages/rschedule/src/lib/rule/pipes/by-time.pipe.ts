@@ -1,7 +1,11 @@
 import { IDateAdapter } from '../../date-time';
 import { IPipeRunFn, PipeRule } from './interfaces';
 
-export class ByTimePipe<T> extends PipeRule<T> {
+/**
+ * Contains shared logic for ByHourOfDay, ByMinuteOfHour,
+ * BySecondOfMinute, and ByMillisecondOfSecond rule pipes
+ */
+export abstract class ByTimePipe<T> extends PipeRule<T> {
   runFn(
     baseGranularity: IDateAdapter.TimeUnit,
     granularity: IDateAdapter.TimeUnit,
