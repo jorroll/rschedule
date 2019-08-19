@@ -1,5 +1,11 @@
 import { DateTimeFormatter, ZonedDateTime, ZoneId } from '@js-joda/core';
-import { DateAdapter, DateTime, IDateAdapter, InvalidDateAdapterError } from '@rschedule/rschedule';
+import {
+  ArgumentError,
+  DateAdapter,
+  DateTime,
+  IDateAdapter,
+  InvalidDateAdapterError,
+} from '@rschedule/rschedule';
 
 const JODA_DATE_ADAPTER_ID = Symbol.for('a422fb72-ee66-498c-9972-03ff797cbe64');
 
@@ -58,7 +64,6 @@ export class JodaDateAdapter extends DateAdapter implements IDateAdapter<ZonedDa
 
   readonly date: ZonedDateTime;
   readonly timezone: string | null;
-  readonly duration: number | undefined;
   readonly generators: unknown[] = [];
 
   protected readonly [JODA_DATE_ADAPTER_ID] = true;
@@ -66,11 +71,10 @@ export class JodaDateAdapter extends DateAdapter implements IDateAdapter<ZonedDa
   private _end: ZonedDateTime | undefined;
 
   constructor(date: ZonedDateTime, options: { duration?: number } = {}) {
-    super(undefined);
+    super(undefined, options);
 
     this.date = date;
     this.timezone = this.date.zone() === ZoneId.SYSTEM ? null : this.date.zone().toString();
-    this.duration = options.duration;
 
     if (this.timezone === 'Z') {
       this.timezone = 'UTC';
@@ -89,18 +93,31 @@ export class JodaDateAdapter extends DateAdapter implements IDateAdapter<ZonedDa
     return this._end;
   }
 
-  set(_: 'timezone', value: string | null) {
-    if (this.timezone === value) return this;
-
-    if (value === null) {
-      return new JodaDateAdapter(this.date.withZoneSameInstant(ZoneId.SYSTEM), {
-        duration: this.duration,
-      });
+  set(prop: 'timezone', value: string | null): JodaDateAdapter;
+  set(prop: 'duration', value: number): JodaDateAdapter;
+  set(prop: 'timezone' | 'duration', value: number | string | null) {
+    if (prop === 'timezone') {
+      if (this.timezone === value) return this;
+      else {
+        return new JodaDateAdapter(
+          this.date.withZoneSameInstant(
+            value === null ? ZoneId.SYSTEM : ZoneId.of(value as string),
+          ),
+          {
+            duration: this.duration,
+          },
+        );
+      }
+    } else if (prop === 'duration') {
+      if (this.duration === value) return this;
+      else {
+        return new JodaDateAdapter(this.date, {
+          duration: value as number,
+        });
+      }
     }
 
-    return new JodaDateAdapter(this.date.withZoneSameInstant(ZoneId.of(value)), {
-      duration: this.duration,
-    });
+    throw new ArgumentError(`Unknown prop "${prop}" for JodaDateAdapter#set()`);
   }
 
   valueOf() {

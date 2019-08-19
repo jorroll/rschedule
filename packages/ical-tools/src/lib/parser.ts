@@ -529,7 +529,7 @@ export function parseBYMONTHDAY(input: number | number[]) {
 }
 
 export function parseBYYEARDAY(input: any) {
-  console.warn(`Parsing "BYYEARDAY" rrule property is not implemented.`);
+  console.error(`Parsing "BYYEARDAY" rrule property is not implemented.`);
   return input;
 }
 
@@ -548,12 +548,12 @@ export function parseBYMONTH(input: number | number[]) {
 }
 
 export function parseBYWEEKNO(input: any) {
-  console.warn(`Parsing "BYYEARDAY" rrule property is not implemented.`);
+  console.error(`Parsing "BYWEEKNO" rrule property is not implemented.`);
   return input;
 }
 
 export function parseBYSETPOS(input: any) {
-  console.warn(`Parsing "BYYEARDAY" rrule property is not implemented.`);
+  console.error(`Parsing "BYSETPOS" rrule property is not implemented.`);
   return input;
 }
 

@@ -24,29 +24,25 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     return !!(object && typeof object === 'object' && (object as any)[DATES_ID]);
   }
 
+  readonly adapters: ReadonlyArray<InstanceType<T>> = [];
+
   get length() {
     return this.adapters.length;
   }
 
-  readonly adapters: ReadonlyArray<InstanceType<T>> = [];
-
   /** Returns the first occurrence or, if there are no occurrences, null. */
   get firstDate(): InstanceType<T> | null {
-    const first = this.adapters[0];
-
-    return (first && (first.set('timezone', this.timezone) as InstanceType<T>)) || null;
+    return this.adapters[0] || null;
   }
 
   /** Returns the last occurrence or, if there are no occurrences, null. */
   get lastDate(): InstanceType<T> | null {
-    const last = this.adapters[this.length - 1];
-
-    return (last && (last.set('timezone', this.timezone) as InstanceType<T>)) || null;
+    return this.adapters[this.length - 1] || null;
   }
 
   readonly isInfinite = false;
   readonly hasDuration: boolean;
-  readonly maxDuration!: number;
+  readonly maxDuration: number = 0;
   readonly timezone!: string | null; // set by `OccurrenceGenerator`
 
   pipe: (...operatorFns: OperatorFnOutput<T>[]) => OccurrenceStream<T> = pipeFn(this);
@@ -77,28 +73,23 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
 
     if (args.dates) {
       this.adapters = args.dates.map(date => {
-        const adapter = this.normalizeDateInputToAdapter(date);
+        let adapter = this.normalizeDateInputToAdapter(date);
 
-        if (args.duration && adapter.duration !== args.duration) {
-          return this.dateAdapter.fromJSON({
-            ...adapter.toJSON(),
-            duration: args.duration,
-          }) as InstanceType<T>;
+        if (args.duration && !adapter.duration) {
+          adapter = adapter.set('duration', args.duration) as InstanceType<T>;
         }
 
-        return adapter;
+        return adapter.set('timezone', this.timezone) as InstanceType<T>;
       });
 
-      this.datetimes = this.adapters.map(adapter =>
-        adapter.set('timezone', this.timezone).toDateTime(),
-      );
+      this.datetimes = this.adapters.map(adapter => adapter.toDateTime());
     }
 
     this.hasDuration = this.datetimes.every(date => !!date.duration);
 
     if (this.hasDuration) {
       this.maxDuration = this.adapters.reduce(
-        (prev, curr) => (curr.duration! > prev ? curr.duration! : prev),
+        (prev, curr) => (curr.duration > prev ? curr.duration : prev),
         0,
       )!;
     }
@@ -176,7 +167,7 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     let dates: DateInput<T>[] = this.adapters.slice();
 
     if (prop === 'timezone') {
-      if (value === this.timezone && !options.keepLocalTime) return this;
+      if (value === this.timezone) return this;
       else if (options.keepLocalTime) {
         dates = this.adapters.map(adapter => {
           const json = adapter.toJSON();
@@ -189,11 +180,8 @@ export class Dates<T extends typeof DateAdapter, D = any> extends OccurrenceGene
     } else if (prop === 'dates') {
       dates = value as DateInput<T>[];
     } else if (prop === 'duration') {
-      dates = dates.map(date =>
-        this.dateAdapter.fromJSON({
-          ...(date as InstanceType<T>).toJSON(),
-          duration: value as number | undefined,
-        }),
+      dates = (dates as InstanceType<T>[]).map(date =>
+        date.set('duration', (value as number | undefined) || 0),
       );
     } else {
       throw new ArgumentError(

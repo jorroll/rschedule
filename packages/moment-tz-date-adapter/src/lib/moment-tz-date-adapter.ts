@@ -1,9 +1,9 @@
 import {
+  ArgumentError,
   DateAdapter,
   DateTime,
   IDateAdapter,
   InvalidDateAdapterError,
-  OccurrenceGenerator,
 } from '@rschedule/rschedule';
 import moment from 'moment-timezone';
 
@@ -65,7 +65,6 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
     return this._date.clone();
   }
   readonly timezone: string | null;
-  readonly duration: number | undefined;
   readonly generators: unknown[] = [];
 
   protected readonly [MOMENT_TZ_DATE_ADAPTER_ID] = true;
@@ -74,11 +73,10 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
   private _date: moment.Moment;
 
   constructor(date: moment.Moment, options: { duration?: number } = {}) {
-    super(undefined);
+    super(undefined, options);
 
     this._date = date.clone();
     this.timezone = date.tz() || null;
-    this.duration = options.duration;
 
     this.assertIsValid();
   }
@@ -95,19 +93,35 @@ export class MomentTZDateAdapter extends DateAdapter implements IDateAdapter<mom
     return this._end;
   }
 
-  set(_: 'timezone', value: string | null) {
-    if (this.timezone === value) return this;
+  set(prop: 'timezone', value: string | null): MomentTZDateAdapter;
+  set(prop: 'duration', value: number): MomentTZDateAdapter;
+  set(prop: 'timezone' | 'duration', value: number | string | null) {
+    if (prop === 'timezone') {
+      if (this.timezone === value) return this;
+      else {
+        const date = this._date.clone();
 
-    const date = this._date.clone();
+        if (value === null) {
+          // work around for https://github.com/moment/moment-timezone/issues/738
+          date.utc().local();
+        } else {
+          date.tz(value as string);
+        }
 
-    if (value === null) {
-      // work around for https://github.com/moment/moment-timezone/issues/738
-      date.utc().local();
-    } else {
-      date.tz(value);
+        return new MomentTZDateAdapter(date, {
+          duration: this.duration,
+        });
+      }
+    } else if (prop === 'duration') {
+      if (this.duration === value) return this;
+      else {
+        return new MomentTZDateAdapter(this._date, {
+          duration: value as number,
+        });
+      }
     }
 
-    return new MomentTZDateAdapter(date, { duration: this.duration });
+    throw new ArgumentError(`Unknown prop "${prop}" for MomentTZDateAdapter#set()`);
   }
 
   valueOf() {

@@ -27,6 +27,7 @@
     "clean:modules": "trash yarn.lock node_modules packages/*/node_modules"
   },
   "devDependencies": {
+    "@jest/reporters": "^24.9.0",
     "@js-joda/core": "^1.11.0",
     "@js-joda/timezone": "^2.1.1",
     "@types/jest": "^23.0.0",

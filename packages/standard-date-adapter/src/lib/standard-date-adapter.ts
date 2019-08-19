@@ -1,10 +1,9 @@
 import {
+  ArgumentError,
   DateAdapter,
   DateTime,
   IDateAdapter,
   InvalidDateAdapterError,
-  OccurrenceGenerator,
-  RScheduleConfig,
 } from '@rschedule/rschedule';
 
 const STANDARD_DATE_ADAPTER_ID = Symbol.for('09e206a9-a8b2-4c85-b2c6-6442bb895153');
@@ -70,7 +69,6 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   }
 
   readonly timezone: string | null;
-  readonly duration: number | undefined;
   readonly generators: unknown[] = [];
 
   protected readonly [STANDARD_DATE_ADAPTER_ID] = true;
@@ -79,7 +77,7 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   private _date: Date;
 
   constructor(date: Date, options: { timezone?: string | null; duration?: number } = {}) {
-    super(undefined);
+    super(undefined, options);
 
     if (!['UTC', null, undefined].includes(options.timezone)) {
       throw new InvalidDateAdapterError(
@@ -90,7 +88,6 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
 
     this._date = new Date(date);
     this.timezone = options.timezone !== undefined ? (options.timezone as 'UTC') : null;
-    this.duration = options.duration;
 
     this.assertIsValid();
   }
@@ -107,19 +104,28 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
     return this._end;
   }
 
-  set(_: 'timezone', value: string | null) {
-    if (this.timezone === value) return this;
-
-    if (value === 'UTC') {
-      return new StandardDateAdapter(this._date, { timezone: 'UTC', duration: this.duration });
-    } else if (value === null) {
-      return new StandardDateAdapter(this._date, { timezone: null, duration: this.duration });
+  set(prop: 'timezone', value: string | null): StandardDateAdapter;
+  set(prop: 'duration', value: number): StandardDateAdapter;
+  set(prop: 'timezone' | 'duration', value: number | string | null) {
+    if (prop === 'timezone') {
+      if (this.timezone === value) return this;
+      else {
+        return new StandardDateAdapter(this._date, {
+          timezone: value as string | null,
+          duration: this.duration,
+        });
+      }
+    } else if (prop === 'duration') {
+      if (this.duration === value) return this;
+      else {
+        return new StandardDateAdapter(this._date, {
+          timezone: this.timezone,
+          duration: value as number,
+        });
+      }
     }
 
-    throw new InvalidDateAdapterError(
-      `StandardDateAdapter only supports "UTC" and local ` +
-        `(null) timezones but "${value}" was provided.`,
-    );
+    throw new ArgumentError(`Unknown prop "${prop}" for StandardDateAdapter#set()`);
   }
 
   valueOf() {

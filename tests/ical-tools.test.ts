@@ -782,10 +782,18 @@ DATE_ADAPTERS.forEach(dateAdapterSet => {
                   ],
                 },
                 start: dateAdapter(1997, 9, 2, 9, 0, 0, { timezone: null }).toJSON(),
-                exdates: [dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' }).toJSON()],
+                exdates: [
+                  dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' })
+                    .set('timezone', null)
+                    .toJSON(),
+                ],
                 rdates: [
-                  dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' }).toJSON(),
-                  dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' }).toJSON(),
+                  dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' })
+                    .set('timezone', null)
+                    .toJSON(),
+                  dateAdapter(1997, 7, 14, 12, 30, 0, { timezone: 'UTC' })
+                    .set('timezone', null)
+                    .toJSON(),
                 ],
                 rrules: [
                   {
