@@ -35,7 +35,7 @@ You can play around with a demo of rSchedule on [codesandbox here](https://codes
 ```typescript
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
-const rule = new Rule({
+const rule = new Rule<typeof StandardDateAdapter>({
   frequency: 'YEARLY',
   byMonthOfYear: [2, 6],
   byDayOfWeek: ['SU', ['MO', 3]],

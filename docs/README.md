@@ -41,7 +41,7 @@ Example usage:
 ```typescript
 RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
 
-const schedule = new Schedule({
+const schedule = new Schedule<typeof StandardDateAdapter>({
   rrules: [
     {
       frequency: 'YEARLY',
