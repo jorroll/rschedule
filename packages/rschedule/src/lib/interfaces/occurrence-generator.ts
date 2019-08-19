@@ -81,24 +81,35 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
   readonly timezone: string | null;
   readonly dateAdapter: T;
 
+  private _firstDate?: InstanceType<T> | null;
+
   /** Returns the first occurrence or, if there are no occurrences, null. */
   get firstDate(): InstanceType<T> | null {
+    if (this._firstDate !== undefined) return this._firstDate;
+
     const start = this._run().next().value;
 
-    if (!start) return null;
+    this._firstDate = start ? (this.dateAdapter.fromDateTime(start) as InstanceType<T>) : null;
 
-    return this.dateAdapter.fromDateTime(start) as InstanceType<T>;
+    return this._firstDate!;
   }
+
+  private _lastDate?: InstanceType<T> | null;
 
   /** If generator is infinite, returns `null`. Otherwise returns the end date */
   get lastDate(): InstanceType<T> | null {
-    if (this.isInfinite) return null;
+    if (this._lastDate !== undefined) return this._lastDate;
+
+    if (this.isInfinite) {
+      this._lastDate = null;
+      return null;
+    }
 
     const end = this._run({ reverse: true }).next().value;
 
-    if (!end) return null;
+    this._lastDate = end ? (this.dateAdapter.fromDateTime(end) as InstanceType<T>) : null;
 
-    return this.dateAdapter.fromDateTime(end) as InstanceType<T>;
+    return this._lastDate!;
   }
 
   constructor(args: { dateAdapter?: T; timezone?: string | null; maxDuration?: number }) {
@@ -136,16 +147,16 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
    *
    * Examples:
    * 
-   ```
-   const iterator = schedule.occurrences({ start: new Date(), take: 5 })
+   * ```
+   * const iterator = schedule.occurrences({ start: new Date(), take: 5 });
    
-   for (const date of iterator) {
-     // do stuff
-   }
+   * for (const date of iterator) {
+   *   // do stuff
+   * }
 
-   iterator.toArray() // returns Date array
-   iterator.next().value // returns next Date
-   ```
+   * iterator.toArray() // returns Date array
+   * iterator.next().value // returns next Date
+   * ```
    * 
    */
   occurrences(args: IOccurrencesArgs<T> = {}): OccurrenceIterator<T> {
@@ -154,7 +165,7 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
 
   /**
    * Iterates over the object's occurrences and bundles them into collections
-   * with a specified granularity (default is `"INSTANTANIOUS"`). Make sure to
+   * with a specified granularity (default is `"YEARLY"`). Make sure to
    * read about each option & combination of options below.
    *
    * Options object:
@@ -164,14 +175,14 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
    *   - reverse?: NOT SUPPORTED
    *   - granularity?: CollectionsGranularity
    *   - weekStart?: IDateAdapter.Weekday
-   *   - incrementLinearly?: boolean
+   *   - skipEmptyPeriods?: boolean
    *
    * Returned `Collection` object:
    *
    *   - `dates` property containing an array of DateAdapter objects.
    *   - `granularity` property containing the granularity.
-   *     - `CollectionsGranularity` type extends `RuleOptions.Frequency` type by adding
-   *       `"INSTANTANIOUS"`.
+   *     - `CollectionsGranularity` === `RuleOptions.Frequency`.
+   *     - default is `"YEARLY"`
    *   - `periodStart` property containing a DateAdapter equal to the period's
    *     start time.
    *   - `periodEnd` property containing a DateAdapter equal to the period's
@@ -188,19 +199,17 @@ export abstract class OccurrenceGenerator<T extends typeof DateAdapter>
    *   start of the year passed in the `start` argument, and the `end` argument will be transformed
    *   to be the end of the year passed in the `end` argument.
    *
-   * By default, the `periodStart` value of `Collection` objects produced by this method does not
-   * necessarily increment linearly. A collection will *always* contain at least one date,
-   * so the `periodStart` from one collection to the next can "jump". This can be changed by
-   * passing the `incrementLinearly: true` option. With this argument, `collections()` will
-   * return `Collection` objects for each period in linear succession, even if a collection object
-   * has no dates associated with it, so long as the object generating occurrences still has upcoming occurrences.
+   * By default, the `periodStart` value of `Collection` objects produced by this method increments linearly.
+   * This means the returned `Collection#dates` property may have length 0. This can be changed by
+   * passing the `skipEmptyPeriods: true` option, in which case the `periodStart` from one collection to the
+   * next can "jump".
    *
    * - Example 1: if your object's first occurrence is 2019/2/1 (February 1st) and you call
-   *   `collection({granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   `collection({skipEmptyPeriods: true, granularity: 'DAILY', start: new Date(2019,0,1)})`
    *   (so starting on January 1st), the first Collection produced will have a `periodStart` in February.
    *
    * - Example 2: if your object's first occurrence is 2019/2/1 (February 1st) and you call
-   *   `collection({incrementLinearly: true, granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   `collection({granularity: 'DAILY', start: new Date(2019,0,1)})`
    *   (so starting on January 1st), the first collection produced will have a `Collection#periodStart`
    *   of January 1st and have `Collection#dates === []`. Similarly, the next 30 collections produced
    *   (Jan 2nd - 31st) will all contain an empty array for the `dates` property. Then the February 1st

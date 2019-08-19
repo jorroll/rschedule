@@ -1,3 +1,5 @@
+import { ZonedDateTime as JodaDateTime } from '@js-joda/core';
+import { JodaDateAdapter } from '@rschedule/joda-date-adapter';
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
@@ -24,6 +26,8 @@ import {
   DatetimeFn,
   dateTimeFn,
   environment,
+  isoString,
+  jodaDatetimeFn,
   luxonDatetimeFn,
   momentDatetimeFn,
   momentTZDatetimeFn,
@@ -43,9 +47,9 @@ export function toISOStringsCol<T extends typeof DateAdapter>(
   }
 
   return calendar
-    .collections(args)
-    .toArray()!
-    .map(occ => occ.dates.map(date => date.toISOString()));
+    .collections({ skipEmptyPeriods: true, granularity: 'MILLISECONDLY', ...args })
+    .toArray()
+    .map(({ dates }) => dates.map(date => date.toISOString()));
 }
 
 function testOccurrences(
@@ -53,7 +57,7 @@ function testOccurrences(
   calendar: Calendar<typeof DateAdapterConstructor>,
   expectation: DateAdapterConstructor[],
   collections: {
-    instantaniously: DateAdapterConstructor[][];
+    millisecondly: DateAdapterConstructor[][];
     yearly: DateAdapterConstructor[][];
     monthly: { no: DateAdapterConstructor[][]; week: DateAdapterConstructor[][] };
   },
@@ -113,7 +117,7 @@ function testOccurrences(
 
     describe('collections', () => {
       [
-        ['INSTANTANIOUSLY', collections.instantaniously],
+        ['MILLISECONDLY', collections.millisecondly],
         ['YEARLY', collections.yearly],
         ['MONTHLY', collections.monthly.no],
       ].forEach(pair => {
@@ -198,11 +202,13 @@ const DATE_ADAPTERS = [
   [MomentDateAdapter, momentDatetimeFn],
   [MomentTZDateAdapter, momentTZDatetimeFn],
   [LuxonDateAdapter, luxonDatetimeFn],
+  [JodaDateAdapter, jodaDatetimeFn],
 ] as [
   [typeof StandardDateAdapter, DatetimeFn<Date>],
   [typeof MomentDateAdapter, DatetimeFn<MomentST>],
   [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
-  [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>]
+  [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>],
+  [typeof JodaDateAdapter, DatetimeFn<JodaDateTime>]
 ];
 
 describe('Calendar', () => {
@@ -213,9 +219,9 @@ describe('Calendar', () => {
         DatetimeFn<any>
       ];
 
-      // const timezones = !DateAdapter.hasTimezoneSupport ? (['UTC'] ) : (['UTC'] );
+      // const timezones = !DateAdapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
 
-      const timezones = !DateAdapter.hasTimezoneSupport ? ([null, 'UTC'] ) : TIMEZONES;
+      const timezones = !DateAdapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
       timezones.forEach(zone => {
         context(zone, timezone => {
@@ -226,6 +232,58 @@ describe('Calendar', () => {
               expect(new Calendar({ dateAdapter: DateAdapter, timezone })).toBeInstanceOf(
                 Calendar,
               ));
+          });
+
+          it('skipEmptyPeriods: false', () => {
+            const calendar = new Calendar({
+              schedules: new Schedule({
+                rrules: [
+                  // YearlyByMonthAndMonthDay
+                  {
+                    frequency: 'YEARLY',
+                    count: 3,
+                    byMonthOfYear: [1, 3],
+                    byDayOfMonth: [5, 7],
+                    start: dateAdapter(1997, 9, 2, 9),
+                  },
+                ],
+                dateAdapter: DateAdapter,
+              }),
+              dateAdapter: DateAdapter,
+              timezone,
+            });
+
+            let result = calendar
+              .collections({ granularity: 'YEARLY', start: dateAdapter(1997, 9, 2, 9) })
+              .toArray()
+              .map(({ dates }) => dates.map(date => date.toISOString()));
+
+            expect(result).toEqual([
+              [],
+              [
+                dateAdapter(1998, 1, 5, 9, 0).toISOString(),
+                dateAdapter(1998, 1, 7, 9, 0).toISOString(),
+                dateAdapter(1998, 3, 5, 9, 0).toISOString(),
+              ],
+            ]);
+
+            result = calendar
+              .collections({ granularity: 'MONTHLY', start: dateAdapter(1997, 9, 2, 9) })
+              .toArray()
+              .map(({ dates }) => dates.map(date => date.toISOString()));
+
+            expect(result).toEqual([
+              [],
+              [],
+              [],
+              [],
+              [
+                dateAdapter(1998, 1, 5, 9, 0).toISOString(),
+                dateAdapter(1998, 1, 7, 9, 0).toISOString(),
+              ],
+              [],
+              [dateAdapter(1998, 3, 5, 9, 0).toISOString()],
+            ]);
           });
 
           testOccurrences(
@@ -253,7 +311,7 @@ describe('Calendar', () => {
               dateAdapter(1998, 3, 5, 9, 0),
             ],
             {
-              instantaniously: [
+              millisecondly: [
                 [dateAdapter(1998, 1, 5, 9, 0)],
                 [dateAdapter(1998, 1, 7, 9, 0)],
                 [dateAdapter(1998, 3, 5, 9, 0)],
@@ -327,7 +385,7 @@ describe('Calendar', () => {
               dateAdapter(1998, 3, 5, 9, 0),
             ],
             {
-              instantaniously: [
+              millisecondly: [
                 [dateAdapter(1997, 9, 2, 9, 0)],
                 [dateAdapter(1998, 1, 1, 9, 0)],
                 [dateAdapter(1998, 1, 5, 9, 0)],
@@ -400,7 +458,7 @@ describe('Calendar', () => {
               dateAdapter(2017, 1, 1, 9, 0),
             ],
             {
-              instantaniously: [
+              millisecondly: [
                 [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 1, 9, 0)],
                 [dateAdapter(2000, 1, 1, 9, 0)],
                 [dateAdapter(2017, 1, 1, 9, 0)],
@@ -441,7 +499,7 @@ describe('Calendar', () => {
             }),
             [dateAdapter(2000, 1, 1, 9, 0), dateAdapter(2017, 1, 1, 9, 0)],
             {
-              instantaniously: [[dateAdapter(2000, 1, 1, 9, 0)], [dateAdapter(2017, 1, 1, 9, 0)]],
+              millisecondly: [[dateAdapter(2000, 1, 1, 9, 0)], [dateAdapter(2017, 1, 1, 9, 0)]],
               yearly: [[dateAdapter(2000, 1, 1, 9, 0)], [dateAdapter(2017, 1, 1, 9, 0)]],
               monthly: {
                 no: [[dateAdapter(2000, 1, 1, 9, 0)], [dateAdapter(2017, 1, 1, 9, 0)]],
@@ -508,7 +566,7 @@ describe('Calendar', () => {
               dateAdapter(2000, 1, 1, 9, 0),
             ],
             {
-              instantaniously: [
+              millisecondly: [
                 [dateAdapter(1997, 9, 2, 9, 0)],
                 [dateAdapter(1998, 1, 1, 9, 0)],
                 [dateAdapter(1998, 1, 5, 9, 0)],

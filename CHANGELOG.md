@@ -4,7 +4,25 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
-none
+### Breaking
+
+- `OccurrenceGenerator#collections()` arguments changed. Specifically, CollectionIterator `ICollectionArgs` interface changed.
+
+  - `incrementLinearly` option removed
+  - `skipEmptyPeriods` option added
+  - `granularity` `"INSTANTANIOUS"` option removed. Use `"MILLISECONDLY"` instead (which does the same thing).
+  - By default, `OccurrenceGenerator#collections()` now increments linearly. You can use `skipEmptyPeriods: true` to get the old default behavior.
+
+- Default granularity for `OccurrenceGenerator#collections()` is now `"YEARLY"`. This change was made to accomidate the other changes to CollectionIterator.
+
+### Fixes
+
+- Fixed potential bug when calling `OccurrenceGenerator#collections()` with granularity `"MONTHLY"` and a `weekStart` value.
+- Fixed the return type of `OccurrenceGenerator#[Symbol.iterator]`
+
+### Peformance
+
+- `OccurrenceGenerator#firstDate` and `OccurrenceGenerator#lastDate` now cache their value after the initial lazy evaluation.
 
 ## Releases
 
