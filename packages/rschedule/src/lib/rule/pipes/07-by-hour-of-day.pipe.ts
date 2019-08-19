@@ -1,7 +1,6 @@
-import { IDateAdapter } from '../../date-time';
 import { RuleOption } from '../rule-options';
 import { ByTimePipe } from './by-time.pipe';
-import { IPipeRule, IPipeRunFn, PipeRule } from './interfaces';
+import { IPipeRule } from './interfaces';
 
 export interface IByHourOfDayRuleOptions {
   byHourOfDay: RuleOption.ByHourOfDay[];

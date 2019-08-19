@@ -9,7 +9,6 @@ import {
   OccurrenceIterator,
 } from '../iterators';
 import { add, OccurrenceStream, OperatorFnOutput, pipeFn, subtract, unique } from '../operators';
-import { RScheduleConfig } from '../rschedule-config';
 import { IProvidedRuleOptions, Rule } from '../rule';
 import { DateInput } from '../utilities';
 
