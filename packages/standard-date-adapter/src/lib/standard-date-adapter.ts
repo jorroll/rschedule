@@ -81,8 +81,15 @@ export class StandardDateAdapter extends DateAdapter implements IDateAdapter<Dat
   constructor(date: Date, options: { timezone?: string | null; duration?: number } = {}) {
     super(undefined);
 
+    if (!['UTC', null, undefined].includes(options.timezone)) {
+      throw new InvalidDateAdapterError(
+        `StandardDateAdapter only supports "UTC" and ` +
+          `local time zones but "${options.timezone}" was provided.`,
+      );
+    }
+
     this._date = new Date(date);
-    this.timezone = options.timezone !== undefined ? options.timezone : null;
+    this.timezone = options.timezone !== undefined ? (options.timezone as 'UTC') : null;
     this.duration = options.duration;
 
     this.assertIsValid();

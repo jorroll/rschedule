@@ -1,44 +1,22 @@
-/**
- * Credit:
- * The vast majority of these tests were taken from [rrulejs](https://github.com/jakubroztocil/rrule),
- * which itself credits the python library `dateutil.rrule` for first creating the tests.
- */
-
-import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
-import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
+import { ruleTests } from '@local-tests/rule-tests-setup';
+import {
+  context,
+  DatetimeFn,
+  environment,
+  momentTZDatetimeFn,
+  timezoneDateAdapterFn,
+  TIMEZONES,
+} from '@local-tests/utilities';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
 import {
   DateAdapter as DateAdapterConstructor,
   IProvidedRuleOptions,
   Rule,
 } from '@rschedule/rschedule';
-import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
-import { DateTime as LuxonDateTime } from 'luxon';
-import { Moment as MomentST } from 'moment';
 import { Moment as MomentTZ } from 'moment-timezone';
-import { ruleTests } from './rule-tests-setup';
-import {
-  context,
-  DatetimeFn,
-  environment,
-  luxonDatetimeFn,
-  momentDatetimeFn,
-  momentTZDatetimeFn,
-  standardDatetimeFn,
-  timezoneDateAdapterFn,
-  TIMEZONES,
-} from './utilities';
 
-const DATE_ADAPTERS = [
-  [StandardDateAdapter, standardDatetimeFn],
-  [MomentDateAdapter, momentDatetimeFn],
-  [MomentTZDateAdapter, momentTZDatetimeFn],
-  [LuxonDateAdapter, luxonDatetimeFn],
-] as [
-  [typeof StandardDateAdapter, DatetimeFn<Date>],
-  [typeof MomentDateAdapter, DatetimeFn<MomentST>],
-  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
-  [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>]
+const DATE_ADAPTERS = [[MomentTZDateAdapter, momentTZDatetimeFn]] as [
+  [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>]
 ];
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {

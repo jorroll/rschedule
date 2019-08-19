@@ -16,7 +16,8 @@
   "verbose": true,
   "testURL": "http://localhost/",
   "moduleNameMapper": {
-    "@rschedule/(.*)": "<rootDir>/packages/$1/src"
+    "@rschedule/(.*)": "<rootDir>/packages/$1/src",
+    "@local-tests/(.*)": "<rootDir>/tests/$1"
   },
   "globals": {
     "ts-jest": {

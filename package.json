@@ -14,6 +14,7 @@
     "build:luxon-date-adapter": "yarn --cwd='./packages/luxon-date-adapter' build",
     "build:moment-date-adapter": "yarn --cwd='./packages/moment-date-adapter' build",
     "build:moment-tz-date-adapter": "yarn --cwd='./packages/moment-tz-date-adapter' build",
+    "build:joda-date-adapter": "yarn --cwd='./packages/joda-date-adapter' build",
     "build:json-tools": "yarn --cwd='./packages/json-tools' build",
     "build:ical-tools": "yarn --cwd='./packages/ical-tools' build",
     "build:rule-tools": "yarn --cwd='./packages/rule-tools' build",
@@ -26,6 +27,8 @@
     "clean:modules": "trash yarn.lock node_modules packages/*/node_modules"
   },
   "devDependencies": {
+    "@js-joda/core": "^1.11.0",
+    "@js-joda/timezone": "^2.1.1",
     "@types/jest": "^23.0.0",
     "@types/lodash.clonedeep": "^4.5.6",
     "@types/luxon": "^1.2.2",

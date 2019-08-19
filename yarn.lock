@@ -18,6 +18,16 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
+"@js-joda/core@^1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@js-joda/core/-/core-1.11.0.tgz#587e3b1a9496f5093526f7195d176c1289406fe5"
+  integrity sha512-GsqC3c/z21VjsfqXChWkwXxVaPbVZ4pRzXTJTomrITo8snEWN05Mv4CwCXjabA9j9CS7T+yxBv3vXpp/DabGEw==
+
+"@js-joda/timezone@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@js-joda/timezone/-/timezone-2.1.1.tgz#55a8c4c14943e0bf4d4ad0c03afb2eaefeb35a34"
+  integrity sha512-AOtISPdFQwIFaOPL7+i7LG8XrsCMhTXIZw2oRgjFDV+lWuDQF6ACeIBQtyqnrRwvakN98G7DUGX/L7cGcw8rUQ==
+
 "@lerna/add@3.13.1":
   version "3.13.1"
   resolved "https://registry.yarnpkg.com/@lerna/add/-/add-3.13.1.tgz#2cd7838857edb3b43ed73e3c21f69a20beb9b702"
