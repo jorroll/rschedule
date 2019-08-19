@@ -4,15 +4,20 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+none
+
+## Releases
+
+## 0.11.6 FEATURE (2019/8/18)
+
 ### Features
 
 - Rigorously assert that rule options are valid. Previously, the library assumed typescript would catch obvious type errors and wouldn't bother checking for them.
+- Add JodaDateAdapter
 
 ### Fixes
 
 - Prevent VEvent objects from being initialized with a rule specifying a `MILLISECONDLY` frequency.
-
-## Releases
 
 ## 0.11.5 FEATURE (2019/7/19)
 
