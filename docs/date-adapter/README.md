@@ -10,6 +10,8 @@ rSchedule is date library agnostic. It needs a `IDateAdapter` constructor to pro
   - For use with moment-timezone `Moment` objects. Has full timezone support.
 - [LuxonDateAdapter](./luxon-date-adapter)
   - For use with luxon `DateTime` objects. Has full timezone support.
+- [JodaDateAdapter](./joda-date-adapter)
+  - For use with js-joda `ZonedDateTime` objects. Has full timezone support.
 
 Date adapters are provided to rSchedule occurrence generator objects, all of which have generic types and receive a `typeof DateAdapter` type object as an argument. There are two ways to provide this argument.
 

@@ -4,6 +4,8 @@ import { Moment as MomentST } from 'moment';
 const momentST = require('moment');
 import { Moment as MomentTZ } from 'moment-timezone';
 const momentTZ = require('moment-timezone');
+import { ZonedDateTime as JodaDateTime, ZoneId } from '@js-joda/core';
+import '@js-joda/timezone';
 import { DateAdapter, DateTime, IOccurrencesArgs, OccurrenceGenerator } from '@rschedule/rschedule';
 import { DateTime as LuxonDateTime } from 'luxon';
 
@@ -224,6 +226,50 @@ export function luxonDatetimeFn(...args: Array<number | string>): LuxonDateTime 
   } else {
     return LuxonDateTime.local(...numbers);
   }
+}
+
+export function jodaDatetimeFn(...args: Array<number | string>): JodaDateTime {
+  if (args.length === 0 || typeof args[0] !== 'number') {
+    const tz = args[0];
+
+    // prettier-ignore
+    return tz === 'UTC' ? JodaDateTime.now(ZoneId.UTC)
+      : [null, undefined].includes((tz as unknown) as null | undefined) ? JodaDateTime.now(ZoneId.SYSTEM)
+      : JodaDateTime.now(ZoneId.of(tz as string));
+  }
+
+  if (args.length === 0) {
+    return JodaDateTime.now(ZoneId.SYSTEM);
+  }
+
+  const numbers: number[] = [];
+  let timezone: string | null = null;
+
+  args.forEach(arg => {
+    if (typeof arg === 'string' || arg === null) {
+      timezone = arg;
+    } else {
+      numbers.push(arg);
+    }
+  });
+
+  const zone =
+    timezone === 'UTC'
+      ? ZoneId.UTC
+      : [null, undefined].includes((timezone as unknown) as null | undefined)
+      ? ZoneId.SYSTEM
+      : ZoneId.of((timezone as unknown) as string);
+
+  return JodaDateTime.of(
+    numbers[0],
+    numbers[1] || 1,
+    numbers[2] || 1,
+    numbers[3] || 0,
+    numbers[4] || 0,
+    numbers[5] || 0,
+    (numbers[6] || 0) * 1_000_000,
+    zone,
+  );
 }
 
 export function datetime(): Date;

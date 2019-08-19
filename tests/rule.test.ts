@@ -4,6 +4,8 @@
  * which itself credits the python library `dateutil.rrule` for first creating the tests.
  */
 
+import { ZonedDateTime as JodaDateTime } from '@js-joda/core';
+import { JodaDateAdapter } from '@rschedule/joda-date-adapter';
 import { LuxonDateAdapter } from '@rschedule/luxon-date-adapter';
 import { MomentDateAdapter } from '@rschedule/moment-date-adapter';
 import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
@@ -21,6 +23,7 @@ import {
   context,
   DatetimeFn,
   environment,
+  jodaDatetimeFn,
   luxonDatetimeFn,
   momentDatetimeFn,
   momentTZDatetimeFn,
@@ -34,11 +37,13 @@ const DATE_ADAPTERS = [
   [MomentDateAdapter, momentDatetimeFn],
   [MomentTZDateAdapter, momentTZDatetimeFn],
   [LuxonDateAdapter, luxonDatetimeFn],
+  [JodaDateAdapter, jodaDatetimeFn],
 ] as [
   [typeof StandardDateAdapter, DatetimeFn<Date>],
   [typeof MomentDateAdapter, DatetimeFn<MomentST>],
   [typeof MomentTZDateAdapter, DatetimeFn<MomentTZ>],
-  [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>]
+  [typeof LuxonDateAdapter, DatetimeFn<LuxonDateTime>],
+  [typeof JodaDateAdapter, DatetimeFn<JodaDateTime>]
 ];
 
 DATE_ADAPTERS.forEach(dateAdapterSet => {

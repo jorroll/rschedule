@@ -1,0 +1,40 @@
+{
+  "name": "@rschedule/joda-date-adapter",
+  "version": "0.11.5",
+  "description": "An rSchedule DateAdapter for \"js-joda\" ZonedDateTime objects.",
+  "author": "John Carroll <john.carroll.p@gmail.com>",
+  "homepage": "https://gitlab.com/john.carroll.p/rschedule",
+  "bugs": "https://gitlab.com/john.carroll.p/rschedule/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/john.carroll.p/rschedule.git"
+  },
+  "license": "Unlicense",
+  "keywords": [
+    "rschedule",
+    "date adapter",
+    "js-joda",
+    "joda",
+    "javascript",
+    "typescript"
+  ],
+  "main": "build/main.js",
+  "typings": "build/packages/joda-date-adapter/index.d.ts",
+  "module": "build/module.js",
+  "engines": {
+    "node": ">=8.9"
+  },
+  "scripts": {
+    "build": "yarn clean:build && rollup -c && rm -rf .rpt2_cache",
+    "clean:build": "rm -rf build && rm -rf .rpt2_cache"
+  },
+  "peerDependencies": {
+    "@rschedule/rschedule": "^0.11.0",
+    "@js-joda/core": "^1.11.0"
+  },
+  "devDependencies": {
+    "rollup": "^1.7.4",
+    "rollup-plugin-typescript2": "^0.20.1",
+    "typescript": "~3.3.0"
+  }
+}

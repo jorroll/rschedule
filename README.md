@@ -4,7 +4,7 @@
 
 ### Still pre-1.0 release (i.e. Beta) [docs](#docs)
 
-A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol. The library is "date agnostic" and usable with standard `Date`, [`Moment`](https://momentjs.com), or luxon [`DateTime`](https://moment.github.io/luxon/) objects through a [`IDateAdapter` interface](./docs/date-adapter). All objects in rSchedule are immutable. rSchedule supports creating schedules with durations (this might seem like a no-brainer, but I'm not aware of another recurrence library that has this feature).
+A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol. The library is "date agnostic" and usable with standard `Date`, [`Moment`](https://momentjs.com), [luxon](https://moment.github.io/luxon/) `DateTime`, or [js-joda](https://github.com/js-joda/js-joda) `ZonedDateTime` objects through a [`IDateAdapter` interface](./docs/date-adapter). All objects in rSchedule are immutable. rSchedule supports creating schedules with durations (this might seem like a no-brainer, but I'm not aware of another recurrence library that has this feature).
 
 At this point, the library's core functionality is feature complete and the tests are passing. ~~This being said, I'm still adjusting the library ahead of a 1.0 release as I dog food it in my own app~~. The library is nearing 1.0 -- see the [roadmap to 1.0](#roadmap-to-10) below.
 
@@ -23,6 +23,7 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 @rschedule/moment-date-adapter
 @rschedule/moment-tz-date-adapter
 @rschedule/luxon-date-adapter
+@rschedule/joda-date-adapter
 ```
 
 ### Usage ([online demo](https://codesandbox.io/s/rschedule-starter-pxezu?fontsize=14&module=/src/index.ts))

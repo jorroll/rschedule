@@ -21,13 +21,14 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 @rschedule/moment-date-adapter
 @rschedule/moment-tz-date-adapter
 @rschedule/luxon-date-adapter
+@rschedule/joda-date-adapter
 ```
 
 ## Brief Overview
 
 rSchedule makes use of a fairly simple [`IDateAdapter`](./date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
 
-[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), and [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter) packages currently exists which provide an [`IDateAdapter`](./date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be pretty easy for you to create your own DateAdapter for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
+[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter), and [`JodaDateAdapter`](./date-adapter/joda-date-adapter) packages currently exists which provide an [`IDateAdapter`](./date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be pretty easy for you to create your own DateAdapter for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
 
 If you plan to use rSchedule with iCalendar support, you'll need to add the optional [`@rschedule/ical-tools`](./serialization/ical) package. In addition to `serializeToICal()` and `parseICal()` functions, the ical-tools package contains a [`VEvent` object](./serialization/ical/vevent) which adhears to the [iCalendar `VEVENT` component specifications](https://tools.ietf.org/html/rfc5545#section-3.6.1). Jump to the [`ical serialization`](./serialization/ical) section to learn more.
 
