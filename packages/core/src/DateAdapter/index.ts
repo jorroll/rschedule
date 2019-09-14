@@ -21,8 +21,21 @@ export type DateAdapterCTor = UnionToIntersection<DateAdapterCTorType[keyof Date
 
 export type DateInput = DateAdapter['date'] | DateAdapter | DateTime;
 
+let dateAdapterConfig: DateAdapterCTor | undefined;
+
 export abstract class DateAdapterBase {
-  static adapter: DateAdapterCTor;
+  static set adapter(value: DateAdapterCTor) {
+    dateAdapterConfig = value;
+  }
+
+  static get adapter(): DateAdapterCTor {
+    if (!dateAdapterConfig) {
+      throw new Error('No date adapter has been configured. See rSchedule docs.');
+    }
+
+    return dateAdapterConfig;
+  }
+
   static readonly date: object;
   static readonly hasTimezoneSupport: boolean = false;
 
