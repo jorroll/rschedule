@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/UniqueOperator",
+  "main": "../umd/UniqueOperator.js",
+  "module": "../es2015/UniqueOperator.js",
+  "sideEffects": true
+}

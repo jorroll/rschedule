@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/Dates",
+  "main": "../umd/Dates.js",
+  "module": "../es2015/Dates.js",
+  "sideEffects": true
+}

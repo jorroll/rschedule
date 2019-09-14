@@ -6,13 +6,31 @@
 
 import {
   DateAdapter as DateAdapterConstructor,
-  IProvidedRuleOptions,
-  OccurrenceGenerator,
-} from '@rschedule/rschedule';
+  RecurrenceRulesOptions,
+  NormalizedRecurrenceRulesOptions,
+} from '@rschedule/core';
+
+import { OccurrenceGenerator } from '@rschedule/core/generators';
+import { FrequencyRuleModule, ByMonthOfYearRuleModule, ByDayOfMonthRuleModule, ByDayOfWeekRuleModule, ByHourOfDayRuleModule, ByMinuteOfHourRuleModule, BySecondOfMinuteRuleModule, ByMillisecondOfSecondRuleModule, ByDayOfWeek } from '@rschedule/core/rules';
+
+export const RECURRENCE_RULES = [
+  FrequencyRuleModule,
+  ByMonthOfYearRuleModule,
+  ByDayOfMonthRuleModule,
+  ByDayOfWeekRuleModule,
+  ByHourOfDayRuleModule,
+  ByMinuteOfHourRuleModule,
+  BySecondOfMinuteRuleModule,
+  ByMillisecondOfSecondRuleModule,
+];
+
+export type IRuleOptions<T extends DateAdapterConstructor> = RecurrenceRulesOptions<T, typeof RECURRENCE_RULES>;
+export type INormalizedRuleOptions = NormalizedRecurrenceRulesOptions<typeof RECURRENCE_RULES>;
+
 
 function testRecurring(
   testName: string,
-  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
+  rule: Readonly<OccurrenceGenerator<DateAdapterConstructor>>,
   expectedDates: DateAdapterConstructor[],
 ) {
   describe(testName, () => {
@@ -184,7 +202,7 @@ function testRecurring(
 
 function testRecurringBetween(
   testName: string,
-  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
+  rule: Readonly<OccurrenceGenerator<DateAdapterConstructor>>,
   start: DateAdapterConstructor,
   end: DateAdapterConstructor,
   inclusive: boolean,
@@ -213,7 +231,7 @@ function testRecurringBetween(
 
 function testPreviousOccurrence(
   testName: string,
-  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
+  rule: Readonly<OccurrenceGenerator<DateAdapterConstructor>>,
   end: DateAdapterConstructor,
   inclusive: boolean,
   expectedDate: DateAdapterConstructor,
@@ -238,7 +256,7 @@ function testPreviousOccurrence(
 
 function testNextOccurrence(
   testName: string,
-  rule: Readonly<OccurrenceGenerator<typeof DateAdapterConstructor>>,
+  rule: Readonly<OccurrenceGenerator<DateAdapterConstructor>>,
   start: DateAdapterConstructor,
   inclusive: boolean,
   expectedDate: DateAdapterConstructor,
@@ -265,7 +283,7 @@ export function ruleTests(
     ...args: (number | { duration?: number; timezone?: string | null })[]
   ) => DateAdapterConstructor,
   parse: (str: string) => DateAdapterConstructor,
-  buildGenerator: (config: IProvidedRuleOptions<any>) => Readonly<OccurrenceGenerator<any>>,
+  buildGenerator: (config: IRuleOptions<any>) => Readonly<OccurrenceGenerator<any>>,
 ) {
   describe('specific bugs', () => {
     if (DateAdapter.hasTimezoneSupport) {
@@ -275,7 +293,7 @@ export function ruleTests(
         const rule = buildGenerator({
           frequency: 'WEEKLY',
           start,
-          byDayOfWeek: ['TH'],
+          byDayOfWeek: ['TH'] as ByDayOfWeek[],
         });
 
         const secondOccurrence = dateAdapter(2018, 8, 23, 0, 0, 0, 0).set(
@@ -477,7 +495,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'YEARLY',
         count: 3,
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -497,7 +515,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'YEARLY',
         count: 3,
-        byDayOfWeek: [['TU', 1], ['TH', -1]],
+        byDayOfWeek: [['TU', 1], ['TH', -1]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -512,7 +530,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'YEARLY',
         count: 3,
-        byDayOfWeek: [['TU', 3], ['TH', -3]],
+        byDayOfWeek: [['TU', 3], ['TH', -3]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -528,7 +546,7 @@ export function ruleTests(
         frequency: 'YEARLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)],
@@ -540,7 +558,7 @@ export function ruleTests(
         frequency: 'YEARLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: [['TU', 1], ['TH', -1]],
+        byDayOfWeek: [['TU', 1], ['TH', -1]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -556,7 +574,7 @@ export function ruleTests(
         frequency: 'YEARLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: [['TU', 3], ['TH', -3]],
+        byDayOfWeek: [['TU', 3], ['TH', -3]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -572,7 +590,7 @@ export function ruleTests(
         frequency: 'YEARLY',
         count: 3,
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)],
@@ -585,7 +603,7 @@ export function ruleTests(
         count: 3,
         byMonthOfYear: [1, 3],
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)],
@@ -707,7 +725,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'YEARLY',
         byMonthOfYear: [2, 6],
-        byDayOfWeek: ['SU', ['MO', 3]],
+        byDayOfWeek: ['SU', ['MO', 3]] as ByDayOfWeek[],
         start: dateAdapter(2010, 2, 7),
         end: dateAdapter(2010, 2, 15),
       }),
@@ -849,7 +867,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'MONTHLY',
         count: 3,
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)],
@@ -860,7 +878,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'MONTHLY',
         count: 3,
-        byDayOfWeek: [['TU', 1], ['TH', -1]],
+        byDayOfWeek: [['TU', 1], ['TH', -1]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -875,7 +893,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'MONTHLY',
         count: 3,
-        byDayOfWeek: [['TU', 3], ['TH', -3]],
+        byDayOfWeek: [['TU', 3], ['TH', -3]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -891,7 +909,7 @@ export function ruleTests(
         frequency: 'MONTHLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)],
@@ -903,7 +921,7 @@ export function ruleTests(
         frequency: 'MONTHLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: [['TU', 1], ['TH', -1]],
+        byDayOfWeek: [['TU', 1], ['TH', -1]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -919,7 +937,7 @@ export function ruleTests(
         frequency: 'MONTHLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: [['TU', 3], ['TH', -3]],
+        byDayOfWeek: [['TU', 3], ['TH', -3]] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -935,7 +953,7 @@ export function ruleTests(
         frequency: 'MONTHLY',
         count: 3,
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)],
@@ -948,7 +966,7 @@ export function ruleTests(
         count: 3,
         byMonthOfYear: [1, 3],
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)],
@@ -1176,7 +1194,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'WEEKLY',
         count: 3,
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)],
@@ -1191,7 +1209,7 @@ export function ruleTests(
         frequency: 'WEEKLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)],
@@ -1323,7 +1341,7 @@ export function ruleTests(
         frequency: 'WEEKLY',
         start: parse('20181001T000000'),
         end: parse('20181009T000000'),
-        byDayOfWeek: ['SU', 'WE'],
+        byDayOfWeek: ['SU', 'WE'] as ByDayOfWeek[],
       }),
       [dateAdapter(2018, 10, 3), dateAdapter(2018, 10, 7)],
     );
@@ -1419,7 +1437,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'DAILY',
         count: 3,
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 4, 9, 0), dateAdapter(1997, 9, 9, 9, 0)],
@@ -1431,7 +1449,7 @@ export function ruleTests(
         frequency: 'DAILY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 1, 6, 9, 0), dateAdapter(1998, 1, 8, 9, 0)],
@@ -1443,7 +1461,7 @@ export function ruleTests(
         frequency: 'DAILY',
         count: 3,
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 2, 3, 9, 0), dateAdapter(1998, 3, 3, 9, 0)],
@@ -1456,7 +1474,7 @@ export function ruleTests(
         count: 3,
         byMonthOfYear: [1, 3],
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 9, 0), dateAdapter(1998, 3, 3, 9, 0), dateAdapter(2001, 3, 1, 9, 0)],
@@ -1688,7 +1706,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'HOURLY',
         count: 3,
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -1704,7 +1722,7 @@ export function ruleTests(
         frequency: 'HOURLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)],
@@ -1716,7 +1734,7 @@ export function ruleTests(
         frequency: 'HOURLY',
         count: 3,
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)],
@@ -1729,7 +1747,7 @@ export function ruleTests(
         count: 3,
         byMonthOfYear: [1, 3],
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 1, 0), dateAdapter(1998, 1, 1, 2, 0)],
@@ -1932,7 +1950,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'MINUTELY',
         count: 3,
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1997, 9, 2, 9, 0), dateAdapter(1997, 9, 2, 9, 1), dateAdapter(1997, 9, 2, 9, 2)],
@@ -1944,7 +1962,7 @@ export function ruleTests(
         frequency: 'MINUTELY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)],
@@ -1956,7 +1974,7 @@ export function ruleTests(
         frequency: 'MINUTELY',
         count: 3,
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)],
@@ -1969,7 +1987,7 @@ export function ruleTests(
         count: 3,
         byMonthOfYear: [1, 3],
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [dateAdapter(1998, 1, 1, 0, 0), dateAdapter(1998, 1, 1, 0, 1), dateAdapter(1998, 1, 1, 0, 2)],
@@ -2196,7 +2214,7 @@ export function ruleTests(
       buildGenerator({
         frequency: 'SECONDLY',
         count: 3,
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -2212,7 +2230,7 @@ export function ruleTests(
         frequency: 'SECONDLY',
         count: 3,
         byMonthOfYear: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -2228,7 +2246,7 @@ export function ruleTests(
         frequency: 'SECONDLY',
         count: 3,
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -2245,7 +2263,7 @@ export function ruleTests(
         count: 3,
         byMonthOfYear: [1, 3],
         byDayOfMonth: [1, 3],
-        byDayOfWeek: ['TU', 'TH'],
+        byDayOfWeek: ['TU', 'TH'] as ByDayOfWeek[],
         start: parse('19970902T090000'),
       }),
       [
@@ -2430,7 +2448,7 @@ export function ruleTests(
         frequency: 'WEEKLY',
         count: 3,
         interval: 2,
-        byDayOfWeek: ['TU', 'SU'],
+        byDayOfWeek: ['TU', 'SU'] as ByDayOfWeek[],
         weekStart: 'MO',
         start: parse('19970902T090000'),
       }),
@@ -2447,7 +2465,7 @@ export function ruleTests(
         frequency: 'WEEKLY',
         count: 3,
         interval: 2,
-        byDayOfWeek: ['TU', 'SU'],
+        byDayOfWeek: ['TU', 'SU'] as ByDayOfWeek[],
         weekStart: 'SU',
         start: parse('19970902T090000'),
       }),

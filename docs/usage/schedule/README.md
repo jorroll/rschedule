@@ -1,14 +1,12 @@
 # Schedule class
 
-**Schedule implements [IOccurrenceGenerator](../#ioccurrencegenerator-interface), IScheduleLike;**
+**Schedule extends [OccurrenceGenerator](../#ioccurrencegenerator-interface);**
 
 `Schedule` objects allow iterating a occurrence schedule made up of RRULE, EXRULE, RDATE, and EXDATE components. Each `Schedule` object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out. As with other rSchedule objects, `Schedule` is immutable.
 
 Example usage:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter
-
 const schedule = new Schedule({
   rrules: [
     {
@@ -56,14 +54,12 @@ There is also an optional `@rschedule/rule-tools` library which contains utility
 `Schedule` has the following constructor.
 
 ```typescript
-class Schedule<T extends typeof DateAdapter, D = any> {
-  static isSchedule(object: unknown): object is Schedule<any>;
-
+class Schedule<D = any> {
   data: D;
-  readonly rrules: ReadonlyArray<Rule<T>>;
-  readonly exrules: ReadonlyArray<Rule<T>>;
-  readonly rdates: Dates<T>;
-  readonly exdates: Dates<T>;
+  readonly rrules: ReadonlyArray<Rule>;
+  readonly exrules: ReadonlyArray<Rule>;
+  readonly rdates: Dates;
+  readonly exdates: Dates;
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
   readonly maxDuration: number;
@@ -80,25 +76,21 @@ class Schedule<T extends typeof DateAdapter, D = any> {
     // In this way, for a given, yielded date, you can access the objects which generated
     // the date as well as the arbitrary data associated with those objects.
     data?: D;
-    rrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
-    exrules?: Array<IProvidedRuleOptions<T> | Rule<T>>;
-    rdates?: Array<DateInput<T>> | Dates<T>;
-    exdates?: Array<DateInput<T>> | Dates<T>;
+    rrules?: Array<IProvidedRuleOptions | Rule>;
+    exrules?: Array<IProvidedRuleOptions | Rule>;
+    rdates?: Array<DateInput> | Dates;
+    exdates?: Array<DateInput> | Dates;
     maxDuration?: number; // see the OccurrenceGenerator interface for info
   });
 
-  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
-  add(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
+  add(prop: 'rrule' | 'exrule', value: Rule): Schedule<D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput): Schedule<D>;
 
-  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): Schedule<T, D>;
-  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): Schedule<T, D>;
+  remove(prop: 'rrule' | 'exrule', value: Rule): Schedule<D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput): Schedule<D>;
 
-  set(
-    prop: 'timezone',
-    value: string | null,
-    options?: { keepLocalTime?: boolean },
-  ): Schedule<T, D>;
-  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): Schedule<T, D>;
-  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): Schedule<T, D>;
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): Schedule<D>;
+  set(prop: 'rrules' | 'exrules', value: Rule[]): Schedule<D>;
+  set(prop: 'rdates' | 'exdates', value: Dates): Schedule<D>;
 }
 ```

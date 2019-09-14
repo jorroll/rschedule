@@ -21,6 +21,7 @@
     "variable-name": false,
     "jsdoc-format": false,
     "unified-signatures": false,
+    "prefer-object-spread": false,
     "trailing-comma": [
       true,
       {

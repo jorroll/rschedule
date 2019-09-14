@@ -1,1 +1,1 @@
-export * from './lib/public_api';
+export { LuxonDateAdapter } from './luxon-date-adapter';

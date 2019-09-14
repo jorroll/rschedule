@@ -1,0 +1,36 @@
+{
+  "name": "@rschedule/core",
+  "version": "0.11.2-0",
+  "description": "A typescript library for working with recurring dates and events.",
+  "author": "John Carroll <john.carroll.p@gmail.com>",
+  "homepage": "https://gitlab.com/john.carroll.p/rschedule",
+  "bugs": "https://gitlab.com/john.carroll.p/rschedule/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/john.carroll.p/rschedule.git"
+  },
+  "license": "Unlicense",
+  "keywords": [
+    "rschedule",
+    "javascript",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "main": "./umd/main.js",
+  "module": "./es2015/main.js",
+  "engines": {
+    "node": ">=8.9"
+  },
+  "scripts": {
+    "prepublishOnly": "yarn build",
+    "build": "ts-node -P ./tasks/tsconfig.json -r tsconfig-paths/register ./tasks/build.ts",
+    "clean:build": "rm -rf build && rm -rf .rpt2_cache",
+    "test": "jest --config './jest.config.js'"
+  },
+  "devDependencies": {
+    "rollup": "^1.7.4",
+    "rollup-plugin-typescript2": "^0.20.1",
+    "ts-node": "^6.0.0",
+    "typescript": "~3.5.2"
+  }
+}

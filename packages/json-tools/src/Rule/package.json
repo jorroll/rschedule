@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/Rule",
+  "main": "../umd/Rule.js",
+  "module": "../es2015/Rule.js",
+  "sideEffects": true
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/core/DateAdapter",
+  "main": "../umd/main.js",
+  "module": "../es2015/main.js",
+  "sideEffects": false
+}

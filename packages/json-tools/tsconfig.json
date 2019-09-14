@@ -2,9 +2,21 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     // "rootDir": "src",
-    "outDir": "build/main",
-    "declarationDir": "build/main",
+    "outDir": "build/err",
+    "declarationDir": "build/err",
     "downlevelIteration": true
   },
-  "include": ["src/**/*.ts"]
+  "files": [
+    "./src/index.ts",
+    "./src/AddOperator/index.ts",
+    "./src/Calendar/index.ts",
+    "./src/Dates/index.ts",
+    "./src/IntersectionOperator/index.ts",
+    "./src/MergeDurationOperator/index.ts",
+    "./src/Rule/index.ts",
+    "./src/Schedule/index.ts",
+    "./src/SubtractOperator/index.ts",
+    "./src/UniqueOperator/index.ts"
+  ],
+  "include": []
 }

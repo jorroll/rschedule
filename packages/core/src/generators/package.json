@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/core/generators",
+  "main": "../umd/generators.js",
+  "module": "../es2015/generators.js",
+  "sideEffects": false
+}

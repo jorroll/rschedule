@@ -19,23 +19,26 @@
     "javascript",
     "typescript"
   ],
-  "main": "build/main.js",
-  "typings": "build/packages/moment-tz-date-adapter/index.d.ts",
-  "module": "build/module.js",
+  "sideEffects": false,
+  "main": "./umd/main.js",
+  "module": "./es2015/main.js",
   "engines": {
     "node": ">=8.9"
   },
   "scripts": {
-    "build": "yarn clean:build && rollup -c && rm -rf .rpt2_cache",
-    "clean:build": "rm -rf build && rm -rf .rpt2_cache"
+    "prepublishOnly": "yarn build",
+    "build": "ts-node -P ./tasks/tsconfig.json -r tsconfig-paths/register ./tasks/build.ts",
+    "clean:build": "rm -rf build && rm -rf .rpt2_cache",
+    "test": "jest --config './jest.config.js'"
   },
   "peerDependencies": {
-    "@rschedule/rschedule": "^0.11.0",
+    "@rschedule/core": "^0.12.0",
     "moment-timezone": "^0.5.21"
   },
   "devDependencies": {
     "rollup": "^1.7.4",
     "rollup-plugin-typescript2": "^0.20.1",
-    "typescript": "~3.3.0"
+    "jest-cli": "^24.0.0",
+    "typescript": "~3.5.2"
   }
 }

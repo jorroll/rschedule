@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/Calendar",
+  "main": "../umd/Calendar.js",
+  "module": "../es2015/Calendar.js",
+  "sideEffects": true
+}

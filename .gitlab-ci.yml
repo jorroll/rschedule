@@ -1,141 +1,153 @@
 stages:
+  - build
   - test
   - dependency_scanning
+
+# coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+
+build:
+  image: node:8.15.1-alpine
+  stage: build
+  cache:
+    untracked: true
+  script:
+    - apk add yarn
+    - yarn install
+
+core:
+  image: node:8.15.1-alpine
+  stage: test
+  cache:
+    untracked: true
+    policy: pull
+  script:
+    - TZ='America/Los_Angeles' yarn test:core
+
+joda_date_adapter:
+  image: node:8.15.1-alpine
+  stage: test
+  cache:
+    untracked: true
+    policy: pull
+  script:
+    - TZ='America/Los_Angeles' yarn test:joda-date-adapter
+
+luxon_date_adapter:
+  image: node:8.15.1-alpine
+  stage: test
+  cache:
+    untracked: true
+    policy: pull
+  script:
+    - TZ='America/Los_Angeles' yarn test:luxon-date-adapter
+
+moment_date_adapter:
+  image: node:8.15.1-alpine
+  stage: test
+  cache:
+    untracked: true
+    policy: pull
+  script:
+    - TZ='America/Los_Angeles' yarn test:moment-date-adapter
+
+recurrence_rules_resolver:
+  image: node:8.15.1-alpine
+  stage: test
+  cache:
+    untracked: true
+    policy: pull
+  script:
+    - TZ='America/Los_Angeles' yarn test:recurrence-rules-resolver
+
+standard_date_adapter:
+  image: node:8.15.1-alpine
+  stage: test
+  cache:
+    untracked: true
+    policy: pull
+  script:
+    - TZ='America/Los_Angeles' yarn test:standard-date-adapter
 
 UTC:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='UTC' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='UTC' yarn test:moment-tz-date-adapter
 
 Africa/Johannesburg:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='Africa/Johannesburg' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='Africa/Johannesburg' yarn test:moment-tz-date-adapter
 
 America/Los_Angeles:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='America/Los_Angeles' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='America/Los_Angeles' yarn test:moment-tz-date-adapter
 
 America/New_York:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='America/New_York' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='America/New_York' yarn test:moment-tz-date-adapter
 
 America/Santiago:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='America/Santiago' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='America/Santiago' yarn test:moment-tz-date-adapter
 
 Europe/London:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='Europe/London' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='Europe/London' yarn test:moment-tz-date-adapter
 
 Asia/Shanghai:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='Asia/Shanghai' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='Asia/Shanghai' yarn test:moment-tz-date-adapter
 
 Asia/Jakarta:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='Asia/Jakarta' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='Asia/Jakarta' yarn test:moment-tz-date-adapter
 
 Australia/Melbourne:
   image: node:8.15.1-alpine
   stage: test
   cache:
-    paths:
-      - node_modules/
-  tags:
-    - linux
-  before_script:
-    - apk add yarn
-    - yarn install
+    untracked: true
+    policy: pull
   script:
-    - TZ='Australia/Melbourne' yarn test --ci=true --reporters='<rootDir>/jest-ci-reporter.js'
-  coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
+    - TZ='Australia/Melbourne' yarn test:moment-tz-date-adapter
 
 dependency_scanning:
   image: docker:stable

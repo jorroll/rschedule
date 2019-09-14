@@ -1,1 +1,1 @@
-export * from './lib/public_api';
+export * from './moment-tz-date-adapter';
