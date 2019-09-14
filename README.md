@@ -33,9 +33,7 @@ You can play around with a demo of rSchedule on [codesandbox here](https://codes
 #### Iterate using standard javascript syntax
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
-const rule = new Rule<typeof StandardDateAdapter>({
+const rule = new Rule({
   frequency: 'YEARLY',
   byMonthOfYear: [2, 6],
   byDayOfWeek: ['SU', ['MO', 3]],

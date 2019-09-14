@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/SubtractOperator",
+  "main": "../umd/SubtractOperator.js",
+  "module": "../es2015/SubtractOperator.js",
+  "sideEffects": true
+}

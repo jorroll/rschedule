@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/core/rules/ByMillisecondOfSecond",
+  "main": "../../umd/rules.js",
+  "module": "../../es2015/rules.js",
+  "sideEffects": false
+}

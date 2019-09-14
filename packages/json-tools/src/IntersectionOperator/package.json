@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/IntersectionOperator",
+  "main": "../umd/IntersectionOperator.js",
+  "module": "../es2015/IntersectionOperator.js",
+  "sideEffects": true
+}

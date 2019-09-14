@@ -2,8 +2,8 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     // "rootDir": "src",
-    "outDir": "build/main",
-    "declarationDir": "build/main"
+    "outDir": "build/umd",
+    "declarationDir": "build/umd"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["./src/**/*.ts"]
 }

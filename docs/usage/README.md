@@ -11,50 +11,18 @@ If you plan on using rSchedule with the iCalendar spec, it also has a fifth `VEv
 
 - [VEvent](../serialization/ical)
 
-Additionally, this library makes use of an [`IDateAdapter`](../date-adapter) interface which allows rSchedule to be used with the date library of your choosing. You must provide a date adapter for each `OccurrenceGenerator` object you create, usually as a `dateAdapter` argument.
-
-All of the `OccurrenceGenerator<T extends typeof DateAdapter>` objects are _generic_ and receive a `typeof DateAdapter` type argument. Type inference will often take care of typing these objects for you but, when it doesn't, **remember that the type you need to pass is for the constructor** (i.e. `Schedule<typeof StandardDateAdapter>`).
-
-For convenience, an [RScheduleConfig](./rschedule-config) object exists which allows you to set a global `defaultDateAdapter`, removing the need to provide a date adapter when creating `OccurrenceGenerator` objects. Making use of the `defaultDateAdapter`, however, will mean that typescript will not be able to infer the proper type and you'll need to specify it yourself.
-
-Example of manually specifying types:
-
-```typescript
-// good
-new Schedule<typeof MomentTZDateAdapter>();
-
-// error!
-new Schedule<MomentTZDateAdapter>();
-```
-
 Finally, this library has an assortment of [occurrence stream operators](./operators) which allow combining multiple occurrence generators into a single occurrence generator. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. See [`occurrence stream operators`](./operators) for more information.
 
 There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up immutable rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
 
 ### Setup
 
-In typescript, adding an optional rSchedule setup file to your project can make getting properly typed objects easier. Instead of importing rSchedule ocurrence generators (i.e. `Schedule`, `Calendar`, etc) directly from the `'@rschedule/rschedule'` package, create a local `rschedule.ts` file, do any configuration you'd like, and import the configured rSchedule objects from this file.
+rSchedule supports multiple date libraries though a [`DateAdapter`](../date-adapter) interface. To get started, you need to import the date adapter for your chosen date library. You only need to do this once, to set up the module.
 
-For example, here we import the [`RScheduleConfig` object](./rschedule-config) and set `MomentTZDateAdapter` as our default date adapter. We also create four new classes that are specific to our app: `Rule<D=any>`, `Dates<D=any>`, `Schedule<D=any>`, `Calendar<D=any>`. These four classes each extend the rSchedule ones and only exist to simplify typing in typescript (as they are all predefined with the `typeof MomentTZDateAdapter` date adapter type). This way, we don't need to manually specify that objects are using the `typeof MomentTZDateAdapter`.
+For example:
 
 ```ts
-// rschedule.ts
-
-import {
-  Schedule as _Schedule,
-  Calendar as _Calendar,
-  Rule as _Rule,
-  Dates as _Dates,
-  RScheduleConfig,
-} from '@rschedule/rschedule';
-import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-
-RScheduleConfig.defaultDateAdapter = MomentTZDateAdapter;
-
-export class Rule<D = any> extends _Rule<typeof MomentTZDateAdapter, D> {}
-export class Dates<D = any> extends _Dates<typeof MomentTZDateAdapter, D> {}
-export class Schedule<D = any> extends _Schedule<typeof MomentTZDateAdapter, D> {}
-export class Calendar<D = any> extends _Calendar<typeof MomentTZDateAdapter, D> {}
+import '@rschedule/moment-date-adapter/setup';
 ```
 
 ### CR**UD** with rSchedule objects
@@ -66,9 +34,9 @@ As a reminder, you can check out the optional [`rule-tools` package](./rule-tool
 #### Example: adding an rrule to a schedule
 
 ```ts
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
+import '@rschedule/standard-date-adapter/setup';
 
-let schedule = new Schedule<typeof StandardDateAdapter>({
+let schedule = new Schedule({
   rrules: [
     {
       frequency: 'YEARLY',
@@ -92,7 +60,7 @@ schedule = schedule.add(
 #### Example: removing an rrule from a schedule
 
 ```ts
-let schedule = new Schedule<typeof StandardDateAdapter>({
+let schedule = new Schedule({
   rrules: [
     {
       frequency: 'YEARLY',
@@ -114,7 +82,7 @@ schedule = schedule.remove('rrule', schedule.rrules[1]);
 #### Example: changing a rule associated with a schedule
 
 ```ts
-let schedule = new Schedule<typeof StandardDateAdapter>({
+let schedule = new Schedule({
   rrules: [
     {
       frequency: 'YEARLY',
@@ -133,18 +101,17 @@ schedule = schedule.remove('rrule', schedule.rrules[0]).add('rrule', updatedRule
 #### Example: adding an rdate to a schedule
 
 ```ts
-let schedule = new Schedule<typeof StandardDateAdapter>();
+let schedule = new Schedule();
 
 schedule = schedule.add('rdate', new Date());
 ```
 
-### IOccurrenceGenerator Interface
+### OccurrenceGenerator Interface
 
 Schedule, Calendar, Rule, Dates, and OccurrenceStream objects each implement the `IOccurrenceGenerator` interface. Note, in the code below, `DateInput<T>` type accepts either the date object that a given DateAdapter is wrapping (e.g. the `MomentDateAdapter` wraps a `Moment` date object), or a date adapter itself.
 
 ````typescript
-interface IOccurrenceGenerator<T extends DateAdapterConstructor> {
-  readonly dateAdapter: T;
+abstract class OccurrenceGenerator {
   readonly timezone: string | null;
 
   /**

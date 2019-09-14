@@ -1,1 +1,3 @@
-export * from './lib/public_api';
+export { RecurrencePattern, OccurrencePattern, Pattern } from './interfaces';
+export * from './rule';
+export * from './schedule';

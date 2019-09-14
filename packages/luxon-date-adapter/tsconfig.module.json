@@ -1,9 +1,9 @@
 {
   "extends": "./tsconfig",
   "compilerOptions": {
-    "target": "esnext",
-    "outDir": "build/module",
-    "declarationDir": "build/module",
-    "module": "esnext"
+    "target": "es2015",
+    "outDir": "build/es2015",
+    "declarationDir": "build/es2015",
+    "module": "es2015"
   }
 }

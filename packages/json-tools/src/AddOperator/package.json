@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/AddOperator",
+  "main": "../umd/AddOperator.js",
+  "module": "../es2015/AddOperator.js",
+  "sideEffects": true
+}

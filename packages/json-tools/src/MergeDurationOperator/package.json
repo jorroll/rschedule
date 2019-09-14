@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/json-tools/MergeDurationOperator",
+  "main": "../umd/MergeDurationOperator.js",
+  "module": "../es2015/MergeDurationOperator.js",
+  "sideEffects": true
+}

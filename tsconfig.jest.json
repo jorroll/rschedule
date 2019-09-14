@@ -1,8 +1,10 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["packages", "tests"],
   "compilerOptions": {
-    "downlevelIteration": true,
-    "sourceMap": true
+    "target": "es2015",
+    "module": "es2015",
+    "sourceMap": true,
+    "noEmit": true,
+    "esModuleInterop": true // required by ts-jest
   }
 }

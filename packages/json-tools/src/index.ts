@@ -1,1 +1,2 @@
-export * from './lib/public_api';
+export * from './OccurrenceGenerator';
+export * from './parseJSON';
