@@ -1,5 +1,9 @@
 import { AddOperator, OccurrenceGenerator } from '@rschedule/core/generators';
-import { ISerializeToJSONOptions, ParseJSONError, registerJSONSerializerFn } from '@rschedule/json-tools';
+import {
+  ISerializeToJSONOptions,
+  ParseJSONError,
+  registerJSONSerializerFn,
+} from '@rschedule/json-tools';
 
 declare module '@rschedule/core/generators' {
   namespace AddOperator {
@@ -13,17 +17,12 @@ declare module '@rschedule/core/generators' {
   }
 
   class AddOperator {
-    static fromJSON(
-      json: AddOperator.JSON,
-      options?: { timezone?: string | null },
-    ): AddOperator;
+    static fromJSON(json: AddOperator.JSON, options?: { timezone?: string | null }): AddOperator;
     toJSON(opts?: ISerializeToJSONOptions): AddOperator.JSON;
   }
 }
 
-AddOperator.prototype.toJSON = function serialize(
-  opts: ISerializeToJSONOptions = {},
-) {
+AddOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}) {
   const json: AddOperator.JSON = {
     type: 'AddOperator',
     streams: this.streams.map(stream => stream.toJSON({ ...opts, nested: true })),
@@ -59,9 +58,7 @@ AddOperator.fromJSON = function parse(
   }
 
   return new AddOperator(
-    json.streams.map(stream =>
-      OccurrenceGenerator.fromJSON(stream, { timezone, ...options }),
-    ),
+    json.streams.map(stream => OccurrenceGenerator.fromJSON(stream, { timezone, ...options })),
     {
       base,
       timezone,

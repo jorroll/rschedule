@@ -3,11 +3,6 @@ import { OccurrenceGenerator } from '@rschedule/core/generators';
 export class ParseJSONError extends Error {}
 export class SerializeJSONError extends Error {}
 
-interface IOccurrenceGeneratorJSON {
-  type: string;
-  [key: string]: any;
-}
-
 export interface ISerializeToJSONOptions {
   nested?: boolean;
   data?: boolean | ((arg: OccurrenceGenerator & { data?: any }) => any);
@@ -20,13 +15,19 @@ export type ISerializeFromJSONFn = (
 
 declare module '@rschedule/core/generators' {
   namespace OccurrenceGenerator {
-    type JSON = IOccurrenceGeneratorJSON;
+    // tslint:disable-next-line: interface-name
+    interface JSON {
+      type: string;
+    }
   }
 
   abstract class OccurrenceGenerator {
     static JSON_FN_MAP: Map<string, ISerializeFromJSONFn>;
-    static fromJSON: ISerializeFromJSONFn;
-    toJSON(opts?: ISerializeToJSONOptions): IOccurrenceGeneratorJSON;
+    static fromJSON(
+      json: OccurrenceGenerator.JSON,
+      options?: { timezone?: string | null },
+    ): OccurrenceGenerator;
+    toJSON(opts?: ISerializeToJSONOptions): OccurrenceGenerator.JSON;
   }
 }
 
@@ -34,26 +35,28 @@ OccurrenceGenerator.JSON_FN_MAP = new Map();
 
 OccurrenceGenerator.prototype.toJSON = function serialize(
   opts?: ISerializeToJSONOptions,
-): IOccurrenceGeneratorJSON {
+): OccurrenceGenerator.JSON {
   throw new SerializeJSONError(
     `To support smaller bundles, ${this.constructor.name}#toJSON() ` +
-      `must be manually added. The easiest way is a one-time import of the ` +
-      `json-tools for your date adapter. See the rSchedule docs.`,
+      `must be manually added. See "@rschedule/json-tools" in the rSchedule docs.`,
   );
 };
 
 OccurrenceGenerator.fromJSON = function parse(
-  json: IOccurrenceGeneratorJSON,
+  json: OccurrenceGenerator.JSON,
   options?: { timezone?: string | null },
 ): OccurrenceGenerator {
+  if (typeof json !== 'object' || json === null) {
+    throw new ParseJSONError(`Invalid json "${json}"`);
+  }
+
   const fn = OccurrenceGenerator.JSON_FN_MAP.get(json.type);
 
   if (!fn) {
     throw new ParseJSONError(
-      `unknown json type "${json.type}". ` +
-        `To support smaller bundles, ${this.constructor.name}.toJSON() ` +
-        `must be manually added. The easiest way is a one-time import of the ` +
-        `json-tools for your date adapter. See the rSchedule docs.`,
+      `Unknown rSchedule object type "${json.type}". Have you added a json serializer ` +
+        `for "${json.type}"? ` +
+        `See "@rschedule/json-tools" in the rSchedule docs.`,
     );
   }
 
@@ -82,8 +85,7 @@ export function registerJSONSerializerFn(
 ) {
   if (OccurrenceGenerator.JSON_FN_MAP.has(name)) {
     throw new Error(
-      `Attempting to set a global json parser function for "${name}" ` +
-        'but one already exists.',
+      `Attempting to set a global json parser function for "${name}" ` + 'but one already exists.',
     );
   }
 

@@ -28,8 +28,6 @@ import '@rschedule/json-tools/Schedule';
 import '@rschedule/json-tools/SubtractOperator';
 import '@rschedule/json-tools/UniqueOperator';
 
-import { parseJSON } from '@rschedule/json-tools';
-
 export default function jsonToolsTests() {
   context(DateAdapterBase.adapter.name, () => {
     // const zones = !DateAdapterBase.adapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
@@ -626,31 +624,31 @@ export default function jsonToolsTests() {
 
         describe('parseJSON()', () => {
           test('rruleJSON1', () => {
-            const rrule = parseJSON(rruleJSON1) as Rule;
+            const rrule = OccurrenceGenerator.fromJSON(rruleJSON1) as Rule;
             expect(rrule).toBeInstanceOf(Rule);
             expect(rrule.toJSON()).toEqual(rruleJSON1);
           });
 
           test('rruleJSON2', () => {
-            const rrule = parseJSON(rruleJSON2) as Rule;
+            const rrule = OccurrenceGenerator.fromJSON(rruleJSON2) as Rule;
             expect(rrule).toBeInstanceOf(Rule);
             expect(rrule.toJSON()).toEqual(rruleJSON2);
           });
 
           test('rruleJSON3', () => {
-            const rrule = parseJSON(rruleJSON3) as Rule;
+            const rrule = OccurrenceGenerator.fromJSON(rruleJSON3) as Rule;
             expect(rrule).toBeInstanceOf(Rule);
             expect(rrule.toJSON()).toEqual(rruleJSON3);
           });
 
           test('rruleJSON4', () => {
-            const rrule = parseJSON(rruleJSON4) as Rule;
+            const rrule = OccurrenceGenerator.fromJSON(rruleJSON4) as Rule;
             expect(rrule).toBeInstanceOf(Rule);
             expect(rrule.toJSON()).toEqual(rruleJSON4);
           });
 
           test('rruleJSON4Data', () => {
-            const rrule = parseJSON(rruleJSON4Data) as Rule;
+            const rrule = OccurrenceGenerator.fromJSON(rruleJSON4Data) as Rule;
             expect(rrule).toBeInstanceOf(Rule);
             expect(rrule.data).toBeTruthy();
             expect(rrule.toJSON()).toEqual(rruleJSON4);
@@ -658,25 +656,25 @@ export default function jsonToolsTests() {
           });
 
           test('rdatesJSON', () => {
-            const rdates = parseJSON(rdatesJSON) as Dates;
+            const rdates = OccurrenceGenerator.fromJSON(rdatesJSON) as Dates;
             expect(rdates instanceof Dates).toBeTruthy();
             expect(rdates.toJSON()).toEqual(rdatesJSON);
           });
 
           test('exdatesJSON', () => {
-            const exdates = parseJSON(exdatesJSON) as Dates;
+            const exdates = OccurrenceGenerator.fromJSON(exdatesJSON) as Dates;
             expect(exdates instanceof Dates).toBeTruthy();
             expect(exdates.toJSON()).toEqual(exdatesJSON);
           });
 
           test('scheduleJSON', () => {
-            const schedule = parseJSON(scheduleJSON) as Schedule;
+            const schedule = OccurrenceGenerator.fromJSON(scheduleJSON) as Schedule;
             expect(schedule instanceof Schedule).toBeTruthy();
             expect(schedule.toJSON()).toEqual(scheduleJSON);
           });
 
           test('scheduleJSONData', () => {
-            const schedule = parseJSON(scheduleJSONData) as Schedule;
+            const schedule = OccurrenceGenerator.fromJSON(scheduleJSONData) as Schedule;
             expect(schedule instanceof Schedule).toBeTruthy();
             expect(schedule.data).toBeFalsy();
             expect(schedule.toJSON()).toEqual(scheduleJSON);
@@ -684,13 +682,13 @@ export default function jsonToolsTests() {
           });
 
           test('uniqueOperatorJSON', () => {
-            const object = parseJSON(uniqueOperatorJSON) as UniqueOperator;
+            const object = OccurrenceGenerator.fromJSON(uniqueOperatorJSON) as UniqueOperator;
             expect(object).toBeInstanceOf(UniqueOperator);
             expect(object.toJSON()).toEqual(uniqueOperatorJSON);
           });
 
           test('uniqueOperatorJSONData', () => {
-            const object = parseJSON(uniqueOperatorJSONData) as UniqueOperator;
+            const object = OccurrenceGenerator.fromJSON(uniqueOperatorJSONData) as UniqueOperator;
             expect(object).toBeInstanceOf(UniqueOperator);
             expect((object as any).data).toBeFalsy();
             expect(object.toJSON()).toEqual(uniqueOperatorJSON);
@@ -698,13 +696,13 @@ export default function jsonToolsTests() {
           });
 
           test('calendarJSON', () => {
-            const calendar = parseJSON(calendarJSON) as Calendar;
+            const calendar = OccurrenceGenerator.fromJSON(calendarJSON) as Calendar;
             expect(calendar).toBeInstanceOf(Calendar);
             expect(calendar.toJSON()).toEqual(calendarJSON);
           });
 
           test('calendarJSONData', () => {
-            const calendar = parseJSON(calendarJSONData) as Calendar;
+            const calendar = OccurrenceGenerator.fromJSON(calendarJSONData) as Calendar;
             expect(calendar).toBeInstanceOf(Calendar);
             expect(calendar.data).toBeFalsy();
             expect(calendar.toJSON()).toEqual(calendarJSON);
