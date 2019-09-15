@@ -8,9 +8,19 @@ import {
   unique,
 } from '@rschedule/core/generators';
 import { IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES';
+import { parse, stringify } from 'ical.js';
+import { IVEventRuleOptions, ParseICalError, parseJCal } from './parser';
 import { RRule } from './rrule';
-
-export type IVEventRuleOptions = Omit<IRRuleOptions, 'start'>;
+import {
+  datesToJCalProps,
+  dateToJCalDTEND,
+  dateToJCalDTSTART,
+  IJCalComponent,
+  numberToJCalDURATION,
+  ruleOptionsToJCalProp,
+  SerializeICalError,
+  wrapInVEVENT,
+} from './serializer';
 
 export interface IVEventArgs<D = any> {
   start: DateInput;
@@ -24,6 +34,10 @@ export interface IVEventArgs<D = any> {
 }
 
 export class VEvent<Data = any> extends ScheduleBase<Data> {
+  static fromICal(iCal: string): VEvent<{ jCal: IJCalComponent }>[] {
+    return parseICal(iCal).vEvents;
+  }
+
   // For some reason, error is thrown if typed as `readonly Rule[]`
   readonly rrules: ReadonlyArray<RRule> = [];
   readonly exrules: ReadonlyArray<RRule> = [];
@@ -267,18 +281,6 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
       | undefined) as OccurrenceGenerator;
   }
 
-  // occurrences(
-  //   args: IOccurrencesArgs = {},
-  // ): OccurrenceIterator<[this, UnwrapArray<this['rrules']> | this['rdates']]> {
-  //   return new OccurrenceIterator(this, this.normalizeOccurrencesArgs(args));
-  // }
-
-  // collections(
-  //   args: ICollectionsArgs = {},
-  // ): CollectionIterator<[this, UnwrapArray<this['rrules']> | this['rdates']]> {
-  //   return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
-  // }
-
   add(prop: 'rrule' | 'exrule', value: RRule): VEvent<Data>;
   add(prop: 'rdate' | 'exdate', value: DateInput): VEvent<Data>;
   add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: RRule | DateInput) {
@@ -406,6 +408,10 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
     });
   }
 
+  toICal(): string {
+    return serializeToICal(this);
+  }
+
   protected normalizeRunOutput(date: DateTime) {
     if (this._duration) {
       return super.normalizeRunOutput(date).set('duration', this._duration);
@@ -425,4 +431,76 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
       start: args.start,
     };
   }
+}
+
+export function vEventToJCal(vevent: VEvent): IJCalComponent {
+  return wrapInVEVENT(
+    dateToJCalDTSTART(vevent.start.toDateTime()),
+    // prettier-ignore
+    ...(typeof vevent.duration === 'number' ? numberToJCalDURATION(vevent.duration)
+      : vevent.duration ? dateToJCalDTEND(vevent.duration.toDateTime())
+      : []),
+    ...vevent.rrules.map(rule => ruleOptionsToJCalProp('RRULE', rule.options)),
+    ...vevent.exrules.map(rule => ruleOptionsToJCalProp('EXRULE', rule.options)),
+    ...datesToJCalProps('RDATE', vevent.rdates),
+    ...datesToJCalProps('EXDATE', vevent.exdates),
+  );
+}
+
+export function serializeToJCal(input: VEvent): IJCalComponent {
+  if (!(input instanceof VEvent)) {
+    throw new SerializeICalError(`Unsupported input type "${input}"`);
+  }
+
+  return vEventToJCal(input);
+}
+
+function serializeToICal(input: VEvent): string {
+  const jCal = serializeToJCal(input);
+
+  // ical.js makes new lines with `\r\n` instead of just `\n`
+  // `\r` is a "Carriage Return" character. We'll remove it.
+  return stringify((jCal as any) as any[]).replace(/\r/g, '');
+}
+
+interface IParsedICalString {
+  vEvents: VEvent[];
+  iCal: string;
+  jCal: IJCalComponent[];
+}
+
+const LINE_REGEX = /^.*\n?/;
+
+function parseICal(iCal: string): IParsedICalString {
+  const match = iCal.trim().match(LINE_REGEX);
+
+  if (match && match[0] && !(match[0].toUpperCase().split(':')[0] === 'BEGIN')) {
+    iCal = `BEGIN:VEVENT\n${iCal}\nEND:VEVENT`;
+  } else if (match && match[0] && !(match[0].toUpperCase().split(':')[1] !== 'VEVENT')) {
+    throw new ParseICalError(
+      `"parseICal()" currently only supports parsing VEVENT ical components.`,
+    );
+  }
+
+  let jCal: IJCalComponent;
+
+  try {
+    jCal = parse(iCal);
+  } catch (e) {
+    throw new ParseICalError(e.message);
+  }
+
+  const parsedJCal = parseJCal(jCal);
+
+  const parsedICal: IParsedICalString = {
+    vEvents: [],
+    iCal,
+    jCal: parsedJCal.jCal,
+  };
+
+  parsedJCal.vEvents.forEach(vEventArgs => {
+    parsedICal.vEvents.push(new VEvent(vEventArgs));
+  });
+
+  return parsedICal;
 }

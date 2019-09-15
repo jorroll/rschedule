@@ -1,12 +1,12 @@
 import { DateAdapter, DateAdapterBase, RuleOption } from '@rschedule/core';
-import { ICalRuleFrequency } from '@rschedule/core/rules/ICAL_RULES';
+import { ICalRuleFrequency, IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES';
 import { parse } from 'ical.js';
 import { IJCalComponent, IJCalProperty } from './serializer';
-import { IVEventRuleOptions, VEvent } from './vevent';
+// import { IVEventRuleOptions, VEvent } from './vevent';
 
 export class ParseICalError extends Error {}
 
-const LINE_REGEX = /^.*\n?/;
+export type IVEventRuleOptions = Omit<IRRuleOptions, 'start'>;
 
 type IDtstartProperty = IJCalProperty & {
   processedValue: DateAdapter;
@@ -22,47 +22,7 @@ export interface IParsedVEventArgs {
   data: { jCal: IJCalComponent };
 }
 
-export interface IParsedICalString {
-  vEvents: VEvent[];
-  iCal: string;
-  jCal: IJCalComponent[];
-}
-
-export function parseICal(iCal: string): IParsedICalString {
-  const match = iCal.trim().match(LINE_REGEX);
-
-  if (match && match[0] && !(match[0].toUpperCase().split(':')[0] === 'BEGIN')) {
-    iCal = `BEGIN:VEVENT\n${iCal}\nEND:VEVENT`;
-  } else if (match && match[0] && !(match[0].toUpperCase().split(':')[1] !== 'VEVENT')) {
-    throw new ParseICalError(
-      `"parseICal()" currently only supports parsing VEVENT ical components.`,
-    );
-  }
-
-  let jCal: IJCalComponent;
-
-  try {
-    jCal = parse(iCal);
-  } catch (e) {
-    throw new ParseICalError(e.message);
-  }
-
-  const parsedJCal = parseJCal(jCal);
-
-  const parsedICal: IParsedICalString = {
-    vEvents: [],
-    iCal,
-    jCal: parsedJCal.jCal,
-  };
-
-  parsedJCal.vEvents.forEach(vEventArgs => {
-    parsedICal.vEvents.push(new VEvent(vEventArgs));
-  });
-
-  return parsedICal;
-}
-
-function parseJCal(input: IJCalComponent | IJCalComponent[]) {
+export function parseJCal(input: IJCalComponent | IJCalComponent[]) {
   const root =
     typeof (input as any)[0] === 'string' ? [input as IJCalComponent] : (input as IJCalComponent[]);
 
