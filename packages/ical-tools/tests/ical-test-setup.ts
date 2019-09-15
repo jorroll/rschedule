@@ -15,13 +15,9 @@ import {
   parseWKST,
 } from '../src/parser';
 
-import {
-  IJCalProperty,
-  parseICal,
-  serializeToICal,
-  serializeToJCal,
-  VEvent,
-} from '@rschedule/ical-tools';
+import { VEvent } from '@rschedule/ical-tools';
+import { IJCalProperty } from '@rschedule/ical-tools/serializer';
+import { serializeToJCal } from '@rschedule/ical-tools/vevent';
 
 function toTwoCharString(int: number) {
   if (int < 10) {
@@ -455,7 +451,7 @@ export default function icalTests() {
                 ical[1] = `DTSTART;TZID=${timezone}:20101110T000000`;
               }
 
-              expect(serializeToICal(schedule)).toEqual(ical.join('\n').concat('\n'));
+              expect(schedule.toICal()).toEqual(ical.join('\n').concat('\n'));
             });
           });
         });
@@ -463,34 +459,34 @@ export default function icalTests() {
         describe('parseICal()', () => {
           it('parses RRULE_STRING', () => {
             if (DateAdapterBase.adapter.hasTimezoneSupport) {
-              const result = parseICal(RRULE_STRING);
+              const result = VEvent.fromICal(RRULE_STRING);
 
-              expect(result.iCal).toBe(`BEGIN:VEVENT\n${RRULE_STRING}\nEND:VEVENT`);
+              // expect(result.iCal).toBe(`BEGIN:VEVENT\n${RRULE_STRING}\nEND:VEVENT`);
 
-              expect(result.jCal).toEqual([
-                [
-                  'vevent',
-                  [
-                    ['dtstart', { tzid: 'America/New_York' }, 'date-time', '1997-09-02T09:00:00'],
-                    [
-                      'rrule',
-                      {},
-                      'recur',
-                      {
-                        byday: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
-                        bymonth: 1,
-                        freq: 'YEARLY',
-                        until: '2000-01-31T14:00:00Z',
-                      },
-                    ],
-                  ],
-                  [],
-                ],
-              ]);
+              // expect(result.jCal).toEqual([
+              //   [
+              //     'vevent',
+              //     [
+              //       ['dtstart', { tzid: 'America/New_York' }, 'date-time', '1997-09-02T09:00:00'],
+              //       [
+              //         'rrule',
+              //         {},
+              //         'recur',
+              //         {
+              //           byday: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
+              //           bymonth: 1,
+              //           freq: 'YEARLY',
+              //           until: '2000-01-31T14:00:00Z',
+              //         },
+              //       ],
+              //     ],
+              //     [],
+              //   ],
+              // ]);
 
               expect(
                 cloneJSON(
-                  result.vEvents.map(event => ({
+                  result.map(event => ({
                     start: event.start,
                     rrules: event.rrules.map(rule => rule.options),
                     data: event.data,
@@ -542,42 +538,42 @@ export default function icalTests() {
                 },
               ]);
             } else {
-              expect(() => parseICal(RRULE_STRING)).toThrowError();
+              expect(() => VEvent.fromICal(RRULE_STRING)).toThrowError();
             }
           });
 
           it('parses RRULE_STRING_TWO', () => {
-            const result = parseICal(RRULE_STRING_TWO);
+            const result = VEvent.fromICal(RRULE_STRING_TWO);
 
-            expect(result.iCal).toBe(`BEGIN:VEVENT\n${RRULE_STRING_TWO}\nEND:VEVENT`);
+            // expect(result.iCal).toBe(`BEGIN:VEVENT\n${RRULE_STRING_TWO}\nEND:VEVENT`);
 
-            expect(cloneJSON(result.jCal)).toEqual([
-              [
-                'vevent',
-                [
-                  ['dtstart', {}, 'date-time', '1997-09-02T09:00:00'],
-                  [
-                    'rrule',
-                    {},
-                    'recur',
-                    {
-                      byday: ['TU', 'TH'],
-                      freq: 'WEEKLY',
-                      until: '1997-10-07T00:00:00',
-                      wkst: 1,
-                    },
-                  ],
-                  ['rdate', {}, 'date-time', '1997-07-14T12:30:00Z'],
-                  ['rdate', {}, 'date-time', '1997-07-14T12:30:00Z'],
-                  ['exdate', {}, 'date-time', '1997-07-14T12:30:00Z'],
-                ],
-                [],
-              ],
-            ]);
+            // expect(cloneJSON(result.jCal)).toEqual([
+            //   [
+            //     'vevent',
+            //     [
+            //       ['dtstart', {}, 'date-time', '1997-09-02T09:00:00'],
+            //       [
+            //         'rrule',
+            //         {},
+            //         'recur',
+            //         {
+            //           byday: ['TU', 'TH'],
+            //           freq: 'WEEKLY',
+            //           until: '1997-10-07T00:00:00',
+            //           wkst: 1,
+            //         },
+            //       ],
+            //       ['rdate', {}, 'date-time', '1997-07-14T12:30:00Z'],
+            //       ['rdate', {}, 'date-time', '1997-07-14T12:30:00Z'],
+            //       ['exdate', {}, 'date-time', '1997-07-14T12:30:00Z'],
+            //     ],
+            //     [],
+            //   ],
+            // ]);
 
             expect(
               cloneJSON(
-                result.vEvents.map(event => ({
+                result.map(event => ({
                   start: event.start,
                   rrules: event.rrules.map(rule => rule.options),
                   rdates: event.rdates.adapters,
@@ -639,35 +635,35 @@ export default function icalTests() {
 
           it('parses VEVENT_STRING', () => {
             if (DateAdapterBase.adapter.hasTimezoneSupport) {
-              const result = parseICal(VEVENT_STRING);
+              const result = VEvent.fromICal(VEVENT_STRING);
 
-              expect(result.iCal).toBe(VEVENT_STRING);
+              // expect(result.iCal).toBe(VEVENT_STRING);
 
-              expect(cloneJSON(result.jCal)).toEqual([
-                [
-                  'vevent',
-                  [
-                    ['dtstart', { tzid: 'Europe/London' }, 'date-time', '2018-10-08T09:00:00'],
-                    ['dtend', { tzid: 'Europe/London' }, 'date-time', '2018-10-08T09:30:00'],
-                    ['rrule', {}, 'recur', { freq: 'DAILY' }],
-                    ['dtstamp', {}, 'date-time', '2018-10-10T13:44:44Z'],
-                    ['uid', {}, 'text', '31k86s3g7aim1hp6og8kvuuvh9@google.com'],
-                    ['created', {}, 'date-time', '2018-10-08T12:09:47Z'],
-                    ['description', {}, 'text', ''],
-                    ['last-modified', {}, 'date-time', '2018-10-08T12:09:47Z'],
-                    ['location', {}, 'text', ''],
-                    ['sequence', {}, 'integer', 0],
-                    ['status', {}, 'text', 'CONFIRMED'],
-                    ['summary', {}, 'text', 'Event repeating Daily at 9am'],
-                    ['transp', {}, 'text', 'OPAQUE'],
-                  ],
-                  [],
-                ],
-              ]);
+              // expect(cloneJSON(result.jCal)).toEqual([
+              //   [
+              //     'vevent',
+              //     [
+              //       ['dtstart', { tzid: 'Europe/London' }, 'date-time', '2018-10-08T09:00:00'],
+              //       ['dtend', { tzid: 'Europe/London' }, 'date-time', '2018-10-08T09:30:00'],
+              //       ['rrule', {}, 'recur', { freq: 'DAILY' }],
+              //       ['dtstamp', {}, 'date-time', '2018-10-10T13:44:44Z'],
+              //       ['uid', {}, 'text', '31k86s3g7aim1hp6og8kvuuvh9@google.com'],
+              //       ['created', {}, 'date-time', '2018-10-08T12:09:47Z'],
+              //       ['description', {}, 'text', ''],
+              //       ['last-modified', {}, 'date-time', '2018-10-08T12:09:47Z'],
+              //       ['location', {}, 'text', ''],
+              //       ['sequence', {}, 'integer', 0],
+              //       ['status', {}, 'text', 'CONFIRMED'],
+              //       ['summary', {}, 'text', 'Event repeating Daily at 9am'],
+              //       ['transp', {}, 'text', 'OPAQUE'],
+              //     ],
+              //     [],
+              //   ],
+              // ]);
 
               expect(
                 cloneJSON(
-                  result.vEvents.map(event => ({
+                  result.map(event => ({
                     start: event.start,
                     duration: event.duration,
                     rrules: event.rrules.map(rule => rule.options),
@@ -712,46 +708,38 @@ export default function icalTests() {
                 },
               ]);
             } else {
-              expect(() => parseICal(VEVENT_STRING)).toThrowError();
+              expect(() => VEvent.fromICal(VEVENT_STRING)).toThrowError();
             }
           });
 
           it('handles INVALID_STRING_ONE', () => {
-            expect(() => parseICal(INVALID_STRING_ONE)).toThrowError(
+            expect(() => VEvent.fromICal(INVALID_STRING_ONE)).toThrowError(
               `invalid line (no token ";" or ":") "Dced34xdio"`,
             );
           });
 
           it('handles INVALID_STRING_TWO', () => {
-            expect(() => parseICal(INVALID_STRING_TWO)).toThrowError(
+            expect(() => VEvent.fromICal(INVALID_STRING_TWO)).toThrowError(
               `Invalid VEVENT component: "DTSTART" property missing.`,
             );
           });
 
           it('handles INVALID_STRING_THREE', () => {
-            expect(parseICal(INVALID_STRING_THREE)).toEqual({
-              jCal: [],
-              iCal: INVALID_STRING_THREE,
-              vEvents: [],
-            });
+            expect(VEvent.fromICal(INVALID_STRING_THREE)).toEqual([]);
           });
 
           it('handles INVALID_STRING_FOUR', () => {
-            expect(parseICal(INVALID_STRING_FOUR)).toEqual({
-              jCal: [],
-              iCal: INVALID_STRING_FOUR,
-              vEvents: [],
-            });
+            expect(VEvent.fromICal(INVALID_STRING_FOUR)).toEqual([]);
           });
 
           it('handles INVALID_STRING_FIVE', () => {
-            expect(() => parseICal(INVALID_STRING_FIVE)).toThrowError(
+            expect(() => VEvent.fromICal(INVALID_STRING_FIVE)).toThrowError(
               `invalid line (no token ";" or ":") "dfDDDdveajdfdoih3289hxfd"`,
             );
           });
 
           it('handles INVALID_STRING_SIX', () => {
-            expect(() => parseICal(INVALID_STRING_SIX)).toThrowError(
+            expect(() => VEvent.fromICal(INVALID_STRING_SIX)).toThrowError(
               `Invalid parameters in 'dfDDDdve;ajdfdoih3289hxfd'`,
             );
           });
@@ -769,9 +757,9 @@ export default function icalTests() {
             .concat('\n');
 
           it('local', () => {
-            const parsed = parseICal(icalLocal).vEvents[0] as VEvent;
+            const parsed = VEvent.fromICal(icalLocal)[0] as VEvent;
 
-            const serialized = serializeToICal(parsed);
+            const serialized = parsed.toICal();
 
             expect(serialized).toBe(icalLocal);
           });
@@ -788,13 +776,13 @@ export default function icalTests() {
 
           it('America/New_York', () => {
             if (DateAdapterBase.adapter.hasTimezoneSupport) {
-              const parsed = parseICal(icalNewYork).vEvents[0] as VEvent;
+              const parsed = VEvent.fromICal(icalNewYork)[0] as VEvent;
 
-              const serialized = serializeToICal(parsed);
+              const serialized = parsed.toICal();
 
               expect(serialized).toBe(icalNewYork);
             } else {
-              expect(() => parseICal(icalNewYork)).toThrowError();
+              expect(() => VEvent.fromICal(icalNewYork)).toThrowError();
             }
           });
         });
@@ -839,7 +827,7 @@ export default function icalTests() {
             ical[4] = `RDATE;TZID=${timezone}:20101011T000000`;
           }
 
-          const serialized = serializeToICal(schedule);
+          const serialized = schedule.toICal();
 
           expect(serialized).toBe(ical.join('\n').concat('\n'));
         });
@@ -881,7 +869,7 @@ export default function icalTests() {
             ical[4] = `RDATE;TZID=${timezone}:20101011T000000`;
           }
 
-          const serialized = serializeToICal(schedule);
+          const serialized = schedule.toICal();
 
           expect(serialized).toBe(ical.join('\n').concat('\n'));
         });

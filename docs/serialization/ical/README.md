@@ -19,9 +19,9 @@ const vEvent = new VEvent({
   start: new Date(),
 });
 
-const iCal = serializeToICal(vEvent); // => string
+const iCal = vEvent.toICal(); // => string
 
-parseICal(iCal); // => { vEvents: [vEvent], iCal: iCal, jCal: [...] }
+vEvent.fromICal(iCal); // => VEvent[]
 ```
 
 ## Installation
@@ -38,40 +38,83 @@ npm install @rschedule/ical-tools ical.js
 
 ## Usage
 
-When serializing to / from the [iCalendar spec](https://tools.ietf.org/html/rfc5545), you must use the `VEvent` object. This is because
+`VEvent` objects allow iterating a occurrence schedule made up of RRULEs and/or EXRULEs as well as RDATEs and EXDATEs. `VEvent` objects are similar to `Schedule` objects, but `VEvent` objects follow the [iCalendar `VEVENT` spec](https://tools.ietf.org/html/rfc5545#section-3.6.1) (e.g. dtstart time is the first occurrence, etc). As part of this support, `VEvent` objects make use of a special variation of `Rule` objects: `RRule` (i.e. `import { RRule } from '@rschedule/ical-tools'`). As with other rSchedule objects, `VEvent` is immutable.
 
-1. `serializeToICal()` expects `VEvent` objects.
-2. `parseICal()` returns `VEvent` objects.
-3. Unlike `Schedule` objects, the `VEvent` object actually adhears to the specifics of the [iCalendar `VEVENT` spec](https://tools.ietf.org/html/rfc5545#section-3.6.1) (e.g. dtstart time is the first occurrence, etc).
+Some rSchedule limitations:
 
-See the [`VEvent` object section](./vevent) for more info on the `VEvent` object.
+- Not all iCal rules are currently supported.
+  - `BYWEEKNO`, `BYYEARDAY`, `BYSETPOS` are unsupported
+- Not all VEVENT properies of the ICAL spec are supported. The supported properties are `RRULE`, `EXRULE`, `RDATE`, `EXDATE`, `DTSTART`, `DTEND` and `DURATION`. Other properties are not supported.
 
-### `serializeToICal()`
-
-The `serializeToICal()` function accepts a `VEvent` object and returns an iCalendar strings representing that object.
-
-Example:
+Example usage:
 
 ```typescript
-const vEvent = new VEvent({
-  start: new Date(),
-});
+const vEvent = VEvent.fromICal(
+  `DTSTART:20120524T000000Z\nRRULE:FREQ=WEEKLY;UNTIL=20121131T000000Z`,
+);
 
-const iCal = serializeToICal(vEvent); // => string
+vEvent
+  .occurrences()
+  .toArray()
+  .map(date => date.toISOString());
+
+vEvent.toICal(); // `DTSTART:20120524T000000Z\nRRULE:FREQ=WEEKLY;UNTIL=20121131T000000Z`
 ```
 
-### `parseICal()`
+### Constructor
 
-The `parseICal()` function accepts an iCal string and returns a `IParsedICalString` object.
-
-Example:
+`VEvent` has the following constructor.
 
 ```typescript
-const iCal = // ... ical string
+class VEvent<D = any> {
+  static fromICal(iCal: string): VEvent<{ jCal: IJCalComponent }>;
 
-const result = parseICal(iCal);
+  data!: D;
+  readonly start: DateAdapter;
+  readonly isInfinite: boolean;
+  readonly duration?: number | DateAdapter;
+  readonly hasDuration: boolean;
+  readonly maxDuration?: number;
+  readonly timezone: string | null;
 
-result.vEvents // => VEvent[];
-result.iCal // => string;
-result.jCal // => jCal object
+  readonly rrules: ReadonlyArray<RRule> = [];
+  readonly exrules: ReadonlyArray<RRule> = [];
+  readonly rdates: Dates<T>;
+  readonly exdates: Dates<T>;
+
+  constructor(args: {
+    start: DateInput;
+    // accepts either the number of milliseconds of the duration or the end
+    // datetime of the first occurrence (which will be used to calculate the
+    // duration in milliseconds)
+    duration?: number | DateInput;
+    // The data property holds arbitrary data associated with the `VEvent`.
+    // The data property is mutable.
+    //
+    // When iterating through a VEvent, you can access a list of the generator objects (i.e. Rules / Dates)
+    // which generated any yielded date by accessing the `DateAdapter#generators` property.
+    // In this way, for a given, yielded date, you can access the objects which generated
+    // the date as well as the arbitrary data associated with those objects.
+    // The data property is ignored when serializing to iCal.
+    data?: D;
+    rrules?: ReadonlyArray<IVEventRuleOptions | RRule>;
+    exrules?: ReadonlyArray<IVEventRuleOptions | RRule>;
+    rdates?: ReadonlyArray<DateInput> | Dates;
+    exdates?: ReadonlyArray<DateInput> | Dates;
+    maxDuration?: number;
+  });
+
+  add(prop: 'rrule' | 'exrule', value: RRule): VEvent<D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput): VEvent<D>;
+
+  remove(prop: 'rrule' | 'exrule', value: RRule): VEvent<D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput): VEvent<D>;
+
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): VEvent<D>;
+  set(prop: 'start', value: DateInput): VEvent<D>;
+  set(prop: 'rrules' | 'exrules', value: RRule[]): VEvent<D>;
+  set(prop: 'rdates' | 'exdates', value: Dates<unknown>): VEvent<D>;
+
+  toICal(): string;
+}
 ```

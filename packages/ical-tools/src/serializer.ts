@@ -25,7 +25,7 @@ export interface IJCalComponent {
  * @param dates array of DateAdapter dates
  * @param type whether these are RDATEs or EXDATEs
  */
-function datesToJCalProps(type: 'RDATE' | 'EXDATE', dates: Dates): IJCalProperty[] {
+export function datesToJCalProps(type: 'RDATE' | 'EXDATE', dates: Dates): IJCalProperty[] {
   const adapters = dates.adapters.map(adapter => adapter.toDateTime());
 
   // group dates by timezone
@@ -83,7 +83,7 @@ function normalizeDateInput(date: DateInput): DateTime {
  * @param type Determins if the serialized options object is labeled as an
  * "RRULE" or an "EXRULE".
  */
-function ruleOptionsToJCalProp(
+export function ruleOptionsToJCalProp(
   type: 'RRULE' | 'EXRULE',
   ruleOptions: IRRuleOptions,
 ): IJCalProperty {
@@ -149,41 +149,11 @@ function ruleOptionsToJCalProp(
   return [type.toLowerCase(), {}, 'recur', stringOptions];
 }
 
-function vEventToJCal(vevent: VEvent): IJCalComponent {
-  return wrapInVEVENT(
-    dateToJCalDTSTART(vevent.start.toDateTime()),
-    // prettier-ignore
-    ...(typeof vevent.duration === 'number' ? numberToJCalDURATION(vevent.duration)
-      : vevent.duration ? dateToJCalDTEND(vevent.duration.toDateTime())
-      : []),
-    ...vevent.rrules.map(rule => ruleOptionsToJCalProp('RRULE', rule.options)),
-    ...vevent.exrules.map(rule => ruleOptionsToJCalProp('EXRULE', rule.options)),
-    ...datesToJCalProps('RDATE', vevent.rdates),
-    ...datesToJCalProps('EXDATE', vevent.exdates),
-  );
-}
-
-export function serializeToJCal(input: VEvent): IJCalComponent {
-  if (!(input instanceof VEvent)) {
-    throw new SerializeICalError(`Unsupported input type "${input}"`);
-  }
-
-  return vEventToJCal(input);
-}
-
-export function serializeToICal(input: VEvent): string {
-  const jCal = serializeToJCal(input);
-
-  // ical.js makes new lines with `\r\n` instead of just `\n`
-  // `\r` is a "Carriage Return" character. We'll remove it.
-  return stringify((jCal as any) as any[]).replace(/\r/g, '');
-}
-
 function serializeByDayOfWeek(arg: RuleOption.ByDayOfWeek) {
   return Array.isArray(arg) ? `${arg[1]}${arg[0]}` : arg;
 }
 
-function dateToJCalDTSTART(date: DateTime) {
+export function dateToJCalDTSTART(date: DateTime) {
   const timezone = date.timezone || 'UTC';
 
   return [
@@ -194,7 +164,7 @@ function dateToJCalDTSTART(date: DateTime) {
   ];
 }
 
-function dateToJCalDTEND(date: DateTime) {
+export function dateToJCalDTEND(date: DateTime) {
   const timezone = date.timezone || 'UTC';
 
   return [
@@ -202,7 +172,7 @@ function dateToJCalDTEND(date: DateTime) {
   ];
 }
 
-function numberToJCalDURATION(duration: number) {
+export function numberToJCalDURATION(duration: number) {
   const weeks = Math.floor(duration / DateAdapter.MILLISECONDS_IN_WEEK);
   duration = duration - weeks * DateAdapter.MILLISECONDS_IN_WEEK;
   const days = Math.floor(duration / DateAdapter.MILLISECONDS_IN_DAY);
@@ -256,6 +226,6 @@ function normalizeTimeLength(input: number) {
   return int.length > 1 ? int : `0${int}`;
 }
 
-function wrapInVEVENT(...inputs: any[]): IJCalComponent {
+export function wrapInVEVENT(...inputs: any[]): IJCalComponent {
   return ['vevent', [...inputs], []];
 }
