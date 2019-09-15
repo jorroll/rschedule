@@ -2,6 +2,7 @@ import { IRecurrenceRuleModule, numberSortComparer, RuleOptionError } from '@rsc
 import { ByMillisecondOfSecondRuleModule } from '../ByMillisecondOfSecond';
 import { BySecondOfMinuteRuleModule } from '../BySecondOfMinute';
 import { FrequencyRuleModule } from '../Frequency';
+import { ruleOptionFilled } from '../utilities/rule-option-filled';
 import { RevByMinuteOfHourRule } from './rev-rule';
 import {
   ByMinuteOfHourRule,
@@ -21,8 +22,8 @@ export const ByMinuteOfHourRuleModule: IRecurrenceRuleModule<
   },
   normalizeOptions: (options, norm) => {
     if (options.byMinuteOfHour !== undefined) {
-      if (!Array.isArray(options.byMinuteOfHour)) {
-        throw new RuleOptionError('"byMinuteOfHour" expects an array');
+      if (!ruleOptionFilled(options.byMinuteOfHour)) {
+        throw new RuleOptionError('"byMinuteOfHour" expects a non-empty array');
       }
 
       if (options.byMinuteOfHour.some(num => num < 0 || num > 59)) {

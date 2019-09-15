@@ -1,5 +1,6 @@
 import { IRecurrenceRuleModule, numberSortComparer, RuleOptionError } from '@rschedule/core';
 import { FrequencyRuleModule } from '../Frequency';
+import { ruleOptionFilled } from '../utilities/rule-option-filled';
 import { RevByMillisecondOfSecondRule } from './rev-rule';
 import {
   ByMillisecondOfSecondRule,
@@ -19,8 +20,8 @@ export const ByMillisecondOfSecondRuleModule: IRecurrenceRuleModule<
   },
   normalizeOptions: (options, norm) => {
     if (options.byMillisecondOfSecond !== undefined) {
-      if (!Array.isArray(options.byMillisecondOfSecond)) {
-        throw new RuleOptionError('"byMillisecondOfSecond" expects an array');
+      if (!ruleOptionFilled(options.byMillisecondOfSecond)) {
+        throw new RuleOptionError('"byMillisecondOfSecond" expects a non-empty array');
       }
 
       if (options.byMillisecondOfSecond.some(num => num < 0 || num > 999)) {

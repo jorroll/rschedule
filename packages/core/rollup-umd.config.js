@@ -10,7 +10,11 @@ export default [
       format: 'umd',
     },
     external: [],
-    plugins: [typescript()],
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.umd.json',
+      }),
+    ],
   },
   {
     input: './src/generators/index.ts',
@@ -23,7 +27,11 @@ export default [
       },
     },
     external: ['@rschedule/core'],
-    plugins: [typescript()],
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.umd.json',
+      }),
+    ],
   },
   {
     input: './src/rules/public_api.ts',
@@ -36,7 +44,11 @@ export default [
       },
     },
     external: ['@rschedule/core'],
-    plugins: [typescript()],
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.umd.json',
+      }),
+    ],
   },
   // {
   //   input: './rules/01-frequency/index.ts',
@@ -49,7 +61,11 @@ export default [
   //     },
   //   },
   //   external: ['@rschedule/core'],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/02-by-month-of-year/index.ts',
@@ -78,7 +94,11 @@ export default [
   //     '@rschedule/core/rules/BySecondOfMinute',
   //     '@rschedule/core/rules/ByMillisecondOfSecond',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/05-by-day-of-month/index.ts',
@@ -107,7 +127,11 @@ export default [
   //     '@rschedule/core/rules/BySecondOfMinute',
   //     '@rschedule/core/rules/ByMillisecondOfSecond',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/06-by-day-of-week/index.ts',
@@ -136,7 +160,11 @@ export default [
   //     '@rschedule/core/rules/BySecondOfMinute',
   //     '@rschedule/core/rules/ByMillisecondOfSecond',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/07-by-hour-of-day/index.ts',
@@ -165,7 +193,11 @@ export default [
   //     '@rschedule/core/rules/BySecondOfMinute',
   //     '@rschedule/core/rules/ByMillisecondOfSecond',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/08-by-minute-of-hour/index.ts',
@@ -194,7 +226,11 @@ export default [
   //     '@rschedule/core/rules/BySecondOfMinute',
   //     '@rschedule/core/rules/ByMillisecondOfSecond',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/09-by-second-of-minute/index.ts',
@@ -223,7 +259,11 @@ export default [
   //     '@rschedule/core/rules/ByMinuteOfHour',
   //     '@rschedule/core/rules/ByMillisecondOfSecond',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/10-by-millisecond-of-second/index.ts',
@@ -252,7 +292,11 @@ export default [
   //     '@rschedule/core/rules/ByMinuteOfHour',
   //     '@rschedule/core/rules/BySecondOfMinute',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
   // {
   //   input: './rules/ical-rules/index.ts',
@@ -283,6 +327,10 @@ export default [
   //     '@rschedule/core/rules/BySecondOfMinute',
   //     '@rschedule/core/rules/ByMillisecondOfSecond',
   //   ],
-  //   plugins: [typescript()],
+  //   plugins: [
+  //   typescript({
+  //     tsconfig: './tsconfig.umd.json',
+  //   }),
+  // ],
   // },
 ];

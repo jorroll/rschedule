@@ -3,6 +3,7 @@ import { ByMillisecondOfSecondRuleModule } from '../ByMillisecondOfSecond';
 import { ByMinuteOfHourRuleModule } from '../ByMinuteOfHour';
 import { BySecondOfMinuteRuleModule } from '../BySecondOfMinute';
 import { FrequencyRuleModule } from '../Frequency';
+import { ruleOptionFilled } from '../utilities/rule-option-filled';
 import { RevByHourOfDayRule } from './rev-rule';
 import {
   ByHourOfDayRule,
@@ -22,8 +23,8 @@ export const ByHourOfDayRuleModule: IRecurrenceRuleModule<
   },
   normalizeOptions: (options, norm) => {
     if (options.byHourOfDay !== undefined) {
-      if (!Array.isArray(options.byHourOfDay)) {
-        throw new RuleOptionError('"byHourOfDay" expects an array');
+      if (!ruleOptionFilled(options.byHourOfDay)) {
+        throw new RuleOptionError('"byHourOfDay" expects a non-empty array');
       }
 
       if (options.byHourOfDay.some(num => num < 0 || num > 23)) {

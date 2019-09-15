@@ -6,5 +6,5 @@
     "declarationDir": "build/main",
     "downlevelIteration": true
   },
-  "include": ["src/**/*.ts"]
+  "files": ["./src/index.ts"]
 }

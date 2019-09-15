@@ -2,7 +2,7 @@ import { DateAdapter, RuleOption } from '@rschedule/core';
 import { IFrequencyRuleOptions, INormFrequencyRuleOptions } from '../Frequency';
 import ByTimeOfUnitRule from '../utilities/by-time-of-unit';
 
-declare module '@rschedule/core' {
+declare module '../../recurrence-rule-options' {
   namespace RuleOption {
     type ByMillisecondOfSecond = DateAdapter.Millisecond;
   }

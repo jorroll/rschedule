@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig",
+  "extends": "./tsconfig.umd",
   "compilerOptions": {
     "target": "es2015",
     "outDir": "build/es2015",

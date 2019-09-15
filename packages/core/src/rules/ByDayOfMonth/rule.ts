@@ -12,7 +12,7 @@ import getNthWeekdayOfMonth from '../utilities/get-nth-weekday-of-month';
 import { RecurrenceRuleBase } from '../utilities/recurrence-rule-base';
 import './types';
 
-declare module '@rschedule/core' {
+declare module '../../recurrence-rule-options' {
   interface IRuleOptions extends IByDayOfMonthRuleOptions {}
 
   interface INormRuleOptions extends INormByDayOfMonthRuleOptions {}

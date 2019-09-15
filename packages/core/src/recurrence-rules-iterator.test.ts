@@ -6,6 +6,7 @@
  * for first creating the tests.
  */
 
+import { context } from '@local-tests/utilities';
 import {
   DateTime,
   INormRuleOptions,
@@ -23,7 +24,6 @@ import { ByMinuteOfHourRuleModule } from './rules/ByMinuteOfHour';
 import { ByMonthOfYearRuleModule } from './rules/ByMonthOfYear';
 import { BySecondOfMinuteRuleModule } from './rules/BySecondOfMinute';
 import { FrequencyRuleModule } from './rules/Frequency';
-import { context } from '@local-tests/utilities';
 import { dateTime } from './rules/test-utilities';
 
 /**
@@ -140,7 +140,7 @@ function testIteration(args: { name: string; rules: IRuleOptions; result: DateTi
 
           let date = controller.next().value;
 
-          expect(date.toISOString()).toBe(result[0].toISOString());
+          expect(date!.toISOString()).toBe(result[0].toISOString());
 
           date = controller.next({ skipToDate: result[2] }).value;
 
@@ -155,11 +155,11 @@ function testIteration(args: { name: string; rules: IRuleOptions; result: DateTi
 
           let date = controller.next().value;
 
-          expect(date.toISOString()).toBe(result[2].toISOString());
+          expect(date!.toISOString()).toBe(result[2].toISOString());
 
           date = controller.next({ skipToDate: result[0] }).value;
 
-          expect(date.toISOString()).toBe(result[0].toISOString());
+          expect(date!.toISOString()).toBe(result[0].toISOString());
         });
       });
     });
@@ -260,21 +260,21 @@ describe('RecurrenceRulesIterator', () => {
   });
 
   describe('_run()', () => {
-    it('testMaxYear', () => {
-      const controller = build({
-        frequency: 'YEARLY',
-        count: 3,
-        byMonthOfYear: [2],
-        byDayOfMonth: [31],
-        start: parse('99970902T090000'),
-        interval: 1,
-        weekStart: 'MO',
-      });
+      it('testMaxYear', () => {
+        const controller = build({
+          frequency: 'YEARLY',
+          count: 3,
+          byMonthOfYear: [2],
+          byDayOfMonth: [31],
+          start: parse('99970902T090000'),
+          interval: 1,
+          weekStart: 'MO',
+        });
 
-      expect(() => {
-        Array.from(controller);
-      }).toThrowError();
-    });
+        expect(() => {
+          Array.from(controller);
+        }).toThrowError();
+      });
 
     context<RuleOption.Frequency>('YEARLY', frequency => {
       testIteration({
@@ -460,7 +460,7 @@ describe('RecurrenceRulesIterator', () => {
           dateTime(1998, 3, 12, 9, 0),
         ],
       });
-
+      
       testIteration({
         name: 'testYearlyByMonthDayAndWeekDay',
         rules: {

@@ -1,6 +1,6 @@
 # Using rSchedule
 
-This library has four main occurrence generating classes which each implement `OccurrenceGenerator`:
+This library has four main occurrence generating classes which each extend `OccurrenceGenerator`:
 
 - [Schedule](./schedule)
 - [Calendar](./calendar)
@@ -11,30 +11,132 @@ If you plan on using rSchedule with the iCalendar spec, it also has a fifth `VEv
 
 - [VEvent](../serialization/ical)
 
-Finally, this library has an assortment of [occurrence stream operators](./operators) which allow combining multiple occurrence generators into a single occurrence generator. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. See [`occurrence stream operators`](./operators) for more information.
+Finally, this library has an assortment of [occurrence stream operators](./operators) which allow combining multiple occurrence generators in various ways. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. See [`occurrence stream operators`](./operators) for more information.
 
 There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up immutable rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
 
 ### Setup
 
-rSchedule supports multiple date libraries though a [`DateAdapter`](../date-adapter) interface. To get started, you need to import the date adapter for your chosen date library. You only need to do this once, to set up the module.
+rSchedule supports multiple date libraries though a [`DateAdapter`](../date-adapter) interface. To get started, you need to import the date adapter for your chosen date library. Create an `rschedule.ts` (or `rschedule.js`) file in your project which configures rSchedule locally. Instead of importing objects from `@rschedule/core`, you'll import them from this local file.
 
 For example:
 
 ```ts
+// rschedule.ts
+
 import '@rschedule/moment-date-adapter/setup';
+// import @rschedule/json-tools/setup <-- optional json support
+
+export * from '@rschedule/moment-date-adapter';
+export * from '@rschedule/core';
+export * from '@rschedule/core/generators';
 ```
+
+```ts
+// main.ts
+
+import { Schedule } from './rschedule';
+
+// ... do stuff
+```
+
+### Overview
+
+If you're not serializing to iCalendar, your primary tool will be the friendly [`Schedule`](./schedule) object. It can be used to build an occurrence schedule from an arbitrary number of inclusion rules, exclusion rules, inclusion dates, and exclusion dates.
+
+Example usage:
+
+```typescript
+const schedule = new Schedule({
+  rrules: [
+    {
+      frequency: 'YEARLY',
+      byMonthOfYear: [2, 6],
+      byDayOfWeek: ['SU', ['MO', 3]],
+      start: new Date(2010, 1, 7),
+    },
+    {
+      frequency: 'DAILY',
+      byDayOfWeek: ['TU'],
+      start: new Date(2012, 1, 7),
+    },
+  ],
+  exdates: [new Date(2010, 3, 2)],
+});
+
+schedule.occurrences().toArray();
+```
+
+Each [`Schedule`](./schedule) object is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
+
+To iterate over a collection of schedules, e.g. for displaying on a calendar, you can use the [`Calendar`](./calendar) object. The Calendar object combines a collection of occurrence generators into a single iterable object (i.e. it displays the `union` of all the given occurrence generators).
+
+Example usage:
+
+```typescript
+const scheduleOne = new Schedule();
+const scheduleTwo = new Schedule();
+
+const calendar = new Calendar({
+  schedules: [scheduleOne, scheduleTwo],
+});
+
+for (const { date } of calendar.occurrences({ start: new Date() })) {
+  // do stuff
+}
+```
+
+Additionally, the [`Dates`](./dates) object provides an `OccurrenceGenerator` wrapper over a collection of arbitrary dates.
+
+Example usage:
+
+```typescript
+const dates = new Dates({
+  dates: [new Date(2000), new Date(2001), new Date(2002)],
+});
+
+dates.occursOn({ date: new Date(2000) }); // true
+
+for (const { date } of dates.occurrences({ start: new Date(2000, 5) })) {
+  // do stuff
+}
+```
+
+For more complex scenerios, rSchedule offers a set of [occurrence stream operator](./operators) functions which allow combining and manipulating a stream of occurrences. Usage is inspired the rxjs pipe operators.
+
+Example usage:
+
+```typescript
+import { add, subtract, unique } from './rschedule';
+
+const scheduleOne = new Schedule();
+const scheduleTwo = new Schedule();
+const scheduleThree = new Schedule();
+const scheduleFour = new Schedule();
+
+new Calendar().pipe(
+  add(scheduleOne),
+  subtract(scheduleTwo),
+  add(scheduleThree),
+  subtract(scheduleFour),
+  unique(),
+);
+```
+
+Internally, some rSchedule objects rely on occurrence stream operators to handle their recurrence logic (e.g. `Schedule`).
+
+Finally, there are [`Rule` objects](./rule) which process recurrence rules. You probably won't need to use `Rule` object's directy though, instead making use of `Schedule` objects.
 
 ### CR**UD** with rSchedule objects
 
-All of rSchedule's objects are immutable (the major exception is the `data` property that many of the occurrence generators have). This decision _greatly_ reduces the number of bugs and helps to optimize the performance of rSchedule objects for reading. The downside is that this can make updating the objects a bit strange and clumsy compared to typical mutable javascript APIs. While each rSchedule object is different, this section provides a brief introduction on how to change rSchedule objects.
+All of rSchedule's objects are immutable (the major exception is the `data` property that many of the occurrence generators have). This decision _greatly_ simplifies the implementation (reducing the number of bugs) and helps to optimize the performance of rSchedule objects for reading. The downside is that this can make updating the objects a bit strange and clumsy compared to typical mutable javascript APIs. While each rSchedule object is different, this section provides a brief introduction on how to change rSchedule objects.
 
-As a reminder, you can check out the optional [`rule-tools` package](./rule-tools) that aims to provide convenient helper functions that simplify common tasks (feel free to contribute anything you feel is missing from this package).
+As a reminder, you can check out the optional [`rule-tools` package](./rule-tools) that aims to provide convenient helper functions that simplify common tasks.
 
 #### Example: adding an rrule to a schedule
 
 ```ts
-import '@rschedule/standard-date-adapter/setup';
+import { Schedule, Rule } from './rschedule';
 
 let schedule = new Schedule({
   rrules: [
@@ -108,11 +210,35 @@ schedule = schedule.add('rdate', new Date());
 
 ### OccurrenceGenerator Interface
 
-Schedule, Calendar, Rule, Dates, and OccurrenceStream objects each implement the `IOccurrenceGenerator` interface. Note, in the code below, `DateInput<T>` type accepts either the date object that a given DateAdapter is wrapping (e.g. the `MomentDateAdapter` wraps a `Moment` date object), or a date adapter itself.
+Schedule, Calendar, Rule, and Dates objects each extend the `OccurrenceGenerator` class. Note, in the code below, the `DateInput` type accepts either the date object that a given DateAdapter is wrapping (e.g. the `MomentDateAdapter` wraps a `Moment` date object), or a date adapter itself.
 
 ````typescript
 abstract class OccurrenceGenerator {
+  readonly isInfinite: boolean;
+  readonly hasDuration: boolean;
+
+  /**
+   * The maximum duration of this generators occurrences. Necessary
+   * as part of the logic processing. By default it is 0.
+   */
+  readonly maxDuration: number;
   readonly timezone: string | null;
+
+  /** Returns the first occurrence or, if there are no occurrences, null. */
+  readonly firstDate: DateAdapter | null;
+
+  /** If generator is infinite, returns `null`. Otherwise returns the end date */
+  readonly lastDate: DateAdapter | null;
+
+  constructor(args?: { timezone?: string | null; maxDuration?: number }): OccurrenceGenerator;
+
+  pipe(...operators: OperatorFnOutput[]): OccurrenceGenerator;
+
+  set(
+    prop: 'timezone',
+    value: string | null,
+    options?: { keepLocalTime?: boolean },
+  ): OccurrenceGenerator;
 
   /**
    * Processes the object's rules/dates and returns an iterable for the occurrences.
@@ -124,24 +250,24 @@ abstract class OccurrenceGenerator {
    * - `reverse` whether to iterate in reverse or not
    *
    * Examples:
-   *
+   * 
    * ```
-   * const iterator = schedule.occurrences({ start: new Date(), take: 5 })
-   *
+   * const iterator = schedule.occurrences({ start: new Date(), take: 5 });
+   
    * for (const date of iterator) {
    *   // do stuff
    * }
-   *
+
    * iterator.toArray() // returns Date array
    * iterator.next().value // returns next Date
    * ```
-   *
+   * 
    */
-  occurrences(args: IOccurrencesArgs<T>): OccurrenceIterator<T>;
+  occurrences(args?: IOccurrencesArgs): OccurrenceIterator;
 
   /**
    * Iterates over the object's occurrences and bundles them into collections
-   * with a specified granularity (default is `"INSTANTANIOUS"`). Make sure to
+   * with a specified granularity (default is `"YEARLY"`). Make sure to
    * read about each option & combination of options below.
    *
    * Options object:
@@ -150,15 +276,15 @@ abstract class OccurrenceGenerator {
    *   - take?: number
    *   - reverse?: NOT SUPPORTED
    *   - granularity?: CollectionsGranularity
-   *   - weekStart?: IDateAdapter.Weekday
-   *   - incrementLinearly?: boolean
+   *   - weekStart?: DateAdapter.Weekday
+   *   - skipEmptyPeriods?: boolean
    *
    * Returned `Collection` object:
    *
    *   - `dates` property containing an array of DateAdapter objects.
    *   - `granularity` property containing the granularity.
-   *     - `CollectionsGranularity` type extends `RuleOptions.Frequency` type by adding
-   *       `"INSTANTANIOUS"`.
+   *     - `CollectionsGranularity` === `RuleOptions.Frequency`.
+   *     - default is `"YEARLY"`
    *   - `periodStart` property containing a DateAdapter equal to the period's
    *     start time.
    *   - `periodEnd` property containing a DateAdapter equal to the period's
@@ -175,19 +301,17 @@ abstract class OccurrenceGenerator {
    *   start of the year passed in the `start` argument, and the `end` argument will be transformed
    *   to be the end of the year passed in the `end` argument.
    *
-   * By default, the `periodStart` value of `Collection` objects produced by this method does not
-   * necessarily increment linearly. A collection will *always* contain at least one date,
-   * so the `periodStart` from one collection to the next can "jump". This can be changed by
-   * passing the `incrementLinearly: true` option. With this argument, `collections()` will
-   * return `Collection` objects for each period in linear succession, even if a collection object
-   * has no dates associated with it, so long as the object generating occurrences still has upcoming occurrences.
+   * By default, the `periodStart` value of `Collection` objects produced by this method increments linearly.
+   * This means the returned `Collection#dates` property may have length 0. This can be changed by
+   * passing the `skipEmptyPeriods: true` option, in which case the `periodStart` from one collection to the
+   * next can "jump".
    *
    * - Example 1: if your object's first occurrence is 2019/2/1 (February 1st) and you call
-   *   `collection({granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   `collection({skipEmptyPeriods: true, granularity: 'DAILY', start: new Date(2019,0,1)})`
    *   (so starting on January 1st), the first Collection produced will have a `periodStart` in February.
    *
    * - Example 2: if your object's first occurrence is 2019/2/1 (February 1st) and you call
-   *   `collection({incrementLinearly: true, granularity: 'DAILY', start: new Date(2019,0,1)})`
+   *   `collection({granularity: 'DAILY', start: new Date(2019,0,1)})`
    *   (so starting on January 1st), the first collection produced will have a `Collection#periodStart`
    *   of January 1st and have `Collection#dates === []`. Similarly, the next 30 collections produced
    *   (Jan 2nd - 31st) will all contain an empty array for the `dates` property. Then the February 1st
@@ -211,7 +335,7 @@ abstract class OccurrenceGenerator {
    *   previous or next months).
    *
    */
-  collections(args: ICollectionsArgs<T>): CollectionIterator<T>;
+  collections(args?: ICollectionsArgs): CollectionIterator;
 
   /**
    * Returns true if an occurrence starts on or between the provided start/end
@@ -219,31 +343,34 @@ abstract class OccurrenceGenerator {
    * equal to the start/end times are ignored.
    *
    * If the occurrence generator has a duration, and `excludeEnds !== true`,
-   * then any occurrence that's time overlaps with the start/end times
+   * and a `maxDuration` argument is supplied (either in the constructor or
+   * here), then any occurrence that's time overlaps with the start/end times
    * return true.
    */
   occursBetween(
-    start: DateInput<T>,
-    end: DateInput<T>,
-    options: { excludeEnds?: boolean; maxDuration?: number },
+    startInput: DateInput,
+    endInput: DateInput,
+    options?: { excludeEnds?: boolean; maxDuration?: number },
   ): boolean;
 
   /**
    * Checks to see if an occurrence exists which equals the given date.
    *
-   * If this occurrence generator has a duration, then `occursOn()` will check
-   * to see if an occurrence is happening during the given datetime.
+   * If this occurrence generator has a duration, and a `maxDuration`
+   * argument is supplied (either in the constructor or here),
+   * then `occursOn()` will check to see if an occurrence is happening
+   * during the given datetime.
    *
    * Additionally, if this occurrence generator has a duration, then a maxDuration
    * argument must be provided. This argument should be the max number of milliseconds
    * that an occurrence's duration can be. When you create an occurrence
    * generator, you can specify the maxDuration at that time.
    */
-  occursOn(args: { date: DateInput<T>; maxDuration?: number }): boolean;
+  occursOn(args: { date: DateInput; maxDuration?: number }): boolean;
   /**
    * Checks to see if an occurrence exists with a weekday === the `weekday` argument.
    * **If there are infinite occurrences, you must include a `before` argument with
-   * the `weekday` argument.**
+   * the `weekday` argument.** Does not currently consider occurrence duration.
    *
    * Optional arguments:
    *
@@ -253,9 +380,9 @@ abstract class OccurrenceGenerator {
    *       than inclusive.
    */
   occursOn(args: {
-    weekday: IDateAdapter.Weekday;
-    after?: DateInput<T>;
-    before?: DateInput<T>;
+    weekday: DateAdapter.Weekday;
+    after?: DateInput;
+    before?: DateInput;
     excludeEnds?: boolean;
   }): boolean;
 
@@ -265,13 +392,11 @@ abstract class OccurrenceGenerator {
    * equal to the provided datetime are ignored.
    *
    * If the occurrence generator has a duration, and `excludeStart !== true`,
-   * then any occurrence that's end time is after/equal to the provided
+   * and a `maxDuration` argument is supplied (either in the constructor or
+   * here), then any occurrence that's end time is after/equal to the provided
    * datetime return true.
    */
-  occursAfter(
-    date: DateInput<T>,
-    options: { excludeStart?: boolean; maxDuration?: number },
-  ): boolean;
+  occursAfter(date: DateInput, options?: { excludeStart?: boolean; maxDuration?: number }): boolean;
 
   /**
    * Returns true if an occurrence starts before the provided datetime.
@@ -282,26 +407,6 @@ abstract class OccurrenceGenerator {
    * also provided, then this will only return true if an occurrence
    * both starts and ends before the provided datetime.
    */
-  occursBefore(
-    date: DateInput<T>,
-    options: { excludeStart?: boolean; maxDuration?: number },
-  ): boolean;
-
-  pipe(...operators: unknown[]): IOccurrenceGenerator<T>;
-
-  /**
-   * Allows setting the timezone associated with this `IOccurrenceGenerator`.
-   * If `keepLocalTime === true`, then any `Rule` objects associated
-   * with this occurrence generator will be changed so that their `start` time
-   * is in this timezone while retaining the same local time. This fundamentally changes
-   * the rule. Similarly, any `Dates` objects associated with this occurrence generator
-   * will have their underlying dates updated so that they are in this timezone while
-   * retaining the same local time (fundamentally changing the dates).
-   */
-  set(
-    prop: 'timezone',
-    value: string | null,
-    options?: { keepLocalTime?: boolean },
-  ): IOccurrenceGenerator<T>;
+  occursBefore(date: DateInput, options?: { excludeStart?: boolean }): boolean;
 }
 ````

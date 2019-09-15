@@ -2,7 +2,7 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/standard-date-adapter)](https://www.npmjs.com/package/@rschedule/standard-date-adapter) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/standard-date-adapter)](https://bundlephobia.com/result?p=@rschedule/standard-date-adapter)
 
-**[`StandardDateAdapter implements IDateAdapter<Date>`](../#IDateAdapter-Interface)**
+**[`StandardDateAdapter extends DateAdapterBase`](../#dateadapterbase)**
 
 rSchedule DateAdapter for working with standard javascript `Date` objects. Only supports local and UTC timezones.
 
@@ -18,13 +18,10 @@ npm install @rschedule/standard-date-adapter
 
 ## Usage
 
-Configure as "global" default date adapter with:
+Configure as date adapter with:
 
 ```typescript
-import { RScheduleConfig } from '@rschedule/rschedule';
-import { StandardDateAdapter } from '@rschedule/standard-date-adapter';
-
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
+import '@rschedule/standard-date-adapter/setup';
 ```
 
 Unlike the other date adapters, if you want to create a StandardDateAdapter in the UTC timezone you need to pass an additional argument to the constructor

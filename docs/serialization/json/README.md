@@ -2,16 +2,37 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/json-tools)](https://www.npmjs.com/package/@rschedule/json-tools) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/json-tools)](https://bundlephobia.com/result?p=@rschedule/json-tools)
 
-The optional package `@rschedule/json-tools` includes `serializeToJSON()` and `parseJSON()` functions.
+The optional package `@rschedule/json-tools` provides json serialization support for rSchedule. Like the rest of rSchedule, the json-tools package is modular to support reducing bundle sizes. You must individually import json serialization support for the rSchedule objects you wish to serialize. If you are just using the standard rSchedule setup (e.g. `import '@rschedule/standard-date-adapter/setup` or `import '@rschedule/luxon-date-adapter/setup`) then a convenience module is provided which will handle everything for. In this case, simply `import '@rschedule/json-tools/setup'`.
 
-Example:
+Standard setup example:
 
 ```typescript
-import { serializeToJSON, parseJSON } from '@rschedule/json-tools';
+// your setup file (e.g. rschedule.ts)
 
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
+import '@rschedule/luxon-date-adapter/setup';
+import '@rschedule/json-tools/setup';
 
-const schedule = new Schedule<typeof StandardDateAdapter>({
+export * from '@rschedule/core';
+export * from '@rschedule/core/generators';
+export * from '@rschedule/luxon-date-adapter';
+```
+
+Custom setup example:
+
+```ts
+// your setup file (e.g. rschedule.ts)
+
+import '@rschedule/json-tools/Schedule';
+import '@rschedule/json-tools/AddOperator';
+import '@rschedule/json-tools/MergeDurationOperator';
+
+// ... other stuff you have
+```
+
+## Usage
+
+```ts
+const schedule = new Schedule({
   rrules: [
     {
       start: new Date(),
@@ -20,11 +41,11 @@ const schedule = new Schedule<typeof StandardDateAdapter>({
   ],
 });
 
-const json = serializeToJSON(schedule);
+const json = schedule.toJSON();
 
 const string = JSON.stringify(json);
 
-parseJSON(JSON.parse(string)); // => Schedule
+OccurrenceGenerator.fromJSON(string);
 ```
 
 ## Installation
@@ -39,23 +60,21 @@ npm install @rschedule/json-tools
 
 ## Usage
 
-`@rschedule/json-tools` supports serializing `Calendar`, `Schedule`, `Dates`, `Rule`, and `OccurrenceStream` objects to json, as well as parsing those objects back from json. It also supports optionally serializing / parsing the `data` property on `Calendar`, `Schedule`, `Dates`, and `Rule` objects.
+`@rschedule/json-tools` supports serializing `Calendar`, `Schedule`, `Dates`, `Rule`, and occurrence stream operators to json, as well as parsing those objects back from json. It also supports optionally serializing / parsing the `data` property on `Calendar`, `Schedule`, `Dates`, and `Rule` objects. Importing `@rschedule/json-tools` will add `OccurrenceGenerator#toJSON()` and `OccurrenceGenerator.fromJSON()` methods.
 
-### `serializeToICal()`
+### `OccurrenceGenerator#toJSON()`
 
-The `serializeToJSON()` function accepts an individual or array of `Calendar`, `Schedule`, `Dates`, `Rule`, or `OccurrenceStream` objects and returns JSON object representations. It also accepts an options object with a `serializeData` property.
+The `toJSON()` method accepts an options object with an optional `data` property.
 
-- If `serializeData: true`, then the `data` property of `Calendar`, `Schedule`, `Dates`, `Rule` will be retained **_as-is_** in the JSON output.
-- If `serializeData: (input: Calendar<any> | Schedule<any> | Dates<any> | Rule<any>) => unknown`, then the `Calendar | Schedule | Dates | Rule` object will be passed as a single argument to the provided function and the return value of the function will be added to the JSON output.
+- If `data: true`, then the `data` property of `Calendar`, `Schedule`, `Dates`, `Rule` will be retained **_as-is_** in the JSON output.
+- If `data: (input: Calendar | Schedule | Dates | Rule) => unknown`, then the `Calendar | Schedule | Dates | Rule` object will be passed as a single argument to the provided function and the return value of the function will be added to the JSON output.
 
 Example:
 
 ```typescript
-import { serializeToJSON } from '@rschedule/json-tools';
+import { Schedule } from './rschedule';
 
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
-const schedule = new Schedule<typeof StandardDateAdapter>({
+const schedule = new Schedule({
   rrules: [
     {
       start: new Date(),
@@ -64,30 +83,28 @@ const schedule = new Schedule<typeof StandardDateAdapter>({
   ],
 });
 
-const json = serializeToJSON(schedule);
-// ALTERNATIVELY const json = serializeToJSON(schedule, { serializeData: true });
-// ALTERNATIVELY const json = serializeToJSON(schedule, { serializeData: input => JSON.stringify(input.data) });
+const json = schedule.toJSON({ data: true });
+// ALTERNATIVELY const json = schedule.toJSON({ data: input => JSON.stringify(input.data) });
 
 const string = JSON.stringify(json);
 ```
 
-### `parseJSON()`
+### `OccurrenceGenerator.fromJSON()`
 
-The `parseJSON()` function accepts single/array of JSON serialized `Calendar`, `Schedule`, `Dates`, `Rule`, and `OccurrenceStream` objects and instantiates those objects. `parseJSON()` also accepts an optional
-options object with optional `dateAdapter` and `parseData` properties.
+The `fromJSON()` method accepts a JSON serialized `OccurrenceGenerator` object and instantiates that object. `fromJSON()` also accepts an optional options object with optional `data` property.
 
-- If `dateAdapter` is not provided, `RScheduleConfig.defaultDateAdapter` is used.
-- If `data` is present on an object when `parseJSON()` parses it, that data will always be passed to the appropriate rSchedule constructor as the `data` property. If you provide an optional `parseData: (data?: unknown) => unknown` function, then that function will be used to parse an object's data property.
+- If `data` is present on an object when `fromJSON()` parses it, that data will always be passed to the appropriate rSchedule constructor as the `data` property. If you provide an optional `data: (json: OccurrenceGenerator.JSON & { data?: any }) => any` function, then that function will be used to parse an object's data property.
 
 Example:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
+const jsonSchedule: Schedule.JSON = // ... object representing a Schedule
 
-const jsonSchedule = // ... json object representing a Schedule
+const dataParser = (json: OccurrenceGenerator.JSON) => {
+  if (json.type === 'Schedule') {
+    return JSON.parse(json.data) as { name: string };
+  }
+}
 
-const schedule = parseJSON(jsonSchedule); // Schedule
-// ALTERNATIVELY const schedule = parseJSON(jsonSchedule, { parseData: data => data && JSON.parse(data) });
-
-Schedule.isSchedule(schedule) // true;
+const schedule: Schedule<{ name: string }> = Schedule.fromJSON<{ name: string }>(jsonSchedule, { data: dataParser });
 ```

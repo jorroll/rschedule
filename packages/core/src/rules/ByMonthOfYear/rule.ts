@@ -3,7 +3,7 @@ import { IFrequencyRuleOptions, INormFrequencyRuleOptions } from '../Frequency';
 import { RecurrenceRuleBase } from '../utilities/recurrence-rule-base';
 import './types';
 
-declare module '@rschedule/core' {
+declare module '../../recurrence-rule-options' {
   interface IRuleOptions extends IByMonthOfYearRuleOptions {}
 
   interface INormRuleOptions extends INormByMonthOfYearRuleOptions {}

@@ -1,6 +1,6 @@
 # Date adapters
 
-rSchedule is date library agnostic. It needs a `IDateAdapter` constructor to process dates. A selection of DateAdapters already exist. Additionally, it should be pretty easy for you to create your own date adapter for whatever date library you wish. As with other rSchedule objects, date adapters are immutable.
+rSchedule is date library agnostic. It needs a `DateAdapter` constructor to process dates. A selection of DateAdapters already exist. Additionally, it should be pretty easy for you to create your own date adapter for whatever date library you wish. As with other rSchedule objects, date adapters are immutable.
 
 - [StandardDateAdapter](./standard-date-adapter)
   - For use with the standard javascript `Date` object. Supports local and UTC timezones.
@@ -13,53 +13,44 @@ rSchedule is date library agnostic. It needs a `IDateAdapter` constructor to pro
 - [JodaDateAdapter](./joda-date-adapter)
   - For use with js-joda `ZonedDateTime` objects. Has full timezone support.
 
-Date adapters are provided to rSchedule occurrence generator objects, all of which have generic types and receive a `typeof DateAdapter` type object as an argument. There are two ways to provide this argument.
+Before you can make use of rSchedule, you must set it up with a date adapter. Each of the provided date adapters have a provided `/setup` module which will do this for you with sensible defaults. These setup files not only configure the date adapter, but also import all of the ICAL rules which rSchedule supports.
 
-1. When creating the generator object, provide the date adapter constructor
+Example usage:
 
-   ```typescript
-   new Schedule({ dateAdapter: LuxonDateAdapter });
+```ts
+import '@rschedule/moment-tz-date-adapter/setup';
 
-   const providedRuleOptions = {
-     start: moment(),
-     frequency: 'DAILY',
-   };
+// or
 
-   new Rule(providedRuleOptions, { dateAdapter: MomentTZDateAdapter });
-   ```
+import '@rschedule/standard-date-adapter/setup';
+```
 
-2. Set the default date adapter for all rSchedule classes using [`RScheduleConfig.defaultDateAdapter`](../usage/rschedule-config/#defaultDateAdapter).
+If you which to customize things yourself, you need to
 
-   ```typescript
-   RScheduleConfig.defaultDateAdapter = MomentTZDateAdapter;
+1. Configure `DateAdapterBase` with your chosen date adapter (i.e. `DateAdapterBase.adapter = StandardDateAdapter`).
+2. Configure `Rule` with your chosen recurrence rules (i.e. `Rule.recurrenceRules = ICAL_RULES`). The order of the recurrence rules matters as some rules may depend on other rules running first.
+3. If using typescript, as a third step you need to update `DateAdapterType` and `DateAdapterCTorType` with your chosen date adapter using declaration merging.
 
-   new Schedule<typeof MomentTZDateAdapter>();
+   - ```ts
+     declare module '@rschedule/core/DateAdapter' {
+       interface DateAdapterType {
+         standard: StandardDateAdapter;
+       }
 
-   const providedRuleOptions = {
-     start: moment(),
-     frequency: 'DAILY',
-   };
+       interface DateAdapterCTorType {
+         standard: typeof StandardDateAdapter;
+       }
+     }
+     ```
 
-   new Rule<typeof MomentTZDateAdapter>(providedRuleOptions);
-   ```
+### The `generators` property
 
-When providing a date adapter constructor as a constructor argument (option 1, above), type inference will often take care of properly typing your generic objects for you. In cases where type inference is unavailable, you will need to manually provide the property type arguments. In these cases, remember that the type argument you need to provide is for the date adapter **_constructor_** (not a date adapter _instance_). In Typescript, you get a constructor type using the `typeof` keyword.
-
-- ```typescript
-  // good
-  new Schedule<typeof MomentTZDateAdapter>();
-
-  // bad
-  new Schedule<MomentTZDateAdapter>();
-  ```
-
-Each DateAdapter has a `generators` property which contains an array of the rSchedule objects which are responsible for generating that particular date. For example, when iterating through a `Schedule` containing two `Rule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `Rule` object which generated the date, the second element will be the `Schedule` object which generated the date. The `IDateAdapter#generators` property pairs with the `data` property found on `Schedule`, `Calendar`, `Rule`, and `Dates` objects. This allows you to attach data to a `Rule` or `Schedule`, and access that data from the yielded dates.
+Each DateAdapter has a `generators` property which contains an array of the rSchedule objects which are responsible for generating that particular date. For example, when iterating through a `Schedule` containing two `Rule` objects, each yielded DateAdapter will have a `generators` property with a length two array. The first element will be the `Rule` object which generated the date, the second element will be the `Schedule` object which generated the date. The `DateAdapter#generators` property pairs with the `data` property found on `Schedule`, `Calendar`, `Rule`, and `Dates` objects. This allows you to attach data to a `Rule` or `Schedule`, and access that data from the yielded dates.
 
 Example:
 
 ```typescript
 const schedule = new Schedule({
-  dateAdapter: StandardDateAdapter,
   rrules: [
     new Rule(
       {
@@ -97,50 +88,84 @@ Note if you are using occurrence operators: occurrence operators are **not** add
 
 This shouldn't be too difficult. Start by looking at either the `MomentDateAdapter` or `MomentTZDateAdapter` (depending on if you'll be supporting timezones) in `packages/moment-date-adapter` for an example.
 
-Your custom date adapter will need to extend the abstract `DateAdapter` class.
+Your custom date adapter will need to extend the abstract `DateAdapterBase` class.
 
-If you choose to do so, `IDateAdapter` related pull requests will be welcomed.
+If you choose to do so, `DateAdapter` related pull requests will be welcomed.
 
-## IDateAdapter Interface
+## DateAdapterBase
 
 ```typescript
-export interface IDateAdapter<D = unknown> {
-  /** Returns the date object this DateAdapter is wrapping */
-  readonly date: D;
-  readonly timezone: string | null;
-  readonly duration: number | undefined; // a length of time in milliseconds
+export abstract class DateAdapterBase {
+  static adapter: DateAdapterCTor;
+  static readonly date: object;
+  static readonly hasTimezoneSupport: boolean = false;
+
+  static abstract isDate(_object: unknown): boolean;
+
+  static abstract fromDate(
+    _date: DateAdapter['date'],
+    _options?: { duration?: number },
+  ): DateAdapter;
+
+  static abstract fromJSON(_json: DateAdapter.JSON): DateAdapter;
+
+  static abstract fromDateTime(_datetime: DateTime): DateAdapter;
+
+  abstract readonly date: object;
+  abstract readonly timezone: string | null;
+  /** A length of time in milliseconds */
+  readonly duration: number;
 
   /**
    * Returns `undefined` if `this.duration` is falsey. Else returns
    * the `end` date.
    */
-  readonly end: D | undefined;
+  abstract end: object | undefined;
 
   /**
-   * This property contains an ordered array of the generator objects
-   * responsible for creating this IDateAdapter.
+   * An array of OccurrenceGenerator objects which produced this DateAdapter.
    *
-   * Examples:
+   * #### Details
    *
-   * - If this IDateAdapter was produced by a `Rule` object, this array
-   *   will just contain the `Rule` object.
+   * When a Rule object creates a DateAdapter, that Rule object adds itself to
+   * the DateAdapter's generators property before yielding the DateAdapter. If you are using a Rule
+   * object directly, the process ends there and the DateAdapter is yielded to you (in this case,
+   * generators will have the type `[Rule]`)
    *
-   * - If this IDateAdapter was produced by a `Schedule` object, this
-   *   array will contain the `Schedule` object as well as the `Rule`
-   *   or `Dates` object which generated it.
+   * If you are using another object, like a Schedule however, then each DateAdapter is generated
+   * by either a Dates (rdates) or Rule (rrule) within the Schedule. After being originally
+   * generated by a Dates/Rule, the DateAdapter is then filtered by any exdate/exrules and,
+   * assuming it passes, then the DateAdapter "bubbles up" to the Schedule object itself. At this
+   * point the Schedule adds itself to the generators array of the DateAdapter and yields the date
+   * to you. So each DateAdapter produced by a Schedule has a generators property of type
+   * `[Schedule, Rule | Dates]`.
+   *
+   * The generators property pairs well with the `data` property on many OccurrenceGenerators. You
+   * can access the OccurrenceGenerators which produced a DateAdapter via `generators`, and then
+   * access any arbitrary data via the `data` property.
+   *
+   * _Note: occurrence operators are never included in the generators array._
+   *
    */
-  readonly generators: unknown[];
+  // using `unknown[]` instead of `never[]` to support convenient generator typing in `Calendar`.
+  // If `never[]` is used, then `Calendar#schedules` *must* be typed as a tuple in order to
+  // access any values in `generators` beyond the first (Calendar) value (the rest of the values
+  // get typed as `never`). This would prevent passing a variable to `Calendar#schedules`.
+  readonly generators: ReadonlyArray<unknown> = [];
 
-  set(prop: 'timezone', value: string | null): DateAdapter;
+  protected constructor(_date: unknown, options?: { duration?: number });
 
-  valueOf(): number;
+  abstract set(prop: 'timezone', value: string | null): this;
+  abstract set(prop: 'duration', value: number): this;
 
-  toISOString(): string;
+  abstract valueOf(): number;
+
+  abstract toISOString(): string;
 
   toDateTime(): DateTime;
 
-  toJSON(): IDateAdapter.JSON;
+  abstract toJSON(): DateAdapter.JSON;
 
-  assertIsValid(): boolean;
+  abstract assertIsValid(): boolean;
 }
 ```

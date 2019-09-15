@@ -1,4 +1,4 @@
-import { Dates, Rule, Schedule } from '@rschedule/core/generators';
+import { Dates, OccurrenceGenerator, Rule, Schedule } from '@rschedule/core/generators';
 
 import {
   ISerializeToJSONOptions,
@@ -27,7 +27,7 @@ declare module '@rschedule/core/generators' {
   class Schedule<Data = any> extends OccurrenceGenerator {
     static fromJSON<D = any>(
       json: Schedule.JSON,
-      options?: { timezone?: string | null },
+      options?: { timezone?: string | null; data?: (json: OccurrenceGenerator.JSON) => any },
     ): Schedule<D>;
 
     toJSON(opts?: ISerializeToJSONOptions): Schedule.JSON;
@@ -51,7 +51,7 @@ Schedule.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {
 
 Schedule.fromJSON = function parse(
   json: Schedule.JSON,
-  options: { timezone?: string | null } = {},
+  options: { timezone?: string | null; data?: (json: OccurrenceGenerator.JSON) => any } = {},
 ): Schedule {
   if (json.type !== 'Schedule') {
     throw new ParseJSONError('Invalid Schedule JSON');
@@ -62,7 +62,7 @@ Schedule.fromJSON = function parse(
     exrules: json.exrules.map(rule => Rule.fromJSON(rule, { timezone: json.timezone, ...options })),
     rdates: Dates.fromJSON(json.rdates, { timezone: json.timezone, ...options }),
     exdates: Dates.fromJSON(json.exdates, { timezone: json.timezone, ...options }),
-    data: json.data,
+    data: typeof options.data === 'function' ? options.data(json) : json.data,
     timezone: options.timezone || json.timezone,
   });
 };

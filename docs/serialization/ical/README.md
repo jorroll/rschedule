@@ -4,6 +4,8 @@
 
 The optional package `@rschedule/ical-tools` includes a new `VEvent` object for working with [iCalendar `VEVENT` components](https://tools.ietf.org/html/rfc5545#section-3.6.1), as well as `serializeToICal()` and `parseICal()` functions.
 
+**Important:** If you are _only_ interested in ICAL support, consider using [rrulejs](https://github.com/jakubroztocil/rrule) instead of rSchedule as it currently has greater support for ICAL recurrence rules.
+
 Some limitations:
 
 - Parsing / serializing `VCALENDAR` components is not currently supported.
@@ -13,9 +15,7 @@ Some limitations:
 Example:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
-const vEvent = new VEvent<typeof StandardDateAdapter>({
+const vEvent = new VEvent({
   start: new Date(),
 });
 
@@ -48,13 +48,11 @@ See the [`VEvent` object section](./vevent) for more info on the `VEvent` object
 
 ### `serializeToICal()`
 
-The `serializeToICal()` function accepts a spread of `VEvent` objects and returns an array of iCalendar strings representing those objects.
+The `serializeToICal()` function accepts a `VEvent` object and returns an iCalendar strings representing that object.
 
 Example:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
 const vEvent = new VEvent({
   start: new Date(),
 });
@@ -64,13 +62,11 @@ const iCal = serializeToICal(vEvent); // => string
 
 ### `parseICal()`
 
-The `parseICal()` function accepts either a single iCal string or an array of iCal strings, as well an options object with an optional dateAdapter property. If no options object is provided, `RScheduleConfig.defaultDateAdapter` is used. An `IParsedICalString<T extends typeof DateAdapter>` object is returned.
+The `parseICal()` function accepts an iCal string and returns a `IParsedICalString` object.
 
 Example:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
 const iCal = // ... ical string
 
 const result = parseICal(iCal);

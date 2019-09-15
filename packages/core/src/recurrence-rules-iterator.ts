@@ -18,7 +18,7 @@ export interface IRecurrenceRulesIteratorArgs {
 }
 
 export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
-  implements IRecurrenceRulesIterator<T>, IterableIterator<DateTime> {
+  implements IRecurrenceRulesIterator<T>, IterableIterator<DateTime | undefined> {
   readonly start!: DateTime;
   readonly end?: DateTime;
   readonly reverse: boolean;
@@ -129,6 +129,8 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
       date = dateCache.shift();
     }
+
+    return undefined;
   }
 
   private *iterateWithCount() {
@@ -137,7 +139,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     const iterable = this.iterate();
     const start = this.args.start || this.start;
 
-    let date: DateTime | undefined = iterable.next().value;
+    let date: DateTime | void = iterable.next().value;
     let index = 1;
 
     while (date && index <= this.options.count!) {
@@ -150,6 +152,8 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
       date = iterable.next(yield date).value;
     }
+
+    return undefined;
   }
 
   private *iterate() {
@@ -170,6 +174,8 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
         );
       }
     }
+
+    return undefined;
   }
 
   /**

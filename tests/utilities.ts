@@ -14,7 +14,7 @@ import { ICAL_RULES } from '@rschedule/core/rules/ICAL_RULES';
 // This function allows me to use the test's name as a
 // variable inside the test
 export function test<T>(name: T, fn: (name: T) => any) {
-  if (name instanceof DateAdapterBase) {
+  if (name instanceof DateAdapterBase || name instanceof DateTime) {
     it(name.toISOString(), () => {
       fn(name);
     });
@@ -22,6 +22,20 @@ export function test<T>(name: T, fn: (name: T) => any) {
     it(`${name}`, () => {
       fn(name);
     });
+  }
+}
+
+export namespace test {
+  export function skip<T>(name: T, fn: (name: T) => any) {
+    if (name instanceof DateAdapterBase || name instanceof DateTime) {
+      it.skip(name.toISOString(), () => {
+        fn(name);
+      });
+    } else {
+      it.skip(`${name}`, () => {
+        fn(name);
+      });
+    }
   }
 }
 

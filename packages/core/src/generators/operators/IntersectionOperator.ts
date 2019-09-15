@@ -4,6 +4,7 @@ import {
   IOperatorConfig,
   IRunArgs,
   OccurrenceGenerator,
+  OccurrenceGeneratorRunResult,
   Operator,
   OperatorFnOutput,
 } from '../occurrence-generator';
@@ -93,7 +94,7 @@ export class IntersectionOperator extends Operator {
     );
   }
 
-  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+  *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     const streams = this.streams.map(stream => new IterableWrapper(stream._run(args)));
 
     if (this.config.base) {
@@ -118,7 +119,7 @@ export class IntersectionOperator extends Operator {
     let stream = selectNextIterable(streams, args);
 
     while (!streams.some(stream => stream.done)) {
-      const yieldArgs = yield this.normalizeRunOutput(stream.value);
+      const yieldArgs = yield this.normalizeRunOutput(stream.value!);
 
       const lastValidDate = stream.value;
 
@@ -193,9 +194,9 @@ function cycleStreams(
 
   if (streams.some(stream => stream.done) || streamPastEnd(next, options)) return false;
 
-  if (streams.every(stream => stream.value.isEqual(next.value))) return true;
+  if (streams.every(stream => stream.value!.isEqual(next.value))) return true;
 
-  if (lastValidDate && next.value.isEqual(lastValidDate)) return true;
+  if (lastValidDate && next.value!.isEqual(lastValidDate)) return true;
 
   options.iteration++;
 
@@ -206,7 +207,7 @@ function cycleStreams(
   const last = selectLastIterable(streams, options);
 
   streams.forEach(stream => {
-    stream.skipToDate(last.value, options);
+    stream.skipToDate(last.value!, options);
   });
 
   return cycleStreams(streams, lastValidDate, options);

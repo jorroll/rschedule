@@ -1,11 +1,17 @@
 import { ArgumentError, DateTime } from '@rschedule/core';
-import { IOperatorConfig, IRunArgs, Operator, OperatorFnOutput } from '../occurrence-generator';
+import {
+  IOperatorConfig,
+  IRunArgs,
+  OccurrenceGeneratorRunResult,
+  Operator,
+  OperatorFnOutput,
+} from '../occurrence-generator';
 import { IterableWrapper } from './_util';
 
 class DurationIterableWrapper extends IterableWrapper {
-  workingValue: DateTime;
+  workingValue: DateTime | undefined;
 
-  constructor(readonly stream: IterableIterator<DateTime>) {
+  constructor(readonly stream: OccurrenceGeneratorRunResult) {
     super(stream);
 
     this.workingValue = this.value;
@@ -97,7 +103,7 @@ export class MergeDurationOperator extends Operator {
     );
   }
 
-  _run(args: IRunArgs = {}): IterableIterator<DateTime> {
+  _run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     return args.reverse ? this.reverseRun(args) : this.forwardRun(args);
   }
 
@@ -109,7 +115,7 @@ export class MergeDurationOperator extends Operator {
     return true;
   }
 
-  private *forwardRun(args: IRunArgs = {}): IterableIterator<DateTime> {
+  private *forwardRun(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (!this.config.base) return;
 
     // We want to find occurrences that end after the provided
@@ -136,7 +142,7 @@ export class MergeDurationOperator extends Operator {
     // `stream.workingValue` will not have been yielded yet
     while (stream.workingValue) {
       // TODO(@john.carroll.p): figure out how to handle `DateTime#generators` for merged `DateTimes`
-      while (!stream.done && stream.workingValue.end!.isAfterOrEqual(stream.value)) {
+      while (!stream.done && stream.workingValue.end!.isAfterOrEqual(stream.value!)) {
         if (stream.workingValue.duration! > this.maxDuration) {
           throw new MergeDurationOperatorError(
             `MergeDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
@@ -144,8 +150,8 @@ export class MergeDurationOperator extends Operator {
           );
         }
 
-        if (stream.value.end!.isAfter(stream.workingValue.end!)) {
-          const diff = stream.value.end!.valueOf() - stream.workingValue.end!.valueOf();
+        if (stream.value!.end!.isAfter(stream.workingValue.end!)) {
+          const diff = stream.value!.end!.valueOf() - stream.workingValue.end!.valueOf();
 
           stream.workingValue = DateTime.fromJSON({
             ...stream.workingValue.toJSON(),
@@ -195,7 +201,7 @@ export class MergeDurationOperator extends Operator {
     }
   }
 
-  private *reverseRun(args: IRunArgs = {}): IterableIterator<DateTime> {
+  private *reverseRun(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (!this.config.base) return;
 
     // We want to find occurrences that end after the provided
@@ -222,8 +228,8 @@ export class MergeDurationOperator extends Operator {
     // `stream.workingValue` will not have been yielded yet
     while (stream.workingValue) {
       // TODO(@john.carroll.p): figure out how to handle `DateTime#generators` for merged `DateTimes`
-      while (!stream.done && stream.workingValue.isBeforeOrEqual(stream.value.end!)) {
-        if (stream.workingValue.duration! > this.maxDuration) {
+      while (!stream.done && stream.workingValue!.isBeforeOrEqual(stream.value!.end!)) {
+        if (stream.workingValue!.duration! > this.maxDuration) {
           throw new MergeDurationOperatorError(
             `MergeDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
               this.maxDuration,
@@ -231,20 +237,20 @@ export class MergeDurationOperator extends Operator {
         }
 
         if (
-          stream.value.isBefore(stream.workingValue) ||
-          stream.value.end!.isAfter(stream.workingValue.end!)
+          stream.value!.isBefore(stream.workingValue!) ||
+          stream.value!.end!.isAfter(stream.workingValue!.end!)
         ) {
-          if (stream.value.end!.isAfter(stream.workingValue.end!)) {
+          if (stream.value!.end!.isAfter(stream.workingValue!.end!)) {
             // `stream.workingValue` is a subset of `stream.value`
             // so simply replace `stream.workingValue` with `stream.value`
             stream.workingValue = stream.value;
           } else {
-            const diff = stream.workingValue.valueOf() - stream.value.valueOf();
+            const diff = stream.workingValue!.valueOf() - stream.value!.valueOf();
 
             stream.workingValue = DateTime.fromJSON({
               // replace workingValue with value
-              ...stream.value.toJSON(),
-              duration: stream.workingValue.duration! + diff,
+              ...stream.value!.toJSON(),
+              duration: stream.workingValue!.duration! + diff,
             });
           }
         }
@@ -254,14 +260,14 @@ export class MergeDurationOperator extends Operator {
 
       // check to make sure the occurrence we are about to yield starts before the
       // provided start time.
-      if (args.start && stream.workingValue.end!.isBefore(args.start)) {
+      if (args.start && stream.workingValue!.end!.isBefore(args.start)) {
         break;
       }
 
       if (
         yieldArgs &&
         yieldArgs.skipToDate &&
-        stream.workingValue.end!.isBefore(yieldArgs.skipToDate)
+        stream.workingValue!.end!.isBefore(yieldArgs.skipToDate)
       ) {
         stream.workingValue = stream.value;
         stream.picked();
@@ -275,14 +281,14 @@ export class MergeDurationOperator extends Operator {
         continue;
       }
 
-      if (stream.workingValue.duration! > this.maxDuration) {
+      if (stream.workingValue!.duration! > this.maxDuration) {
         throw new MergeDurationOperatorError(
           `MergeDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
             this.maxDuration,
         );
       }
 
-      yieldArgs = yield this.normalizeRunOutput(stream.workingValue);
+      yieldArgs = yield this.normalizeRunOutput(stream.workingValue!);
 
       stream.workingValue = stream.value;
       stream.picked();

@@ -1,5 +1,11 @@
 import { DateTime } from '@rschedule/core';
-import { IOperatorConfig, IRunArgs, Operator, OperatorFnOutput } from '../occurrence-generator';
+import {
+  IOperatorConfig,
+  IRunArgs,
+  OccurrenceGeneratorRunResult,
+  Operator,
+  OperatorFnOutput,
+} from '../occurrence-generator';
 import { IterableWrapper, streamPastEnd, streamPastSkipToDate } from './_util';
 
 /**
@@ -20,13 +26,13 @@ export class UniqueOperator extends Operator {
     });
   }
 
-  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+  *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (!this.config.base) return;
 
     const stream = new IterableWrapper(this.config.base._run(args));
 
     while (!stream.done) {
-      const yieldArgs = yield this.normalizeRunOutput(stream.value);
+      const yieldArgs = yield this.normalizeRunOutput(stream.value!);
 
       const lastValue = stream.value;
 
@@ -41,7 +47,7 @@ export class UniqueOperator extends Operator {
         }
       }
 
-      while (!streamPastEnd(stream, args) && stream.value.isEqual(lastValue)) {
+      while (!streamPastEnd(stream, args) && stream.value!.isEqual(lastValue)) {
         stream.picked();
       }
     }

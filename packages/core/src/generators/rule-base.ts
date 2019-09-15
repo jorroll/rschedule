@@ -15,6 +15,7 @@ import {
   IOccurrencesArgs,
   IRunArgs,
   OccurrenceGenerator,
+  OccurrenceGeneratorRunResult,
   OccurrenceIterator,
 } from './occurrence-generator';
 
@@ -103,7 +104,7 @@ export abstract class RuleBase<
     value: Options[Prop],
   ): RuleBase<Options, NOptions, Data>;
 
-  *_run(rawArgs: IRunArgs = {}): IterableIterator<DateTime> {
+  *_run(rawArgs: IRunArgs = {}): OccurrenceGeneratorRunResult {
     const args = this.normalizeRunArgs(rawArgs);
 
     const iterator = new RecurrenceRulesIterator(
@@ -125,5 +126,7 @@ export abstract class RuleBase<
 
       date = iterator.next(yieldArgs).value;
     }
+
+    return undefined;
   }
 }

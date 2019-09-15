@@ -2,23 +2,24 @@
 
 [**`Rule implements IOccurrenceGenerator`**](../#ioccurrencegenerator-interface)
 
-`Rule` objects implement the `RRULE` portion of the [iCAL spec](https://tools.ietf.org/html/rfc5545), and hold/process recurrence rules. While they can be used stand-alone, I expect most people to use them inside of `Schedule` objects. As with other rSchedule objects, `Rule` is immutable.
+`Rule` objects process recurrence rules. rSchedule is modular, so it is possible to pick and choose which recurrence rules are included, as well as create custom recurrence rules. If you're using the standard setup for rSchedule (e.g. `import '@rschedule/standard-date-adapter/setup'` or `import '@rschedule/moment-date-adapter/setup`) then all of the available [iCAL spec](https://tools.ietf.org/html/rfc5545) recurrence rules have been added for you.
 
-Rule objects are created with a variety of [iCAL spec](https://tools.ietf.org/html/rfc5545) options which are summarized below. If you're not familiar, you can read the [recurrence rule section of the ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10) to really familiarize yourself with the concepts (its not long).
+The following describes the ICAL recurrence rules which rSchedule has. Note, rSchedule currently doesn't provide recurrence rules for all iCal rules. `BYWEEKNO`, `BYYEARDAY`, and `BYSETPOS` are unsupported. If you're not familiar, you can read the [recurrence rule section of the ICAL spec](https://tools.ietf.org/html/rfc5545#section-3.3.10) to really familiarize yourself with the concepts (its not long).
 
-There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up the immutable rSchedule objects. [See the `rule-tools` docs for more information.](../rule-tools)
+There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `Schedule` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up the immutable rSchedule objects. [See the `rule-tools` docs for more information.](../rule-tools)
 
 Rule objects support:
 
 ```typescript
-export interface IProvidedRuleOptions<T extends typeof DateAdapter> {
-  start: RuleOption.Start<T>;
-  end?: RuleOption.End<T>;
+export interface IRuleOptions {
+  start: RuleOption.Start;
+  end?: RuleOption.End;
   duration?: RuleOption.Duration;
   frequency: RuleOption.Frequency;
   interval?: RuleOption.Interval;
   count?: RuleOption.Count;
   weekStart?: RuleOption.WeekStart;
+  byMillisecondOfSecond?: RuleOption.ByMillisecondOfSecond[];
   bySecondOfMinute?: RuleOption.BySecondOfMinute[];
   byMinuteOfHour?: RuleOption.ByMinuteOfHour[];
   byHourOfDay?: RuleOption.ByHourOfDay[];
@@ -27,21 +28,18 @@ export interface IProvidedRuleOptions<T extends typeof DateAdapter> {
   byMonthOfYear?: RuleOption.ByMonthOfYear[];
 }
 
-export namespace IDateAdapter {
-  export type Weekday = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
-}
-
 export namespace RuleOption {
   // Either a date object or a date adapter object.
-  export type Start<T extends typeof DateAdapter> = DateInput<T>;
+  export type Start = DateInput;
   // Either a date object or a date adapter object.
-  export type End<T extends typeof DateAdapter> = DateInput<T>;
+  export type End = DateInput;
   // A length of time in milliseconds
   export type Duration = number;
   export type Interval = number;
   export type Count = number;
-  export type WeekStart = IDateAdapter.Weekday;
+  export type WeekStart = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
   export type Frequency =
+    | 'MILLISECONDLY'
     | 'SECONDLY'
     | 'MINUTELY'
     | 'HOURLY'
@@ -59,7 +57,15 @@ export namespace RuleOption {
    * If the number is negative, it is calculated from the end of
    * the month / year.
    */
-  export type ByDayOfWeek = IDateAdapter.Weekday | [IDateAdapter.Weekday, number];
+  export type ByDayOfWeek =
+    | 'SU'
+    | 'MO'
+    | 'TU'
+    | 'WE'
+    | 'TH'
+    | 'FR'
+    | 'SA'
+    | ['SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA', number];
   export type ByMillisecondOfSecond = number;
   export type BySecondOfMinute = number;
   export type ByMonthOfYear = number;
@@ -263,40 +269,34 @@ type BySecondOfMinute = 0 | 1 | 2 | // ... | 60
 `Rule` has the following constructor.
 
 ```typescript
-class Rule<T extends typeof DateAdapter, D = any> {
-  static isRule(object: unknown): object is Rule<any>;
-
+class Rule<D = any> {
   data: D;
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
   readonly maxDuration: number;
   readonly duration: number | undefined;
   readonly timezone: string | null;
-  readonly options: IProvidedRuleOptions<T>;
+  readonly options: IRuleOptions;
 
   constructor(
-    options: IProvidedRuleOptions<T>,
+    options: IRuleOptions,
     args?: {
       // The data property holds arbitrary data associated with the `Rule`.
       // The data property is also the one exception to rSchedule's immutability:
       // the data property is mutable.
       //
       // When iterating through a Rule, you can access a list of the generator objects (i.e. this Rule)
-      // which generated any yielded date by accessing the `IDateAdapter#generators` property.
+      // which generated any yielded date by accessing the `DateAdapter#generators` property.
       // In this way, for a given, yielded date, you can access the object which generated
       // the date (in this case, this Rule) as well as the arbitrary data associated with that object (this data).
       data?: D;
-      dateAdapter?: T;
       timezone?: string | null;
       maxDuration?: number; // see the OccurrenceGenerator interface for info
     },
   );
 
   set(prop: 'timezone', value: string | null, tzoptions?: { keepLocalTime?: boolean }): Rule<T, D>;
-  set(prop: 'options', value: IProvidedRuleOptions<T>): Rule<T, D>;
-  set<O extends keyof IProvidedRuleOptions<T>>(
-    prop: O,
-    value: IProvidedRuleOptions<T>[O],
-  ): Rule<T, D>;
+  set(prop: 'options', value: IRuleOptions): Rule<T, D>;
+  set<O extends keyof IRuleOptions>(prop: O, value: IRuleOptions[O]): Rule<T, D>;
 }
 ```

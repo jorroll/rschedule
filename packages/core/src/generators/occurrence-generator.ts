@@ -18,7 +18,7 @@ export interface IRunArgs {
   reverse?: boolean;
 }
 
-// export type DateAdapterFor<S> = S extends OccurrenceGenerator<infer A> ? A : never;
+export type OccurrenceGeneratorRunResult = IterableIterator<DateTime>;
 
 export abstract class OccurrenceGenerator {
   abstract readonly isInfinite: boolean;
@@ -90,7 +90,7 @@ export abstract class OccurrenceGenerator {
    *
    * use `occurrences()` instead
    */
-  abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
+  abstract _run(args?: IRunArgs): OccurrenceGeneratorRunResult;
 
   /**
    * Processes the object's rules/dates and returns an iterable for the occurrences.
@@ -516,7 +516,7 @@ export interface IOccurrencesArgs {
 export class OccurrenceIterator<
   G extends ReadonlyArray<OccurrenceGenerator> = ReadonlyArray<OccurrenceGenerator>
 > {
-  private readonly iterator: IterableIterator<DateTime>;
+  private readonly iterator: OccurrenceGeneratorRunResult;
   private readonly isInfinite: boolean;
 
   constructor(private iterable: OccurrenceGenerator, private args: IRunArgs) {
@@ -813,8 +813,6 @@ export abstract class Operator extends OccurrenceGenerator {
     this.isInfinite = this.calculateIsInfinite();
     this.hasDuration = this.calculateHasDuration();
   }
-
-  abstract _run(args?: IRunArgs): IterableIterator<DateTime>;
 
   protected abstract calculateIsInfinite(): boolean;
   protected abstract calculateHasDuration(): boolean;

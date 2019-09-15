@@ -23,7 +23,7 @@ export interface IVEventArgs<D = any> {
   maxDuration?: number;
 }
 
-export class VEvent<Data = any> extends ScheduleBase<IVEventRuleOptions | RRule, Data> {
+export class VEvent<Data = any> extends ScheduleBase<Data> {
   // For some reason, error is thrown if typed as `readonly Rule[]`
   readonly rrules: ReadonlyArray<RRule> = [];
   readonly exrules: ReadonlyArray<RRule> = [];
@@ -175,8 +175,6 @@ export class VEvent<Data = any> extends ScheduleBase<IVEventRuleOptions | RRule,
     this._start = this.start.toDateTime();
 
     this.timezone = this.start.timezone;
-
-    this.data = options.data as Data;
 
     if (typeof options.duration === 'object') {
       this.duration = this.normalizeDateInputToAdapter(options.duration);

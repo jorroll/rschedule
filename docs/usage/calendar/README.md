@@ -1,25 +1,23 @@
 # Calendar class
 
-[**`Calendar implements IOccurrenceGenerator`**](../#ioccurrencegenerator-interface)
+[**`Calendar implements OccurrenceGenerator`**](../#occurrencegenerator-interface)
 
-While [`Schedule`](../schedule) objects are intended to represent the schedule of a single event, `Calendar` objects are intended to represent a group (calendar) of events. `Calendar` objects support iterating through _the union_ of a group of [`IOccurrenceGenerator`](../#ioccurrencegenerator-interface) objects. As with other rSchedule objects, `Calendar` is immutable.
+While [`Schedule`](../schedule) objects are intended to represent the schedule of a single event, `Calendar` objects are intended to represent a group (calendar) of events. `Calendar` objects support iterating through _the union_ of a group of [`OccurrenceGenerator`](../#occurrencegenerator-interface) objects. As with other rSchedule objects, `Calendar` is immutable.
 
-Unlike `Schedule` or `Rule` objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different occurrence generator). Because `Calendar` objects are constructed from objects which implement the [`IOccurrenceGenerator` interface](../#shared-interfaces), you can construct calendars out of other `Calendars`, out of `Schedules`, `Rules`, etc.
+Unlike `Schedule` or `Rule` objects, Calendar objects allow multiple occurrences happening at the same time (each associated with a different occurrence generator). Because `Calendar` objects are constructed from objects which implement the [`OccurrenceGenerator` interface](../#shared-interfaces), you can construct calendars out of other `Calendars`, out of `Schedules`, `Rules`, etc.
 
 Example:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
 const calendar = new Calendar({
   schedules: [new Schedule(), new Calendar()],
   data: 'Holds anything I want',
 });
 
-// See the `IOccurrenceGenerator` interface for info on `IOccurrenceGenerator#collections()`
-for (const collection of calendar.collections({ grandularity: 'MONTHLY' })) {
-  for (const date of collection.dates) {
-    const calendar = date.generators[0]; // see `IDateAdapter#generators`
+// See the `OccurrenceGenerator` interface for info on `OccurrenceGenerator#collections()`
+for (const { dates } of calendar.collections({ grandularity: 'MONTHLY' })) {
+  for (const adapter of dates) {
+    const calendar = adapter.generators[0]; // see `DateAdapter#generators`
 
     const data = calendar.data; // see data property description, below.
 
@@ -35,40 +33,33 @@ for (const collection of calendar.collections({ grandularity: 'MONTHLY' })) {
 `Calendar` has the following constructor.
 
 ```typescript
-class Calendar<T extends typeof DateAdapter, D = any> {
-  static isCalendar(object: unknown): object is Calendar<any>;
-
+class Calendar<D = any> {
   data: D;
-  readonly schedules: ReadonlyArray<IOccurrenceGenerator<T>>;
+  readonly schedules: ReadonlyArray<OccurrenceGenerator>;
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
   readonly maxDuration: number;
 
   constructor(args: {
-    schedules?: IOccurrenceGenerator<T>[] | IOccurrenceGenerator<T>;
+    schedules?: OccurrenceGenerator[] | OccurrenceGenerator;
     // The data property holds arbitrary data associated with the `Calendar`.
     // The data property is also the one exception to rSchedule's immutability:
     // the data property is mutable.
     //
     // When iterating through a Calendar, you can access a list of the generator objects
     // (i.e. Schedules, Rules, Dates, etc) which generated any yielded date by accessing
-    // the `IDateAdapter#generators` property. In this way, for a given, yielded date,
+    // the `DateAdapter#generators` property. In this way, for a given, yielded date,
     // you can access the objects which generated the date as well as the arbitrary data
     // associated with those objects.
     data?: D;
-    dateAdapter?: T;
     timezone?: string | null;
     maxDuration?: number; // see the OccurrenceGenerator interface for info
   });
 
-  set(
-    prop: 'timezone',
-    value: string | null,
-    options?: { keepLocalTime?: boolean },
-  ): Calendar<T, D>;
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): Calendar<D>;
   set(
     prop: 'schedules',
-    value: ReadonlyArray<IOccurrenceGenerator<T>> | IOccurrenceGenerator<T>,
-  ): Calendar<T, D>;
+    value: ReadonlyArray<OccurrenceGenerator> | OccurrenceGenerator,
+  ): Calendar<D>;
 }
 ```

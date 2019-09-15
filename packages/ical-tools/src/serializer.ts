@@ -163,33 +163,20 @@ function vEventToJCal(vevent: VEvent): IJCalComponent {
   );
 }
 
-export function serializeToJCal(inputs: VEvent): IJCalComponent;
-export function serializeToJCal(...inputs: VEvent[]): IJCalComponent[];
-export function serializeToJCal(...inputs: VEvent[]): IJCalComponent[] | IJCalComponent {
-  const jCal = inputs.map(input => {
-    if (input instanceof VEvent) {
-      return vEventToJCal(input);
-    } else {
-      throw new SerializeICalError(`Unsupported input type "${input}"`);
-    }
-  });
+export function serializeToJCal(input: VEvent): IJCalComponent {
+  if (!(input instanceof VEvent)) {
+    throw new SerializeICalError(`Unsupported input type "${input}"`);
+  }
 
-  return jCal.length > 1 ? jCal : jCal[0];
+  return vEventToJCal(input);
 }
 
-export function serializeToICal(inputs: VEvent): string;
-export function serializeToICal(...inputs: VEvent[]): string[];
-export function serializeToICal(...inputs: VEvent[]): string[] | string {
-  const jCal = serializeToJCal(...inputs);
+export function serializeToICal(input: VEvent): string {
+  const jCal = serializeToJCal(input);
 
-  const iCal = (inputs.length === 1 ? [(jCal as unknown) as IJCalComponent] : jCal).map(
-    (jcal: any) =>
-      // ical.js makes new lines with `\r\n` instead of just `\n`
-      // `\r` is a "Carriage Return" character. We'll remove it.
-      stringify(jcal).replace(/\r/g, ''),
-  );
-
-  return iCal.length > 1 ? iCal : iCal[0];
+  // ical.js makes new lines with `\r\n` instead of just `\n`
+  // `\r` is a "Carriage Return" character. We'll remove it.
+  return stringify((jCal as any) as any[]).replace(/\r/g, '');
 }
 
 function serializeByDayOfWeek(arg: RuleOption.ByDayOfWeek) {

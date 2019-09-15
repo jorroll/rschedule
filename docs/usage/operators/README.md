@@ -9,15 +9,13 @@ This library exports a selection of occurrence stream operators for manipulating
 - [MergeDuration](#mergeduration)
 - [SplitDuration](#splitduration)
 
-Each of these operator functions is used as an argument to `IOccurrenceGenerator#pipe()`.
+Each of these operator functions is used as an argument to `OccurrenceGenerator#pipe()`.
 
 If you look at the source code for `Schedule` and `Calendar`, you'll see that, internally, their iteration logic is implemented with these operators. You can use these operators to create complex custom schedules.
 
 For example:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
 const rrules = new Rule({
   // ...rule options
 });
