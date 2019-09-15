@@ -4,6 +4,7 @@ import { ByMillisecondOfSecondRuleModule } from '../ByMillisecondOfSecond';
 import { ByMinuteOfHourRuleModule } from '../ByMinuteOfHour';
 import { BySecondOfMinuteRuleModule } from '../BySecondOfMinute';
 import { FrequencyRuleModule } from '../Frequency';
+import { ruleOptionFilled } from '../utilities/rule-option-filled';
 import { RevByDayOfMonthRule } from './rev-rule';
 import { ByDayOfMonthRule, IByDayOfMonthRuleOptions, INormByDayOfMonthRuleOptions } from './rule';
 
@@ -23,19 +24,22 @@ export const ByDayOfMonthRuleModule: IRecurrenceRuleModule<
         throw new RuleOptionError('when "frequency" is "WEEKLY", "byDayOfMonth" cannot be present');
       }
 
-      if (!Array.isArray(options.byDayOfMonth)) {
-        throw new RuleOptionError('"byDayOfMonth" expects an array');
+      if (!ruleOptionFilled(options.byDayOfMonth)) {
+        throw new RuleOptionError('"byDayOfMonth" expects a non-empty array');
       }
 
       if (options.byDayOfMonth.some((num: number) => num === 0 || num < -31 || num > 31)) {
         throw new RuleOptionError(
-          '"byDayOfMonth" values must be `num !== 0 && num < 31 && num > -31`',
+          '"byDayOfMonth" values must be `num !== 0 && num <= 31 && num >= -31`',
         );
       }
 
       norm.byDayOfMonth = options.byDayOfMonth.slice();
     } else if (
-      !(options.byDayOfMonth || (options as any).byDayOfWeek) &&
+      !(
+        ruleOptionFilled((options as any).byDayOfWeek) ||
+        ruleOptionFilled((options as any).byDayOfYear)
+      ) &&
       ['YEARLY', 'MONTHLY'].includes(options.frequency)
     ) {
       norm.byDayOfMonth = [norm.start.get('day')];

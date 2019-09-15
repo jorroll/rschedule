@@ -10,10 +10,10 @@ export default function datesTests() {
     dates: Dates,
     tests: any[],
     // Array<
-    //   { occursBefore: IDateAdapter<T>, excludeStart?: boolean, expect: boolean } |
-    //   { occursAfter: IDateAdapter<T>, excludeStart?: boolean, expect: boolean } |
-    //   { occursBetween: [IDateAdapter<T>, IDateAdapter<T>], excludeEnds?: boolean, expect: boolean } |
-    //   { occursOn: IDateAdapter<T>, expect: boolean }
+    //   { occursBefore: DateAdapter, excludeStart?: boolean, expect: boolean } |
+    //   { occursAfter: DateAdapter, excludeStart?: boolean, expect: boolean } |
+    //   { occursBetween: [DateAdapter, DateAdapter], excludeEnds?: boolean, expect: boolean } |
+    //   { occursOn: DateAdapter, expect: boolean }
     // >
   ) {
     describe(name, () => {

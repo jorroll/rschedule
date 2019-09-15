@@ -3,6 +3,7 @@ import {
   IOperatorConfig,
   IRunArgs,
   OccurrenceGenerator,
+  OccurrenceGeneratorRunResult,
   Operator,
   OperatorFnOutput,
 } from '../occurrence-generator';
@@ -29,7 +30,7 @@ export class SubtractOperator extends Operator {
     });
   }
 
-  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+  *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (!this.config.base) return;
 
     const inclusion = new IterableWrapper(this.config.base._run(args));
@@ -44,7 +45,7 @@ export class SubtractOperator extends Operator {
     if (streamPastEnd(inclusion, args)) return;
 
     while (!inclusion.done) {
-      const yieldArgs = yield this.normalizeRunOutput(inclusion.value);
+      const yieldArgs = yield this.normalizeRunOutput(inclusion.value!);
 
       inclusion.picked();
 
@@ -80,7 +81,7 @@ function cycleStreams(
 ) {
   iterateExclusion(inclusion, exclusion, options);
 
-  while (!inclusion.done && !exclusion.done && inclusion.value.isEqual(exclusion.value)) {
+  while (!inclusion.done && !exclusion.done && inclusion.value!.isEqual(exclusion.value)) {
     inclusion.picked();
     iterateExclusion(inclusion, exclusion, options);
   }
@@ -92,14 +93,14 @@ function iterateExclusion(
   options: { reverse?: boolean } = {},
 ) {
   if (options.reverse) {
-    while (!exclusion.done && !inclusion.done && exclusion.value.isAfter(inclusion.value)) {
+    while (!exclusion.done && !inclusion.done && exclusion.value!.isAfter(inclusion.value!)) {
       exclusion.picked();
     }
 
     return;
   }
 
-  while (!exclusion.done && !inclusion.done && exclusion.value.isBefore(inclusion.value)) {
+  while (!exclusion.done && !inclusion.done && exclusion.value!.isBefore(inclusion.value!)) {
     exclusion.picked();
   }
 }

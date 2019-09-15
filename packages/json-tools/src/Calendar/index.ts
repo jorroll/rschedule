@@ -14,14 +14,14 @@ declare module '@rschedule/core/generators' {
       type: 'Calendar';
       timezone?: string | null;
       schedules: OccurrenceGenerator.JSON[];
-      data?: unknown;
+      data?: any;
     }
   }
 
   class Calendar<Data = any> extends OccurrenceGenerator {
     static fromJSON<D = any>(
       json: Calendar.JSON,
-      options?: { timezone?: string | null },
+      options?: { timezone?: string | null; data?: (json: OccurrenceGenerator.JSON) => any },
     ): Calendar<D>;
 
     toJSON(opts?: ISerializeToJSONOptions): Calendar.JSON;
@@ -30,7 +30,7 @@ declare module '@rschedule/core/generators' {
 
 Calendar.fromJSON = function parse(
   json: Calendar.JSON,
-  options: { timezone?: string | null } = {},
+  options: { timezone?: string | null; data?: (json: OccurrenceGenerator.JSON) => any } = {},
 ): Calendar<any> {
   if (json.type !== 'Calendar') {
     throw new ParseJSONError('Invalid Calendar JSON');
@@ -40,7 +40,7 @@ Calendar.fromJSON = function parse(
     schedules: json.schedules.map(sched =>
       OccurrenceGenerator.fromJSON(sched, { timezone: json.timezone, ...options }),
     ),
-    data: json.data,
+    data: typeof options.data === 'function' ? options.data(json) : json.data,
     timezone: options.timezone || json.timezone,
   });
 };

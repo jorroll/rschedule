@@ -1,10 +1,11 @@
 import { DateTime } from '@rschedule/core';
+import { OccurrenceGeneratorRunResult } from '../occurrence-generator';
 
 export class IterableWrapper {
   done!: boolean;
-  value!: DateTime;
+  value!: DateTime | undefined;
 
-  constructor(readonly stream: IterableIterator<DateTime>) {
+  constructor(readonly stream: OccurrenceGeneratorRunResult) {
     this.picked();
   }
 
@@ -17,7 +18,7 @@ export class IterableWrapper {
 
   skipToDate(date: DateTime, options: { reverse?: boolean }) {
     if (this.done) return;
-    if (options.reverse ? date.isAfter(this.value) : date.isBefore(this.value)) return;
+    if (options.reverse ? date.isAfter(this.value!) : date.isBefore(this.value!)) return;
 
     const { done, value } = this.stream.next({ skipToDate: date });
 
@@ -35,7 +36,7 @@ export function selectNextIterable(
       if (prev.done) return curr;
       if (curr.done) return prev;
 
-      return prev.value.isAfter(curr.value) ? prev : curr;
+      return prev.value!.isAfter(curr.value!) ? prev : curr;
     });
   }
 
@@ -43,7 +44,7 @@ export function selectNextIterable(
     if (prev.done) return curr;
     if (curr.done) return prev;
 
-    return prev.value.isBefore(curr.value) ? prev : curr;
+    return prev.value!.isBefore(curr.value!) ? prev : curr;
   });
 }
 
@@ -56,7 +57,7 @@ export function selectLastIterable(
       if (prev.done) return curr;
       if (curr.done) return prev;
 
-      return prev.value.isBefore(curr.value) ? prev : curr;
+      return prev.value!.isBefore(curr.value!) ? prev : curr;
     });
   }
 
@@ -64,7 +65,7 @@ export function selectLastIterable(
     if (prev.done) return curr;
     if (curr.done) return prev;
 
-    return prev.value.isAfter(curr.value) ? prev : curr;
+    return prev.value!.isAfter(curr.value!) ? prev : curr;
   });
 }
 
@@ -75,8 +76,8 @@ export function streamPastEnd(
   return (
     stream.done ||
     !!(options.reverse
-      ? options.start && options.start.isAfter(stream.value)
-      : options.end && options.end.isBefore(stream.value))
+      ? options.start && options.start.isAfter(stream.value!)
+      : options.end && options.end.isBefore(stream.value!))
   );
 }
 
@@ -88,7 +89,7 @@ export function streamPastSkipToDate(
   return (
     stream.done ||
     !!(options.reverse
-      ? skipToDate.isAfterOrEqual(stream.value)
-      : skipToDate.isBeforeOrEqual(stream.value))
+      ? skipToDate.isAfterOrEqual(stream.value!)
+      : skipToDate.isBeforeOrEqual(stream.value!))
   );
 }

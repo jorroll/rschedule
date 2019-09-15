@@ -13,7 +13,7 @@ import {
 
 import { RecurrenceRule } from '../utilities/recurrence-rule';
 
-declare module '@rschedule/core' {
+declare module '../../recurrence-rule-options' {
   namespace RuleOption {
     type Frequency =
       | 'MILLISECONDLY'

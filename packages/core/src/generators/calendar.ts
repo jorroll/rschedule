@@ -6,6 +6,7 @@ import {
   IOccurrencesArgs,
   IRunArgs,
   OccurrenceGenerator,
+  OccurrenceGeneratorRunResult,
   OccurrenceIterator,
 } from './occurrence-generator';
 
@@ -94,14 +95,14 @@ export class Calendar<Data = any> extends OccurrenceGenerator {
     throw new ArgumentError('Unknown value for `prop`: ' + `"${prop}"`);
   }
 
-  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+  *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (this.schedules.length === 0) return;
 
     const count = args.take;
 
     delete args.take;
 
-    let iterator: IterableIterator<DateTime>;
+    let iterator: OccurrenceGeneratorRunResult;
 
     if (this.schedules.length === 1) {
       iterator = this.schedules[0]._run(args);
@@ -123,5 +124,7 @@ export class Calendar<Data = any> extends OccurrenceGenerator {
 
       index++;
     }
+
+    return undefined;
   }
 }

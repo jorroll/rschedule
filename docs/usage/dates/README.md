@@ -1,19 +1,17 @@
 # Dates class
 
-[**`Dates implements IOccurrenceGenerator`**](../#ioccurrencegenerator-interface)
+[**`Dates extends OccurrenceGenerator`**](../#occurrencegenerator-interface)
 
-The `Dates` class provides a `IOccurrenceGenerator` wrapper for an array of dates. As with other rSchedule objects, `Dates` is immutable.
+The `Dates` class provides a `OccurrenceGenerator` wrapper for an array of dates. As with other rSchedule objects, `Dates` is immutable.
 
 Example usage:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdatper;
-
 const dates = new Dates({
   dates: [new Date(2000), new Date(2001), new Date(2002)],
 });
 
-for (const date of dates.occurrences({ start: new Date(2000, 5) })) {
+for (const { date } of dates.occurrences({ start: new Date(2000, 5) })) {
   // do stuff
 }
 
@@ -25,14 +23,12 @@ dates.occursOn({ date: new Date(2003) }); // false
 `Dates` has the following constructor.
 
 ```typescript
-class Dates<T extends typeof DateAdapter, D = any> {
-  static isDates(object: unknown): object is Dates<any>;
-
+class Dates<D = any> {
   data: D;
   readonly length: number;
-  readonly adapters: readonly InstanceType<T>[];
-  readonly firstDate: InstanceType<T> | null;
-  readonly lastDate: InstanceType<T> | null
+  readonly adapters: readonly DateAdapter[];
+  readonly firstDate: DateAdapter | null;
+  readonly lastDate: DateAdapter | null;
   readonly isInfinite = false;
   readonly hasDuration: boolean;
   readonly maxDuration: number;
@@ -41,21 +37,20 @@ class Dates<T extends typeof DateAdapter, D = any> {
   constructor(args: {
     timezone?: string | null;
     duration?: number;
-    dates?: Array<DateInput<T>>;
+    dates?: Array<DateInput>;
     // The data property holds arbitrary data associated with the `Dates`.
     // The data property is also the one exception to rSchedule's immutability:
     // the data property is mutable.
     //
     // When iterating through a Dates, you can access a list of the generator objects (i.e. this Dates)
-    // which generated any yielded date by accessing the `IDateAdapter#generators` property.
+    // which generated any yielded date by accessing the `DateAdapter#generators` property.
     // In this way, for a given, yielded date, you can access the object which generated
     // the date (in this case, this Dates) as well as the arbitrary data associated with that object (this data).
     data?: D;
-    dateAdapter?: T;
   });
 
-  add(value: DateInput<T>): Dates<T>;
-  remove(value: DateInput<T>): Dates<T>;
+  add(value: DateInput): Dates<D>;
+  remove(value: DateInput): Dates<D>;
 
   /**
    * Dates are immutable. This allows you to create a new `Dates` with the
@@ -75,16 +70,16 @@ class Dates<T extends typeof DateAdapter, D = any> {
    * the `dates` property.
    *
    */
-  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): Dates<T, D>;
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): Dates<D>;
   /**
    * Dates are immutable. This allows you to create a new `Dates` with new date objects.
    */
-  set(prop: 'dates', value: DateInput<T>[]): Dates<T, D>;
+  set(prop: 'dates', value: DateInput[]): Dates<D>;
   /**
    * Dates are immutable. This allows you to create a new `Dates` with all of the underlying
    * date objects set to have the specified `duration`. Duration is a length of time,
    * expressed in milliseconds.
    */
-  set(prop: 'duration', value: number | undefined): Dates<T, D>;
+  set(prop: 'duration', value: number | undefined): Dates<D>;
 }
 ```

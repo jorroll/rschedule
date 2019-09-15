@@ -5,6 +5,7 @@ import { ByMillisecondOfSecondRuleModule } from '../ByMillisecondOfSecond';
 import { ByMinuteOfHourRuleModule } from '../ByMinuteOfHour';
 import { BySecondOfMinuteRuleModule } from '../BySecondOfMinute';
 import { FrequencyRuleModule } from '../Frequency';
+import { ruleOptionFilled } from '../utilities/rule-option-filled';
 import { RevByMonthOfYearRule } from './rev-rule';
 import {
   ByMonthOfYearRule,
@@ -26,8 +27,8 @@ export const ByMonthOfYearRuleModule: IRecurrenceRuleModule<
   },
   normalizeOptions: (options, norm) => {
     if (options.byMonthOfYear !== undefined) {
-      if (!Array.isArray(options.byMonthOfYear)) {
-        throw new RuleOptionError('"byMonthOfYear" expects an array');
+      if (!ruleOptionFilled(options.byMonthOfYear)) {
+        throw new RuleOptionError('"byMonthOfYear" expects a non-empty array');
       }
 
       if (options.byMonthOfYear.some((num: number) => num < 1 || num > 12)) {
@@ -37,7 +38,11 @@ export const ByMonthOfYearRuleModule: IRecurrenceRuleModule<
       norm.byMonthOfYear = options.byMonthOfYear.slice();
       norm.byMonthOfYear!.sort(numberSortComparer);
     } else if (
-      !((options as any).byDayOfMonth || (options as any).byDayOfWeek) &&
+      !(
+        ruleOptionFilled((options as any).byDayOfMonth) ||
+        ruleOptionFilled((options as any).byDayOfWeek) ||
+        ruleOptionFilled((options as any).byDayOfYear)
+      ) &&
       options.frequency === 'YEARLY'
     ) {
       norm.byMonthOfYear = [norm.start.get('month')];

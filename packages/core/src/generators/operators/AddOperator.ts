@@ -4,6 +4,7 @@ import {
   IOperatorConfig,
   IRunArgs,
   OccurrenceGenerator,
+  OccurrenceGeneratorRunResult,
   Operator,
   OperatorFnOutput,
 } from '../occurrence-generator';
@@ -29,7 +30,7 @@ export class AddOperator extends Operator {
     });
   }
 
-  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+  *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     const streams = this.streams.map(input => new IterableWrapper(input._run(args)));
 
     if (this.config.base) {
@@ -43,7 +44,7 @@ export class AddOperator extends Operator {
     if (streamPastEnd(stream, args)) return;
 
     while (!stream.done) {
-      const yieldArgs = yield this.normalizeRunOutput(stream.value);
+      const yieldArgs = yield this.normalizeRunOutput(stream.value!);
 
       stream.picked();
 

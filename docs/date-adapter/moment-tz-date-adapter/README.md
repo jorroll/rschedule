@@ -2,7 +2,7 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/moment-tz-date-adapter)](https://www.npmjs.com/package/@rschedule/moment-tz-date-adapter) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/moment-tz-date-adapter)](https://bundlephobia.com/result?p=@rschedule/moment-tz-date-adapter)
 
-**[`MomentTZDateAdapter implements IDateAdapter<Moment>`](../#IDateAdapter-Interface)**
+**[`MomentTZDateAdapter extends DateAdapterBase`](../#dateadapterbase)**
 
 rSchedule DateAdapter for working with [moment-timezone](https://momentjs.com/timezone/) `Moment` objects. Has full timezone support. If you don't need full timezone support, or if you are not using the [`moment-timezone`](https://momentjs.com/timezone/) add on to [`moment`](https://momentjs.com), then you should consider the [`MomentDateAdapter`](./moment-date-adapter) instead.
 
@@ -18,11 +18,8 @@ npm install @rschedule/moment-tz-date-adapter
 
 ## Usage
 
-Configure as "global" default date adapter with:
+Configure as date adapter with:
 
 ```typescript
-import { RScheduleConfig } from '@rschedule/rschedule';
-import { MomentTZDateAdapter } from '@rschedule/moment-tz-date-adapter';
-
-RScheduleConfig.defaultDateAdapter = MomentTZDateAdapter;
+import '@rschedule/moment-tz-date-adapter/setup';
 ```

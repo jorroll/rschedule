@@ -1,11 +1,9 @@
 {
   "extends": "../../tsconfig",
   "compilerOptions": {
-    // "rootDir": "src",
     "outDir": "build/err",
     "declarationDir": "build/err",
     "downlevelIteration": true
   },
-  "files": ["./src/index.ts", "./src/rules/public_api.ts", "./src/generators/index.ts"],
-  "include": []
+  "include": ["src"]
 }

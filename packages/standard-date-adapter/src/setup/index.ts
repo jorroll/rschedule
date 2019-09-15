@@ -14,5 +14,5 @@ declare module '@rschedule/core/DateAdapter' {
   }
 }
 
-DateAdapterBase.adapter = StandardDateAdapter as any;
+DateAdapterBase.adapter = StandardDateAdapter;
 Rule.recurrenceRules = ICAL_RULES;

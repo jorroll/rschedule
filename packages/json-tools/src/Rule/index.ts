@@ -1,5 +1,5 @@
 import { cloneJSON, DateAdapter, DateAdapterBase, IRuleOptions } from '@rschedule/core';
-import { Rule } from '@rschedule/core/generators';
+import { OccurrenceGenerator, Rule } from '@rschedule/core/generators';
 import {
   ISerializeToJSONOptions,
   registerJSONSerializerFn,
@@ -25,7 +25,10 @@ declare module '@rschedule/core/generators' {
   }
 
   abstract class Rule<Data = any> extends OccurrenceGenerator {
-    static fromJSON<D = any>(json: Rule.JSON, options?: { timezone?: string | null }): Rule<D>;
+    static fromJSON<D = any>(
+      json: Rule.JSON,
+      options?: { timezone?: string | null; data?: (json: OccurrenceGenerator.JSON) => any },
+    ): Rule<D>;
     toJSON(opts?: ISerializeToJSONOptions): Rule.JSON;
   }
 }
@@ -50,7 +53,10 @@ Rule.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}): 
   return json;
 };
 
-Rule.fromJSON = function fromJSON(json: Rule.JSON, options: { timezone?: string | null } = {}) {
+Rule.fromJSON = function fromJSON(
+  json: Rule.JSON,
+  options: { timezone?: string | null; data?: (json: OccurrenceGenerator.JSON) => any } = {},
+) {
   const config = {
     ...json.config,
     start: DateAdapterBase.adapter.fromJSON(json.config.start),
@@ -58,7 +64,7 @@ Rule.fromJSON = function fromJSON(json: Rule.JSON, options: { timezone?: string 
   };
 
   return new Rule<any>(config, {
-    data: json.data,
+    data: typeof options.data === 'function' ? options.data(json) : json.data,
     timezone: options.timezone || json.timezone,
   });
 };

@@ -16,7 +16,7 @@ import getNthWeekdayOfYear from '../utilities/get-nth-weekday-of-year';
 import { RecurrenceRuleBase } from '../utilities/recurrence-rule-base';
 import './types';
 
-declare module '@rschedule/core' {
+declare module '../../recurrence-rule-options' {
   interface IRuleOptions extends IByDayOfWeekRuleOptions {}
 
   interface INormRuleOptions extends INormByDayOfWeekRuleOptions {}

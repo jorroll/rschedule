@@ -12,6 +12,7 @@ import {
   IOccurrencesArgs,
   IRunArgs,
   OccurrenceGenerator,
+  OccurrenceGeneratorRunResult,
   OccurrenceIterator,
 } from './occurrence-generator';
 
@@ -189,7 +190,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
     });
   }
 
-  *_run(args: IRunArgs = {}) {
+  *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     let dates = this.datetimes.sort(dateTimeSortComparer);
 
     if (args.start) {
@@ -238,5 +239,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
 
       date = dateCache.shift();
     }
+
+    return undefined;
   }
 }

@@ -1,4 +1,4 @@
-import { DateAdapter, DateAdapterBase, DateAdapterCTor, DateInput, DateTime } from './DateAdapter';
+import { DateAdapterBase, DateInput, DateTime } from './DateAdapter';
 import {
   IRecurrenceRuleModule,
   NormRecurrenceRulesOptions,

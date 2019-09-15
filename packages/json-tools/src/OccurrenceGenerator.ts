@@ -25,7 +25,10 @@ declare module '@rschedule/core/generators' {
     static JSON_FN_MAP: Map<string, ISerializeFromJSONFn>;
     static fromJSON(
       json: OccurrenceGenerator.JSON,
-      options?: { timezone?: string | null },
+      options?: {
+        timezone?: string | null;
+        data?: (json: OccurrenceGenerator.JSON & { data?: any }) => any;
+      },
     ): OccurrenceGenerator;
     toJSON(opts?: ISerializeToJSONOptions): OccurrenceGenerator.JSON;
   }

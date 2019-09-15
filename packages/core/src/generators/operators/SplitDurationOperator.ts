@@ -1,5 +1,11 @@
 import { ArgumentError, DateTime, dateTimeSortComparer } from '@rschedule/core';
-import { IOperatorConfig, IRunArgs, Operator, OperatorFnOutput } from '../occurrence-generator';
+import {
+  IOperatorConfig,
+  IRunArgs,
+  OccurrenceGeneratorRunResult,
+  Operator,
+  OperatorFnOutput,
+} from '../occurrence-generator';
 import { IterableWrapper } from './_util';
 
 export class SplitDurationOperatorError extends Error {}
@@ -105,7 +111,7 @@ export class SplitDurationOperator extends Operator {
     );
   }
 
-  *_run(args: IRunArgs = {}): IterableIterator<DateTime> {
+  *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (!this.config.base) return;
 
     const reverse = args.reverse || false;
@@ -143,17 +149,17 @@ export class SplitDurationOperator extends Operator {
 
       if (!(datesBucket[0] && datesBucket[0][0])) {
         // we're out of dates
-        datesBucket.push(this.splitDate(stream.value, reverse));
+        datesBucket.push(this.splitDate(stream.value!, reverse));
         stream.picked();
       }
 
       while (
         !stream.done &&
         (reverse
-          ? datesBucket[0].some(date => date.isBeforeOrEqual(stream.value.end!))
-          : datesBucket[0].some(date => date.isAfterOrEqual(stream.value)))
+          ? datesBucket[0].some(date => date.isBeforeOrEqual(stream.value!.end!))
+          : datesBucket[0].some(date => date.isAfterOrEqual(stream.value!)))
       ) {
-        datesBucket.push(this.splitDate(stream.value, reverse));
+        datesBucket.push(this.splitDate(stream.value!, reverse));
 
         stream.picked();
       }

@@ -4,6 +4,7 @@ import { ByMillisecondOfSecondRuleModule } from '../ByMillisecondOfSecond';
 import { ByMinuteOfHourRuleModule } from '../ByMinuteOfHour';
 import { BySecondOfMinuteRuleModule } from '../BySecondOfMinute';
 import { FrequencyRuleModule } from '../Frequency';
+import { ruleOptionFilled } from '../utilities/rule-option-filled';
 import { RevByDayOfWeekRule } from './rev-rule';
 import { ByDayOfWeekRule, IByDayOfWeekRuleOptions, INormByDayOfWeekRuleOptions } from './rule';
 
@@ -19,8 +20,8 @@ export const ByDayOfWeekRuleModule: IRecurrenceRuleModule<
   },
   normalizeOptions: (options, norm) => {
     if (options.byDayOfWeek !== undefined) {
-      if (!Array.isArray(options.byDayOfWeek)) {
-        throw new RuleOptionError('"byDayOfWeek" expects an array');
+      if (!ruleOptionFilled(options.byDayOfWeek)) {
+        throw new RuleOptionError('"byDayOfWeek" expects a non-empty array');
       }
 
       const invalidWeeday = options.byDayOfWeek.find(day =>
@@ -73,7 +74,7 @@ export const ByDayOfWeekRuleModule: IRecurrenceRuleModule<
       }
 
       norm.byDayOfWeek = options.byDayOfWeek;
-    } else if (!(options as any).byDayOfMonth && options.frequency === 'WEEKLY') {
+    } else if (!ruleOptionFilled((options as any).byDayOfMonth) && options.frequency === 'WEEKLY') {
       norm.byDayOfWeek = [norm.start.get('weekday')] as RuleOption.ByDayOfWeek[];
     }
   },

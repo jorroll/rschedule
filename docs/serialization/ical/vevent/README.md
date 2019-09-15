@@ -1,19 +1,20 @@
 # VEvent class
 
-**VEvent implements [IOccurrenceGenerator](../../../usage/#ioccurrencegenerator-interface), IScheduleLike;**
+**VEvent extends [OccurrenceGenerator](../../../usage/#occurrencegenerator-interface)**
 
-`VEvent` objects allow iterating a occurrence schedule made up of an RRULE and/or EXRULE as well as RDATEs and EXDATEs. Each `VEvent` object follows the iCalendar `VEVENT` spec. As such, duplicate occurrences are filtered out. As with other rSchedule objects, `VEvent` is immutable.
+`VEvent` objects allow iterating a occurrence schedule made up of RRULEs and/or EXRULEs as well as RDATEs and EXDATEs. `VEvent` objects are similar to `Schedule` objects, but `VEvent` objects follow the iCalendar `VEVENT` spec. As part of this support, `VEvent` objects make use of a special variation of `Rule` objects: `RRule` (i.e. `import { RRule } from '@rschedule/ical-tools'`). As with other rSchedule objects, `VEvent` is immutable.
 
-Some limitations:
+**Important:** If you are _only_ interested in ICAL support, consider using [rrulejs](https://github.com/jakubroztocil/rrule) instead of rSchedule as it currently has greater support for ICAL recurrence rules.
 
-- Not all iCal rules are currently supported. See the [`Rule` object section](../../../usage/rule) for more info.
+Some rSchedule limitations:
+
+- Not all iCal rules are currently supported.
+  - `BYWEEKNO`, `BYYEARDAY`, `BYSETPOS` are unsupported
 - Not all VEVENT properies of the ICAL spec are supported. The supported properties are `RRULE`, `EXRULE`, `RDATE`, `EXDATE`, `DTSTART`, `DTEND` and `DURATION`. Other properties are not supported.
 
 Example usage:
 
 ```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
 const vEvent = new VEvent({
   start: new Date(2012, 5, 24),
   rrules: [
@@ -36,54 +37,51 @@ vEvent
 `VEvent` has the following constructor.
 
 ```typescript
-class VEvent<T extends typeof DateAdapter, D = any> {
-  static isVEvent(object: unknown): object is VEvent<any>;
-
+class VEvent<D = any> {
   data!: D;
-  readonly start: InstanceType<T>;
+  readonly start: DateAdapter;
   readonly isInfinite: boolean;
-  readonly duration?: number | InstanceType<T>;
+  readonly duration?: number | DateAdapter;
   readonly hasDuration: boolean;
   readonly maxDuration?: number;
   readonly timezone: string | null;
 
-  readonly rrules: ReadonlyArray<Rule<T>> = [];
-  readonly exrules: ReadonlyArray<Rule<T>> = [];
+  readonly rrules: ReadonlyArray<RRule> = [];
+  readonly exrules: ReadonlyArray<RRule> = [];
   readonly rdates: Dates<T>;
   readonly exdates: Dates<T>;
 
   constructor(args: {
-    start: DateInput<T>;
+    start: DateInput;
     // accepts either the number of milliseconds of the duration or the end
     // datetime of the first occurrence (which will be used to calculate the
     // duration in milliseconds)
-    duration?: number | DateInput<T>;
-    dateAdapter?: T;
+    duration?: number | DateInput;
     // The data property holds arbitrary data associated with the `VEvent`.
-    // The data property is also the one exception to rSchedule's immutability:
-    // the data property is mutable.
+    // The data property is mutable.
     //
     // When iterating through a VEvent, you can access a list of the generator objects (i.e. Rules / Dates)
-    // which generated any yielded date by accessing the `IDateAdapter#generators` property.
+    // which generated any yielded date by accessing the `DateAdapter#generators` property.
     // In this way, for a given, yielded date, you can access the objects which generated
     // the date as well as the arbitrary data associated with those objects.
     // The data property is ignored when serializing to iCal.
     data?: D;
-    rrules?: ReadonlyArray<IVEventRuleOptions<T> | Rule<T>>;
-    exrules?: ReadonlyArray<IVEventRuleOptions<T> | Rule<T>>;
-    rdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
-    exdates?: ReadonlyArray<DateInput<T>> | Dates<T>;
+    rrules?: ReadonlyArray<IVEventRuleOptions | RRule>;
+    exrules?: ReadonlyArray<IVEventRuleOptions | RRule>;
+    rdates?: ReadonlyArray<DateInput> | Dates;
+    exdates?: ReadonlyArray<DateInput> | Dates;
+    maxDuration?: number;
   });
 
-  add(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): VEvent<T, D>;
-  add(prop: 'rdate' | 'exdate', value: DateInput<T>): VEvent<T, D>;
+  add(prop: 'rrule' | 'exrule', value: RRule): VEvent<D>;
+  add(prop: 'rdate' | 'exdate', value: DateInput): VEvent<D>;
 
-  remove(prop: 'rrule' | 'exrule', value: Rule<T, unknown>): VEvent<T, D>;
-  remove(prop: 'rdate' | 'exdate', value: DateInput<T>): VEvent<T, D>;
+  remove(prop: 'rrule' | 'exrule', value: RRule): VEvent<D>;
+  remove(prop: 'rdate' | 'exdate', value: DateInput): VEvent<D>;
 
-  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): VEvent<T, D>;
-  set(prop: 'start', value: DateInput<T>): VEvent<T, D>;
-  set(prop: 'rrules' | 'exrules', value: Rule<T, unknown>[]): VEvent<T, D>;
-  set(prop: 'rdates' | 'exdates', value: Dates<T, unknown>): VEvent<T, D>;
+  set(prop: 'timezone', value: string | null, options?: { keepLocalTime?: boolean }): VEvent<D>;
+  set(prop: 'start', value: DateInput): VEvent<D>;
+  set(prop: 'rrules' | 'exrules', value: RRule[]): VEvent<D>;
+  set(prop: 'rdates' | 'exdates', value: Dates<unknown>): VEvent<D>;
 }
 ```

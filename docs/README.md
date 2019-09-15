@@ -1,19 +1,19 @@
 # rSchedule
 
-## Version 0.11 Docs
+## Version 0.12 Docs
 
-A javascript library, written in typescript, for working with recurring dates. Rules can be imported / exported in [ICAL](https://tools.ietf.org/html/rfc5545) spec format, and Rule objects themselves adhere to the javascript iterator protocol. All objects in rSchedule are immutable.
+A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. Timezone support is dependent on the date library you are using. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
 
 ### Installation
 
 ```bash
 # To install both the main package and the `StandardDateAdapter` for standard javascript dates */
 
-yarn add @rschedule/rschedule @rschedule/standard-date-adapter
+yarn add @rschedule/core @rschedule/standard-date-adapter
 
 # or
 
-npm install @rschedule/rschedule @rschedule/standard-date-adapter
+npm install @rschedule/core @rschedule/standard-date-adapter
 
 # Current DateAdapter packages
 
@@ -24,106 +24,17 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 @rschedule/joda-date-adapter
 ```
 
-## Brief Overview
+## Brief Intro
 
-rSchedule makes use of a fairly simple [`IDateAdapter`](./date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
+rSchedule makes use of a [`DateAdapter`](./date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
 
-[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter), and [`JodaDateAdapter`](./date-adapter/joda-date-adapter) packages currently exists which provide an [`IDateAdapter`](./date-adapter) complient wrapper for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be pretty easy for you to create your own DateAdapter for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
+[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter), and [`JodaDateAdapter`](./date-adapter/joda-date-adapter) packages currently exists which provide support for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be fairly easy for you to create your own DateAdapter for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
 
 If you plan to use rSchedule with iCalendar support, you'll need to add the optional [`@rschedule/ical-tools`](./serialization/ical) package. In addition to `serializeToICal()` and `parseICal()` functions, the ical-tools package contains a [`VEvent` object](./serialization/ical/vevent) which adhears to the [iCalendar `VEVENT` component specifications](https://tools.ietf.org/html/rfc5545#section-3.6.1). Jump to the [`ical serialization`](./serialization/ical) section to learn more.
 
-If you don't need iCalendar support, you can serialize your objects using the optional [`@rschedule/json-tools` package](./serialization/json) (which is much smaller than `@rschedule/ical-tools`).
+- Note: if you simply want ICAL support, you should consider using the [rrulejs](https://github.com/jakubroztocil/rrule) package instead as it currently supports a greater range of the iCal spec.
 
-If you're not serializing to iCalendar, your primary tool will be the friendly [`Schedule` object](./usage/schedule) (which is not iCal spec complient--its better). It can be used to build an occurrence schedule from an arbitrary number of inclusion rules, exclusion rules, inclusion dates, and exclusion dates.
-
-Example usage:
-
-```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
-const schedule = new Schedule<typeof StandardDateAdapter>({
-  rrules: [
-    {
-      frequency: 'YEARLY',
-      byMonthOfYear: [2, 6],
-      byDayOfWeek: ['SU', ['MO', 3]],
-      start: new Date(2010, 1, 7),
-    },
-    {
-      frequency: 'DAILY',
-      byDayOfWeek: ['TU'],
-      start: new Date(2012, 1, 7),
-    },
-  ],
-  exdates: [new Date(2010, 3, 2)],
-});
-
-schedule.occurrences().toArray();
-```
-
-Each [`Schedule` object](./usage/schedule) is intended to contain all the recurrence information to iterate through a single event, while following an API inspired by the ICAL spec. As such, duplicate occurrences are filtered out.
-
-To iterate over a collection of schedules, e.g. for displaying on a calendar, you can use the [`Calendar` object](./usage/calendar). The Calendar object combines a collection of occurrence generators into a single iterable object (i.e. it displays the `union` of all the given occurrence generators).
-
-Example usage:
-
-```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdatper;
-
-const scheduleOne = new Schedule();
-const scheduleTwo = new Schedule();
-
-const calendar = new Calendar({
-  schedules: [scheduleOne, scheduleTwo],
-});
-
-for (const occurrence of calendar.occurrences({ start: new Date() })) {
-  // do stuff
-}
-```
-
-Additionally, the [`Dates` object](./usage/dates) provides an `OccurrenceGenerator` wrapper over a collection of arbitrary dates.
-
-Example usage:
-
-```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdatper;
-
-const dates = new Dates({
-  dates: [new Date(2000), new Date(2001), new Date(2002)],
-});
-
-dates.occursOn({ date: new Date(2000) }); // true
-
-for (const date of dates.occurrences({ start: new Date(2000, 5) })) {
-  // do stuff
-}
-```
-
-For more complex scenerios, rSchedule offers a set of [occurrence stream operator](./usage/operators) functions which allow combining and manipulating a stream of occurrences. Usage is inspired the rxjs pipe operators.
-
-Example usage:
-
-```typescript
-RScheduleConfig.defaultDateAdapter = StandardDateAdatper;
-
-const scheduleOne = new Schedule();
-const scheduleTwo = new Schedule();
-const scheduleThree = new Schedule();
-const scheduleFour = new Schedule();
-
-new Calendar().pipe(
-  add(scheduleOne),
-  subtract(scheduleTwo),
-  add(scheduleThree),
-  subtract(scheduleFour),
-  unique(),
-);
-```
-
-Internally, some rSchedule objects rely on occurrence stream operators to handle their recurrence logic (e.g. `Schedule`).
-
-Finally, there are [`Rule` objects](./usage/rule) which process recurrence rules. You probably won't need to use `Rule` object's direction though, instead making use of `Schedule` objects.
+If you don't need iCalendar support, you can serialize your objects using the optional [`@rschedule/json-tools` package](./serialization/json). The json-tools package is much smaller than the ical-tools package, and supports a greater range of rSchedule's functionality.
 
 ## [Usage Overview](./usage)
 
@@ -133,7 +44,7 @@ See [Usage Overview](./usage) for more info.
 
 - [rrulejs](https://github.com/jakubroztocil/rrule)
   - Supports time zones via luxon and supports iCal. `rrulejs` is older and more mature than rSchedule and I used it before making rSchedule.
-  - For most projects, rrulejs will probably do everything you need and you may feel more comfortable using something older and with a larger install base. Another reason you might want to choose rrule would be for it's NLP, internationalization support, or support for `BYWEEKNO`, `BYYEARDAY`, and `BYSETPOS` ICal rules. By comparison, rSchedule has better timezone support, serialization support, duration support, calendar support, and more. See the docs of both projects to learn more.
+  - For most projects, rrulejs will probably do everything you need and you may feel more comfortable using something older and with a larger install base. Another reason you might want to choose rrule would be for it's NLP, internationalization support, or support for `BYWEEKNO`, `BYYEARDAY`, and `BYSETPOS` ICal rules. By comparison, rSchedule has better timezone support, support for different date libraries, duration support, custom rule support, a smaller minimum bundle size, and complex calendar support. See the docs of both projects to learn more.
 - [laterjs](https://github.com/bunkat/later) (currently unmaintained)
   - Simpler API. Not ICAL compatible. Has support for chron jobs.
 - [dayspan](https://github.com/ClickerMonkey/dayspan)
