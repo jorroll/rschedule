@@ -1,10 +1,18 @@
 import { ArgumentError, DateInput, dateInputToDateAdapter, IRuleOptions } from '@rschedule/core';
 import { Rule } from '@rschedule/core/generators';
 
-import { RecurrencePattern } from './interfaces';
-
 import '@rschedule/core/rules/ByDayOfMonth';
 import '@rschedule/core/rules/ByDayOfWeek';
+
+export type RecurrencePattern =
+  | 'every [WEEKDAY]'
+  | 'the [MONTH_WEEKNO] [WEEKDAY] of every month'
+  | 'the [MONTH_DAYNO] of every month'
+  | 'the last [WEEKDAY] of every month';
+
+export type OccurrencePattern = 'date';
+
+export type Pattern = OccurrencePattern | RecurrencePattern;
 
 /**
  * Checks to see if the provided rule/rule options match the given `RecurrencePattern`.

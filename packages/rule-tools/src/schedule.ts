@@ -1,9 +1,7 @@
 import { DateInput } from '@rschedule/core';
 import { Calendar, Dates, intersection, Rule, Schedule, unique } from '@rschedule/core/generators';
 
-import { Pattern, RecurrencePattern } from './interfaces';
-
-import { buildRecurrencePattern, isRecurrencePattern } from './rule';
+import { buildRecurrencePattern, isRecurrencePattern, Pattern, RecurrencePattern } from './rule';
 
 /**
  * Checks to see if a `schedule` contains the `OccurrencePattern` or `RecurrencePattern`
