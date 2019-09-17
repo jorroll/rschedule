@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/moment-tz-date-adapter",
-  "version": "0.11.6",
+  "version": "0.12.0",
   "description": "An rSchedule DateAdapter for \"moment-timezone\" date objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
@@ -36,9 +36,9 @@
     "moment-timezone": "^0.5.21"
   },
   "devDependencies": {
+    "jest-cli": "^24.0.0",
     "rollup": "^1.7.4",
     "rollup-plugin-typescript2": "^0.20.1",
-    "jest-cli": "^24.0.0",
     "typescript": "~3.5.2"
   }
 }
