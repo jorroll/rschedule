@@ -4,8 +4,72 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## 0.12.0 BREAKING (2019/9/15)
+
+This is a large breaking change to the library that simplifies the API and increases the modularity / extensibility of the code. You should check out the updated docs to understand all of the changes. The new API is similar to the old API, but better.
+
+#### API improvements
+
+Through some dark, typescript sorcery, rSchedule no longer needs to export generic objects to adapt the library's typing for different date adapters. Now you can simply import your date adapter of choice once, and the types of rSchedule's objects will automatically be updated. Where before you might have:
+
+```ts
+const rule = new Rule<typeof MomentDateAdapter>();
+
+const dates: Moment[] = rule
+  .occurrences()
+  .toArray()
+  .map(({ date }) => date);
+
+// OR
+
+const rule = new Rule<typeof StandardDateAdapter>();
+
+const dates: Date[] = rule
+  .occurrences()
+  .toArray()
+  .map(({ date }) => date);
+```
+
+now you simply have
+
+```ts
+const rule = new Rule();
+
+const dates: Moment[] = rule
+  .occurrences()
+  .toArray()
+  .map(({ date }) => date);
+
+// OR, when using the StandardDateAdapter
+
+const rule = new Rule();
+
+const dates: Date[] = rule
+  .occurrences()
+  .toArray()
+  .map(({ date }) => date);
+```
+
+it's magical! End users need never touch a date adapter.
+
+#### Modularity changes
+
+The `@rschedule/rschedule` package has been removed and replaced with `@rschedule/core` which itself has been broken up into `@rschedule/core`, `@rschedule/core/generators`, and `@rschedule/core/rules`. The recurrence rule API has also been improved, simplified, and now made public (where before it was private API).
+
+- `@rschedule/core` contains the required bits of the library: the recurrence and date adapter logic and nothing else (it doesn't contain any actual recurrence rules).
+- `@rschedule/core/rules` contains individual rule modules. You can now pick and choose which rules you care about, potentially reducing bundle size. Unused rules are tree-shakable. This also means that this library can add additional rules in the future, without worrying about bloating the library for folks that don't need the new features.
+- Similarly, `@rschedule/core/generators` contains the opinionated `OccurrenceGenerator` API, which is also now optional and tree-shakable. This allows additional occurrence stream operators to be added in the future, without fear of bloating the library for folks who don't need them.
+
 ### Breaking
 
+_Note: this update is large and not all changes are included below._
+
+- `@rschedule/rschedule` -> `@rschedule/core`, `@rschedule/core/generators`, and `@rschedule/core/rules`.
+- DateAdapter updated to support different date libraries via typescript declaration merging. This affects almost all of the types in the library, most of which are no longer generic.
+  - `OccurrenceGenerator` is no longer generic. Similarly, `Calendar`, `Schedule`, `Rule`, and `Dates` only receive an optional generic param for their `data` attribute.
+  - `IDateAdapter` removed and folded into the `DateAdapterBase` class. Now, all date adapters must extend the abstract `DateAdapterBase` class.
+  - `DateAdapter` class renamed `DateAdapterBase`. `DateAdapter` is now an exported type equal to the activated date adapter, as well as a namespace.
+  - It is now impossible to utilize two different date adapters in a single project at the same time. This was never encouraged, but previously it was possible.
 - `Dates` `duration` constructor argument now only applies the duration to provided dates which do not already have a duration. Put another way, the `duration` option for the dates constructor now acts as a default duration for provided dates, rather than _the duration_ of all dates.
 - `DateAdapter#duration` type changed from `number | undefined` to `number`. A duration of `0` is treated as no duration.
 - `OccurrenceGenerator#collections()` arguments changed. Specifically, CollectionIterator `ICollectionArgs` interface changed.
@@ -14,10 +78,13 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
   - `granularity` `"INSTANTANIOUS"` option removed. Use `"MILLISECONDLY"` instead (which does the same thing).
   - By default, `OccurrenceGenerator#collections()` now increments linearly. You can use `skipEmptyPeriods: true` to get the old default behavior.
 - Default granularity for `OccurrenceGenerator#collections()` is now `"YEARLY"`. This change was made to accomidate the other changes to CollectionIterator.
+- `@rschedule/json-tools` no longer exports `parseJSON()` or `serializeToJSON()` functions. Instead, the library contains individual modules for each rSchedule object which, when imported, modify that rschedule object, adding `toJSON()` and static `fromJSON()` methods.
+- `@rschedule/ical-tools` no longer exports `parseICal()` or `serializeToICal()` functions. Instead, `VEvent` now has `VEvent#toICal()` and `VEvent.fromICal()`.
 
-### Feature
+### Features
 
 - Added `DateAdapter#set('duration', number)` option for setting a date adapters duration.
+- `RecurrenceRuleIterator`, as well as individual recurrence rules, are now public API.
 
 ### Fixes
 

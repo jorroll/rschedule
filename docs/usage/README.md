@@ -1,5 +1,7 @@
 # Using rSchedule
 
+**_This assumes you have followed the [setup instructions](../#setup)_**
+
 This library has four main occurrence generating classes which each extend `OccurrenceGenerator`:
 
 - [Schedule](./schedule)
@@ -13,32 +15,7 @@ If you plan on using rSchedule with the iCalendar spec, it also has a fifth `VEv
 
 Finally, this library has an assortment of [occurrence stream operators](./operators) which allow combining multiple occurrence generators in various ways. Usage of the occurrence stream operators is heavily inspired by rxjs pipe operators. See [`occurrence stream operators`](./operators) for more information.
 
-There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `IScheduleLike` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up immutable rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
-
-### Setup
-
-rSchedule supports multiple date libraries though a [`DateAdapter`](../date-adapter) interface. To get started, you need to import the date adapter for your chosen date library. Create an `rschedule.ts` (or `rschedule.js`) file in your project which configures rSchedule locally. Instead of importing objects from `@rschedule/core`, you'll import them from this local file.
-
-For example:
-
-```ts
-// rschedule.ts
-
-import '@rschedule/moment-date-adapter/setup';
-// import @rschedule/json-tools/setup <-- optional json support
-
-export * from '@rschedule/moment-date-adapter';
-export * from '@rschedule/core';
-export * from '@rschedule/core/generators';
-```
-
-```ts
-// main.ts
-
-import { Schedule } from './rschedule';
-
-// ... do stuff
-```
+There is also an optional `@rschedule/rule-tools` library which contains utility functions for manipulating rSchedule `Rule` and `Schedule` objects and working with common recurrence rule patterns. Even if you don't use it, it can provide a useful example of how to manipulate and build up immutable rSchedule objects. [See the `rule-tools` docs for more information.](./rule-tools)
 
 ### Overview
 
@@ -127,7 +104,7 @@ Internally, some rSchedule objects rely on occurrence stream operators to handle
 
 Finally, there are [`Rule` objects](./rule) which process recurrence rules. You probably won't need to use `Rule` object's directy though, instead making use of `Schedule` objects.
 
-### CR**UD** with rSchedule objects
+### CRUD with rSchedule objects
 
 All of rSchedule's objects are immutable (the major exception is the `data` property that many of the occurrence generators have). This decision _greatly_ simplifies the implementation (reducing the number of bugs) and helps to optimize the performance of rSchedule objects for reading. The downside is that this can make updating the objects a bit strange and clumsy compared to typical mutable javascript APIs. While each rSchedule object is different, this section provides a brief introduction on how to change rSchedule objects.
 

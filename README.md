@@ -1,21 +1,19 @@
 # rSchedule
 
-[![NPM version](https://flat.badgen.net/npm/v/@rschedule/rschedule)](https://www.npmjs.com/package/@rschedule/rschedule) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/rschedule)](https://bundlephobia.com/result?p=@rschedule/rschedule)
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/core)](https://www.npmjs.com/package/@rschedule/core) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/core)](https://bundlephobia.com/result?p=@rschedule/core)
 
 ### Still pre-1.0 release (i.e. Beta) [docs](#docs)
 
-A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. Timezone support is dependent on the date library you are using. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
-
-See the [roadmap to 1.0](#roadmap-to-10) below.
+A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. If your chosen date library supports time zones, rSchedule supports time zones. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
 
 ```bash
 # To install both the main package and the `StandardDateAdapter` for standard javascript dates */
 
-yarn add @rschedule/rschedule @rschedule/standard-date-adapter
+yarn add @rschedule/core @rschedule/standard-date-adapter
 
 # or
 
-npm install @rschedule/rschedule @rschedule/standard-date-adapter
+npm install @rschedule/core @rschedule/standard-date-adapter
 
 # Current DateAdapter packages
 
@@ -25,6 +23,8 @@ npm install @rschedule/rschedule @rschedule/standard-date-adapter
 @rschedule/luxon-date-adapter
 @rschedule/joda-date-adapter
 ```
+
+[See the docs for setup instructions](#docs)
 
 ### Usage ([online demo](https://codesandbox.io/s/rschedule-starter-pxezu?fontsize=14&module=/src/index.ts))
 
@@ -85,7 +85,8 @@ rule
 
 ## Docs
 
-- [Version 0.11 docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/v0.11/docs)
+- [Version 0.12 docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/v0.12/docs)
+- [Version 0.11 docs](https://gitlab.com/john.carroll.p/rschedule/tree/v0.11/docs)
 - [Version 0.10 docs](https://gitlab.com/john.carroll.p/rschedule/tree/f46bf244370dd476633b944e424096a6ae629305/docs)
 - [Version 0.9 docs](https://gitlab.com/john.carroll.p/rschedule/tree/a80b576c981570710def8f83575a4932b12f8f34/docs)
 
@@ -110,8 +111,7 @@ _related: see the [Release 1.0 issue](https://gitlab.com/john.carroll.p/rschedul
   - [x] Support `VEVENT`
   - [x] Research `VTIMEZONE` to understand its effect on `VEVENT` and possibly add support.
     - rSchedule will not be supporting `VTIMEZONE` (feel free to open an issue on this topic). `VTIMEZONE` is intended to inline time zone data inside an ICAL string. In `rSchedule`, date libraries (e.g. `moment-timezone`) provide their own time zone data.
-- [ ] Revisit decision not to support `ByDayOfYear`, `ByPositionInSet`, and `ByWeekOfYear` rules.
-- [ ] **Most important:** more real world testing to make sure the API is appropriate and everything works as expected.
+- [ ] More real world testing to make sure the API is appropriate and everything works as expected.
 
 ## Features that will come after 1.0
 

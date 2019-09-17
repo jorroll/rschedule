@@ -1,8 +1,10 @@
 # rSchedule
 
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/core)](https://www.npmjs.com/package/@rschedule/core) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/core)](https://bundlephobia.com/result?p=@rschedule/core)
+
 ## Version 0.12 Docs
 
-A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. Timezone support is dependent on the date library you are using. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
+A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. If your chosen date library supports time zones, rSchedule supports time zones. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
 
 ### Installation
 
@@ -24,17 +26,33 @@ npm install @rschedule/core @rschedule/standard-date-adapter
 @rschedule/joda-date-adapter
 ```
 
-## Brief Intro
+### Setup
 
-rSchedule makes use of a [`DateAdapter`](./date-adapter) wrapper object which abstracts away from individual date library implementations, making this package date library agnostic.
+rSchedule supports multiple date libraries though a [`DateAdapter`](./date-adapter) interface. To get started, you need to import the date adapter for your chosen date library (see the [`DateAdapter`](./date-adapter) section for more information).
 
-[`StandardDateAdapter`](./date-adapter/standard-date-adapter), [`LuxonDateAdapter`](./date-adapter/luxon-date-adapter), [`MomentDateAdapter`](./date-adapter/moment-date-adapter), [`MomentTZDateAdapter`](./date-adapter/moment-tz-date-adapter), and [`JodaDateAdapter`](./date-adapter/joda-date-adapter) packages currently exists which provide support for a variety of date libraries (and the standard javascript `Date` object). If your chosen date adapter supports time zones, rSchedule supports time zones. Additionally, it should be fairly easy for you to create your own DateAdapter for your preferred library. See the [DateAdapter section](./date-adapter) for more info.
+Create an `rschedule.ts` (or `rschedule.js`) file in your project which configures rSchedule locally. Instead of importing objects from `@rschedule/core`, you'll import them from this local file.
 
-If you plan to use rSchedule with iCalendar support, you'll need to add the optional [`@rschedule/ical-tools`](./serialization/ical) package. In addition to `serializeToICal()` and `parseICal()` functions, the ical-tools package contains a [`VEvent` object](./serialization/ical/vevent) which adhears to the [iCalendar `VEVENT` component specifications](https://tools.ietf.org/html/rfc5545#section-3.6.1). Jump to the [`ical serialization`](./serialization/ical) section to learn more.
+For example:
 
-- Note: if you simply want ICAL support, you should consider using the [rrulejs](https://github.com/jakubroztocil/rrule) package instead as it currently supports a greater range of the iCal spec.
+```ts
+// rschedule.ts
 
-If you don't need iCalendar support, you can serialize your objects using the optional [`@rschedule/json-tools` package](./serialization/json). The json-tools package is much smaller than the ical-tools package, and supports a greater range of rSchedule's functionality.
+import '@rschedule/moment-date-adapter/setup';
+// import '@rschedule/json-tools/setup' <-- optional json support
+
+export * from '@rschedule/moment-date-adapter';
+export * from '@rschedule/core';
+export * from '@rschedule/core/generators';
+// export * from '@rschedule/ical-tools' <-- optional ical support
+```
+
+```ts
+// other project file
+
+import { Schedule } from './rschedule';
+
+// ... do stuff
+```
 
 ## [Usage Overview](./usage)
 
