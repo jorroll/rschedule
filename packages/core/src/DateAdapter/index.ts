@@ -25,6 +25,10 @@ let dateAdapterConfig: DateAdapterCTor | undefined;
 
 export abstract class DateAdapterBase {
   static set adapter(value: DateAdapterCTor) {
+    if (dateAdapterConfig) {
+      throw new Error(`"${dateAdapterConfig.name}" has already been configured.`);
+    }
+
     dateAdapterConfig = value;
   }
 
