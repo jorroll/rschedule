@@ -1,5 +1,5 @@
 # @rschedule/luxon-date-adapter
 
-An rSchedule DateAdapter for "luxon" date objects. Intended to be used with the `@rschedule/rschedule` package.
+An rSchedule DateAdapter for "luxon" date objects. Intended to be used with the `@rschedule/core` package.
 
 # [See the rSchedule repo for info](https://gitlab.com/john.carroll.p/rschedule)
