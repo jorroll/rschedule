@@ -2,8 +2,8 @@
   "compilerOptions": {
     "baseUrl": "./",
     "rootDir": ".",
-    "target": "esnext",
-    "module": "esnext",
+    "target": "es5",
+    "module": "es2015",
     "lib": ["es2017", "dom"],
     "strict": true,
     "declaration": true,
