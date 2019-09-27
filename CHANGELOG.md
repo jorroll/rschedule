@@ -4,6 +4,12 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## 0.12.1 FIX (2019/9/26)
+
+### Fixes
+
+- Fixed module build targets so that `UMD` targets `es5` and `es2015` targets `es2015` (#34)
+
 ## 0.12.0 BREAKING (2019/9/15)
 
 This is a large breaking change to the library that simplifies the API and increases the modularity / extensibility of the code. You should check out the updated docs to understand all of the changes. The new API is similar to the old API, but better.
