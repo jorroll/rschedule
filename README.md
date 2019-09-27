@@ -1,6 +1,6 @@
 # rSchedule
 
-[![NPM version](https://flat.badgen.net/npm/v/@rschedule/core)](https://www.npmjs.com/package/@rschedule/core) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/core)](https://bundlephobia.com/result?p=@rschedule/core)
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/core)](https://www.npmjs.com/package/@rschedule/core) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/core)](https://bundlephobia.com/result?p=@rschedule/core) [![Actively maintained](https://flat.badgen.net/badge/Maintenance%20level/Actively%20developed/green)](https://gist.github.com/cheerfulstoic/d107229326a01ff0f333a1d3476e068d)
 
 ### Still pre-1.0 release (i.e. Beta) [docs](#docs)
 
