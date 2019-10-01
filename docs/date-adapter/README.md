@@ -13,6 +13,8 @@ rSchedule is date library agnostic. It needs a `DateAdapter` constructor to proc
 - [JodaDateAdapter](./joda-date-adapter)
   - For use with js-joda `ZonedDateTime` objects. Has full timezone support.
 
+### Standard Setup
+
 Before you can make use of rSchedule, you must set it up with a date adapter. Each of the provided date adapter packages has a `*/setup` entry point which will not only configure the date adapter for you, but also configure the rSchedule `Rule` object with all the recurrence rules.
 
 Example usage:
