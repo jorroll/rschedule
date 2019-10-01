@@ -13,7 +13,7 @@ rSchedule is date library agnostic. It needs a `DateAdapter` constructor to proc
 - [JodaDateAdapter](./joda-date-adapter)
   - For use with js-joda `ZonedDateTime` objects. Has full timezone support.
 
-Before you can make use of rSchedule, you must set it up with a date adapter. Each of the provided date adapters have a provided `/setup` module which will do this for you with sensible defaults. These setup files not only configure the date adapter, but also import all of the ICAL rules which rSchedule supports.
+Before you can make use of rSchedule, you must set it up with a date adapter. Each of the provided date adapter packages has a `*/setup` entry point which will not only configure the date adapter for you, but also configure the rSchedule `Rule` object with all the recurrence rules.
 
 Example usage:
 
@@ -25,10 +25,15 @@ import '@rschedule/moment-tz-date-adapter/setup';
 import '@rschedule/standard-date-adapter/setup';
 ```
 
-If you which to customize things yourself, you need to
+If you import the provided `*/setup` file, then everything is configured for you.
+
+### Custom Setup
+
+If you wish to handle setup yourself (e.g. in order to customize which recurrence rules are used or because you have a custom DateAdapter), you need to do the following:
 
 1. Configure `DateAdapterBase` with your chosen date adapter (i.e. `DateAdapterBase.adapter = StandardDateAdapter`).
-2. Configure `Rule` with your chosen recurrence rules (i.e. `Rule.recurrenceRules = ICAL_RULES`). The order of the recurrence rules matters as some rules may depend on other rules running first.
+2. If you plan on using the rSchedule provided `Rule` object, you must configure `Rule` with your chosen recurrence rules (i.e. `Rule.recurrenceRules = ICAL_RULES`). The order of the recurrence rules matters as some rules may depend on other rules running first.
+   - Currently the rules API is not well documented. You can open an issue if you have trouble.
 3. If using typescript, as a third step you need to update `DateAdapterType` and `DateAdapterCTorType` with your chosen date adapter using declaration merging.
 
    - ```ts
