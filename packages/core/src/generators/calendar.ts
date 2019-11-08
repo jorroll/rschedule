@@ -32,6 +32,28 @@ export class Calendar<Data = any> extends OccurrenceGenerator {
   readonly isInfinite: boolean;
   readonly hasDuration: boolean;
 
+  /**
+   *
+   * Create a new Calendar object with the specified options.
+   *
+   * ### Options
+   *
+   * - **timezone**: The timezone that yielded occurrences should be *displayed* in.
+   *   Note, this one affects the *displayed* timezone of yielded occurrences.
+   *   For rules, occurrences are first found using the unmodified rule
+   *   config (including whatever timezone the `start` datetime is defined
+   *   in), and then converted to the timezone specified here before being
+   *   yielded. By default, the timezone is *local* time (`null`). So if you don't
+   *   want your rules to be displayed in local time, you must supply a
+   *   timezone argument.
+   * - **data**: arbitrary data you can associate with this Calendar. This
+   *   is the only mutable property of `Calendar` objects.
+   * - **maxDuration**: currently unused.
+   * - **schedules**: either an occurrence generator, or an array of occurrence generators, which should
+   *   be used to build up this Calendar's occurrences. The Calendar will display the union of occurrences
+   *   its schedules produce.
+   *
+   */
   constructor(args: ICalendarArgs<Data> = {}) {
     super(args);
 

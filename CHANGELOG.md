@@ -4,6 +4,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## FIX
+
+- Clarify the effect of the `timezone` argument in the docs.
+
 ## 0.12.1 FIX (2019/9/26)
 
 ### Fixes

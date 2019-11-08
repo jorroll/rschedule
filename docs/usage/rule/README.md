@@ -290,6 +290,12 @@ class Rule<D = any> {
       // In this way, for a given, yielded date, you can access the object which generated
       // the date (in this case, this Rule) as well as the arbitrary data associated with that object (this data).
       data?: D;
+      // The timezone that yielded occurrences should be *displayed* in. Note,
+      // this one affects the *displayed* timezone of yielded occurrences.
+      // For rules, occurrences are first found using the unmodified rule
+      // config (including whatever timezone the `start` datetime is defined
+      // in), and then converted to the timezone specified here before being
+      // yielded.
       timezone?: string | null;
       maxDuration?: number; // see the OccurrenceGenerator interface for info
     },

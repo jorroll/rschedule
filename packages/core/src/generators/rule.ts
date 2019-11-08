@@ -22,7 +22,6 @@ export class Rule<Data = any> extends RuleBase<IRuleOptions, INormRuleOptions, D
    *   here before being yielded.
    * - **data**: arbitrary data you can associate with this rule. This
    *   is the only mutable property of `Rule` objects.
-   * - **dateAdapter**: the DateAdapter class that should be used for this Rule.
    *
    * ### Rule Config
    *
