@@ -52,6 +52,14 @@ class Calendar<D = any> {
     // you can access the objects which generated the date as well as the arbitrary data
     // associated with those objects.
     data?: D;
+    // The timezone that yielded occurrences should be *displayed* in. Note,
+    // this one affects the *displayed* timezone of yielded occurrences.
+    // For rules, occurrences are first found using the unmodified rule
+    // config (including whatever timezone the `start` datetime is defined
+    // in), and then converted to the timezone specified here before being
+    // yielded. By default, the timezone is *local* time (`null`). So if you don't
+    // want your rules to be displayed in local time, you must supply a
+    // timezone argument.
     timezone?: string | null;
     maxDuration?: number; // see the OccurrenceGenerator interface for info
   });

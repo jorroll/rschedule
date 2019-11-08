@@ -43,10 +43,16 @@ export class Schedule<Data = any> extends ScheduleBase<Data> {
    *
    * ### Options
    *
-   * - **timezone**: the timezone that yielded occurrences should be in.
+   * - **timezone**: The timezone that yielded occurrences should be *displayed* in.
+   *   Note, this one affects the *displayed* timezone of yielded occurrences.
+   *   For rules, occurrences are first found using the unmodified rule
+   *   config (including whatever timezone the `start` datetime is defined
+   *   in), and then converted to the timezone specified here before being
+   *   yielded. By default, the timezone is *local* time (`null`). So if you don't
+   *   want your rules to be displayed in local time, you must supply a
+   *   timezone argument.
    * - **data**: arbitrary data you can associate with this Schedule. This
    *   is the only mutable property of `Schedule` objects.
-   * - **dateAdapter**: the DateAdapter class that should be used for this Schedule.
    * - **maxDuration**: currently unused.
    * - **rrules**: rules specifying when occurrences happen. See the "Rule Config"
    *   section below.
