@@ -50,7 +50,7 @@ export class MomentTZDateAdapter extends DateAdapterBase {
 
   static fromDateTime(datetime: DateTime) {
     const date = MomentTZDateAdapter.fromJSON(datetime.toJSON());
-    date.generators.push(...datetime.generators);
+    (date.generators as any).push(...datetime.generators);
     return date;
   }
 
@@ -59,12 +59,14 @@ export class MomentTZDateAdapter extends DateAdapterBase {
   }
 
   readonly timezone: string | null;
-  readonly generators: unknown[] = [];
 
   private _end: moment.Moment | undefined;
   private _date: moment.Moment;
 
-  constructor(date: moment.Moment, options: { duration?: number } = {}) {
+  constructor(
+    date: moment.Moment,
+    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+  ) {
     super(undefined, options);
 
     this._date = date.clone();
@@ -102,6 +104,7 @@ export class MomentTZDateAdapter extends DateAdapterBase {
 
         return new MomentTZDateAdapter(date, {
           duration: this.duration,
+          generators: this.generators,
         });
       }
     } else if (prop === 'duration') {
@@ -109,6 +112,7 @@ export class MomentTZDateAdapter extends DateAdapterBase {
       else {
         return new MomentTZDateAdapter(this._date, {
           duration: value as number,
+          generators: this.generators,
         });
       }
     }

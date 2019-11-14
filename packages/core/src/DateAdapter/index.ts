@@ -99,10 +99,14 @@ export abstract class DateAdapterBase {
   // If `never[]` is used, then `Calendar#schedules` *must* be typed as a tuple in order to
   // access any values in `generators` beyond the first (Calendar) value (the rest of the values
   // get typed as `never`). This would prevent passing a variable to `Calendar#schedules`.
-  readonly generators: ReadonlyArray<unknown> = [];
+  readonly generators: ReadonlyArray<unknown>;
 
-  protected constructor(_date: unknown, options?: { duration?: number }) {
+  protected constructor(
+    _date: unknown,
+    options?: { duration?: number; generators?: ReadonlyArray<unknown> },
+  ) {
     this.duration = (options && options.duration) || 0;
+    this.generators = (options && options.generators && options.generators.slice()) || [];
 
     if (!Number.isInteger(this.duration) || this.duration < 0) {
       throw new InvalidDateAdapterError('duration must be a non-negative integer');
@@ -312,7 +316,7 @@ export class DateTime {
   //   return !!(object && object[DATETIME_ID]);
   // }
 
-  static fromJSON(json: DateAdapter.JSON) {
+  static fromJSON(json: DateAdapter.JSON & { generators?: ReadonlyArray<unknown> }) {
     const date = new Date(
       Date.UTC(
         json.year,
@@ -325,11 +329,11 @@ export class DateTime {
       ),
     );
 
-    return new DateTime(date, json.timezone, json.duration);
+    return new DateTime(date, json.timezone, json.duration, json.generators);
   }
 
   static fromDateAdapter(adapter: DateAdapter) {
-    return DateTime.fromJSON(adapter.toJSON());
+    return DateTime.fromJSON({ ...adapter.toJSON(), generators: adapter.generators });
   }
 
   readonly date: Date;
@@ -524,7 +528,7 @@ export class DateTime {
 
   set(unit: DateAdapter.TimeUnit | 'duration', value: number): DateTime {
     if (unit === 'duration') {
-      return new DateTime(this.date, this.timezone, value as number);
+      return new DateTime(this.date, this.timezone, value as number, this.generators);
     }
 
     let date = new Date(this.date);
@@ -682,7 +686,7 @@ export class DateTime {
   }
 
   private forkDateTime(date: Date) {
-    return new DateTime(date, this.timezone, this.duration);
+    return new DateTime(date, this.timezone, this.duration, this.generators);
   }
 }
 

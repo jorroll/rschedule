@@ -320,6 +320,12 @@ export abstract class OccurrenceGenerator {
       return false;
     }
 
+    if (!args.date) {
+      throw new ArgumentError(
+        `"occursOn()" must be called with either a "date" or "weekday" argument`
+      );
+    }
+
     if (this.hasDuration) {
       const maxDuration = this.getMaxDuration('occursOn', args);
 
@@ -474,7 +480,7 @@ export abstract class OccurrenceGenerator {
   }
 
   protected normalizeDateInput<T extends DateInput | undefined>(
-    date?: T,
+    date: T,
   ): T extends undefined ? undefined : DateTime {
     return date ? dateInputToDateTime(date!, this.timezone) : (undefined as any);
   }

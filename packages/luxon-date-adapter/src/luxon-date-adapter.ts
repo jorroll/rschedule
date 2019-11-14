@@ -65,17 +65,19 @@ export class LuxonDateAdapter extends DateAdapterBase {
    */
   static fromDateTime(datetime: DateTime) {
     const date = LuxonDateAdapter.fromJSON(datetime.toJSON());
-    date.generators.push(...datetime.generators);
+    (date.generators as any).push(...datetime.generators);
     return date;
   }
 
   readonly date: LuxonDateTime;
   readonly timezone: string | null;
-  readonly generators: unknown[] = [];
 
   private _end: LuxonDateTime | undefined;
 
-  constructor(date: LuxonDateTime, options: { duration?: number } = {}) {
+  constructor(
+    date: LuxonDateTime,
+    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+  ) {
     super(undefined, options);
 
     this.date = date;
@@ -102,10 +104,14 @@ export class LuxonDateAdapter extends DateAdapterBase {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else if (value === null) {
-        return new LuxonDateAdapter(this.date.toLocal(), { duration: this.duration });
+        return new LuxonDateAdapter(this.date.toLocal(), {
+          duration: this.duration,
+          generators: this.generators,
+        });
       } else {
         return new LuxonDateAdapter(this.date.setZone(value as string), {
           duration: this.duration,
+          generators: this.generators,
         });
       }
     } else if (prop === 'duration') {
@@ -113,6 +119,7 @@ export class LuxonDateAdapter extends DateAdapterBase {
       else {
         return new LuxonDateAdapter(this.date, {
           duration: value as number,
+          generators: this.generators,
         });
       }
     }

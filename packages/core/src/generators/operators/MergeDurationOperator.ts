@@ -156,6 +156,7 @@ export class MergeDurationOperator extends Operator {
           stream.workingValue = DateTime.fromJSON({
             ...stream.workingValue.toJSON(),
             duration: stream.workingValue.duration! + diff,
+            generators: stream.workingValue.generators,
           });
         }
 
@@ -251,6 +252,7 @@ export class MergeDurationOperator extends Operator {
               // replace workingValue with value
               ...stream.value!.toJSON(),
               duration: stream.workingValue!.duration! + diff,
+              generators: stream.value!.generators,
             });
           }
         }
