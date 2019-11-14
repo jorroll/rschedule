@@ -9,8 +9,6 @@ Example:
 ```typescript
 import { addSchedulePattern } from '@rschedule/rule-tools';
 
-RScheduleConfig.defaultDateAdapter = StandardDateAdapter;
-
 let schedule = new Schedule();
 
 schedule = addSchedulePattern('every [WEEKDAY]', new Date(), schedule);
@@ -94,9 +92,9 @@ Examples:
    - "2019/05/04"
    - January 1st, 2019
 
-## Schedule and VEvent functions
+## Schedule functions
 
-`@rschedule/rule-tools` provides utility functions for working with `IScheduleLike` objects (including `Schedule` and `VEvent`, and any custom objects you make which implement `IScheduleLike`).
+`@rschedule/rule-tools` provides utility functions for working with `Schedule` objects.
 
 ### `scheduleHasPattern()`
 
