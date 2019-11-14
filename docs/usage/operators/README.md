@@ -66,7 +66,7 @@ new Calendar().pipe(
 
 An operator function which takes a spread of occurrence generators and only returns the dates which intersect every occurrence generator.
 
-Because it's possible for all the generators to never intersect, and because the intersection operator can't detect this lack of intersection, you must call `intersection()` with a `{maxFailedIterations: number}` argument if it is built from occurrence generators of infinite length. For convenience, you can globally set `RScheduleConfig.defaultMaxFailedIterations`.
+Because it's possible for all the generators to never intersect, and because the intersection operator can't detect this lack of intersection, you must call `intersection()` with a `{maxFailedIterations: number}` argument if it is built from occurrence generators of infinite length. For convenience, you can globally set `IntersectionOperator.defaultMaxFailedIterations`.
 
 - Without further information, I'd probably set `defaultMaxFailedIterations = 50`.
 
@@ -78,7 +78,7 @@ The `maxFailedIterations` argument caps the number of iterations the operator wi
 Example:
 
 ```typescript
-new Calendar().pipe(intersection({ maxFailedIterations: 50, streams: [scheduleOne, scheduleTwo] }));
+new Calendar().pipe(intersection({ streams: [scheduleOne, scheduleTwo], maxFailedIterations: 50 }));
 ```
 
 #### Unique
@@ -101,8 +101,6 @@ An operator function which takes an occurrence stream with `hasDuration === true
 
 You must provide a `maxDuration` argument that represents the maximum possible duration for a single occurrence. If this duration is exceeded, a `MergeDurationOperatorError` will be thrown.
 
-- For your convenience, you can globally set a default `MergeDurationOperator#maxDuration` via `RScheduleConfig.MergeDurationOperator.defaultMaxDuration`.
-
 Example:
 
 ```typescript
@@ -115,7 +113,6 @@ const dates = new Dates({
     new StandardDateAdapter(new Date(2010, 10, 11, 14), { duration: MILLISECONDS_IN_HOUR * 2 }),
     new StandardDateAdapter(new Date(2010, 10, 12, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
   ],
-  dateAdpter: StandardDateAdapter,
 }).pipe(
   mergeDuration({
     maxDuration: MILLISECONDS_IN_HOUR * 24,
@@ -137,8 +134,6 @@ An operator function which takes an occurrence stream with `hasDuration === true
 
 You must provide a `maxDuration` argument that represents the maximum possible duration for a single occurrence. If this duration is exceeded, a `SplitDurationOperatorError` will be thrown.
 
-- For your convenience, you can globally set a default `SplitDurationOperator#maxDuration` via `RScheduleConfig.SplitDurationOperator.defaultMaxDuration`.
-
 Usage example:
 
 ```typescript
@@ -159,7 +154,6 @@ const dates = new Dates({
     new StandardDateAdapter(new Date(2010, 10, 10, 13), { duration: MILLISECONDS_IN_HOUR * 1 }),
     new StandardDateAdapter(new Date(2010, 10, 11, 13), { duration: MILLISECONDS_IN_HOUR * 2 }),
   ],
-  dateAdpter: StandardDateAdapter,
 }).pipe(
   splitDuration({
     splitFn,
