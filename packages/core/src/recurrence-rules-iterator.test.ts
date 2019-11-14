@@ -260,21 +260,21 @@ describe('RecurrenceRulesIterator', () => {
   });
 
   describe('_run()', () => {
-      it('testMaxYear', () => {
-        const controller = build({
-          frequency: 'YEARLY',
-          count: 3,
-          byMonthOfYear: [2],
-          byDayOfMonth: [31],
-          start: parse('99970902T090000'),
-          interval: 1,
-          weekStart: 'MO',
-        });
-
-        expect(() => {
-          Array.from(controller);
-        }).toThrowError();
+    it('testMaxYear', () => {
+      const controller = build({
+        frequency: 'YEARLY',
+        count: 3,
+        byMonthOfYear: [2],
+        byDayOfMonth: [31],
+        start: parse('99970902T090000'),
+        interval: 1,
+        weekStart: 'MO',
       });
+
+      expect(() => {
+        Array.from(controller);
+      }).toThrowError();
+    });
 
     context<RuleOption.Frequency>('YEARLY', frequency => {
       testIteration({
@@ -460,7 +460,7 @@ describe('RecurrenceRulesIterator', () => {
           dateTime(1998, 3, 12, 9, 0),
         ],
       });
-      
+
       testIteration({
         name: 'testYearlyByMonthDayAndWeekDay',
         rules: {
