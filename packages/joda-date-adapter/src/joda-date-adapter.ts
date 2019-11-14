@@ -51,17 +51,19 @@ export class JodaDateAdapter extends DateAdapterBase {
 
   static fromDateTime(datetime: DateTime) {
     const date = JodaDateAdapter.fromJSON(datetime.toJSON());
-    date.generators.push(...datetime.generators);
+    (date.generators as any).push(...datetime.generators);
     return date;
   }
 
   readonly date: ZonedDateTime;
   readonly timezone: string | null;
-  readonly generators: unknown[] = [];
 
   private _end: ZonedDateTime | undefined;
 
-  constructor(date: ZonedDateTime, options: { duration?: number } = {}) {
+  constructor(
+    date: ZonedDateTime,
+    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+  ) {
     super(undefined, options);
 
     this.date = date;
@@ -96,6 +98,7 @@ export class JodaDateAdapter extends DateAdapterBase {
           ),
           {
             duration: this.duration,
+            generators: this.generators,
           },
         );
       }
@@ -104,6 +107,7 @@ export class JodaDateAdapter extends DateAdapterBase {
       else {
         return new JodaDateAdapter(this.date, {
           duration: value as number,
+          generators: this.generators,
         });
       }
     }

@@ -61,7 +61,9 @@ export default function scheduleTests() {
 
   describe('Schedule', () => {
     context(DateAdapterBase.adapter.name, () => {
-      // const timezones: (string | null)[] = !DateAdapterBase.adapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
+      // const timezones: (string | null)[] = !DateAdapterBase.adapter.hasTimezoneSupport
+      //   ? ['UTC']
+      //   : ['UTC'];
 
       const timezones = !DateAdapterBase.adapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
@@ -72,6 +74,52 @@ export default function scheduleTests() {
           describe('ScheduleClass', () => {
             it('is instantiable', () =>
               expect(new Schedule({ timezone })).toBeInstanceOf(Schedule));
+          });
+
+          describe('bugs', () => {
+            if (DateAdapterBase.adapter.hasTimezoneSupport) {
+              // https://gitlab.com/john.carroll.p/rschedule/issues/35
+              it('run start arg is in different time zone', () => {
+                let schedule = new Schedule({
+                  timezone: 'America/Phoenix',
+                  rrules: [
+                    {
+                      frequency: 'WEEKLY',
+                      byDayOfWeek: ['SU'],
+                      start: dateAdapter(2019, 10, 16, 12, 30, { timezone: 'America/Phoenix' }),
+                    },
+                  ],
+                  rdates: [dateAdapter(2019, 11, 11, 12, 30, { timezone: 'America/Phoenix' })],
+                });
+
+                schedule = schedule.set('timezone', 'America/Toronto');
+
+                expect(schedule.timezone).toBe('America/Toronto');
+                expect(schedule.rrules[0].timezone).toBe('America/Toronto');
+                expect(schedule.rdates.timezone).toBe('America/Toronto');
+
+                const adapters = schedule
+                  .occurrences({
+                    start: dateAdapter(2019, 10, 13),
+                    take: 4,
+                  })
+                  .toArray();
+
+                adapters.forEach(adapter => {
+                  expect(adapter.generators.length).toBe(2);
+                  expect(adapter.generators[0]).toBe(schedule);
+                });
+
+                const dates = adapters.map(({ date }) => date);
+
+                expect(dates).toEqual([
+                  dateAdapter(2019, 10, 20, 15, 30, { timezone: 'America/Toronto' }).date,
+                  dateAdapter(2019, 10, 27, 15, 30, { timezone: 'America/Toronto' }).date,
+                  dateAdapter(2019, 11, 3, 14, 30, { timezone: 'America/Toronto' }).date,
+                  dateAdapter(2019, 11, 10, 14, 30, { timezone: 'America/Toronto' }).date,
+                ]);
+              });
+            }
           });
 
           testOccurrences(

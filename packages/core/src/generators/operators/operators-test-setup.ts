@@ -2,12 +2,12 @@ import { DateAdapterBase, DateTime } from '@rschedule/core';
 
 import {
   add,
+  Dates,
   intersection,
   mergeDuration,
   splitDuration,
   subtract,
   unique,
-  Dates,
 } from '@rschedule/core/generators';
 
 import {
@@ -94,7 +94,12 @@ export default function operatorsTests() {
                 const results: string[] = [];
 
                 for (const date of iterable) {
-                  results.push(toAdapter(date).toISOString());
+                  const adapter = toAdapter(date);
+
+                  results.push(adapter.toISOString());
+
+                  expect(adapter.generators.length).toBe(1);
+                  expect(adapter.generators[0]).toBe(datesA);
                 }
 
                 expect(results).toEqual(occurrencesToIsoStrings(datesA));
@@ -124,19 +129,28 @@ export default function operatorsTests() {
                     const stringOriginal: string[] = [];
 
                     for (const date of iterableUTC) {
+                      const adapter = toAdapter(date, { keepZone: true });
+
+                      expect(adapter.generators.length).toBe(1);
+
                       expect(date.timezone).toEqual('UTC');
-                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      const json = adapter.toJSON();
                       delete json.timezone;
                       jsonUTC.push(json);
-                      stringUTC.push(toAdapter(date, { keepZone: true }).toISOString());
+                      stringUTC.push(adapter.toISOString());
                     }
 
                     for (const date of iterableOriginal) {
+                      const adapter = toAdapter(date, { keepZone: true });
+
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesA);
+
                       expect(date.timezone).not.toEqual('UTC');
-                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      const json = adapter.toJSON();
                       delete json.timezone;
                       jsonOriginal.push(json);
-                      stringOriginal.push(toAdapter(date, { keepZone: true }).toISOString());
+                      stringOriginal.push(adapter.toISOString());
                     }
 
                     expect(jsonUTC).not.toEqual(jsonOriginal);
@@ -154,7 +168,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual([
@@ -172,7 +189,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual([
@@ -191,7 +211,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -213,7 +236,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -233,7 +259,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -257,7 +286,10 @@ export default function operatorsTests() {
                 const results: string[] = [];
 
                 for (const date of iterable) {
-                  results.push(toAdapter(date).toISOString());
+                  const adapter = toAdapter(date);
+                  results.push(adapter.toISOString());
+                  expect(adapter.generators.length).toBe(1);
+                  expect(adapter.generators[0]).toBe(datesA);
                 }
 
                 expect(results.length).toBe(0);
@@ -276,7 +308,10 @@ export default function operatorsTests() {
                 const results: string[] = [];
 
                 for (const date of iterable) {
-                  results.push(toAdapter(date).toISOString());
+                  const adapter = toAdapter(date);
+                  results.push(adapter.toISOString());
+                  expect(adapter.generators.length).toBe(1);
+                  expect(adapter.generators[0]).toBe(datesA);
                 }
 
                 expect(results).toEqual([
@@ -300,7 +335,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual([
@@ -321,7 +359,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual([
@@ -343,7 +384,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -368,7 +412,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -391,7 +438,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -416,7 +466,10 @@ export default function operatorsTests() {
                 const results: string[] = [];
 
                 for (const date of iterable) {
-                  results.push(toAdapter(date).toISOString());
+                  const adapter = toAdapter(date);
+                  results.push(adapter.toISOString());
+                  expect(adapter.generators.length).toBe(1);
+                  expect(adapter.generators[0]).toBe(datesA);
                 }
 
                 expect(results).toEqual([
@@ -437,7 +490,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual([
@@ -455,7 +511,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual([
@@ -474,7 +533,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -496,7 +558,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -516,7 +581,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual(
@@ -542,7 +610,10 @@ export default function operatorsTests() {
                 const results: [string, number][] = [];
 
                 for (const date of iterable) {
-                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                  const adapter = toAdapter(date);
+                  results.push([adapter.toISOString(), date.duration!]);
+                  expect(adapter.generators.length).toBe(1);
+                  expect(adapter.generators[0]).toBe(durDatesA);
                 }
 
                 expect(results).toEqual([
@@ -582,19 +653,28 @@ export default function operatorsTests() {
                     const stringOriginal: string[] = [];
 
                     for (const date of iterableUTC) {
+                      const adapter = toAdapter(date, { keepZone: true });
+
+                      expect(adapter.generators.length).toBe(1);
+
                       expect(date.timezone).toEqual('UTC');
-                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      const json = adapter.toJSON();
                       delete json.timezone;
                       jsonUTC.push(json);
-                      stringUTC.push(toAdapter(date, { keepZone: true }).toISOString());
+                      stringUTC.push(adapter.toISOString());
                     }
 
                     for (const date of iterableOriginal) {
+                      const adapter = toAdapter(date, { keepZone: true });
+
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(durDatesA);
+
                       expect(date.timezone).not.toEqual('UTC');
-                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      const json = adapter.toJSON();
                       delete json.timezone;
                       jsonOriginal.push(json);
-                      stringOriginal.push(toAdapter(date, { keepZone: true }).toISOString());
+                      stringOriginal.push(adapter.toISOString());
                     }
 
                     expect(jsonUTC).not.toEqual(jsonOriginal);
@@ -632,7 +712,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(durDatesA);
                   }
 
                   expect(results).toEqual([
@@ -652,7 +735,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(durDatesA);
                   }
 
                   expect(results).toEqual([
@@ -672,7 +758,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(durDatesA);
                   }
 
                   expect(results).toEqual(
@@ -703,19 +792,24 @@ export default function operatorsTests() {
               const maxDuration = MILLISECONDS_IN_HOUR * 3;
 
               it('splitDuration()', () => {
+                const base = durDatesA.add(
+                  dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                    duration: MILLISECONDS_IN_HOUR * 0.5,
+                  }),
+                );
+
                 const iterable = splitDuration({ maxDuration, splitFn })({
-                  base: durDatesA.add(
-                    dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
-                      duration: MILLISECONDS_IN_HOUR * 0.5,
-                    }),
-                  ),
+                  base,
                   timezone,
                 })._run();
 
                 const results: [string, number][] = [];
 
                 for (const date of iterable) {
-                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                  const adapter = toAdapter(date);
+                  results.push([adapter.toISOString(), date.duration!]);
+                  expect(adapter.generators.length).toBe(1);
+                  expect(adapter.generators[0]).toBe(base);
                 }
 
                 expect(results).toEqual([
@@ -755,19 +849,28 @@ export default function operatorsTests() {
                     const stringOriginal: string[] = [];
 
                     for (const date of iterableUTC) {
+                      const adapter = toAdapter(date, { keepZone: true });
+
+                      expect(adapter.generators.length).toBe(1);
+
                       expect(date.timezone).toEqual('UTC');
-                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      const json = adapter.toJSON();
                       delete json.timezone;
                       jsonUTC.push(json);
-                      stringUTC.push(toAdapter(date, { keepZone: true }).toISOString());
+                      stringUTC.push(adapter.toISOString());
                     }
 
                     for (const date of iterableOriginal) {
+                      const adapter = toAdapter(date, { keepZone: true });
+
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(durDatesA);
+
                       expect(date.timezone).not.toEqual('UTC');
-                      const json = toAdapter(date, { keepZone: true }).toJSON();
+                      const json = adapter.toJSON();
                       delete json.timezone;
                       jsonOriginal.push(json);
-                      stringOriginal.push(toAdapter(date, { keepZone: true }).toISOString());
+                      stringOriginal.push(adapter.toISOString());
                     }
 
                     expect(jsonUTC).not.toEqual(jsonOriginal);
@@ -788,7 +891,10 @@ export default function operatorsTests() {
 
                   expect(() => {
                     for (const date of iterable) {
-                      results.push([toAdapter(date).toISOString(), date.duration!]);
+                      const adapter = toAdapter(date);
+                      results.push([adapter.toISOString(), date.duration!]);
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(durDatesA);
                     }
                   }).toThrowError();
                 });
@@ -804,7 +910,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(durDatesA);
                   }
 
                   expect(results).toEqual([
@@ -825,7 +934,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(durDatesA);
                   }
 
                   expect(results).toEqual([
@@ -837,19 +949,24 @@ export default function operatorsTests() {
                 });
 
                 it('reverse', () => {
+                  const base = durDatesA.add(
+                    dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                      duration: MILLISECONDS_IN_HOUR * 0.5,
+                    }),
+                  );
+
                   const iterable = splitDuration({ maxDuration, splitFn })({
-                    base: durDatesA.add(
-                      dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
-                        duration: MILLISECONDS_IN_HOUR * 0.5,
-                      }),
-                    ),
+                    base,
                     timezone,
                   })._run({ reverse: true });
 
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(base);
                   }
 
                   expect(results).toEqual(
@@ -866,19 +983,24 @@ export default function operatorsTests() {
                 });
 
                 it('reverse start', () => {
+                  const base = durDatesA.add(
+                    dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                      duration: MILLISECONDS_IN_HOUR * 0.5,
+                    }),
+                  );
+
                   const iterable = splitDuration({ maxDuration, splitFn })({
-                    base: durDatesA.add(
-                      dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
-                        duration: MILLISECONDS_IN_HOUR * 0.5,
-                      }),
-                    ),
+                    base,
                     timezone,
                   })._run({ reverse: true, start: dateTime(2010, 10, 11, 14, 12, 11, 11) });
 
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(base);
                   }
 
                   expect(results).toEqual(
@@ -893,19 +1015,24 @@ export default function operatorsTests() {
                 });
 
                 it('reverse end', () => {
+                  const base = durDatesA.add(
+                    dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
+                      duration: MILLISECONDS_IN_HOUR * 0.5,
+                    }),
+                  );
+
                   const iterable = splitDuration({ maxDuration, splitFn })({
-                    base: durDatesA.add(
-                      dateAdapter(2010, 10, 11, 14, 15, 11, 11, {
-                        duration: MILLISECONDS_IN_HOUR * 0.5,
-                      }),
-                    ),
+                    base,
                     timezone,
                   })._run({ reverse: true, end: dateTime(2010, 10, 11, 14, 12, 11, 11) });
 
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(base);
                   }
 
                   expect(results).toEqual(
@@ -931,7 +1058,10 @@ export default function operatorsTests() {
                 const results: string[] = [];
 
                 for (const date of iterable) {
-                  results.push(toAdapter(date).toISOString());
+                  const adapter = toAdapter(date);
+                  results.push(adapter.toISOString());
+                  expect(adapter.generators.length).toBe(1);
+                  expect([datesA, datesB]).toContain(adapter.generators[0]);
                 }
 
                 expect(results).toEqual(occurrencesToIsoStrings(datesA, datesB));
@@ -946,7 +1076,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect([datesA, datesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -968,7 +1101,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect([datesA, datesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -990,7 +1126,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect([datesA, datesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(occurrencesToIsoStrings(datesA, datesB).reverse());
@@ -1009,7 +1148,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesB);
                   }
 
                   expect(results).toEqual([
@@ -1030,7 +1172,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesB);
                     }
 
                     expect(results).toEqual([
@@ -1048,7 +1193,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesB);
                     }
 
                     expect(results).toEqual([
@@ -1066,7 +1214,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesB);
                     }
 
                     expect(results).toEqual(
@@ -1088,7 +1239,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesB);
                     }
 
                     expect(results).toEqual(
@@ -1108,7 +1262,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesB);
                     }
 
                     expect(results).toEqual(
@@ -1131,7 +1288,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect(adapter.generators[0]).toBe(datesA);
                   }
 
                   expect(results).toEqual([
@@ -1150,7 +1310,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesA);
                     }
 
                     expect(results).toEqual([isoString(2018, 11, 11, 11, 11, 11, 11)]);
@@ -1165,7 +1328,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesA);
                     }
 
                     expect(results).toEqual([isoString(2017, 9, 9, 9, 9, 9, 9)]);
@@ -1180,7 +1346,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect(adapter.generators[0]).toBe(datesA);
                     }
 
                     expect(results).toEqual(
@@ -1206,7 +1375,10 @@ export default function operatorsTests() {
                 const results: string[] = [];
 
                 for (const date of iterable) {
-                  results.push(toAdapter(date).toISOString());
+                  const adapter = toAdapter(date);
+                  results.push(adapter.toISOString());
+                  expect(adapter.generators.length).toBe(1);
+                  expect([datesA, datesB]).toContain(adapter.generators[0]);
                 }
 
                 expect(results).toEqual([
@@ -1230,7 +1402,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect([datesA, datesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -1250,7 +1425,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect([datesA, datesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -1271,7 +1449,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect([datesA, datesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(
@@ -1300,7 +1481,10 @@ export default function operatorsTests() {
                   const results: string[] = [];
 
                   for (const date of iterable) {
-                    results.push(toAdapter(date).toISOString());
+                    const adapter = toAdapter(date);
+                    results.push(adapter.toISOString());
+                    expect(adapter.generators.length).toBe(1);
+                    expect([datesA, datesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -1327,7 +1511,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect([datesA, datesB]).toContain(adapter.generators[0]);
                     }
 
                     expect(results).toEqual([
@@ -1349,7 +1536,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect([datesA, datesB]).toContain(adapter.generators[0]);
                     }
 
                     expect(results).toEqual([
@@ -1372,7 +1562,10 @@ export default function operatorsTests() {
                     const results: string[] = [];
 
                     for (const date of iterable) {
-                      results.push(toAdapter(date).toISOString());
+                      const adapter = toAdapter(date);
+                      results.push(adapter.toISOString());
+                      expect(adapter.generators.length).toBe(1);
+                      expect([datesA, datesB]).toContain(adapter.generators[0]);
                     }
 
                     expect(results).toEqual(
@@ -1406,7 +1599,10 @@ export default function operatorsTests() {
                 const results: [string, number][] = [];
 
                 for (const date of iterable) {
-                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                  const adapter = toAdapter(date);
+                  results.push([adapter.toISOString(), date.duration!]);
+                  expect(adapter.generators.length).toBe(1);
+                  expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                 }
 
                 expect(results).toEqual([
@@ -1452,7 +1648,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -1474,7 +1673,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -1497,7 +1699,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(
@@ -1523,7 +1728,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(
@@ -1547,7 +1755,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(
@@ -1588,7 +1799,10 @@ export default function operatorsTests() {
                 const results: [string, number][] = [];
 
                 for (const date of iterable) {
-                  results.push([toAdapter(date).toISOString(), date.duration!]);
+                  const adapter = toAdapter(date);
+                  results.push([adapter.toISOString(), date.duration!]);
+                  expect(adapter.generators.length).toBe(1);
+                  expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                 }
 
                 expect(results).toEqual([
@@ -1641,7 +1855,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -1671,7 +1888,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual([
@@ -1696,7 +1916,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(
@@ -1731,7 +1954,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(
@@ -1762,7 +1988,10 @@ export default function operatorsTests() {
                   const results: [string, number][] = [];
 
                   for (const date of iterable) {
-                    results.push([toAdapter(date).toISOString(), date.duration!]);
+                    const adapter = toAdapter(date);
+                    results.push([adapter.toISOString(), date.duration!]);
+                    expect(adapter.generators.length).toBe(1);
+                    expect([durDatesA, durDatesB]).toContain(adapter.generators[0]);
                   }
 
                   expect(results).toEqual(

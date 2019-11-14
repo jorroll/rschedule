@@ -53,7 +53,7 @@ export class StandardDateAdapter extends DateAdapterBase {
 
   static fromDateTime(datetime: DateTime) {
     const date = StandardDateAdapter.fromJSON(datetime.toJSON());
-    date.generators.push(...datetime.generators);
+    (date.generators as any).push(...datetime.generators);
     return date;
   }
 
@@ -62,12 +62,18 @@ export class StandardDateAdapter extends DateAdapterBase {
   }
 
   readonly timezone: string | null;
-  readonly generators: unknown[] = [];
 
   private _end: Date | undefined;
   private _date: Date;
 
-  constructor(date: Date, options: { timezone?: string | null; duration?: number } = {}) {
+  constructor(
+    date: Date,
+    options: {
+      timezone?: string | null;
+      duration?: number;
+      generators?: ReadonlyArray<unknown>;
+    } = {},
+  ) {
     super(undefined, options);
 
     if (!['UTC', null, undefined].includes(options.timezone)) {
@@ -104,6 +110,7 @@ export class StandardDateAdapter extends DateAdapterBase {
         return new StandardDateAdapter(this._date, {
           timezone: value as string | null,
           duration: this.duration,
+          generators: this.generators,
         });
       }
     } else if (prop === 'duration') {
@@ -112,6 +119,7 @@ export class StandardDateAdapter extends DateAdapterBase {
         return new StandardDateAdapter(this._date, {
           timezone: this.timezone,
           duration: value as number,
+          generators: this.generators,
         });
       }
     }

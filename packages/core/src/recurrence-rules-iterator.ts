@@ -9,7 +9,7 @@ import {
   RecurrenceRuleResult,
   ValidDateTime,
 } from './recurrence-rule';
-import { cloneJSON } from './utilities';
+import { cloneJSON, normalizeDateTimeTimezone } from './utilities';
 
 export interface IRecurrenceRulesIteratorArgs {
   start?: DateTime;
@@ -43,18 +43,20 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     this.options = { ...cloneJSON(options), start: options.start, end: options.end };
     this.reverse = (this.options.count === undefined && args.reverse) || false;
 
+    const { start, end } = this.normalizeDateTimeArgs(args);
+
     if (options.count !== undefined) {
       this.start = options.start;
-    } else if (args.start && options.start) {
-      this.start = args.start.isAfterOrEqual(options.start) ? args.start : options.start;
+    } else if (start && options.start) {
+      this.start = start.isAfterOrEqual(options.start) ? start : options.start;
     } else {
-      this.start = args.start || options.start;
+      this.start = start || options.start;
     }
 
-    if (args.end && options.end) {
-      this.end = args.end.isBeforeOrEqual(options.end) ? args.end : options.end;
+    if (end && options.end) {
+      this.end = end.isBeforeOrEqual(options.end) ? end : options.end;
     } else {
-      this.end = args.end || options.end;
+      this.end = end || options.end;
     }
 
     if (this.args.reverse && !(options.count !== undefined || this.end)) {
@@ -239,5 +241,12 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
   private normalizeRunOutput(date: DateTime) {
     return this.hasDuration ? date.set('duration', this.options.duration!) : date;
+  }
+
+  private normalizeDateTimeArgs(args: IRecurrenceRulesIteratorArgs) {
+    return {
+      start: args.start && normalizeDateTimeTimezone(args.start, this.options.start.timezone),
+      end: args.end && normalizeDateTimeTimezone(args.end, this.options.start.timezone),
+    };
   }
 }

@@ -4,9 +4,13 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
-## FIX
+## 0.12.2 FIX (2019/11/13)
+
+### Fixes
 
 - Clarify the effect of the `timezone` argument in the docs.
+- Fixed bug that could occur if a `RecurrenceRulesIterator` was passed run options with a `start`/`end` time in a different time zone from the `RecurrenceRulesIterator's` rule start time ([#35](https://gitlab.com/john.carroll.p/rschedule/issues/35)).
+- Fixed a bug that could result in generated date adapters not having the proper `generators` value.
 
 ## 0.12.1 FIX (2019/9/26)
 

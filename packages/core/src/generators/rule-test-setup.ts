@@ -8,34 +8,34 @@ import { context, dateAdapterFn, TIMEZONES } from '../../../../tests/utilities';
 
 import { DateAdapter, DateAdapterBase, IRuleOptions } from '@rschedule/core';
 
-import { Rule, OccurrenceGenerator } from '@rschedule/core/generators';
+import { OccurrenceGenerator, Rule } from '@rschedule/core/generators';
 
 export default function ruleTests() {
   describe('Rule', () => {
     context(DateAdapterBase.adapter.name, () => {
       // const timezones = !DateAdapterBase.adapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
       const timezones = !DateAdapterBase.adapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
-  
+
       timezones.forEach(timezone => {
         context(timezone, zone => {
           const dateAdapter = dateAdapterFn(zone);
-  
+
           // legacy function to create new dateAdapter instances
           const parse = (str: string) => {
             const parts: Array<number | string> = str
               .match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)!
               .map(part => Number(part));
-  
+
             parts.shift();
-  
+
             // @ts-ignore
             return dateAdapter(...parts);
           };
-  
+
           function buildGenerator(config: IRuleOptions) {
             return new Rule(config, { timezone });
           }
-  
+
           function testRecurring(
             testName: string,
             rule: Readonly<OccurrenceGenerator>,
@@ -44,47 +44,47 @@ export default function ruleTests() {
             describe(testName, () => {
               it('matches expected dates', () => {
                 const expected = expectedDates.map(date => date.toISOString());
-  
+
                 const actual = rule
                   .occurrences()
                   .toArray()!
                   .map(date => date.toISOString());
-  
+
                 expect(actual).toEqual(expected);
               });
-  
+
               it('allows skipping iterations', () => {
                 if (expectedDates.length < 3) {
                   return;
                 }
-  
+
                 const iterable = rule.occurrences();
-  
+
                 let date = iterable.next().value;
-  
+
                 expect(date.toISOString()).toBe(expectedDates[0].toISOString());
-  
+
                 date = iterable.next({ skipToDate: expectedDates[2] }).value;
-  
+
                 expect(date && date.toISOString()).toBe(expectedDates[2].toISOString());
               });
-  
+
               it('allows skipping iterations in reverse', () => {
                 if (expectedDates.length !== 3) {
                   return;
                 }
-  
+
                 const iterable = rule.occurrences({ reverse: true });
-  
+
                 let date = iterable.next().value;
-  
+
                 expect(date.toISOString()).toBe(expectedDates[2].toISOString());
-  
+
                 date = iterable.next({ skipToDate: expectedDates[0] }).value;
-  
+
                 expect(date.toISOString()).toBe(expectedDates[0].toISOString());
               });
-  
+
               describe('w/args', () => {
                 it('END', () => {
                   let newExpectedDates: DateAdapter[];
@@ -105,7 +105,7 @@ export default function ruleTests() {
                     .map(date => date.toISOString());
                   expect(actual).toEqual(expected);
                 });
-  
+
                 it('REVERSE', () => {
                   if (expectedDates.length === 0) {
                     // can't generate a start date in this scenerio so simply return
@@ -120,25 +120,25 @@ export default function ruleTests() {
                   expect(actual).toEqual(expected);
                 });
               });
-  
+
               describe('#occursOn()', () => {
                 expectedDates
                   .map(date => date.toDateTime())
                   .forEach(date => {
                     describe(date.toISOString(), () => {
                       it('date', () => expect(rule.occursOn({ date })).toBeTruthy());
-  
+
                       describe('weekday', () => {
                         it('no options', () =>
                           expect(rule.occursOn({ weekday: date.get('weekday') })).toBeTruthy());
                       });
                     });
                   });
-  
+
                 if (expectedDates.length > 0) {
                   const first = expectedDates[0].toDateTime();
                   const last = expectedDates[expectedDates.length - 1].toDateTime();
-  
+
                   describe(first.toISOString(), () => {
                     describe('weekday', () => {
                       it('before first including', () => {
@@ -149,7 +149,7 @@ export default function ruleTests() {
                           }),
                         ).toBeTruthy();
                       });
-  
+
                       it('before first excluding', () =>
                         expect(
                           rule.occursOn({
@@ -158,7 +158,7 @@ export default function ruleTests() {
                             excludeEnds: true,
                           }),
                         ).toBeFalsy());
-  
+
                       it('after first including', () =>
                         expect(
                           rule.occursOn({
@@ -171,7 +171,7 @@ export default function ruleTests() {
                       // it('after first excluding', () => expect(rule.occursOn({weekday: first.get('weekday'), after: first, excludeEnds: true})).toBeTruthy())
                     });
                   });
-  
+
                   describe(last.toISOString(), () => {
                     describe('weekday', () => {
                       it('before last including', () =>
@@ -181,7 +181,7 @@ export default function ruleTests() {
                             before: last,
                           }),
                         ).toBeTruthy());
-  
+
                       // don't think there's a generic way to know what the answer should be (e.g. take a `MINUTELY` rule of count 3 which only takes place
                       // on one day, if you exclude that day it doesn't happen).
                       // it('before last excluding', () => expect(rule.occursOn({weekday: last.get('weekday'), before: last, excludeEnds: true})).toBeTruthy())
@@ -192,7 +192,7 @@ export default function ruleTests() {
                             after: last,
                           }),
                         ).toBeTruthy());
-  
+
                       it('after last excluding', () =>
                         expect(
                           rule.occursOn({
@@ -207,7 +207,7 @@ export default function ruleTests() {
               });
             });
           }
-  
+
           function testRecurringBetween(
             testName: string,
             rule: Readonly<OccurrenceGenerator>,
@@ -219,7 +219,7 @@ export default function ruleTests() {
             describe(testName, () => {
               it('matches expected dates', () => {
                 let occurrences = rule.occurrences({ start, end }).toArray()!;
-  
+
                 if (!inclusive) {
                   occurrences = occurrences.filter(
                     date =>
@@ -229,14 +229,14 @@ export default function ruleTests() {
                       ),
                   );
                 }
-  
+
                 expect(occurrences.map(d => d.toISOString())).toEqual(
                   expectedDates.map(d => d.toISOString()),
                 );
               });
             });
           }
-  
+
           function testPreviousOccurrence(
             testName: string,
             rule: Readonly<OccurrenceGenerator>,
@@ -261,7 +261,7 @@ export default function ruleTests() {
               });
             });
           }
-  
+
           function testNextOccurrence(
             testName: string,
             rule: Readonly<OccurrenceGenerator>,
@@ -284,34 +284,68 @@ export default function ruleTests() {
               });
             });
           }
-  
+
           describe('specific bugs', () => {
             if (DateAdapterBase.adapter.hasTimezoneSupport) {
               it('occursOn() arg is in a different timezone from rule start', () => {
                 const start = dateAdapter(2018, 8, 16, 0, 0, 0, 0);
-  
+
                 const rule = buildGenerator({
                   frequency: 'WEEKLY',
                   start,
                   byDayOfWeek: ['TH'],
                 });
-  
+
                 const secondOccurrence = dateAdapter(2018, 8, 23, 0, 0, 0, 0).set(
                   'timezone',
                   'America/Los_Angeles',
                 );
-  
+
                 const falseSecondOccurrence = dateAdapter(2018, 8, 22, 0, 0, 0, 0).set(
                   'timezone',
                   'America/Los_Angeles',
                 );
-  
+
                 expect(rule.occursOn({ date: secondOccurrence })).toBeTruthy();
                 expect(rule.occursOn({ date: falseSecondOccurrence })).toBeFalsy();
               });
+
+              // https://gitlab.com/john.carroll.p/rschedule/issues/35
+              it('run start arg is in different time zone', () => {
+                let rule = buildGenerator({
+                  frequency: 'WEEKLY',
+                  byDayOfWeek: ['SU'],
+                  start: dateAdapter(2019, 10, 16, 12, 30, { timezone: 'America/Phoenix' }),
+                });
+  
+                rule = rule.set('timezone', 'America/Toronto');
+  
+                expect(rule.timezone).toBe('America/Toronto');
+  
+                const adapters = rule
+                  .occurrences({
+                    start: dateAdapter(2019, 10, 13),
+                    take: 4,
+                  })
+                  .toArray();
+  
+                adapters.forEach(adapter => {
+                  expect(adapter.generators.length).toBe(1);
+                  expect(adapter.generators[0]).toBe(rule);
+                });
+  
+                const dates = adapters.map(({ date }) => date);
+  
+                expect(dates).toEqual([
+                  dateAdapter(2019, 10, 20, 15, 30, { timezone: 'America/Toronto' }).date,
+                  dateAdapter(2019, 10, 27, 15, 30, { timezone: 'America/Toronto' }).date,
+                  dateAdapter(2019, 11, 3, 14, 30, { timezone: 'America/Toronto' }).date,
+                  dateAdapter(2019, 11, 10, 14, 30, { timezone: 'America/Toronto' }).date,
+                ]);
+              });
             }
           });
-  
+
           testPreviousOccurrence(
             'testBefore',
             buildGenerator({
@@ -322,7 +356,7 @@ export default function ruleTests() {
             false,
             dateAdapter(1997, 9, 4, 9, 0, 0, 0),
           );
-  
+
           testPreviousOccurrence(
             'testBeforeInc',
             buildGenerator({
@@ -333,7 +367,7 @@ export default function ruleTests() {
             true,
             dateAdapter(1997, 9, 5, 9, 0, 0, 0),
           );
-  
+
           testNextOccurrence(
             'testAfter',
             buildGenerator({
@@ -344,7 +378,7 @@ export default function ruleTests() {
             false,
             dateAdapter(1997, 9, 5, 9, 0, 0, 0),
           );
-  
+
           testNextOccurrence(
             'testAfterInc',
             buildGenerator({
@@ -355,7 +389,7 @@ export default function ruleTests() {
             true,
             dateAdapter(1997, 9, 4, 9, 0, 0, 0),
           );
-  
+
           testRecurringBetween(
             'testBetween',
             buildGenerator({
@@ -371,7 +405,7 @@ export default function ruleTests() {
               dateAdapter(1997, 9, 5, 9, 0, 0, 0),
             ],
           );
-  
+
           testRecurringBetween(
             'testBetweenInc',
             buildGenerator({
@@ -389,7 +423,7 @@ export default function ruleTests() {
               dateAdapter(1997, 9, 6, 9, 0, 0, 0),
             ],
           );
-  
+
           describe('YEARLY', () => {
             testRecurring(
               'testYearly',
@@ -404,7 +438,7 @@ export default function ruleTests() {
                 dateAdapter(1999, 9, 2, 9, 0, 0, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyWithEndDate',
               buildGenerator({
@@ -418,7 +452,7 @@ export default function ruleTests() {
                 dateAdapter(1999, 9, 2, 9, 0, 0, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyBySecondWithEndDate',
               buildGenerator({
@@ -429,7 +463,7 @@ export default function ruleTests() {
               }),
               [dateAdapter(2010, 10, 10, 0, 0, 2), dateAdapter(2010, 10, 10, 0, 0, 4)],
             );
-  
+
             testRecurring(
               'testYearlyInterval',
               buildGenerator({
@@ -444,7 +478,7 @@ export default function ruleTests() {
                 dateAdapter(2001, 9, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyIntervalLarge',
               buildGenerator({
@@ -459,7 +493,7 @@ export default function ruleTests() {
                 dateAdapter(2197, 9, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonth',
               buildGenerator({
@@ -474,7 +508,7 @@ export default function ruleTests() {
                 dateAdapter(1999, 1, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonthDay',
               buildGenerator({
@@ -489,7 +523,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonthAndMonthDay',
               buildGenerator({
@@ -505,7 +539,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 5, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByWeekDay',
               buildGenerator({
@@ -525,7 +559,7 @@ export default function ruleTests() {
                 // dateAdapter(1997, 9, 25, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByNWeekDay',
               buildGenerator({
@@ -540,7 +574,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 12, 31, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByNWeekDayLarge',
               buildGenerator({
@@ -555,7 +589,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 12, 17, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonthAndWeekDay',
               buildGenerator({
@@ -571,7 +605,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 8, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonthAndNWeekDay',
               buildGenerator({
@@ -587,7 +621,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonthAndNWeekDayLarge',
               buildGenerator({
@@ -603,7 +637,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 12, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonthDayAndWeekDay',
               buildGenerator({
@@ -619,7 +653,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMonthAndMonthDayAndWeekDay',
               buildGenerator({
@@ -636,7 +670,7 @@ export default function ruleTests() {
                 dateAdapter(2001, 3, 1, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByHour',
               buildGenerator({
@@ -651,7 +685,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 9, 2, 18, 0),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMinute',
               buildGenerator({
@@ -666,7 +700,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 9, 2, 9, 6),
               ],
             );
-  
+
             testRecurring(
               'testYearlyBySecond',
               buildGenerator({
@@ -681,7 +715,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 9, 2, 9, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByHourAndMinute',
               buildGenerator({
@@ -697,7 +731,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 9, 2, 6, 6),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByHourAndSecond',
               buildGenerator({
@@ -713,7 +747,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 9, 2, 6, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByMinuteAndSecond',
               buildGenerator({
@@ -729,7 +763,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testYearlyByHourAndMinuteAndSecond',
               buildGenerator({
@@ -746,7 +780,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 18, 6),
               ],
             );
-  
+
             // This is testing a bug I found while iterating in reverse
             testRecurring(
               'testYearlyByMonthAndByWeekWithEndDate',
@@ -759,7 +793,7 @@ export default function ruleTests() {
               }),
               [dateAdapter(2010, 2, 7), dateAdapter(2010, 2, 14), dateAdapter(2010, 2, 15)],
             );
-  
+
             testRecurringBetween(
               'testYearlyBetweenInc',
               buildGenerator({
@@ -771,7 +805,7 @@ export default function ruleTests() {
               true,
               [dateAdapter(2016, 1, 1)],
             );
-  
+
             testRecurringBetween(
               'testYearlyBetweenIncLargeSpan',
               buildGenerator({
@@ -783,7 +817,7 @@ export default function ruleTests() {
               true,
               [dateAdapter(2016, 1, 1)],
             );
-  
+
             testRecurringBetween(
               'testYearlyBetweenIncLargeSpan2',
               buildGenerator({
@@ -796,7 +830,7 @@ export default function ruleTests() {
               [dateAdapter(2016, 1, 1), dateAdapter(2017, 1, 1)],
             );
           });
-  
+
           describe('MONTHLY', () => {
             testRecurring(
               'testMonthly',
@@ -811,7 +845,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 11, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyWithEndDate',
               buildGenerator({
@@ -825,7 +859,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 11, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyInterval',
               buildGenerator({
@@ -840,7 +874,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyIntervalLarge',
               buildGenerator({
@@ -855,7 +889,7 @@ export default function ruleTests() {
                 dateAdapter(2000, 9, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonth',
               buildGenerator({
@@ -870,7 +904,7 @@ export default function ruleTests() {
                 dateAdapter(1999, 1, 2, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonthDay',
               buildGenerator({
@@ -885,7 +919,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonthAndMonthDay',
               buildGenerator({
@@ -901,7 +935,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 5, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByWeekDay',
               buildGenerator({
@@ -916,7 +950,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByNWeekDay',
               buildGenerator({
@@ -931,7 +965,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 7, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByNWeekDayLarge',
               buildGenerator({
@@ -946,7 +980,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 16, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonthAndWeekDay',
               buildGenerator({
@@ -962,7 +996,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 8, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonthAndNWeekDay',
               buildGenerator({
@@ -978,7 +1012,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonthAndNWeekDayLarge',
               buildGenerator({
@@ -994,7 +1028,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 12, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonthDayAndWeekDay',
               buildGenerator({
@@ -1010,7 +1044,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMonthAndMonthDayAndWeekDay',
               buildGenerator({
@@ -1027,7 +1061,7 @@ export default function ruleTests() {
                 dateAdapter(2001, 3, 1, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByHour',
               buildGenerator({
@@ -1042,7 +1076,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 2, 18, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMinute',
               buildGenerator({
@@ -1057,7 +1091,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 2, 9, 6),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyBySecond',
               buildGenerator({
@@ -1072,7 +1106,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 2, 9, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByHourAndMinute',
               buildGenerator({
@@ -1088,7 +1122,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 2, 6, 6),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByHourAndSecond',
               buildGenerator({
@@ -1104,7 +1138,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 2, 6, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByMinuteAndSecond',
               buildGenerator({
@@ -1120,7 +1154,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyByHourAndMinuteAndSecond',
               buildGenerator({
@@ -1137,7 +1171,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyNegByMonthDayJanFebForNonLeapYear',
               buildGenerator({
@@ -1153,7 +1187,7 @@ export default function ruleTests() {
                 dateAdapter(2014, 3, 31, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testMonthlyNegByMonthDayJanFebForLeapYear',
               buildGenerator({
@@ -1170,7 +1204,7 @@ export default function ruleTests() {
               ],
             );
           });
-  
+
           describe('WEEKLY', () => {
             testRecurring(
               'testWeekly',
@@ -1185,7 +1219,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 16, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyWithEndDate',
               buildGenerator({
@@ -1199,7 +1233,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 16, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyInterval',
               buildGenerator({
@@ -1214,7 +1248,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 30, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyIntervalLarge',
               buildGenerator({
@@ -1229,7 +1263,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 6, 9, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByMonth',
               buildGenerator({
@@ -1244,7 +1278,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 20, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByWeekDay',
               buildGenerator({
@@ -1259,7 +1293,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByMonthAndWeekDay',
               // This test is interesting, because it crosses the year
@@ -1278,7 +1312,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 8, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByHour',
               buildGenerator({
@@ -1293,7 +1327,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 18, 0),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByMinute',
               buildGenerator({
@@ -1308,7 +1342,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 9, 6),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyBySecond',
               buildGenerator({
@@ -1323,7 +1357,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 9, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByHourAndMinute',
               buildGenerator({
@@ -1339,7 +1373,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 6, 6),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByHourAndSecond',
               buildGenerator({
@@ -1355,7 +1389,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 6, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByMinuteAndSecond',
               buildGenerator({
@@ -1371,7 +1405,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testWeeklyByHourAndMinuteAndSecond',
               buildGenerator({
@@ -1388,7 +1422,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'calculates weekly recurrences correctly across DST boundaries',
               buildGenerator({
@@ -1402,7 +1436,7 @@ export default function ruleTests() {
                 dateAdapter(2018, 11, 14, 18),
               ],
             );
-  
+
             testRecurring(
               'calculates byweekday recurrences correctly across DST boundaries',
               buildGenerator({
@@ -1414,7 +1448,7 @@ export default function ruleTests() {
               [dateAdapter(2018, 10, 3), dateAdapter(2018, 10, 7)],
             );
           });
-  
+
           describe('DAILY', () => {
             testRecurring(
               'testDaily',
@@ -1429,7 +1463,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 4, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyWithEndDate',
               buildGenerator({
@@ -1443,7 +1477,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 4, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyInterval',
               buildGenerator({
@@ -1458,7 +1492,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 6, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyIntervalLarge',
               buildGenerator({
@@ -1473,7 +1507,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 5, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMonth',
               buildGenerator({
@@ -1488,7 +1522,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMonthDay',
               buildGenerator({
@@ -1503,7 +1537,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 10, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMonthAndMonthDay',
               buildGenerator({
@@ -1519,7 +1553,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 5, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByWeekDay',
               buildGenerator({
@@ -1534,7 +1568,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 9, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMonthAndWeekDay',
               buildGenerator({
@@ -1550,7 +1584,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 8, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMonthDayAndWeekDay',
               buildGenerator({
@@ -1566,7 +1600,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 3, 3, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMonthAndMonthDayAndWeekDay',
               buildGenerator({
@@ -1583,7 +1617,7 @@ export default function ruleTests() {
                 dateAdapter(2001, 3, 1, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByHour',
               buildGenerator({
@@ -1598,7 +1632,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 18, 0),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMinute',
               buildGenerator({
@@ -1613,7 +1647,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 9, 6),
               ],
             );
-  
+
             testRecurring(
               'testDailyBySecond',
               buildGenerator({
@@ -1628,7 +1662,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 9, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testDailyByHourAndMinute',
               buildGenerator({
@@ -1644,7 +1678,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 6, 6),
               ],
             );
-  
+
             testRecurring(
               'testDailyByHourAndSecond',
               buildGenerator({
@@ -1660,7 +1694,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 6, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testDailyByMinuteAndSecond',
               buildGenerator({
@@ -1676,7 +1710,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testDailyByHourAndMinuteAndSecond',
               buildGenerator({
@@ -1693,7 +1727,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'calculates daily recurrences correctly across DST boundaries',
               buildGenerator({
@@ -1711,7 +1745,7 @@ export default function ruleTests() {
               ],
             );
           });
-  
+
           describe('HOURLY', () => {
             testRecurring(
               'testHourly',
@@ -1726,7 +1760,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 11, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyWithEndDate',
               buildGenerator({
@@ -1740,7 +1774,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 11, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyInterval',
               buildGenerator({
@@ -1755,7 +1789,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 13, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyIntervalLarge',
               buildGenerator({
@@ -1770,7 +1804,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 11, 5, 11, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMonth',
               buildGenerator({
@@ -1785,7 +1819,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 2, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMonthDay',
               buildGenerator({
@@ -1800,7 +1834,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 2, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMonthAndMonthDay',
               buildGenerator({
@@ -1816,7 +1850,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 5, 2, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByWeekDay',
               buildGenerator({
@@ -1831,7 +1865,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 11, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMonthAndWeekDay',
               buildGenerator({
@@ -1847,7 +1881,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 2, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMonthDayAndWeekDay',
               buildGenerator({
@@ -1863,7 +1897,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 2, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMonthAndMonthDayAndWeekDay',
               buildGenerator({
@@ -1880,7 +1914,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 2, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByHour',
               buildGenerator({
@@ -1895,7 +1929,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 18, 0),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMinute',
               buildGenerator({
@@ -1910,7 +1944,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 10, 6),
               ],
             );
-  
+
             testRecurring(
               'testHourlyBySecond',
               buildGenerator({
@@ -1925,7 +1959,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 10, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByHourAndMinute',
               buildGenerator({
@@ -1941,7 +1975,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 6, 6),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByHourAndSecond',
               buildGenerator({
@@ -1957,7 +1991,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 6, 0, 6),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByMinuteAndSecond',
               buildGenerator({
@@ -1973,7 +2007,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testHourlyByHourAndMinuteAndSecond',
               buildGenerator({
@@ -1991,7 +2025,7 @@ export default function ruleTests() {
               ],
             );
           });
-  
+
           describe('MINUTELY', () => {
             testRecurring(
               'testMinutely',
@@ -2006,7 +2040,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyWithEndDate',
               buildGenerator({
@@ -2020,7 +2054,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyInterval',
               buildGenerator({
@@ -2035,7 +2069,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 4),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyIntervalLarge',
               buildGenerator({
@@ -2050,7 +2084,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 4, 11, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMonth',
               buildGenerator({
@@ -2065,7 +2099,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMonthDay',
               buildGenerator({
@@ -2080,7 +2114,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMonthAndMonthDay',
               buildGenerator({
@@ -2096,7 +2130,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 5, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByWeekDay',
               buildGenerator({
@@ -2111,7 +2145,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMonthAndWeekDay',
               buildGenerator({
@@ -2127,7 +2161,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMonthDayAndWeekDay',
               buildGenerator({
@@ -2143,7 +2177,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMonthAndMonthDayAndWeekDay',
               buildGenerator({
@@ -2160,7 +2194,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByHour',
               buildGenerator({
@@ -2175,7 +2209,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 2),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMinute',
               buildGenerator({
@@ -2190,7 +2224,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 10, 6),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyBySecond',
               buildGenerator({
@@ -2205,7 +2239,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 1, 6),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByHourAndMinute',
               buildGenerator({
@@ -2221,7 +2255,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 6, 6),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByHourAndSecond',
               buildGenerator({
@@ -2237,7 +2271,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 1, 6),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByMinuteAndSecond',
               buildGenerator({
@@ -2253,7 +2287,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testMinutelyByHourAndMinuteAndSecond',
               buildGenerator({
@@ -2271,7 +2305,7 @@ export default function ruleTests() {
               ],
             );
           });
-  
+
           describe('SECONDLY', () => {
             testRecurring(
               'testSecondly',
@@ -2286,7 +2320,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyWithEndDate',
               buildGenerator({
@@ -2300,7 +2334,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyInterval',
               buildGenerator({
@@ -2315,7 +2349,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 0, 4),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyIntervalLarge',
               buildGenerator({
@@ -2330,7 +2364,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 4, 11, 2, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMonth',
               buildGenerator({
@@ -2345,7 +2379,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMonthDay',
               buildGenerator({
@@ -2360,7 +2394,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 3, 0, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMonthAndMonthDay',
               buildGenerator({
@@ -2376,7 +2410,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 5, 0, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByWeekDay',
               buildGenerator({
@@ -2391,7 +2425,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMonthAndWeekDay',
               buildGenerator({
@@ -2407,7 +2441,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMonthDayAndWeekDay',
               buildGenerator({
@@ -2423,7 +2457,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMonthAndMonthDayAndWeekDay',
               buildGenerator({
@@ -2440,7 +2474,7 @@ export default function ruleTests() {
                 dateAdapter(1998, 1, 1, 0, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByHour',
               buildGenerator({
@@ -2455,7 +2489,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 0, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMinute',
               buildGenerator({
@@ -2470,7 +2504,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 6, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyBySecond',
               buildGenerator({
@@ -2485,7 +2519,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 1, 6),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByHourAndMinute',
               buildGenerator({
@@ -2501,7 +2535,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 6, 2),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByHourAndSecond',
               buildGenerator({
@@ -2517,7 +2551,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 18, 1, 6),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByMinuteAndSecond',
               buildGenerator({
@@ -2533,7 +2567,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 2, 9, 18, 6),
               ],
             );
-  
+
             testRecurring(
               'testSecondlyByHourAndMinuteAndSecond',
               buildGenerator({
@@ -2551,7 +2585,7 @@ export default function ruleTests() {
               ],
             );
           });
-  
+
           describe('UNTIL', () => {
             testRecurring(
               'testUntilNotMatching',
@@ -2567,7 +2601,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 4, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testUntilMatching',
               buildGenerator({
@@ -2582,7 +2616,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 4, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testUntilSingle',
               buildGenerator({
@@ -2593,7 +2627,7 @@ export default function ruleTests() {
               }),
               [dateAdapter(1997, 9, 2, 9, 0)],
             );
-  
+
             testRecurring(
               'testUntilEmpty',
               buildGenerator({
@@ -2604,7 +2638,7 @@ export default function ruleTests() {
               }),
               [],
             );
-  
+
             testRecurring(
               'testUntilWithDate',
               buildGenerator({
@@ -2620,7 +2654,7 @@ export default function ruleTests() {
               ],
             );
           });
-  
+
           describe('WKST', () => {
             testRecurring(
               'testWkStIntervalMO',
@@ -2638,7 +2672,7 @@ export default function ruleTests() {
                 dateAdapter(1997, 9, 16, 9, 0),
               ],
             );
-  
+
             testRecurring(
               'testWkStIntervalSU',
               buildGenerator({
@@ -2656,7 +2690,7 @@ export default function ruleTests() {
               ],
             );
           });
-  
+
           testRecurring(
             'testDTStartIsDate',
             buildGenerator({
@@ -2670,7 +2704,7 @@ export default function ruleTests() {
               dateAdapter(1997, 9, 4, 0, 0),
             ],
           );
-  
+
           testRecurring(
             'testDTStartWithMicroseconds',
             buildGenerator({
@@ -2684,7 +2718,7 @@ export default function ruleTests() {
               dateAdapter(1997, 9, 4, 9, 0),
             ],
           );
-  
+
           describe('testMaxYear', () => {
             it('throws error', () => {
               const rule = buildGenerator({
@@ -2694,13 +2728,13 @@ export default function ruleTests() {
                 byDayOfMonth: [31],
                 start: parse('99970902T090000'),
               });
-  
+
               expect(() => {
                 rule.occurrences().toArray();
               }).toThrowError();
             });
           });
-  
+
           testRecurring(
             'testSubsecondStartYearly',
             buildGenerator({
@@ -2714,5 +2748,4 @@ export default function ruleTests() {
       });
     });
   });
-  
 }
