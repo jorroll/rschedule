@@ -1,7 +1,7 @@
 stages:
   - build
   - test
-  - dependency_scanning
+  # - dependency_scanning
 
 # coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
@@ -148,22 +148,23 @@ Australia/Melbourne:
     policy: pull
   script:
     - TZ='Australia/Melbourne' yarn test:moment-tz-date-adapter
-
-dependency_scanning:
-  image: docker:stable
-  stage: dependency_scanning
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  script:
-    - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
-    - docker run
-      --env DEP_SCAN_DISABLE_REMOTE_CHECKS="${DEP_SCAN_DISABLE_REMOTE_CHECKS:-false}"
-      --volume "$PWD:/code"
-      --volume /var/run/docker.sock:/var/run/docker.sock
-      "registry.gitlab.com/gitlab-org/security-products/dependency-scanning:$SP_VERSION" /code
-  artifacts:
-    reports:
-      dependency_scanning: gl-dependency-scanning-report.json
+# Currently there are no dependencies
+#
+# dependency_scanning:
+#   image: docker:stable
+#   stage: dependency_scanning
+#   variables:
+#     DOCKER_DRIVER: overlay2
+#   allow_failure: true
+#   services:
+#     - docker:stable-dind
+#   script:
+#     - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
+#     - docker run
+#       --env DEP_SCAN_DISABLE_REMOTE_CHECKS="${DEP_SCAN_DISABLE_REMOTE_CHECKS:-false}"
+#       --volume "$PWD:/code"
+#       --volume /var/run/docker.sock:/var/run/docker.sock
+#       "registry.gitlab.com/gitlab-org/security-products/dependency-scanning:$SP_VERSION" /code
+#   artifacts:
+#     reports:
+#       dependency_scanning: gl-dependency-scanning-report.json
