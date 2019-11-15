@@ -4,6 +4,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+## 1.0.0 (2019/11/14)
+
+- This marks the first non-beta release of rSchedule. There is no functional difference between this version and version `0.12.2`.
+
 ## 0.12.2 FIX (2019/11/13)
 
 ### Fixes

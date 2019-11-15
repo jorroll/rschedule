@@ -32,7 +32,7 @@
     "test": "jest --config './jest.config.js'"
   },
   "peerDependencies": {
-    "@rschedule/core": "^0.12.0",
+    "@rschedule/core": "^1.0.0",
     "moment-timezone": "^0.5.21"
   },
   "devDependencies": {
