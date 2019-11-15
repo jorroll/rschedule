@@ -2,7 +2,7 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/core)](https://www.npmjs.com/package/@rschedule/core) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/core)](https://bundlephobia.com/result?p=@rschedule/core)
 
-## Version 0.12 Docs
+## Version 1.x Docs
 
 A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. If your chosen date library supports time zones, rSchedule supports time zones. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
 

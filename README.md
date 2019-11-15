@@ -2,7 +2,7 @@
 
 [![NPM version](https://flat.badgen.net/npm/v/@rschedule/core)](https://www.npmjs.com/package/@rschedule/core) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/core)](https://bundlephobia.com/result?p=@rschedule/core) [![Actively maintained](https://flat.badgen.net/badge/Maintenance%20level/Actively%20developed/green)](https://gist.github.com/cheerfulstoic/d107229326a01ff0f333a1d3476e068d)
 
-### Still pre-1.0 release (i.e. Beta) [docs](#docs)
+### [View docs](#docs)
 
 A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. If your chosen date library supports time zones, rSchedule supports time zones. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
 
@@ -85,7 +85,8 @@ rule
 
 ## Docs
 
-- [Version 0.12 docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/v0.12/docs)
+- [Version 1.x docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/v1/docs)
+- [Version 0.12 docs](https://gitlab.com/john.carroll.p/rschedule/tree/v0.12/docs)
 - [Version 0.11 docs](https://gitlab.com/john.carroll.p/rschedule/tree/v0.11/docs)
 - [Version 0.10 docs](https://gitlab.com/john.carroll.p/rschedule/tree/f46bf244370dd476633b944e424096a6ae629305/docs)
 - [Version 0.9 docs](https://gitlab.com/john.carroll.p/rschedule/tree/a80b576c981570710def8f83575a4932b12f8f34/docs)
@@ -99,21 +100,7 @@ rule
   - `VEVENT` supports `RRULE`, `EXRULE`, `RDATE`, `EXDATE`, `DTSTART`, `DTEND` and `DURATION` properties. Other properties are not supported.
   - No `VCALENDAR` iCal support.
 
-## Roadmap to 1.0
-
-_related: see the [Release 1.0 issue](https://gitlab.com/john.carroll.p/rschedule/issues/26)_
-
-- [x] Flesh out `duration` support in the library.
-  - [x] Create `mergeDuration` operator
-  - [x] Create `splitDuration` operator
-  - [x] Add `duration` awareness to `OccurrenceGenerator` `occursBetween()`, `occursOn()`, `occursAfter()`, and `occursBefore()`.
-- [x] Flesh out `ical-tools`.
-  - [x] Support `VEVENT`
-  - [x] Research `VTIMEZONE` to understand its effect on `VEVENT` and possibly add support.
-    - rSchedule will not be supporting `VTIMEZONE` (feel free to open an issue on this topic). `VTIMEZONE` is intended to inline time zone data inside an ICAL string. In `rSchedule`, date libraries (e.g. `moment-timezone`) provide their own time zone data.
-- [ ] More real world testing to make sure the API is appropriate and everything works as expected.
-
-## Features that will come after 1.0
+## Roadmap
 
 - [x] Explore rearranging library exports and build to better support tree shaking and reduce minimum bundle size.
 - [ ] Natural language package for converting rSchedule objects into human readable strings
