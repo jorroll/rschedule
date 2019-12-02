@@ -4,6 +4,14 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+- None
+
+## 1.0.1 FIX (2019/12/1)
+
+### Fixes
+
+- Added all side effects declarations to each module's main `package.json` file as an attempted fix for [issue #37](https://gitlab.com/john.carroll.p/rschedule/issues/37). Previously each entry point handled it's own side effects declarations.
+
 ## 1.0.0 (2019/11/14)
 
 - This marks the first non-beta release of rSchedule. There is no functional difference between this version and version `0.12.2`.
