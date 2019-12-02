@@ -18,7 +18,10 @@
     "javascript",
     "typescript"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./umd/setup.js",
+    "./es2015/setup.js"
+  ],
   "main": "./umd/main.js",
   "module": "./es2015/main.js",
   "engines": {
