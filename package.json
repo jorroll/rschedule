@@ -8,9 +8,8 @@
   ],
   "scripts": {
     "postinstall": "rm -rf node_modules/@rschedule",
-    "pub": "yarn build && yarn lerna publish",
+    "pub": "yarn test && yarn lerna version && yarn build && yarn lerna publish --contents build",
     "build": "run-p build:*",
-    "prebuild": "yarn --cwd='./packages/core' build",
     "build:ical-tools": "yarn --cwd='./packages/ical-tools' build",
     "build:joda-date-adapter": "yarn --cwd='./packages/joda-date-adapter' build",
     "build:json-tools": "yarn --cwd='./packages/json-tools' build",
