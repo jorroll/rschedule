@@ -6,6 +6,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.0.2 FIX (2019/12/1)
+
+- Same as `1.0.1` but fixes a build issue with that version.
+
 ## 1.0.1 FIX (2019/12/1)
 
 ### Fixes
