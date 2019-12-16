@@ -116,43 +116,43 @@ export function ruleOptionsToJCalProp(
     wkst?: number;
   } = {};
 
-  for (const option in ruleOptions) {
-    if (ruleOptions.hasOwnProperty(option) && (ruleOptions as any)[option] !== undefined) {
-      switch (option) {
-        case 'frequency':
-          stringOptions.freq = ruleOptions.frequency;
-          break;
-        case 'interval':
-          stringOptions.interval = ruleOptions.interval;
-          break;
-        case 'end':
-          stringOptions.until = dateTimeToJCal(end!);
-          break;
-        case 'count':
-          stringOptions.count = ruleOptions.count;
-          break;
-        case 'bySecondOfMinute':
-          stringOptions.bysecond = ruleOptions.bySecondOfMinute!;
-          break;
-        case 'byMinuteOfHour':
-          stringOptions.byminute = ruleOptions.byMinuteOfHour;
-          break;
-        case 'byHourOfDay':
-          stringOptions.byhour = ruleOptions.byHourOfDay;
-          break;
-        case 'byDayOfWeek':
-          stringOptions.byday = ruleOptions.byDayOfWeek!.map(day => serializeByDayOfWeek(day));
-          break;
-        case 'byDayOfMonth':
-          stringOptions.bymonthday = ruleOptions.byDayOfMonth;
-          break;
-        case 'byMonthOfYear':
-          stringOptions.bymonth = ruleOptions.byMonthOfYear;
-          break;
-        case 'weekStart':
-          stringOptions.wkst = DateAdapter.WEEKDAYS.indexOf(ruleOptions.weekStart!) + 1;
-          break;
-      }
+  for (const option of Object.getOwnPropertyNames(ruleOptions)) {
+    if ((ruleOptions as any)[option] === undefined) continue;
+
+    switch (option) {
+      case 'frequency':
+        stringOptions.freq = ruleOptions.frequency;
+        break;
+      case 'interval':
+        stringOptions.interval = ruleOptions.interval;
+        break;
+      case 'end':
+        stringOptions.until = dateTimeToJCal(end!);
+        break;
+      case 'count':
+        stringOptions.count = ruleOptions.count;
+        break;
+      case 'bySecondOfMinute':
+        stringOptions.bysecond = ruleOptions.bySecondOfMinute!;
+        break;
+      case 'byMinuteOfHour':
+        stringOptions.byminute = ruleOptions.byMinuteOfHour;
+        break;
+      case 'byHourOfDay':
+        stringOptions.byhour = ruleOptions.byHourOfDay;
+        break;
+      case 'byDayOfWeek':
+        stringOptions.byday = ruleOptions.byDayOfWeek!.map(day => serializeByDayOfWeek(day));
+        break;
+      case 'byDayOfMonth':
+        stringOptions.bymonthday = ruleOptions.byDayOfMonth;
+        break;
+      case 'byMonthOfYear':
+        stringOptions.bymonth = ruleOptions.byMonthOfYear;
+        break;
+      case 'weekStart':
+        stringOptions.wkst = DateAdapter.WEEKDAYS.indexOf(ruleOptions.weekStart!) + 1;
+        break;
     }
   }
 
