@@ -6,7 +6,7 @@ import { IJCalComponent, IJCalProperty } from './serializer';
 
 export class ParseICalError extends Error {}
 
-export type IVEventRuleOptions = Omit<IRRuleOptions, 'start'>;
+export type IVEventRuleOptions = Omit<IRRuleOptions, 'start' | 'byMillisecondOfSecond'>;
 
 type IDtstartProperty = IJCalProperty & {
   processedValue: DateAdapter;
