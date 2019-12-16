@@ -4,7 +4,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
-- None
+### Fixes
+
+- Properly serialize a VEvent containing a rule with an interval ([#39](https://gitlab.com/john.carroll.p/rschedule/issues/39))
+- Remove `byMillisecondOfSecond` from VEvent rule options.
 
 ## 1.0.2 FIX (2019/12/1)
 

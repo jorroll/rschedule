@@ -1,6 +1,6 @@
 import { DateAdapter, DateAdapterBase, DateInput, DateTime, RuleOption } from '@rschedule/core';
 import { Dates } from '@rschedule/core/generators';
-import { IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES';
+import { ICalRuleFrequency, IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES';
 import { stringify } from 'ical.js';
 import { VEvent } from './vevent';
 
@@ -102,7 +102,19 @@ export function ruleOptionsToJCalProp(
     }
   }
 
-  const stringOptions: any = {};
+  const stringOptions: {
+    freq?: ICalRuleFrequency;
+    interval?: number;
+    until?: string;
+    count?: number;
+    bysecond?: number[];
+    byminute?: number[];
+    byhour?: number[];
+    byday?: string[];
+    bymonthday?: number[];
+    bymonth?: number[];
+    wkst?: number;
+  } = {};
 
   for (const option in ruleOptions) {
     if (ruleOptions.hasOwnProperty(option) && (ruleOptions as any)[option] !== undefined) {
@@ -112,8 +124,6 @@ export function ruleOptionsToJCalProp(
           break;
         case 'interval':
           stringOptions.interval = ruleOptions.interval;
-
-          stringOptions.push(`INTERVAL=${ruleOptions.interval}`);
           break;
         case 'end':
           stringOptions.until = dateTimeToJCal(end!);
@@ -201,7 +211,7 @@ export function numberToJCalDURATION(duration: number) {
   return [['duration', {}, 'duration', val]];
 }
 
-function dateTimeToJCal(input: DateTime) {
+export function dateTimeToJCal(input: DateTime) {
   const ints = [
     input.get('year'),
     input.get('month'),

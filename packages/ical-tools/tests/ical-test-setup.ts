@@ -1,4 +1,4 @@
-import { DateAdapter, DateAdapterBase } from '@rschedule/core';
+import { DateAdapter, DateAdapterBase, DateTime } from '@rschedule/core';
 
 import { context, dateAdapterFn, test, TIMEZONES } from '@local-tests/utilities';
 
@@ -15,9 +15,11 @@ import {
   parseWKST,
 } from '../src/parser';
 
-import { VEvent } from '@rschedule/ical-tools';
-import { IJCalProperty } from '@rschedule/ical-tools/serializer';
-import { serializeToJCal } from '@rschedule/ical-tools/vevent';
+import { IRRuleOptions, VEvent } from '@rschedule/ical-tools';
+
+import { dateTimeToJCal, IJCalProperty, ruleOptionsToJCalProp } from '../src/serializer';
+
+import { serializeToJCal } from '../src/vevent';
 
 function toTwoCharString(int: number) {
   if (int < 10) {
@@ -402,6 +404,51 @@ export default function icalTests() {
                 ],
               })),
           );
+
+          it('ruleOptionsToJCalProp()', () => {
+            const options: IRRuleOptions = {
+              frequency: 'DAILY',
+              start: dateAdapter(2010, 11, 10),
+              end: dateAdapter(2011, 11, 10),
+              duration: 1000,
+              count: 30,
+              interval: 5,
+              weekStart: 'FR',
+              bySecondOfMinute: [1],
+              byMinuteOfHour: [1],
+              byHourOfDay: [1],
+              byDayOfWeek: ['MO', ['TU', 1], ['TH', -1]],
+              byDayOfMonth: [1],
+              byMonthOfYear: [1],
+            };
+
+            let end: DateTime;
+
+            if ((options.start as DateAdapter).timezone) {
+              end = (options.end as DateAdapter).set('timezone', 'UTC').toDateTime();
+            } else {
+              end = (options.end as DateAdapter).toDateTime();
+            }
+
+            expect(ruleOptionsToJCalProp('RRULE', options)).toEqual([
+              'rrule',
+              {},
+              'recur',
+              {
+                freq: 'DAILY',
+                until: dateTimeToJCal(end),
+                interval: 5,
+                count: 30,
+                wkst: 6,
+                bysecond: [1],
+                byminute: [1],
+                byhour: [1],
+                byday: ['MO', '1TU', '-1TH'],
+                bymonthday: [1],
+                bymonth: [1],
+              },
+            ]);
+          });
 
           describe('serializeToJCal()', () => {
             it('serializes Schedule with only `start`', () => {
