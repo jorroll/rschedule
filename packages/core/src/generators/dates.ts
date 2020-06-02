@@ -215,6 +215,8 @@ export class Dates<Data = any> extends OccurrenceGenerator {
 
     while (date) {
       if (yieldArgs) {
+        // FIXME: this operates slightly differently than `skipToDate` for a RecurrenceRule.
+        // For a RecurrenceRule, I think it's effectively `yieldArgs.skipToDate.isAfterOrEqual(date)`
         if (
           yieldArgs.skipToDate &&
           (args.reverse ? yieldArgs.skipToDate.isBefore(date) : yieldArgs.skipToDate.isAfter(date))

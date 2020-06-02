@@ -5,6 +5,7 @@ import {
   Dates,
   intersection,
   mergeDuration,
+  Schedule,
   splitDuration,
   subtract,
   unique,
@@ -24,7 +25,9 @@ import {
 export default function operatorsTests() {
   describe('Operators', () => {
     context(DateAdapterBase.adapter.name, () => {
-      // const timezones: (string | null)[] = !DateAdapterBase.adapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
+      // const timezones: (string | null)[] = !DateAdapterBase.adapter.hasTimezoneSupport
+      //   ? [null]
+      //   : [null];
 
       const timezones = !DateAdapterBase.adapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
@@ -1465,6 +1468,79 @@ export default function operatorsTests() {
                     ].reverse(),
                   );
                 });
+              });
+
+              it('ensure that IntersectionOperator works with Schedule (issue #41)', () => {
+                const scheduleA = new Schedule({
+                  rrules: [
+                    {
+                      start: dateAdapter(2020, 6, 1, 0, 0, 0, 0),
+                      frequency: 'DAILY',
+                      interval: 1,
+                    },
+                  ],
+                  timezone,
+                });
+
+                expect(toISOStrings(scheduleA.occurrences({ take: 5 }).toArray())).toEqual([
+                  isoString(2020, 6, 1, 0, 0, 0, 0),
+                  isoString(2020, 6, 2, 0, 0, 0, 0),
+                  isoString(2020, 6, 3, 0, 0, 0, 0),
+                  isoString(2020, 6, 4, 0, 0, 0, 0),
+                  isoString(2020, 6, 5, 0, 0, 0, 0),
+                ]);
+
+                const scheduleB = new Schedule({
+                  rrules: [
+                    {
+                      start: dateAdapter(2020, 6, 1, 0, 0, 0, 0),
+                      frequency: 'DAILY',
+                      interval: 2,
+                    },
+                  ],
+                  timezone,
+                });
+
+                expect(toISOStrings(scheduleB.occurrences({ take: 5 }).toArray())).toEqual([
+                  isoString(2020, 6, 1, 0, 0, 0, 0),
+                  isoString(2020, 6, 3, 0, 0, 0, 0),
+                  isoString(2020, 6, 5, 0, 0, 0, 0),
+                  isoString(2020, 6, 7, 0, 0, 0, 0),
+                  isoString(2020, 6, 9, 0, 0, 0, 0),
+                ]);
+
+                const iterable = intersection({
+                  maxFailedIterations: 50,
+                  streams: [scheduleA, scheduleB],
+                })({
+                  timezone,
+                })._run();
+
+                const results: string[] = [];
+                let i = 0;
+
+                for (const date of iterable) {
+                  i++;
+                  const adapter = toAdapter(date);
+                  results.push(adapter.toISOString());
+                  expect(adapter.generators.length).toBe(2);
+                  expect([scheduleA, scheduleB]).toContain(adapter.generators[0]);
+
+                  if (i > 9) break;
+                }
+
+                expect(results).toEqual([
+                  isoString(2020, 6, 1, 0, 0, 0, 0),
+                  isoString(2020, 6, 1, 0, 0, 0, 0),
+                  isoString(2020, 6, 3, 0, 0, 0, 0),
+                  isoString(2020, 6, 3, 0, 0, 0, 0),
+                  isoString(2020, 6, 5, 0, 0, 0, 0),
+                  isoString(2020, 6, 5, 0, 0, 0, 0),
+                  isoString(2020, 6, 7, 0, 0, 0, 0),
+                  isoString(2020, 6, 7, 0, 0, 0, 0),
+                  isoString(2020, 6, 9, 0, 0, 0, 0),
+                  isoString(2020, 6, 9, 0, 0, 0, 0),
+                ]);
               });
             });
 
