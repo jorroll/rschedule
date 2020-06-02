@@ -56,10 +56,7 @@ An operator function which accepts a spread of occurrence generators and removes
 Example:
 
 ```typescript
-new Calendar().pipe(
-  add(schedule),
-  subtract(aDifferentSchedule),
-);
+scheduleOne.pipe(subtract(scheduleTwo));
 ```
 
 #### Intersection
@@ -78,7 +75,12 @@ The `maxFailedIterations` argument caps the number of iterations the operator wi
 Example:
 
 ```typescript
-new Calendar().pipe(intersection({ streams: [scheduleOne, scheduleTwo], maxFailedIterations: 50 }));
+scheduleOne.pipe(
+  intersection({
+    streams: [scheduleTwo],
+    maxFailedIterations: 50,
+  }),
+);
 ```
 
 #### Unique
