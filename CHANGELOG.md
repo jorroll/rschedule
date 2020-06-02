@@ -6,6 +6,12 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.0.4 FIX (2020/6/1)
+
+### Fixes
+
+- Fixed an issue when using IntersectionOperator with a RecurrencePipe ([!53](https://gitlab.com/john.carroll.p/rschedule/-/merge_requests/53))
+
 ## 1.0.3 FIX (2019/12/16)
 
 ### Fixes
