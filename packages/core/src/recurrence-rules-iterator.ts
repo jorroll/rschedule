@@ -168,6 +168,8 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     while (date) {
       const args = yield this.normalizeRunOutput(date);
 
+      // if skipToDate === last yielded date, skipToDate is effectively ignored
+      // (I think...)
       if (args && args.skipToDate) {
         date = this.nextDate(args.skipToDate);
       } else {
@@ -181,7 +183,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
   }
 
   /**
-   * Loops through the recurrence rules until a valid date is found
+   * Loops through the recurrence rules until a valid date is found.
    */
   private nextDate(start: DateTime): DateTime | null {
     let result = this.runRules(start);

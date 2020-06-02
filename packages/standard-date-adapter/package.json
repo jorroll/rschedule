@@ -28,6 +28,7 @@
   "scripts": {
     "build": "ts-node -P ./tasks/tsconfig.json -r tsconfig-paths/register ./tasks/build.ts",
     "clean:build": "rm -rf build && rm -rf .rpt2_cache",
+    "test:debug": "node --inspect-brk ../../node_modules/.bin/jest --runInBand --config './jest.config.js'",
     "test": "jest --config './jest.config.js'"
   },
   "peerDependencies": {

@@ -207,6 +207,14 @@ function cycleStreams(
   const last = selectLastIterable(streams, options);
 
   streams.forEach(stream => {
+    // where `streamA` is a specific IterableWrapper
+    // `streamA.skipToDate(streamA.value, options)` is the same as
+    // `streamA.stream.next()`.
+    // It used to be that `streamA.skipToDate(streamA.value, options)` was a noop.
+    // Because of this change, we need to make sure not to `skipToDate` on the `last`
+    // stream
+    if (stream === last) return;
+
     stream.skipToDate(last.value!, options);
   });
 
