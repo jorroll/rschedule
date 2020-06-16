@@ -4,6 +4,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+- None
+
+## 1.0.5 FIX (2020/6/16)
+
 ### Fixes
 
 - Fixed the handling of the `skipToDate` OccurrenceIterator `next()` arg ([!54](https://gitlab.com/john.carroll.p/rschedule/-/merge_requests/54))
