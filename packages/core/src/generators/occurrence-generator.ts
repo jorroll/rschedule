@@ -8,6 +8,7 @@ import {
   DateTime,
   getDifferenceBetweenWeekdays,
   InfiniteLoopError,
+  IRecurrenceRulesIteratorNextArgs,
   normalizeDateTimeTimezone,
 } from '@rschedule/core';
 
@@ -19,6 +20,18 @@ export interface IRunArgs {
 }
 
 export type OccurrenceGeneratorRunResult = IterableIterator<DateTime>;
+
+export interface IRunNextArgs {
+  /**
+   * Moves the iterator state forward so that it is equal
+   * to or past the given date. The provided date *must*
+   * be greater than the last yielded date (or, when iterating
+   * in reverse, it must be smaller). This is more efficent then  repeatedly
+   * iterating and throwing away values until the desired date
+   * is reached.
+   */
+  skipToDate?: DateInput;
+}
 
 export abstract class OccurrenceGenerator {
   abstract readonly isInfinite: boolean;
@@ -322,7 +335,7 @@ export abstract class OccurrenceGenerator {
 
     if (!args.date) {
       throw new ArgumentError(
-        `"occursOn()" must be called with either a "date" or "weekday" argument`
+        `"occursOn()" must be called with either a "date" or "weekday" argument`,
       );
     }
 
@@ -535,7 +548,7 @@ export class OccurrenceIterator<
   [Symbol.iterator]: () => IterableIterator<DateAdapter & { generators: G }> = () =>
     this.occurrenceIterator();
 
-  next(args?: { skipToDate?: DateInput }): IteratorResult<DateAdapter & { generators: G }> {
+  next(args?: IRunNextArgs): IteratorResult<DateAdapter & { generators: G }> {
     return this.occurrenceIterator(args).next();
   }
 
@@ -551,7 +564,7 @@ export class OccurrenceIterator<
     );
   }
 
-  private *occurrenceIterator(rawArgs?: { skipToDate?: DateInput }) {
+  private *occurrenceIterator(rawArgs?: IRunNextArgs) {
     let args = this.normalizeRunArgs(rawArgs);
 
     let date = this.iterator.next(args).value;
@@ -565,7 +578,7 @@ export class OccurrenceIterator<
     }
   }
 
-  private normalizeRunArgs(args?: { skipToDate?: DateInput }) {
+  private normalizeRunArgs(args?: IRunNextArgs) {
     return {
       skipToDate: this.normalizeDateInput(args && args.skipToDate),
     };

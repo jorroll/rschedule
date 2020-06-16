@@ -108,6 +108,34 @@ export default function operatorsTests() {
                 expect(results).toEqual(occurrencesToIsoStrings(datesA));
               });
 
+              it('_run `skipToDate` must be in the future', () => {
+                const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+                const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+                const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+                const dates = new Dates({
+                  dates: [first, second, third],
+                  timezone,
+                });
+
+                const iterator1 = add(dates)({
+                  timezone,
+                })._run();
+
+                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+                const iterator2 = add(dates)({
+                  timezone,
+                })._run();
+
+                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                  third.valueOf(),
+                );
+                expect(() => iterator2.next({ skipToDate: first })).toThrowError();
+              });
+
               describe('args', () => {
                 const offset = new Date().getTimezoneOffset();
 
@@ -297,6 +325,42 @@ export default function operatorsTests() {
 
                 expect(results.length).toBe(0);
               });
+
+              it('_run `skipToDate` must be in the future', () => {
+                const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+                const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+                const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+                const dates = new Dates({
+                  dates: [first, second, third],
+                  timezone,
+                });
+
+                const noop = new Dates({ timezone });
+
+                const iterator1 = subtract(noop)({
+                  base: add(dates)({
+                    timezone,
+                  }),
+                  timezone,
+                })._run();
+
+                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+                const iterator2 = subtract(noop)({
+                  base: add(dates)({
+                    timezone,
+                  }),
+                  timezone,
+                })._run();
+
+                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                  third.valueOf(),
+                );
+                expect(() => iterator2.next({ skipToDate: first })).toThrowError();
+              });
             });
 
             describe('IntersectionOperator', () => {
@@ -324,6 +388,40 @@ export default function operatorsTests() {
                   isoString(2019, 1, 1, 1, 1, 1, 1),
                   isoString(2020, 3, 3, 3, 3, 3, 3),
                 ]);
+              });
+
+              it('_run `skipToDate` must be in the future', () => {
+                const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+                const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+                const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+                const dates = new Dates({
+                  dates: [first, second, third],
+                  timezone,
+                });
+
+                const iterator1 = intersection({
+                  maxFailedIterations: 50,
+                  streams: [dates],
+                })({
+                  timezone,
+                })._run();
+
+                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+                const iterator2 = intersection({
+                  maxFailedIterations: 50,
+                  streams: [dates],
+                })({
+                  timezone,
+                })._run();
+
+                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                  third.valueOf(),
+                );
+                expect(() => iterator2.next({ skipToDate: first })).toThrowError();
               });
 
               describe('runArgs', () => {
@@ -483,6 +581,36 @@ export default function operatorsTests() {
                 ]);
               });
 
+              it('_run `skipToDate` must be in the future', () => {
+                const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+                const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+                const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+                const dates = new Dates({
+                  dates: [first, second, third],
+                  timezone,
+                });
+
+                const iterator1 = unique()({
+                  base: dates,
+                  timezone,
+                })._run();
+
+                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+                const iterator2 = unique()({
+                  base: dates,
+                  timezone,
+                })._run();
+
+                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                  third.valueOf(),
+                );
+                expect(() => iterator2.next({ skipToDate: first })).toThrowError();
+              });
+
               describe('runArgs', () => {
                 it('start', () => {
                   const iterable = unique()({
@@ -624,6 +752,48 @@ export default function operatorsTests() {
                   [isoString(2010, 10, 11, 13, 11, 11, 11), MILLISECONDS_IN_HOUR * 3],
                   [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
                 ]);
+              });
+
+              it('_run `skipToDate` must be in the future', () => {
+                const first = dateAdapter(1997, 9, 2, 9, {
+                  duration: MILLISECONDS_IN_HOUR * 1,
+                }).toDateTime();
+
+                const second = dateAdapter(1998, 9, 2, 9, {
+                  duration: MILLISECONDS_IN_HOUR * 1,
+                }).toDateTime();
+
+                const third = dateAdapter(1999, 9, 2, 9, {
+                  duration: MILLISECONDS_IN_HOUR * 1,
+                }).toDateTime();
+
+                const dates = new Dates({
+                  dates: [first, second, third],
+                  timezone,
+                });
+
+                const iterator1 = mergeDuration({
+                  maxDuration: MILLISECONDS_IN_HOUR * 3,
+                })({
+                  base: dates,
+                  timezone,
+                })._run();
+
+                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+                const iterator2 = mergeDuration({
+                  maxDuration: MILLISECONDS_IN_HOUR * 3,
+                })({
+                  base: dates,
+                  timezone,
+                })._run();
+
+                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                  third.valueOf(),
+                );
+                expect(() => iterator2.next({ skipToDate: first })).toThrowError();
               });
 
               describe('args', () => {
@@ -824,6 +994,50 @@ export default function operatorsTests() {
                   [isoString(2010, 10, 11, 15, 11, 11, 11), MILLISECONDS_IN_HOUR * 1],
                   [isoString(2010, 10, 12, 13, 1, 1, 1), MILLISECONDS_IN_HOUR * 1],
                 ]);
+              });
+
+              it('_run `skipToDate` must be in the future', () => {
+                const first = dateAdapter(1997, 9, 2, 9, {
+                  duration: MILLISECONDS_IN_HOUR * 1,
+                }).toDateTime();
+
+                const second = dateAdapter(1998, 9, 2, 9, {
+                  duration: MILLISECONDS_IN_HOUR * 1,
+                }).toDateTime();
+
+                const third = dateAdapter(1999, 9, 2, 9, {
+                  duration: MILLISECONDS_IN_HOUR * 1,
+                }).toDateTime();
+
+                const dates = new Dates({
+                  dates: [first, second, third],
+                  timezone,
+                });
+
+                const iterator1 = splitDuration({
+                  maxDuration: MILLISECONDS_IN_HOUR * 3,
+                  splitFn: dt => [dt],
+                })({
+                  base: dates,
+                  timezone,
+                })._run();
+
+                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+                const iterator2 = splitDuration({
+                  maxDuration: MILLISECONDS_IN_HOUR * 3,
+                  splitFn: dt => [dt],
+                })({
+                  base: dates,
+                  timezone,
+                })._run();
+
+                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                  third.valueOf(),
+                );
+                expect(() => iterator2.next({ skipToDate: first })).toThrowError();
               });
 
               describe('args', () => {
@@ -1470,7 +1684,7 @@ export default function operatorsTests() {
                 });
               });
 
-              it('ensure that IntersectionOperator works with Schedule (issue #41)', () => {
+              it('works with Schedule objects (issue #41)', () => {
                 const scheduleA = new Schedule({
                   rrules: [
                     {

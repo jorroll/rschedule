@@ -24,7 +24,7 @@ import { ByMinuteOfHourRuleModule } from './rules/ByMinuteOfHour';
 import { ByMonthOfYearRuleModule } from './rules/ByMonthOfYear';
 import { BySecondOfMinuteRuleModule } from './rules/BySecondOfMinute';
 import { FrequencyRuleModule } from './rules/Frequency';
-import { dateTime } from './rules/test-utilities';
+import { dateTime } from './test-utilities';
 
 /**
  * Some helper functions are defined at bottom of this file
@@ -274,6 +274,38 @@ describe('RecurrenceRulesIterator', () => {
       expect(() => {
         Array.from(controller);
       }).toThrowError();
+    });
+
+    it('`skipToDate` must be in the future', () => {
+      const controller1 = build(
+        normalizeRuleOptions({
+          frequency: 'YEARLY',
+          start: dateTime(1997, 9, 2, 9),
+          count: 3,
+          interval: 1,
+          weekStart: 'MO',
+        }),
+      );
+
+      const first = dateTime(1997, 9, 2, 9);
+      const third = dateTime(1999, 9, 2, 9);
+
+      expect(controller1.next().value).toEqual(first);
+      expect(() => controller1.next({ skipToDate: first })).toThrowError();
+
+      const controller2 = build(
+        normalizeRuleOptions({
+          frequency: 'YEARLY',
+          start: dateTime(1997, 9, 2, 9),
+          count: 3,
+          interval: 1,
+          weekStart: 'MO',
+        }),
+      );
+
+      expect(controller2.next().value).toEqual(first);
+      expect(controller2.next({ skipToDate: third }).value).toEqual(third);
+      expect(() => controller2.next({ skipToDate: first })).toThrowError();
     });
 
     context<RuleOption.Frequency>('YEARLY', frequency => {

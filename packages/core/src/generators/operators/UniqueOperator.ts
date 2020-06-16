@@ -1,4 +1,3 @@
-import { DateTime } from '@rschedule/core';
 import {
   IOperatorConfig,
   IRunArgs,
@@ -6,7 +5,8 @@ import {
   Operator,
   OperatorFnOutput,
 } from '../occurrence-generator';
-import { IterableWrapper, streamPastEnd, streamPastSkipToDate } from './_util';
+import { IterableWrapper } from './_util';
+import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
 
 /**
  * An operator function which deduplicates an occurrence stream. Occurrence
@@ -29,26 +29,24 @@ export class UniqueOperator extends Operator {
   *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (!this.config.base) return;
 
-    const stream = new IterableWrapper(this.config.base._run(args));
+    const stream = new IterableWrapper(this.config.base, args);
 
     while (!stream.done) {
-      const yieldArgs = yield this.normalizeRunOutput(stream.value!);
+      const yieldArgs: IRecurrenceRulesIteratorNextArgs = yield this.normalizeRunOutput(
+        stream.value!,
+      );
 
       const lastValue = stream.value;
 
-      stream.picked();
+      // iterate the current stream
+      stream.next(yieldArgs);
 
-      if (yieldArgs && yieldArgs.skipToDate) {
-        while (
-          !streamPastEnd(stream, args) &&
-          !streamPastSkipToDate(stream, yieldArgs.skipToDate, args)
-        ) {
-          stream.picked();
-        }
-      }
-
-      while (!streamPastEnd(stream, args) && stream.value!.isEqual(lastValue)) {
-        stream.picked();
+      while (
+        !(yieldArgs && yieldArgs.skipToDate) &&
+        !stream.done &&
+        stream.value!.isEqual(lastValue)
+      ) {
+        stream.next();
       }
     }
   }

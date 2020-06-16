@@ -129,6 +129,28 @@ export default function datesTests() {
             it('is instantiable', () => expect(new Dates({ timezone })).toBeInstanceOf(Dates));
           });
 
+          it('_run `skipToDate` must be in the future', () => {
+            const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+            const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+            const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+            const dates = new Dates({
+              dates: [first, second, third],
+              timezone,
+            });
+
+            let iterator = dates._run();
+
+            expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
+            expect(() => iterator.next({ skipToDate: first })).toThrowError();
+
+            iterator = dates._run();
+
+            expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
+            expect(iterator.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+            expect(() => iterator.next({ skipToDate: first })).toThrowError();
+          });
+
           describe('set()', () => {
             it('timezone UTC', () => {
               const dates = new Dates({

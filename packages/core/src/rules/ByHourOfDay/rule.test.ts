@@ -1,6 +1,7 @@
 import { context } from '@local-tests/utilities';
 import { InvalidDateTime, RuleOption, ValidDateTime } from '@rschedule/core';
-import { buildRuleFn, dateTime } from '../test-utilities';
+import { dateTime } from '../../test-utilities';
+import { buildRuleFn } from '../test-utilities';
 import { ByHourOfDayRule } from './rule';
 
 const buildRule = buildRuleFn<typeof ByHourOfDayRule, { byHourOfDay: RuleOption.ByHourOfDay[] }>(

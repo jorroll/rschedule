@@ -7,6 +7,7 @@ import {
   OperatorFnOutput,
 } from '../occurrence-generator';
 import { IterableWrapper } from './_util';
+import { IRecurrenceRulesIteratorNextArgs } from '@rschedule/core/recurrence-rules-iterator';
 
 export class SplitDurationOperatorError extends Error {}
 
@@ -131,11 +132,13 @@ export class SplitDurationOperator extends Operator {
       checkFromEnd = args.end.add(this.maxDuration, 'millisecond');
     }
 
-    const stream = new IterableWrapper(
-      this.config.base._run({ ...args, start: checkFromStart, end: checkFromEnd }),
-    );
+    const stream = new IterableWrapper(this.config.base, {
+      ...args,
+      start: checkFromStart,
+      end: checkFromEnd,
+    });
 
-    let yieldArgs: { skipToDate?: DateTime } | undefined;
+    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
 
     const datesBucket: DateTime[][] = [];
 
@@ -150,7 +153,7 @@ export class SplitDurationOperator extends Operator {
       if (!(datesBucket[0] && datesBucket[0][0])) {
         // we're out of dates
         datesBucket.push(this.splitDate(stream.value!, reverse));
-        stream.picked();
+        stream.next();
       }
 
       while (
@@ -161,7 +164,7 @@ export class SplitDurationOperator extends Operator {
       ) {
         datesBucket.push(this.splitDate(stream.value!, reverse));
 
-        stream.picked();
+        stream.next();
       }
 
       let selectedDate = datesBucket[0] && datesBucket[0][0];
@@ -244,6 +247,19 @@ export class SplitDurationOperator extends Operator {
       }
 
       yieldArgs = yield this.normalizeRunOutput(selectedDate);
+
+      if (
+        yieldArgs &&
+        yieldArgs.skipToDate &&
+        (args.reverse
+          ? selectedDate.isBeforeOrEqual(yieldArgs.skipToDate)
+          : selectedDate.isAfterOrEqual(yieldArgs.skipToDate))
+      ) {
+        throw new Error(
+          'A provided `skipToDate` option must be greater than the last yielded date ' +
+            '(or smaller, in the case of reverse iteration)',
+        );
+      }
     }
   }
 

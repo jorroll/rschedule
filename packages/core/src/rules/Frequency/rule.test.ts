@@ -6,7 +6,7 @@ import {
   RuleOption,
   ValidDateTime,
 } from '@rschedule/core';
-import { dateTime } from '../test-utilities';
+import { dateTime } from '../../test-utilities';
 import { FrequencyRule, IFrequencyRuleOptions, intervalDifferenceBetweenDates } from './rule';
 
 function buildRule(start: DateTime, options: IFrequencyRuleOptions & { start: DateTime }) {

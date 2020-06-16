@@ -183,6 +183,59 @@ export default function calendarTests() {
               expect(new Calendar({ timezone })).toBeInstanceOf(Calendar));
           });
 
+          // tests issue https://gitlab.com/john.carroll.p/rschedule/-/issues/41
+          it('_run `skipToDate` must be in the future', () => {
+            const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+            const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+            const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+            const generator1 = new Calendar({
+              schedules: new Dates({
+                dates: [first, second, third],
+              }),
+              timezone,
+            });
+
+            const iterator1 = generator1._run();
+
+            expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+            expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+            const iterator2 = generator1._run();
+
+            expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+            expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+            expect(() => iterator2.next({ skipToDate: first })).toThrowError();
+
+            // test second with a Schedule source
+            const generator2 = new Calendar({
+              schedules: new Schedule({
+                rrules: [
+                  // YearlyByMonthAndMonthDay
+                  {
+                    frequency: 'YEARLY',
+                    start: first,
+                    count: 3,
+                    interval: 1,
+                    weekStart: 'MO',
+                  },
+                ],
+              }),
+              timezone,
+            });
+
+            const iterator3 = generator2._run();
+
+            expect(iterator3.next().value.valueOf()).toEqual(first.valueOf());
+            expect(() => iterator3.next({ skipToDate: first })).toThrowError();
+
+            const iterator4 = generator2._run();
+
+            expect(iterator4.next().value.valueOf()).toEqual(first.valueOf());
+            expect(iterator4.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+            expect(() => iterator4.next({ skipToDate: first })).toThrowError();
+          });
+
           it('skipEmptyPeriods: false', () => {
             const calendar = new Calendar({
               schedules: new Schedule({

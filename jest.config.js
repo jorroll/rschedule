@@ -15,7 +15,7 @@ module.exports = {
   // collect coverage throws off the ts-jest source maps :(
   // see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360004708619-TypeScript-and-Jest-debugger-stops-only-on-breakpoints-in-tests-never-in-source-files?page=1#community_comment_360000714019
   collectCoverage: false,
-  verbose: true,
+  verbose: false,
   testURL: 'http://localhost/',
   moduleNameMapper: {
     // more specific path maps need to come before less specific path maps

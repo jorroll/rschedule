@@ -1,72 +1,114 @@
 import { DateTime } from '@rschedule/core';
-import { OccurrenceGeneratorRunResult } from '../occurrence-generator';
+import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
+import {
+  IRunArgs,
+  OccurrenceGenerator,
+  OccurrenceGeneratorRunResult,
+} from '../occurrence-generator';
 
+/**
+ * Simple class that lets us access the `value`, `runArgs`, and `done`
+ * status of an OccurrenceGenerator iterator
+ */
 export class IterableWrapper {
   done!: boolean;
   value!: DateTime | undefined;
 
-  constructor(readonly stream: OccurrenceGeneratorRunResult) {
-    this.picked();
+  readonly stream: OccurrenceGeneratorRunResult;
+
+  constructor(generator: OccurrenceGenerator, readonly runArgs: IRunArgs) {
+    this.stream = generator._run(this.runArgs);
+    this.next();
   }
 
-  picked() {
-    const { done, value } = this.stream.next();
+  next(args?: IRecurrenceRulesIteratorNextArgs) {
+    const { done, value } = this.stream.next(args);
 
     this.done = done;
     this.value = value;
+    return { done, value };
+  }
+}
+
+export function processYieldArgs(
+  streams: IterableWrapper[],
+  options: { reverse?: boolean } = {},
+  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
+) {
+  if (!yieldArgs.skipToDate || streams.length === 0) return;
+
+  // check for invalid `skipToDate` option
+  if (
+    options.reverse
+      ? streams.every(s => s.value!.isBeforeOrEqual(yieldArgs.skipToDate!))
+      : streams.every(s => s.value!.isAfterOrEqual(yieldArgs.skipToDate!))
+  ) {
+    throw new Error(
+      'A provided `skipToDate` option must be greater than the last yielded date ' +
+        '(or smaller, in the case of reverse iteration)',
+    );
   }
 
-  skipToDate(date: DateTime, options: { reverse?: boolean }) {
-    if (this.done) return;
-    if (options.reverse ? date.isAfter(this.value!) : date.isBefore(this.value!)) return;
+  for (const stream of streams) {
+    if (stream.done) continue; // no point in calling `next()`
+    if (
+      options.reverse
+        ? stream.value!.isBeforeOrEqual(yieldArgs.skipToDate)
+        : stream.value!.isAfterOrEqual(yieldArgs.skipToDate)
+    ) {
+      // This can happen there are two streams and one stream starts after the other finishes.
+      // Or, when iterating in reverse, when one stream ends before the other starts.
+      // In this case we don't want to call `next()` because it will throw an error.
+      // In both of these cases, calling `next()` won't do anything anyway.
+      continue;
+    }
 
-    const { done, value } = this.stream.next({ skipToDate: date });
-
-    this.done = done;
-    this.value = value;
+    stream.next(yieldArgs);
   }
+}
+
+/** sorts ascending with completed iterables at the end */
+export function streamsComparer(a: IterableWrapper, b: IterableWrapper) {
+  if (a.done && b.done) return 0;
+  if (a.done) return 1;
+  if (b.done) return -1;
+  if (a.value!.isAfter(b.value!)) return 1;
+  return -1;
+}
+
+/** sorts descending with completed iterables at the start */
+export function streamsReverseComparer(a: IterableWrapper, b: IterableWrapper) {
+  if (a.done && b.done) return 0;
+  if (a.done) return -1;
+  if (b.done) return 1;
+  if (a.value!.isAfter(b.value!)) return -1;
+  return 1;
 }
 
 export function selectNextIterable(
   streams: IterableWrapper[],
   options: { reverse?: boolean } = {},
+  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
 ) {
-  if (options.reverse) {
-    return streams.reduce((prev, curr) => {
-      if (prev.done) return curr;
-      if (curr.done) return prev;
+  processYieldArgs(streams, options, yieldArgs);
 
-      return prev.value!.isAfter(curr.value!) ? prev : curr;
-    });
-  }
-
-  return streams.reduce((prev, curr) => {
-    if (prev.done) return curr;
-    if (curr.done) return prev;
-
-    return prev.value!.isBefore(curr.value!) ? prev : curr;
-  });
+  return streams
+    .sort(options.reverse ? streamsReverseComparer : streamsComparer)
+    .filter(s => !s.done)
+    .shift();
 }
 
 export function selectLastIterable(
   streams: IterableWrapper[],
   options: { reverse?: boolean } = {},
+  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
 ) {
-  if (options.reverse) {
-    return streams.reduce((prev, curr) => {
-      if (prev.done) return curr;
-      if (curr.done) return prev;
+  processYieldArgs(streams, options, yieldArgs);
 
-      return prev.value!.isBefore(curr.value!) ? prev : curr;
-    });
-  }
-
-  return streams.reduce((prev, curr) => {
-    if (prev.done) return curr;
-    if (curr.done) return prev;
-
-    return prev.value!.isAfter(curr.value!) ? prev : curr;
-  });
+  return streams
+    .sort(options.reverse ? streamsReverseComparer : streamsComparer)
+    .filter(s => !s.done)
+    .pop();
 }
 
 export function streamPastEnd(

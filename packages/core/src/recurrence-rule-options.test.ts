@@ -8,7 +8,7 @@ import { ByMinuteOfHourRuleModule } from './rules/ByMinuteOfHour';
 import { ByMonthOfYearRuleModule } from './rules/ByMonthOfYear';
 import { BySecondOfMinuteRuleModule } from './rules/BySecondOfMinute';
 import { FrequencyRuleModule } from './rules/Frequency';
-import { dateTime } from './rules/test-utilities';
+import { dateTime } from './test-utilities';
 
 describe('normalizeRuleOptions', () => {
   context(dateTime(2019, 1, 1, 1, 1, 1, 1), date => {

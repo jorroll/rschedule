@@ -1,6 +1,7 @@
 import { context } from '@local-tests/utilities';
 import { InvalidDateTime, RuleOption, ValidDateTime } from '@rschedule/core';
-import { buildRevRuleFn, dateTime } from '../test-utilities';
+import { dateTime } from '../../test-utilities';
+import { buildRevRuleFn } from '../test-utilities';
 import { RevByHourOfDayRule } from './rev-rule';
 
 const buildRule = buildRevRuleFn<

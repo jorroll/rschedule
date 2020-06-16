@@ -121,8 +121,7 @@ export abstract class DateAdapterBase {
   abstract toISOString(): string;
 
   toDateTime(): DateTime {
-    const date = DateTime.fromJSON(this.toJSON());
-    (date.generators as any[]).push(...this.generators);
+    const date = DateTime.fromJSON({ ...this.toJSON(), generators: this.generators });
     return date;
   }
 
@@ -368,7 +367,7 @@ export class DateTime {
     this.date = new Date(date);
     this.timezone = timezone || null;
     this.duration = duration || 0;
-    this.generators = generators || [];
+    this.generators = (generators && generators.slice()) || [];
 
     if (!Number.isInteger(this.duration) || this.duration < 0) {
       throw new InvalidDateTimeError('duration must be a non-negative integer');
@@ -526,9 +525,15 @@ export class DateTime {
     }
   }
 
-  set(unit: DateAdapter.TimeUnit | 'duration', value: number): DateTime {
+  set(unit: 'generators', value: unknown[]): DateTime;
+  set(unit: DateAdapter.TimeUnit | 'duration', value: number): DateTime;
+  set(unit: DateAdapter.TimeUnit | 'duration' | 'generators', value: number | unknown[]): DateTime {
     if (unit === 'duration') {
       return new DateTime(this.date, this.timezone, value as number, this.generators);
+    }
+
+    if (unit === 'generators') {
+      return new DateTime(this.date, this.timezone, this.duration, value as unknown[]);
     }
 
     let date = new Date(this.date);

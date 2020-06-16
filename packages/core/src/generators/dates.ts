@@ -15,6 +15,7 @@ import {
   OccurrenceGeneratorRunResult,
   OccurrenceIterator,
 } from './occurrence-generator';
+import { IRecurrenceRulesIteratorNextArgs } from '../recurrence-rules-iterator';
 
 export interface IDatesArgs<D = any> {
   timezone?: string | null;
@@ -209,34 +210,36 @@ export class Dates<Data = any> extends OccurrenceGenerator {
       dates = dates.slice(0, args.take);
     }
 
-    let dateCache = dates.slice();
+    const dateCache = dates.slice();
     let date = dateCache.shift();
-    let yieldArgs: { skipToDate?: DateTime } | undefined;
+    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
 
     while (date) {
-      if (yieldArgs) {
-        // FIXME: this operates slightly differently than `skipToDate` for a RecurrenceRule.
-        // For a RecurrenceRule, I think it's effectively `yieldArgs.skipToDate.isAfterOrEqual(date)`
-        if (
-          yieldArgs.skipToDate &&
-          (args.reverse ? yieldArgs.skipToDate.isBefore(date) : yieldArgs.skipToDate.isAfter(date))
-        ) {
-          date = dateCache.shift();
-          continue;
-        }
-
-        yieldArgs = undefined;
+      if (
+        yieldArgs &&
+        yieldArgs.skipToDate &&
+        (args.reverse ? yieldArgs.skipToDate.isBefore(date) : yieldArgs.skipToDate.isAfter(date))
+      ) {
+        date = dateCache.shift();
+        continue;
       }
 
       date = date.add(this, 'generator');
 
       yieldArgs = yield this.normalizeRunOutput(date);
 
-      if (yieldArgs && yieldArgs.skipToDate) {
-        // need to reset the date cache to allow the same date to be picked again.
-        // Also, I suppose it's possible someone might want to go back in time,
-        // which this allows.
-        dateCache = dates.slice();
+      // Here, we are matching the behavior of the RecurrenceRulesIterator
+      if (
+        yieldArgs &&
+        yieldArgs.skipToDate &&
+        (args.reverse
+          ? yieldArgs.skipToDate.isAfterOrEqual(date)
+          : yieldArgs.skipToDate.isBeforeOrEqual(date))
+      ) {
+        throw new Error(
+          'A provided `skipToDate` option must be greater than the last yielded date ' +
+            '(or smaller, in the case of reverse iteration)',
+        );
       }
 
       date = dateCache.shift();
