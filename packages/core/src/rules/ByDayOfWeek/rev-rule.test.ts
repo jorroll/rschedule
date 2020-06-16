@@ -1,7 +1,8 @@
 import { context } from '@local-tests/utilities';
 import { InvalidDateTime, RuleOption, ValidDateTime } from '@rschedule/core';
+import { dateTime } from '../../test-utilities';
 import '../ByMonthOfYear';
-import { buildRevRuleFn, dateTime } from '../test-utilities';
+import { buildRevRuleFn } from '../test-utilities';
 import { getPrevWeekdaysOfMonth, getPrevWeekdaysOfYear, RevByDayOfWeekRule } from './rev-rule';
 
 const buildRule = buildRevRuleFn<

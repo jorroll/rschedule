@@ -83,7 +83,6 @@ export abstract class ScheduleBase<Data = any> extends OccurrenceGenerator {
     const count = args.take;
 
     delete args.take;
-
     const iterator = this.occurrenceStream._run(args);
 
     let date = iterator.next().value;

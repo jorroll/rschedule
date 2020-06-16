@@ -1,4 +1,3 @@
-import { DateTime } from '@rschedule/core';
 import {
   IOperatorConfig,
   IRunArgs,
@@ -7,8 +6,9 @@ import {
   Operator,
   OperatorFnOutput,
 } from '../occurrence-generator';
-import { IterableWrapper, streamPastEnd, streamPastSkipToDate } from './_util';
+import { IterableWrapper, processYieldArgs } from './_util';
 import { AddOperator } from './AddOperator';
+import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
 
 /**
  * An operator function which accepts a spread of occurrence generators
@@ -33,35 +33,24 @@ export class SubtractOperator extends Operator {
   *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
     if (!this.config.base) return;
 
-    const inclusion = new IterableWrapper(this.config.base._run(args));
+    const inclusion = new IterableWrapper(this.config.base, args);
     const exclusion = new IterableWrapper(
       new AddOperator(this.streams, {
         timezone: this.config.timezone,
-      })._run(args),
+      }),
+      args,
     );
 
     cycleStreams(inclusion, exclusion, args);
 
-    if (streamPastEnd(inclusion, args)) return;
-
     while (!inclusion.done) {
       const yieldArgs = yield this.normalizeRunOutput(inclusion.value!);
 
-      inclusion.picked();
-
-      cycleStreams(inclusion, exclusion, args);
-
-      if (yieldArgs && yieldArgs.skipToDate) {
-        while (
-          !streamPastEnd(inclusion, args) &&
-          !streamPastSkipToDate(inclusion, yieldArgs.skipToDate, args)
-        ) {
-          inclusion.picked();
-          cycleStreams(inclusion, exclusion, args);
-        }
+      if (!(yieldArgs && yieldArgs.skipToDate)) {
+        inclusion.next();
       }
 
-      if (streamPastEnd(inclusion, args)) return;
+      cycleStreams(inclusion, exclusion, args, yieldArgs);
     }
   }
 
@@ -78,11 +67,14 @@ function cycleStreams(
   inclusion: IterableWrapper,
   exclusion: IterableWrapper,
   options: { reverse?: boolean } = {},
+  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
 ) {
+  processYieldArgs([inclusion, exclusion], options, yieldArgs);
+
   iterateExclusion(inclusion, exclusion, options);
 
   while (!inclusion.done && !exclusion.done && inclusion.value!.isEqual(exclusion.value)) {
-    inclusion.picked();
+    inclusion.next();
     iterateExclusion(inclusion, exclusion, options);
   }
 }
@@ -94,13 +86,13 @@ function iterateExclusion(
 ) {
   if (options.reverse) {
     while (!exclusion.done && !inclusion.done && exclusion.value!.isAfter(inclusion.value!)) {
-      exclusion.picked();
+      exclusion.next();
     }
 
     return;
   }
 
   while (!exclusion.done && !inclusion.done && exclusion.value!.isBefore(inclusion.value!)) {
-    exclusion.picked();
+    exclusion.next();
   }
 }

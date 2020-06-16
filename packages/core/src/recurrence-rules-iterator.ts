@@ -17,6 +17,18 @@ export interface IRecurrenceRulesIteratorArgs {
   reverse?: boolean;
 }
 
+export interface IRecurrenceRulesIteratorNextArgs {
+  /**
+   * Moves the iterator state forward so that it is equal
+   * to or past the given date. The provided date *must*
+   * be greater than the last yielded date (or, when iterating
+   * in reverse, it must be smaller). This is more efficent then  repeatedly
+   * iterating and throwing away values until the desired date
+   * is reached.
+   */
+  skipToDate?: DateTime;
+}
+
 export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
   implements IRecurrenceRulesIterator<T>, IterableIterator<DateTime | undefined> {
   readonly start!: DateTime;
@@ -75,7 +87,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     return this.iterator;
   }
 
-  next(args?: { skipToDate?: DateTime }) {
+  next(args?: IRecurrenceRulesIteratorNextArgs) {
     return this.iterator.next(args);
   }
 
@@ -107,26 +119,23 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
   private *iterateWithReverseCount() {
     const dates = Array.from(this.iterateWithCount()).reverse();
 
-    let yieldArgs: { skipToDate?: DateTime } | undefined;
-    let dateCache = dates.slice();
+    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
+    const dateCache = dates.slice();
     let date = dateCache.shift();
 
     while (date) {
-      if (yieldArgs) {
-        if (yieldArgs.skipToDate && yieldArgs.skipToDate.isBefore(date)) {
-          date = dateCache.shift();
-          continue;
-        }
-
-        yieldArgs = undefined;
+      if (yieldArgs && yieldArgs.skipToDate && date.isAfter(yieldArgs.skipToDate)) {
+        date = dateCache.shift();
+        continue;
       }
 
       yieldArgs = yield date;
 
-      if (yieldArgs && yieldArgs.skipToDate) {
-        // need to reset the date cache to allow the same (or past)
-        // date to be picked again.
-        dateCache = dates.slice();
+      if (yieldArgs && yieldArgs.skipToDate && yieldArgs.skipToDate.isAfterOrEqual(date)) {
+        throw new Error(
+          'A provided `skipToDate` option must be greater than the last yielded date ' +
+            '(or smaller, in the case of reverse iteration)',
+        );
       }
 
       date = dateCache.shift();
@@ -143,16 +152,31 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
     let date: DateTime | void = iterable.next().value;
     let index = 1;
+    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
 
     while (date && index <= this.options.count!) {
       index++;
 
-      if (date && date.isBefore(start)) {
+      if (date.isBefore(start)) {
         date = iterable.next().value;
         continue;
       }
 
-      date = iterable.next(yield date).value;
+      if (yieldArgs && yieldArgs.skipToDate && date.isBefore(yieldArgs.skipToDate)) {
+        date = iterable.next().value;
+        continue;
+      }
+
+      yieldArgs = yield date;
+
+      if (yieldArgs && yieldArgs.skipToDate && yieldArgs.skipToDate.isBeforeOrEqual(date)) {
+        throw new Error(
+          'A provided `skipToDate` option must be greater than the last yielded date ' +
+            '(or smaller, in the case of reverse iteration)',
+        );
+      }
+
+      date = iterable.next().value;
     }
 
     return undefined;
@@ -166,11 +190,25 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     let date = this.nextDate(startingDate);
 
     while (date) {
-      const args = yield this.normalizeRunOutput(date);
+      const args: IRecurrenceRulesIteratorNextArgs = yield this.normalizeRunOutput(date);
 
-      // if skipToDate === last yielded date, skipToDate is effectively ignored
-      // (I think...)
       if (args && args.skipToDate) {
+        if (
+          this.reverse
+            ? args.skipToDate.isAfterOrEqual(date)
+            : args.skipToDate.isBeforeOrEqual(date)
+        ) {
+          // We cannot consistently skip backwards because after an iterator is "done"
+          // it always returns undefined and you cannot reset it. Theoretically, it would be
+          // fine to skip backwards if the iterator wasn't already "done", but this
+          // would be prone to user error so we simply disallow skipping backwards altogether.
+
+          throw new Error(
+            'A provided `skipToDate` option must be greater than the last yielded date ' +
+              '(or smaller, in the case of reverse iteration)',
+          );
+        }
+
         date = this.nextDate(args.skipToDate);
       } else {
         date = this.nextDate(
@@ -186,7 +224,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
    * Loops through the recurrence rules until a valid date is found.
    */
   private nextDate(start: DateTime): DateTime | null {
-    let result = this.runRules(start);
+    let result = this.runRules(start.set('generators', []));
 
     if (this.isDatePastEnd(result.date)) return null;
 

@@ -5,18 +5,18 @@ import {
   OccurrenceGeneratorRunResult,
   Operator,
   OperatorFnOutput,
+  OccurrenceGenerator,
 } from '../occurrence-generator';
 import { IterableWrapper } from './_util';
+import { IRecurrenceRulesIteratorNextArgs } from '@rschedule/core/recurrence-rules-iterator';
 
 class DurationIterableWrapper extends IterableWrapper {
   workingValue: DateTime | undefined;
 
-  constructor(readonly stream: OccurrenceGeneratorRunResult) {
-    super(stream);
-
+  constructor(generator: OccurrenceGenerator, runArgs: IRunArgs) {
+    super(generator, runArgs);
     this.workingValue = this.value;
-
-    this.picked();
+    this.next();
   }
 }
 
@@ -132,11 +132,13 @@ export class MergeDurationOperator extends Operator {
       checkFromEnd = args.end.add(this.maxDuration, 'millisecond');
     }
 
-    const stream = new DurationIterableWrapper(
-      this.config.base._run({ ...args, start: checkFromStart, end: checkFromEnd }),
-    );
+    const stream = new DurationIterableWrapper(this.config.base, {
+      ...args,
+      start: checkFromStart,
+      end: checkFromEnd,
+    });
 
-    let yieldArgs: any | undefined;
+    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
 
     // checking `stream.workingValue` because when `stream.done === true`
     // `stream.workingValue` will not have been yielded yet
@@ -151,23 +153,22 @@ export class MergeDurationOperator extends Operator {
         }
 
         if (stream.value!.end!.isAfter(stream.workingValue.end!)) {
-          const diff = stream.value!.end!.valueOf() - stream.workingValue.end!.valueOf();
+          const diff: number = stream.value!.end!.valueOf() - stream.workingValue.end!.valueOf();
 
-          stream.workingValue = DateTime.fromJSON({
-            ...stream.workingValue.toJSON(),
-            duration: stream.workingValue.duration! + diff,
-            generators: stream.workingValue.generators,
-          });
+          stream.workingValue = stream.workingValue!.set(
+            'duration',
+            stream.workingValue.duration! + diff,
+          );
         }
 
-        stream.picked();
+        stream.next();
       }
 
       // check to make sure the occurrence we are about to yield ends after the
       // provided start time.
       if (args.start && stream.workingValue.end!.isBefore(args.start)) {
         stream.workingValue = stream.value;
-        stream.picked();
+        stream.next();
         continue;
       }
 
@@ -179,7 +180,7 @@ export class MergeDurationOperator extends Operator {
         stream.workingValue.end!.isBefore(yieldArgs.skipToDate)
       ) {
         stream.workingValue = stream.value;
-        stream.picked();
+        stream.next();
         continue;
       }
 
@@ -197,8 +198,19 @@ export class MergeDurationOperator extends Operator {
 
       yieldArgs = yield this.normalizeRunOutput(stream.workingValue);
 
+      if (
+        yieldArgs &&
+        yieldArgs.skipToDate &&
+        stream.workingValue!.isAfterOrEqual(yieldArgs.skipToDate)
+      ) {
+        throw new Error(
+          'A provided `skipToDate` option must be greater than the last yielded date ' +
+            '(or smaller, in the case of reverse iteration)',
+        );
+      }
+
       stream.workingValue = stream.value;
-      stream.picked();
+      stream.next();
     }
   }
 
@@ -219,9 +231,11 @@ export class MergeDurationOperator extends Operator {
       checkFromEnd = args.end.add(this.maxDuration, 'millisecond');
     }
 
-    const stream = new DurationIterableWrapper(
-      this.config.base._run({ ...args, start: checkFromStart, end: checkFromEnd }),
-    );
+    const stream = new DurationIterableWrapper(this.config.base, {
+      ...args,
+      start: checkFromStart,
+      end: checkFromEnd,
+    });
 
     let yieldArgs: any | undefined;
 
@@ -248,16 +262,14 @@ export class MergeDurationOperator extends Operator {
           } else {
             const diff = stream.workingValue!.valueOf() - stream.value!.valueOf();
 
-            stream.workingValue = DateTime.fromJSON({
-              // replace workingValue with value
-              ...stream.value!.toJSON(),
-              duration: stream.workingValue!.duration! + diff,
-              generators: stream.value!.generators,
-            });
+            stream.workingValue = stream.value!.set(
+              'duration',
+              stream.workingValue!.duration! + diff,
+            );
           }
         }
 
-        stream.picked();
+        stream.next();
       }
 
       // check to make sure the occurrence we are about to yield starts before the
@@ -272,14 +284,14 @@ export class MergeDurationOperator extends Operator {
         stream.workingValue!.end!.isBefore(yieldArgs.skipToDate)
       ) {
         stream.workingValue = stream.value;
-        stream.picked();
+        stream.next();
         continue;
       }
 
       // make sure we are not after the user requested `end` time.
       if (args.end && stream.workingValue && stream.workingValue.isAfter(args.end)) {
         stream.workingValue = stream.value;
-        stream.picked();
+        stream.next();
         continue;
       }
 
@@ -292,8 +304,19 @@ export class MergeDurationOperator extends Operator {
 
       yieldArgs = yield this.normalizeRunOutput(stream.workingValue!);
 
+      if (
+        yieldArgs &&
+        yieldArgs.skipToDate &&
+        stream.workingValue!.end!.isBeforeOrEqual(yieldArgs.skipToDate)
+      ) {
+        throw new Error(
+          'A provided `skipToDate` option must be greater than the last yielded date ' +
+            '(or smaller, in the case of reverse iteration)',
+        );
+      }
+
       stream.workingValue = stream.value;
-      stream.picked();
+      stream.next();
     }
   }
 }

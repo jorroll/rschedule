@@ -317,25 +317,25 @@ export default function ruleTests() {
                   byDayOfWeek: ['SU'],
                   start: dateAdapter(2019, 10, 16, 12, 30, { timezone: 'America/Phoenix' }),
                 });
-  
+
                 rule = rule.set('timezone', 'America/Toronto');
-  
+
                 expect(rule.timezone).toBe('America/Toronto');
-  
+
                 const adapters = rule
                   .occurrences({
                     start: dateAdapter(2019, 10, 13),
                     take: 4,
                   })
                   .toArray();
-  
+
                 adapters.forEach(adapter => {
                   expect(adapter.generators.length).toBe(1);
                   expect(adapter.generators[0]).toBe(rule);
                 });
-  
+
                 const dates = adapters.map(({ date }) => date);
-  
+
                 expect(dates).toEqual([
                   dateAdapter(2019, 10, 20, 15, 30, { timezone: 'America/Toronto' }).date,
                   dateAdapter(2019, 10, 27, 15, 30, { timezone: 'America/Toronto' }).date,
@@ -344,6 +344,32 @@ export default function ruleTests() {
                 ]);
               });
             }
+
+            // tests issue https://gitlab.com/john.carroll.p/rschedule/-/issues/41
+            it('_run `skipToDate` must be in the future', () => {
+              const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+              const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+              const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+              const generator = buildGenerator({
+                frequency: 'YEARLY',
+                start: first,
+                count: 3,
+                interval: 1,
+                weekStart: 'MO',
+              });
+
+              let iterator = generator._run();
+
+              expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
+              expect(() => iterator.next({ skipToDate: first })).toThrowError();
+
+              iterator = generator._run();
+
+              expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
+              expect(iterator.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+              expect(() => iterator.next({ skipToDate: first })).toThrowError();
+            });
           });
 
           testPreviousOccurrence(

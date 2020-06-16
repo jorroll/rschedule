@@ -6,7 +6,7 @@ import {
   RuleOption,
   ValidDateTime,
 } from '@rschedule/core';
-import { dateTime, isoString } from '../test-utilities';
+import { dateTime, isoString } from '../../test-utilities';
 import { RevFrequencyRule } from './rev-rule';
 import { IFrequencyRuleOptions, intervalDifferenceBetweenDates } from './rule';
 

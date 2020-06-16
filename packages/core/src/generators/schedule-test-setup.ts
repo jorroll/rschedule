@@ -120,6 +120,39 @@ export default function scheduleTests() {
                 ]);
               });
             }
+
+            // tests issue https://gitlab.com/john.carroll.p/rschedule/-/issues/41
+            it('_run `skipToDate` must be in the future', () => {
+              const first = dateAdapter(1997, 9, 2, 9).toDateTime();
+              const second = dateAdapter(1998, 9, 2, 9).toDateTime();
+              const third = dateAdapter(1999, 9, 2, 9).toDateTime();
+
+              const generator = new Schedule({
+                timezone,
+                rrules: [
+                  {
+                    frequency: 'YEARLY',
+                    start: first,
+                    count: 3,
+                    interval: 1,
+                    weekStart: 'MO',
+                  },
+                ],
+              });
+
+              const iterator1 = generator._run();
+
+              expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+              expect(() => iterator1.next({ skipToDate: first })).toThrowError();
+
+              const iterator2 = generator._run();
+
+              expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
+              expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                third.valueOf(),
+              );
+              expect(() => iterator2.next({ skipToDate: first })).toThrowError();
+            });
           });
 
           testOccurrences(

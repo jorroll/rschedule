@@ -18,6 +18,8 @@ import {
   OccurrenceGeneratorRunResult,
   OccurrenceIterator,
 } from './occurrence-generator';
+import { IRecurrenceRulesIteratorNextArgs } from '../recurrence-rules-iterator';
+import { normalizeDateTimeTimezone } from '../utilities';
 
 export interface IRuleArgs<D = any> {
   data?: D;
@@ -122,9 +124,21 @@ export abstract class RuleBase<
 
       date = date.add(this, 'generator');
 
-      const yieldArgs = yield this.normalizeRunOutput(date);
+      const yieldArgs: IRecurrenceRulesIteratorNextArgs = yield this.normalizeRunOutput(date);
 
-      date = iterator.next(yieldArgs).value;
+      if (yieldArgs && yieldArgs.skipToDate) {
+        // The RecurrenceRuleIterator might have a different timezone from the rule.
+        // Because of this, the yieldArgs will not properly be normalized by the
+        // OccurrenceIterator, so we need to do it here
+        date = iterator.next({
+          ...yieldArgs,
+          skipToDate: normalizeDateTimeTimezone(yieldArgs.skipToDate, iterator.start.timezone),
+        }).value;
+      } else {
+        // theoretically, the yieldArgs are undefined here
+        // maybe in the future there will be other yieldArg options though
+        date = iterator.next(yieldArgs).value;
+      }
     }
 
     return undefined;

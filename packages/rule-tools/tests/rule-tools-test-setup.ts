@@ -19,7 +19,10 @@ import { Schedule } from '@rschedule/core/generators';
 
 export default function ruleToolsTests() {
   context(DateAdapterBase.adapter.name, () => {
-    // const zones = !DateAdapterBase.adapter.hasTimezoneSupport ? [null, 'UTC'] : ['UTC'];
+    // const zones: (string | null)[] = !DateAdapterBase.adapter.hasTimezoneSupport
+    //   ? ['UTC']
+    //   : ['UTC'];
+
     const zones = !DateAdapterBase.adapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
     zones.forEach(zone => {
@@ -36,9 +39,9 @@ export default function ruleToolsTests() {
           describe('isRecurrencePattern()', () => {
             it(name, () => {
               expectations.forEach(pair => {
-                expect(
-                  isRecurrencePattern({pattern: pair[0], date, rule: optionsFn(date)}),
-                ).toBe(pair[1]);
+                expect(isRecurrencePattern({ pattern: pair[0], date, rule: optionsFn(date) })).toBe(
+                  pair[1],
+                );
               });
             });
           });
@@ -54,9 +57,7 @@ export default function ruleToolsTests() {
             context(date, date => {
               describe('buildRecurrencePattern()', () => {
                 test('every [WEEKDAY]', (pattern: RecurrencePattern) => {
-                  expect(
-                    buildRecurrencePattern(pattern, date),
-                  ).toEqual({
+                  expect(buildRecurrencePattern(pattern, date)).toEqual({
                     start: date,
                     frequency: 'WEEKLY',
                     byDayOfWeek: [date.toDateTime().get('weekday')],
@@ -64,9 +65,7 @@ export default function ruleToolsTests() {
                 });
 
                 test('the [MONTH_WEEKNO] [WEEKDAY] of every month', (pattern: RecurrencePattern) => {
-                  expect(
-                    buildRecurrencePattern(pattern, date),
-                  ).toEqual({
+                  expect(buildRecurrencePattern(pattern, date)).toEqual({
                     start: date,
                     frequency: 'MONTHLY',
                     byDayOfWeek: [
@@ -79,9 +78,7 @@ export default function ruleToolsTests() {
                 });
 
                 test('the [MONTH_DAYNO] of every month', (pattern: RecurrencePattern) => {
-                  expect(
-                    buildRecurrencePattern(pattern, date),
-                  ).toEqual({
+                  expect(buildRecurrencePattern(pattern, date)).toEqual({
                     start: date,
                     frequency: 'MONTHLY',
                     byDayOfMonth: [date.toDateTime().get('day')],
@@ -89,9 +86,7 @@ export default function ruleToolsTests() {
                 });
 
                 test('the last [WEEKDAY] of every month', (pattern: RecurrencePattern) => {
-                  expect(
-                    buildRecurrencePattern(pattern, date),
-                  ).toEqual({
+                  expect(buildRecurrencePattern(pattern, date)).toEqual({
                     start: date,
                     frequency: 'MONTHLY',
                     byDayOfWeek: [[date.toDateTime().get('weekday'), -1]],
@@ -129,9 +124,7 @@ export default function ruleToolsTests() {
           });
 
           describe('isRecurrencePattern()', () => {
-            function weeklyTH(
-              date: DateAdapter,
-            ): IRuleOptions {
+            function weeklyTH(date: DateAdapter): IRuleOptions {
               return {
                 start: date,
                 frequency: 'WEEKLY',
@@ -139,9 +132,7 @@ export default function ruleToolsTests() {
               };
             }
 
-            function weeklyMO(
-              date: DateAdapter,
-            ): IRuleOptions {
+            function weeklyMO(date: DateAdapter): IRuleOptions {
               return {
                 start: date,
                 frequency: 'WEEKLY',
@@ -149,9 +140,7 @@ export default function ruleToolsTests() {
               };
             }
 
-            function dailyTH(
-              date: DateAdapter,
-            ): IRuleOptions {
+            function dailyTH(date: DateAdapter): IRuleOptions {
               return {
                 start: date,
                 frequency: 'DAILY',
@@ -159,9 +148,7 @@ export default function ruleToolsTests() {
               };
             }
 
-            function monthly2ndTH(
-              date: DateAdapter,
-            ): IRuleOptions {
+            function monthly2ndTH(date: DateAdapter): IRuleOptions {
               return {
                 start: date,
                 frequency: 'MONTHLY',
@@ -169,9 +156,7 @@ export default function ruleToolsTests() {
               };
             }
 
-            function monthlyLastWE(
-              date: DateAdapter,
-            ): IRuleOptions {
+            function monthlyLastWE(date: DateAdapter): IRuleOptions {
               return {
                 start: date,
                 frequency: 'MONTHLY',
@@ -179,9 +164,7 @@ export default function ruleToolsTests() {
               };
             }
 
-            function monthly14th(
-              date: DateAdapter,
-            ): IRuleOptions {
+            function monthly14th(date: DateAdapter): IRuleOptions {
               return {
                 start: date,
                 frequency: 'MONTHLY',
@@ -368,8 +351,7 @@ export default function ruleToolsTests() {
               exdates: [date, dateTime.add(1, 'day')],
             });
 
-            scheduleEmpty = new Schedule({
-            });
+            scheduleEmpty = new Schedule({});
           });
 
           describe('addSchedulePattern()', () => {
@@ -524,7 +506,11 @@ export default function ruleToolsTests() {
               const end = dateTime.add(1, 'week');
 
               it('scheduleWEEKDAY', () => {
-                scheduleWEEKDAY = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleWEEKDAY});
+                scheduleWEEKDAY = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleWEEKDAY,
+                });
 
                 expect(scheduleWEEKDAY.rrules.length).toBe(1);
                 expect(scheduleWEEKDAY.rrules[0].options).toEqual({
@@ -536,7 +522,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(4);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -564,7 +554,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -574,7 +568,11 @@ export default function ruleToolsTests() {
               const end = dateTime.set('month', 11).set('day', 14);
 
               it('scheduleWEEKDAY', () => {
-                scheduleWEEKDAY = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleWEEKDAY});
+                scheduleWEEKDAY = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleWEEKDAY,
+                });
 
                 expect(scheduleWEEKDAY.rrules.length).toBe(1);
                 expect(scheduleWEEKDAY.rrules[0].options).toEqual({
@@ -585,7 +583,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(4);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -614,7 +616,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -624,7 +630,11 @@ export default function ruleToolsTests() {
               const end = dateTime.set('day', 14);
 
               it('scheduleWEEKDAY', () => {
-                scheduleWEEKDAY = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleWEEKDAY});
+                scheduleWEEKDAY = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleWEEKDAY,
+                });
 
                 expect(scheduleWEEKDAY.rrules.length).toBe(1);
                 expect(scheduleWEEKDAY.rrules[0].options).toEqual({
@@ -635,7 +645,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(4);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -665,7 +679,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -675,7 +693,11 @@ export default function ruleToolsTests() {
               const end = dateTime.set('day', 30);
 
               it('scheduleWEEKDAY', () => {
-                scheduleWEEKDAY = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleWEEKDAY});
+                scheduleWEEKDAY = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleWEEKDAY,
+                });
 
                 expect(scheduleWEEKDAY.rrules.length).toBe(1);
                 expect(scheduleWEEKDAY.rrules[0].options).toEqual({
@@ -686,7 +708,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(4);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -715,7 +741,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = endScheduleRecurrencePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = endScheduleRecurrencePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -728,11 +758,16 @@ export default function ruleToolsTests() {
 
               it('scheduleWEEKDAY', () => {
                 expect(
-                  removeSchedulePattern({pattern, date: end, schedule: scheduleWEEKDAY}).rrules.length,
+                  removeSchedulePattern({ pattern, date: end, schedule: scheduleWEEKDAY }).rrules
+                    .length,
                 ).toBe(0);
 
                 expect(
-                  removeSchedulePattern({pattern, date: end.subtract(2, 'week'), schedule: scheduleWEEKDAY}).rrules[0].options,
+                  removeSchedulePattern({
+                    pattern,
+                    date: end.subtract(2, 'week'),
+                    schedule: scheduleWEEKDAY,
+                  }).rrules[0].options,
                 ).toEqual({
                   start: date,
                   frequency: 'WEEKLY',
@@ -741,7 +776,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = removeSchedulePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(4);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -769,7 +808,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = removeSchedulePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -779,7 +822,11 @@ export default function ruleToolsTests() {
               const end = dateTime.set('month', 11).set('day', 14);
 
               it('scheduleWEEKDAY', () => {
-                scheduleWEEKDAY = removeSchedulePattern({pattern, date: end, schedule: scheduleWEEKDAY});
+                scheduleWEEKDAY = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleWEEKDAY,
+                });
 
                 expect(scheduleWEEKDAY.rrules.length).toBe(1);
                 expect(scheduleWEEKDAY.rrules[0].options).toEqual({
@@ -790,7 +837,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = removeSchedulePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(3);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -813,7 +864,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = removeSchedulePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -823,7 +878,11 @@ export default function ruleToolsTests() {
               const end = dateTime.set('day', 14);
 
               it('scheduleWEEKDAY', () => {
-                scheduleWEEKDAY = removeSchedulePattern({pattern, date: end, schedule: scheduleWEEKDAY});
+                scheduleWEEKDAY = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleWEEKDAY,
+                });
 
                 expect(scheduleWEEKDAY.rrules.length).toBe(1);
                 expect(scheduleWEEKDAY.rrules[0].options).toEqual({
@@ -834,7 +893,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = removeSchedulePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(2);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -852,7 +915,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = removeSchedulePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -862,7 +929,11 @@ export default function ruleToolsTests() {
               const end = dateTime.set('day', 30);
 
               it('scheduleWEEKDAY', () => {
-                scheduleWEEKDAY = removeSchedulePattern({pattern, date: end, schedule: scheduleWEEKDAY});
+                scheduleWEEKDAY = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleWEEKDAY,
+                });
 
                 expect(scheduleWEEKDAY.rrules.length).toBe(1);
                 expect(scheduleWEEKDAY.rrules[0].options).toEqual({
@@ -873,7 +944,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleCOMBINED', () => {
-                scheduleCOMBINED = removeSchedulePattern({pattern, date: end, schedule: scheduleCOMBINED});
+                scheduleCOMBINED = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleCOMBINED,
+                });
 
                 expect(scheduleCOMBINED.rrules.length).toBe(3);
                 expect(scheduleCOMBINED.rrules.map(rule => rule.options)).toEqual([
@@ -896,7 +971,11 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                scheduleEmpty = removeSchedulePattern({pattern, date: end, schedule: scheduleEmpty});
+                scheduleEmpty = removeSchedulePattern({
+                  pattern,
+                  date: end,
+                  schedule: scheduleEmpty,
+                });
 
                 expect(scheduleEmpty.rrules.length).toBe(0);
               });
@@ -906,42 +985,46 @@ export default function ruleToolsTests() {
           describe('scheduleHasPattern()', () => {
             context('every [WEEKDAY]', (pattern: Pattern) => {
               it('scheduleWEEKDAY', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleWEEKDAY}),
-                ).toBe(true);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleWEEKDAY })).toBe(true);
 
                 expect(
-                  scheduleHasPattern({pattern, date: dateTime.add(1, 'day'), schedule: scheduleWEEKDAY}),
+                  scheduleHasPattern({
+                    pattern,
+                    date: dateTime.add(1, 'day'),
+                    schedule: scheduleWEEKDAY,
+                  }),
                 ).toBe(false);
               });
 
               it('scheduleCOMBINED', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleCOMBINED}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleCOMBINED })).toBe(
+                  false,
+                );
               });
 
               it('scheduleEmpty', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleEmpty}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleEmpty })).toBe(false);
               });
             });
 
             context('the [MONTH_WEEKNO] [WEEKDAY] of every month', (pattern: Pattern) => {
               it('scheduleWEEKDAY', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleWEEKDAY}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleWEEKDAY })).toBe(
+                  false,
+                );
               });
 
               it('scheduleCOMBINED', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleCOMBINED}),
-                ).toBe(true);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleCOMBINED })).toBe(
+                  true,
+                );
 
                 expect(
-                  scheduleHasPattern({pattern, date: dateTime.add(1, 'month').set('day', 14), schedule: scheduleCOMBINED}),
+                  scheduleHasPattern({
+                    pattern,
+                    date: dateTime.add(1, 'month').set('day', 14),
+                    schedule: scheduleCOMBINED,
+                  }),
                 ).toBe(true);
 
                 expect(
@@ -954,77 +1037,77 @@ export default function ruleToolsTests() {
               });
 
               it('scheduleEmpty', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleEmpty}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleEmpty })).toBe(false);
               });
             });
 
             context('the [MONTH_DAYNO] of every month', (pattern: Pattern) => {
               it('scheduleWEEKDAY', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleWEEKDAY}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleWEEKDAY })).toBe(
+                  false,
+                );
               });
 
               it('scheduleCOMBINED', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleCOMBINED}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleCOMBINED })).toBe(
+                  false,
+                );
 
                 expect(
-                  scheduleHasPattern({pattern, date: dateTime.set('day', 14), schedule: scheduleCOMBINED}),
+                  scheduleHasPattern({
+                    pattern,
+                    date: dateTime.set('day', 14),
+                    schedule: scheduleCOMBINED,
+                  }),
                 ).toBe(true);
               });
 
               it('scheduleEmpty', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleEmpty}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleEmpty })).toBe(false);
               });
             });
 
             context('the last [WEEKDAY] of every month', (pattern: Pattern) => {
               it('scheduleWEEKDAY', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleWEEKDAY}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleWEEKDAY })).toBe(
+                  false,
+                );
               });
 
               it('scheduleCOMBINED', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleCOMBINED}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleCOMBINED })).toBe(
+                  false,
+                );
 
                 expect(
-                  scheduleHasPattern({pattern, date: dateTime.set('day', 30), schedule: scheduleCOMBINED}),
+                  scheduleHasPattern({
+                    pattern,
+                    date: dateTime.set('day', 30),
+                    schedule: scheduleCOMBINED,
+                  }),
                 ).toBe(true);
               });
 
               it('scheduleEmpty', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleEmpty}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleEmpty })).toBe(false);
               });
             });
 
             context('date', (pattern: Pattern) => {
               it('scheduleWEEKDAY', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleWEEKDAY}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleWEEKDAY })).toBe(
+                  false,
+                );
               });
 
               it('scheduleCOMBINED', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleCOMBINED}),
-                ).toBe(true);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleCOMBINED })).toBe(
+                  true,
+                );
               });
 
               it('scheduleEmpty', () => {
-                expect(
-                  scheduleHasPattern({pattern, date, schedule: scheduleEmpty}),
-                ).toBe(false);
+                expect(scheduleHasPattern({ pattern, date, schedule: scheduleEmpty })).toBe(false);
               });
             });
           });

@@ -1,4 +1,4 @@
-import { DateTime } from '@rschedule/core';
+import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
 
 import {
   IOperatorConfig,
@@ -9,7 +9,7 @@ import {
   OperatorFnOutput,
 } from '../occurrence-generator';
 
-import { IterableWrapper, selectNextIterable, streamPastEnd, streamPastSkipToDate } from './_util';
+import { IterableWrapper, selectNextIterable } from './_util';
 
 /**
  * An operator function which accepts a spread of occurrence generators
@@ -31,36 +31,29 @@ export class AddOperator extends Operator {
   }
 
   *_run(args: IRunArgs = {}): OccurrenceGeneratorRunResult {
-    const streams = this.streams.map(input => new IterableWrapper(input._run(args)));
+    const wrappedStreams = this.streams.map(input => new IterableWrapper(input, args));
 
     if (this.config.base) {
-      streams.push(new IterableWrapper(this.config.base._run(args)));
+      wrappedStreams.push(new IterableWrapper(this.config.base, args));
     }
 
-    if (streams.length === 0) return;
+    if (wrappedStreams.length === 0) return;
 
-    let stream = selectNextIterable(streams, args);
+    let stream = selectNextIterable(wrappedStreams, args);
 
-    if (streamPastEnd(stream, args)) return;
+    while (stream && !stream.done) {
+      // yield the current stream's value
+      const yieldArgs: IRecurrenceRulesIteratorNextArgs = yield this.normalizeRunOutput(
+        stream.value!,
+      );
 
-    while (!stream.done) {
-      const yieldArgs = yield this.normalizeRunOutput(stream.value!);
-
-      stream.picked();
-
-      stream = selectNextIterable(streams, args);
-
-      if (yieldArgs && yieldArgs.skipToDate) {
-        while (
-          !streamPastEnd(stream, args) &&
-          !streamPastSkipToDate(stream, yieldArgs.skipToDate, args)
-        ) {
-          stream.picked();
-          stream = selectNextIterable(streams, args);
-        }
+      if (!(yieldArgs && yieldArgs.skipToDate)) {
+        // iterate the current stream
+        stream.next();
       }
 
-      if (streamPastEnd(stream, args)) return;
+      // select the next stream
+      stream = selectNextIterable(wrappedStreams, args, yieldArgs);
     }
   }
 
