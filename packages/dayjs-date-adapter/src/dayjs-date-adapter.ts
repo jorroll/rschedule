@@ -7,7 +7,10 @@ import {
 } from '@rschedule/core';
 
 import dayjs from 'dayjs';
-import 'dayjs/plugin/utc';
+// this import only exists for typings and is removed from the build
+// by rollup
+// tslint:disable-next-line: no-submodule-imports
+import utc from 'dayjs/plugin/utc';
 
 if (typeof dayjs.utc === 'undefined') {
   throw new Error(

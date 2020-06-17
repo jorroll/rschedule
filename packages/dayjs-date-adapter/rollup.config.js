@@ -27,7 +27,7 @@ export default [
       '@rschedule/core',
       '@rschedule/core/generators',
       '@rschedule/core/rules/ICAL_RULES',
-      '@rschedule/moment-date-adapter',
+      '@rschedule/dayjs-date-adapter',
       'dayjs',
     ],
     plugins: [
