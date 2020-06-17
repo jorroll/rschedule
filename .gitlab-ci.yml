@@ -23,6 +23,15 @@ core:
   script:
     - TZ='America/Los_Angeles' yarn test:core
 
+dayjs_date_adapter:
+  image: node:8.15.1-alpine
+  stage: test
+  cache:
+    untracked: true
+    policy: pull
+  script:
+    - TZ='America/Los_Angeles' yarn test:dayjs-date-adapter
+
 joda_date_adapter:
   image: node:8.15.1-alpine
   stage: test

@@ -1,0 +1,6 @@
+{
+  "name": "@rschedule/dayjs-date-adapter/setup",
+  "main": "../umd/setup.js",
+  "module": "../es2015/setup.js",
+  "sideEffects": true
+}

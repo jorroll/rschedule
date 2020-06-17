@@ -4,7 +4,7 @@
 
 ### [View docs](#docs)
 
-A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), or [js-joda](https://github.com/js-joda/js-joda) objects. If your chosen date library supports time zones, rSchedule supports time zones. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
+A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), [dayjs](https://day.js.org/), or [js-joda](https://github.com/js-joda/js-joda) objects. If your chosen date library supports time zones, rSchedule supports time zones. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
 
 ```bash
 # To install both the main package and the `StandardDateAdapter` for standard javascript dates */
@@ -21,6 +21,7 @@ npm install @rschedule/core @rschedule/standard-date-adapter
 @rschedule/moment-date-adapter
 @rschedule/moment-tz-date-adapter
 @rschedule/luxon-date-adapter
+@rschedule/dayjs-date-adapter
 @rschedule/joda-date-adapter
 ```
 
