@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/moment-tz-date-adapter",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "An rSchedule DateAdapter for \"moment-timezone\" date objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
