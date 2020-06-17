@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/luxon-date-adapter",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "An rSchedule DateAdapter for \"luxon\" DateTime objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
