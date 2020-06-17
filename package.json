@@ -13,6 +13,7 @@
     "prebuild": "yarn --cwd='./packages/core' build",
     "build": "run-p build:*",
     "build:ical-tools": "yarn --cwd='./packages/ical-tools' build",
+    "build:dayjs-date-adapter": "yarn --cwd='./packages/dayjs-date-adapter' build",
     "build:joda-date-adapter": "yarn --cwd='./packages/joda-date-adapter' build",
     "build:json-tools": "yarn --cwd='./packages/json-tools' build",
     "build:luxon-date-adapter": "yarn --cwd='./packages/luxon-date-adapter' build",
