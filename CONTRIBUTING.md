@@ -12,3 +12,4 @@ To make contributing easier, this repo has a `.devcontainer` configuration file 
 ### FAQ
 
 1. By default, you might not be able to push any git commits using VSCode running inside a dev container. To fix this issue, read this [VSCode Article](https://code.visualstudio.com/docs/remote/containers#_sharing-git-credentials-with-your-container).
+2. If you run out of memory while developing inside a docker container, see the [VSCode Docs](https://vscode.trafficmanager.net/docs/remote/troubleshooting#_speeding-up-containers-in-docker-desktop) for fixes. The short version is that you need to open up docker preferences/settings and change the amount of memory allocated to your containers.
