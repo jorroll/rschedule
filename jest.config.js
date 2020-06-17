@@ -32,6 +32,8 @@ module.exports = {
     '@rschedule/rule-tools': '<rootDir>/../rule-tools/src',
     '@rschedule/recurrence-rules-resolver/(.*)': '<rootDir>/../recurrence-rules-resolver/src/$1',
     '@rschedule/recurrence-rules-resolver': '<rootDir>/../recurrence-rules-resolver/src',
+    '@rschedule/dayjs-date-adapter/(.*)': '<rootDir>/../dayjs-date-adapter/src/$1',
+    '@rschedule/dayjs-date-adapter': '<rootDir>/../dayjs-date-adapter/src',
     '@rschedule/joda-date-adapter/(.*)': '<rootDir>/../joda-date-adapter/src/$1',
     '@rschedule/joda-date-adapter': '<rootDir>/../joda-date-adapter/src',
     '@rschedule/moment-date-adapter/(.*)': '<rootDir>/../moment-date-adapter/src/$1',

@@ -10,6 +10,8 @@ rSchedule is date library agnostic. It needs a `DateAdapter` constructor to proc
   - For use with moment-timezone `Moment` objects. Has full timezone support.
 - [LuxonDateAdapter](./luxon-date-adapter)
   - For use with luxon `DateTime` objects. Has full timezone support.
+- [DayjsDateAdapter](./dayjs-date-adapter)
+  - For use with dayjs `Dayjs` objects. Supports local and UTC timezones.
 - [JodaDateAdapter](./joda-date-adapter)
   - For use with js-joda `ZonedDateTime` objects. Has full timezone support.
 

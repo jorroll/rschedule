@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    // "rootDir": "src",
+    "outDir": "build/main",
+    "declarationDir": "build/main",
+    "allowSyntheticDefaultImports": true
+  },
+  "files": ["./src/index.ts", "./src/setup/index.ts"]
+}

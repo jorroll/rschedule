@@ -1,0 +1,29 @@
+# @rschedule/dayjs-date-adapter
+
+[![NPM version](https://flat.badgen.net/npm/v/@rschedule/dayjs-date-adapter)](https://www.npmjs.com/package/@rschedule/dayjs-date-adapter) [![Size when minified & gzipped](https://flat.badgen.net/bundlephobia/minzip/@rschedule/dayjs-date-adapter)](https://bundlephobia.com/result?p=@rschedule/dayjs-date-adapter)
+
+**[`DayjsDateAdapter extends DateAdapterBase`](../#dateadapterbase)**
+
+rSchedule DateAdapter for working with [dayjs](https://dayjsjs.com) objects. This package also requires the dayjs ["UTC" plugin](https://day.js.org/docs/en/plugin/utc). Dayjs must be extended using this plugin _before_ the `DayjsDateAdapter` is loaded. Only supports local and UTC timezones.
+
+## Installation
+
+```bash
+yarn add @rschedule/dayjs-date-adapter
+
+# or
+
+npm install @rschedule/dayjs-date-adapter
+```
+
+## Usage
+
+Configure as date adapter with:
+
+```typescript
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
+
+import '@rschedule/dayjs-date-adapter/setup';
+```

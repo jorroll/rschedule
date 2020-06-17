@@ -26,6 +26,8 @@
       "@rschedule/rule-tools/*": ["packages/rule-tools/src/*"],
       "@rschedule/recurrence-rules-resolver": ["packages/recurrence-rules-resolver/src"],
       "@rschedule/recurrence-rules-resolver/*": ["packages/recurrence-rules-resolver/src/*"],
+      "@rschedule/dayjs-date-adapter": ["packages/dayjs-date-adapter/src"],
+      "@rschedule/dayjs-date-adapter/*": ["packages/dayjs-date-adapter/src/*"],
       "@rschedule/joda-date-adapter": ["packages/joda-date-adapter/src"],
       "@rschedule/joda-date-adapter/*": ["packages/joda-date-adapter/src/*"],
       "@rschedule/moment-date-adapter": ["packages/moment-date-adapter/src"],
