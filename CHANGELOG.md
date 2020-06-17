@@ -6,6 +6,8 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.1.1 FEATURE (2020/6/16)
+
 ### Feature
 
 - Add `DayjsDateAdapter` package (#43).
