@@ -15,8 +15,8 @@ function buildRule(start: DateTime, options: IFrequencyRuleOptions & { start: Da
       start,
       reverse: false,
       options: {
-        start,
-        frequency: 'YEARLY',
+        // start,
+        // frequency: 'YEARLY',
         interval: 1,
         weekStart: 'MO' as RuleOption.WeekStart,
         ...options,

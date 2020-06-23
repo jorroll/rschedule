@@ -122,15 +122,15 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator1.next().value!.valueOf()).toEqual(first.valueOf());
                 expect(() => iterator1.next({ skipToDate: first })).toThrowError();
 
                 const iterator2 = add(dates)({
                   timezone,
                 })._run();
 
-                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
-                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                expect(iterator2.next().value!.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value!.valueOf()).toEqual(
                   third.valueOf(),
                 );
                 expect(() => iterator2.next({ skipToDate: first })).toThrowError();
@@ -345,7 +345,7 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator1.next().value!.valueOf()).toEqual(first.valueOf());
                 expect(() => iterator1.next({ skipToDate: first })).toThrowError();
 
                 const iterator2 = subtract(noop)({
@@ -355,8 +355,8 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
-                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                expect(iterator2.next().value!.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value!.valueOf()).toEqual(
                   third.valueOf(),
                 );
                 expect(() => iterator2.next({ skipToDate: first })).toThrowError();
@@ -407,7 +407,7 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator1.next().value!.valueOf()).toEqual(first.valueOf());
                 expect(() => iterator1.next({ skipToDate: first })).toThrowError();
 
                 const iterator2 = intersection({
@@ -417,8 +417,8 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
-                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                expect(iterator2.next().value!.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value!.valueOf()).toEqual(
                   third.valueOf(),
                 );
                 expect(() => iterator2.next({ skipToDate: first })).toThrowError();
@@ -596,7 +596,7 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator1.next().value!.valueOf()).toEqual(first.valueOf());
                 expect(() => iterator1.next({ skipToDate: first })).toThrowError();
 
                 const iterator2 = unique()({
@@ -604,8 +604,8 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
-                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                expect(iterator2.next().value!.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value!.valueOf()).toEqual(
                   third.valueOf(),
                 );
                 expect(() => iterator2.next({ skipToDate: first })).toThrowError();
@@ -779,7 +779,7 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator1.next().value!.valueOf()).toEqual(first.valueOf());
                 expect(() => iterator1.next({ skipToDate: first })).toThrowError();
 
                 const iterator2 = mergeDuration({
@@ -789,8 +789,8 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
-                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                expect(iterator2.next().value!.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value!.valueOf()).toEqual(
                   third.valueOf(),
                 );
                 expect(() => iterator2.next({ skipToDate: first })).toThrowError();
@@ -1022,7 +1022,7 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+                expect(iterator1.next().value!.valueOf()).toEqual(first.valueOf());
                 expect(() => iterator1.next({ skipToDate: first })).toThrowError();
 
                 const iterator2 = splitDuration({
@@ -1033,8 +1033,8 @@ export default function operatorsTests() {
                   timezone,
                 })._run();
 
-                expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
-                expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(
+                expect(iterator2.next().value!.valueOf()).toEqual(first.valueOf());
+                expect(iterator2.next({ skipToDate: third }).value!.valueOf()).toEqual(
                   third.valueOf(),
                 );
                 expect(() => iterator2.next({ skipToDate: first })).toThrowError();

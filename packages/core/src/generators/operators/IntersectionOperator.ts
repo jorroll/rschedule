@@ -1,5 +1,4 @@
-import { ArgumentError, DateTime } from '@rschedule/core';
-import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
+import { ArgumentError, DateTime, IRunNextArgs } from '@rschedule/core';
 import {
   IOperatorConfig,
   IRunArgs,
@@ -58,16 +57,16 @@ export class IntersectionOperator extends Operator {
       if (!this.maxFailedIterations) {
         throw new ArgumentError(
           'The IntersectionOperator must be provided ' +
-            'a `maxFailedIterations` argument when it is built from schedules of infinite length. ' +
-            'This argument is used to ensure that the IntersectionOperator does not enter ' +
-            'an infinite loop because the underlying schedules never intersect. ' +
-            'If the `maxFailedIterations` count is reached it will be assumed that ' +
-            'all valid occurrences have been found and iteration will end without error.' +
-            'Without additional information, "50" is probably a good ' +
-            '`maxFailedIterations` value. ' +
-            'If the schedules are not of infinite length, `maxFailedIterations` is ignored. ' +
-            'Note also that you can provide a `defaultMaxFailedIterations` number via ' +
-            'IntersectionOperator.defaultMaxFailedIterations.',
+          'a `maxFailedIterations` argument when it is built from schedules of infinite length. ' +
+          'This argument is used to ensure that the IntersectionOperator does not enter ' +
+          'an infinite loop because the underlying schedules never intersect. ' +
+          'If the `maxFailedIterations` count is reached it will be assumed that ' +
+          'all valid occurrences have been found and iteration will end without error.' +
+          'Without additional information, "50" is probably a good ' +
+          '`maxFailedIterations` value. ' +
+          'If the schedules are not of infinite length, `maxFailedIterations` is ignored. ' +
+          'Note also that you can provide a `defaultMaxFailedIterations` number via ' +
+          'IntersectionOperator.defaultMaxFailedIterations.',
         );
       }
     }
@@ -116,7 +115,7 @@ export class IntersectionOperator extends Operator {
 
       const lastValidDate = stream.value;
 
-      if (!(yieldArgs && yieldArgs.skipToDate)) {
+      if (!(yieldArgs?.skipToDate)) {
         // iterate the current stream
         stream.next();
       }
@@ -173,7 +172,7 @@ function cycleStreams(
     end?: DateTime;
     reverse?: boolean;
   },
-  yieldArgs?: IRecurrenceRulesIteratorNextArgs,
+  yieldArgs?: IRunNextArgs,
 ): boolean {
   const next = selectNextIterable(streams, options, yieldArgs);
 

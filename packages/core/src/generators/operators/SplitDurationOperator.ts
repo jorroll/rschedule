@@ -1,4 +1,4 @@
-import { ArgumentError, DateTime, dateTimeSortComparer } from '@rschedule/core';
+import { ArgumentError, DateTime, dateTimeSortComparer, IRunNextArgs } from '@rschedule/core';
 import {
   IOperatorConfig,
   IRunArgs,
@@ -7,9 +7,8 @@ import {
   OperatorFnOutput,
 } from '../occurrence-generator';
 import { IterableWrapper } from './_util';
-import { IRecurrenceRulesIteratorNextArgs } from '@rschedule/core/recurrence-rules-iterator';
 
-export class SplitDurationOperatorError extends Error {}
+export class SplitDurationOperatorError extends Error { }
 
 /**
  * An operator function which takes an occurrence stream with
@@ -92,7 +91,7 @@ export class SplitDurationOperator extends Operator {
     if (config.base && !config.base.hasDuration) {
       throw new ArgumentError(
         'Base stream provided to SplitDurationOperator does not have an associated duration. ' +
-          'The SplitDurationOperator can only be used with streams which have a duration.',
+        'The SplitDurationOperator can only be used with streams which have a duration.',
       );
     }
   }
@@ -138,7 +137,7 @@ export class SplitDurationOperator extends Operator {
       end: checkFromEnd,
     });
 
-    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
+    let yieldArgs: IRunNextArgs | undefined;
 
     const datesBucket: DateTime[][] = [];
 
@@ -242,7 +241,7 @@ export class SplitDurationOperator extends Operator {
       if (selectedDate.duration! > this.maxDuration) {
         throw new SplitDurationOperatorError(
           `SplitDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
-            this.maxDuration,
+          this.maxDuration,
         );
       }
 
@@ -257,7 +256,7 @@ export class SplitDurationOperator extends Operator {
       ) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-            '(or smaller, in the case of reverse iteration)',
+          '(or smaller, in the case of reverse iteration)',
         );
       }
     }
@@ -287,9 +286,9 @@ export class SplitDurationOperator extends Operator {
     if (!valid) {
       throw new Error(
         'The provided SplitDurationOperator split function ' +
-          'must return an array of DateTimes with length > 0 ' +
-          'where the total duration of the new dates equals the duration of ' +
-          'the original date.',
+        'must return an array of DateTimes with length > 0 ' +
+        'where the total duration of the new dates equals the duration of ' +
+        'the original date.',
       );
     }
 

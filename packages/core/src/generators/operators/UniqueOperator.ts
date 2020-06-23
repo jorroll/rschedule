@@ -6,7 +6,6 @@ import {
   OperatorFnOutput,
 } from '../occurrence-generator';
 import { IterableWrapper } from './_util';
-import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
 
 /**
  * An operator function which deduplicates an occurrence stream. Occurrence
@@ -32,7 +31,7 @@ export class UniqueOperator extends Operator {
     const stream = new IterableWrapper(this.config.base, args);
 
     while (!stream.done) {
-      const yieldArgs: IRecurrenceRulesIteratorNextArgs = yield this.normalizeRunOutput(
+      const yieldArgs = yield this.normalizeRunOutput(
         stream.value!,
       );
 

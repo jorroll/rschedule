@@ -1,4 +1,4 @@
-import { DateInput, DateTime } from '@rschedule/core';
+import { DateInput } from '@rschedule/core';
 
 import {
   CollectionIterator,

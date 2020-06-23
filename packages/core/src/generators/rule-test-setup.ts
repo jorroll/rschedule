@@ -62,7 +62,7 @@ export default function ruleTests() {
 
                 let date = iterable.next().value;
 
-                expect(date.toISOString()).toBe(expectedDates[0].toISOString());
+                expect(date!.toISOString()).toBe(expectedDates[0].toISOString());
 
                 date = iterable.next({ skipToDate: expectedDates[2] }).value;
 
@@ -78,11 +78,11 @@ export default function ruleTests() {
 
                 let date = iterable.next().value;
 
-                expect(date.toISOString()).toBe(expectedDates[2].toISOString());
+                expect(date!.toISOString()).toBe(expectedDates[2].toISOString());
 
                 date = iterable.next({ skipToDate: expectedDates[0] }).value;
 
-                expect(date.toISOString()).toBe(expectedDates[0].toISOString());
+                expect(date!.toISOString()).toBe(expectedDates[0].toISOString());
               });
 
               describe('w/args', () => {
@@ -361,13 +361,13 @@ export default function ruleTests() {
 
               let iterator = generator._run();
 
-              expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
+              expect(iterator.next().value!.valueOf()).toEqual(first.valueOf());
               expect(() => iterator.next({ skipToDate: first })).toThrowError();
 
               iterator = generator._run();
 
-              expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
-              expect(iterator.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+              expect(iterator.next().value!.valueOf()).toEqual(first.valueOf());
+              expect(iterator.next({ skipToDate: third }).value!.valueOf()).toEqual(third.valueOf());
               expect(() => iterator.next({ skipToDate: first })).toThrowError();
             });
           });

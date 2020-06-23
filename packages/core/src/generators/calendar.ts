@@ -1,4 +1,4 @@
-import { ArgumentError, DateTime } from '@rschedule/core';
+import { ArgumentError } from '@rschedule/core';
 
 import {
   CollectionIterator,

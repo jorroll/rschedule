@@ -9,6 +9,7 @@ import {
   RecurrenceRuleResult,
   ValidDateTime,
 } from './recurrence-rule';
+
 import { cloneJSON, normalizeDateTimeTimezone } from './utilities';
 
 export interface IRecurrenceRulesIteratorArgs {
@@ -17,7 +18,7 @@ export interface IRecurrenceRulesIteratorArgs {
   reverse?: boolean;
 }
 
-export interface IRecurrenceRulesIteratorNextArgs {
+export interface IRunNextArgs {
   /**
    * Moves the iterator state forward so that it is equal
    * to or past the given date. The provided date *must*
@@ -30,7 +31,7 @@ export interface IRecurrenceRulesIteratorNextArgs {
 }
 
 export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
-  implements IRecurrenceRulesIterator<T>, IterableIterator<DateTime | undefined> {
+  implements IRecurrenceRulesIterator<T>, Iterator<DateTime, undefined, IRunNextArgs | undefined> {
   readonly start!: DateTime;
   readonly end?: DateTime;
   readonly reverse: boolean;
@@ -42,8 +43,8 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
   protected iterator =
     // prettier-ignore
     this.options.count === undefined ? this.iterate() :
-    this.args.reverse ? this.iterateWithReverseCount() :
-    this.iterateWithCount();
+      this.args.reverse ? this.iterateWithReverseCount() :
+        this.iterateWithCount();
 
   constructor(
     recurrenceRules:
@@ -74,7 +75,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     if (this.args.reverse && !(options.count !== undefined || this.end)) {
       throw new Error(
         'When iterating in reverse, the rule must have an `end` or `count` ' +
-          'property or you must provide an `end` argument.',
+        'property or you must provide an `end` argument.',
       );
     }
 
@@ -87,7 +88,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     return this.iterator;
   }
 
-  next(args?: IRecurrenceRulesIteratorNextArgs) {
+  next(args?: IRunNextArgs) {
     return this.iterator.next(args);
   }
 
@@ -119,7 +120,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
   private *iterateWithReverseCount() {
     const dates = Array.from(this.iterateWithCount()).reverse();
 
-    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
+    let yieldArgs: IRunNextArgs | undefined;
     const dateCache = dates.slice();
     let date = dateCache.shift();
 
@@ -134,7 +135,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
       if (yieldArgs && yieldArgs.skipToDate && yieldArgs.skipToDate.isAfterOrEqual(date)) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-            '(or smaller, in the case of reverse iteration)',
+          '(or smaller, in the case of reverse iteration)',
         );
       }
 
@@ -152,7 +153,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
     let date: DateTime | void = iterable.next().value;
     let index = 1;
-    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
+    let yieldArgs: IRunNextArgs | undefined;
 
     while (date && index <= this.options.count!) {
       index++;
@@ -172,7 +173,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
       if (yieldArgs && yieldArgs.skipToDate && yieldArgs.skipToDate.isBeforeOrEqual(date)) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-            '(or smaller, in the case of reverse iteration)',
+          '(or smaller, in the case of reverse iteration)',
         );
       }
 
@@ -190,7 +191,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     let date = this.nextDate(startingDate);
 
     while (date) {
-      const args: IRecurrenceRulesIteratorNextArgs = yield this.normalizeRunOutput(date);
+      const args: IRunNextArgs | undefined = yield this.normalizeRunOutput(date);
 
       if (args && args.skipToDate) {
         if (
@@ -205,7 +206,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
           throw new Error(
             'A provided `skipToDate` option must be greater than the last yielded date ' +
-              '(or smaller, in the case of reverse iteration)',
+            '(or smaller, in the case of reverse iteration)',
           );
         }
 
@@ -241,16 +242,16 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     if (result instanceof InvalidDateTime) {
       throw new RecurrenceRuleError(
         `Failed to find a matching occurrence in ${index} iterations. ` +
-          `Last iterated date: "${result.date.toISOString()}"`,
+        `Last iterated date: "${result.date.toISOString()}"`,
       );
     }
 
     if (this.reverse ? start.isBefore(result.date) : start.isAfter(result.date)) {
       throw new RecurrenceRuleError(
         'An error occurred in a recurrence rule. If this happened using ' +
-          'the rSchedule provided recurrence rules, you should ' +
-          'open an issue in the rSchedule repo. The maintainer is going to ' +
-          'want to know how to recreate the error.',
+        'the rSchedule provided recurrence rules, you should ' +
+        'open an issue in the rSchedule repo. The maintainer is going to ' +
+        'want to know how to recreate the error.',
       );
     }
 

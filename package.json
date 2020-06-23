@@ -65,6 +65,6 @@
     "tsconfig-paths": "^3.8.0",
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.13.0",
-    "typescript": "~3.5.2"
+    "typescript": "~3.9.5"
   }
 }

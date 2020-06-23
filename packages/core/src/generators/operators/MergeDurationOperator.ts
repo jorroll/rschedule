@@ -1,14 +1,13 @@
-import { ArgumentError, DateTime } from '@rschedule/core';
+import { ArgumentError, DateTime, IRunNextArgs } from '@rschedule/core';
 import {
   IOperatorConfig,
   IRunArgs,
+  OccurrenceGenerator,
   OccurrenceGeneratorRunResult,
   Operator,
   OperatorFnOutput,
-  OccurrenceGenerator,
 } from '../occurrence-generator';
 import { IterableWrapper } from './_util';
-import { IRecurrenceRulesIteratorNextArgs } from '@rschedule/core/recurrence-rules-iterator';
 
 class DurationIterableWrapper extends IterableWrapper {
   workingValue: DateTime | undefined;
@@ -20,7 +19,7 @@ class DurationIterableWrapper extends IterableWrapper {
   }
 }
 
-export class MergeDurationOperatorError extends Error {}
+export class MergeDurationOperatorError extends Error { }
 
 /**
  * An operator function which takes an occurrence stream with
@@ -84,7 +83,7 @@ export class MergeDurationOperator extends Operator {
     if (config.base && !config.base.hasDuration) {
       throw new ArgumentError(
         'Base stream provided to MergeDurationOperator does not have an associated duration. ' +
-          'The MergeDurationOperator can only be used with streams which have a duration. ',
+        'The MergeDurationOperator can only be used with streams which have a duration. ',
       );
     }
   }
@@ -138,7 +137,7 @@ export class MergeDurationOperator extends Operator {
       end: checkFromEnd,
     });
 
-    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
+    let yieldArgs: IRunNextArgs | undefined;
 
     // checking `stream.workingValue` because when `stream.done === true`
     // `stream.workingValue` will not have been yielded yet
@@ -148,7 +147,7 @@ export class MergeDurationOperator extends Operator {
         if (stream.workingValue.duration! > this.maxDuration) {
           throw new MergeDurationOperatorError(
             `MergeDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
-              this.maxDuration,
+            this.maxDuration,
           );
         }
 
@@ -175,8 +174,7 @@ export class MergeDurationOperator extends Operator {
       // make sure the occurrence we are about to yield ends after the
       // provided skipToDate
       if (
-        yieldArgs &&
-        yieldArgs.skipToDate &&
+        yieldArgs?.skipToDate &&
         stream.workingValue.end!.isBefore(yieldArgs.skipToDate)
       ) {
         stream.workingValue = stream.value;
@@ -192,20 +190,19 @@ export class MergeDurationOperator extends Operator {
       if (stream.workingValue.duration! > this.maxDuration) {
         throw new MergeDurationOperatorError(
           `MergeDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
-            this.maxDuration,
+          this.maxDuration,
         );
       }
 
       yieldArgs = yield this.normalizeRunOutput(stream.workingValue);
 
       if (
-        yieldArgs &&
-        yieldArgs.skipToDate &&
+        yieldArgs?.skipToDate &&
         stream.workingValue!.isAfterOrEqual(yieldArgs.skipToDate)
       ) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-            '(or smaller, in the case of reverse iteration)',
+          '(or smaller, in the case of reverse iteration)',
         );
       }
 
@@ -247,7 +244,7 @@ export class MergeDurationOperator extends Operator {
         if (stream.workingValue!.duration! > this.maxDuration) {
           throw new MergeDurationOperatorError(
             `MergeDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
-              this.maxDuration,
+            this.maxDuration,
           );
         }
 
@@ -298,7 +295,7 @@ export class MergeDurationOperator extends Operator {
       if (stream.workingValue!.duration! > this.maxDuration) {
         throw new MergeDurationOperatorError(
           `MergeDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
-            this.maxDuration,
+          this.maxDuration,
         );
       }
 
@@ -311,7 +308,7 @@ export class MergeDurationOperator extends Operator {
       ) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-            '(or smaller, in the case of reverse iteration)',
+          '(or smaller, in the case of reverse iteration)',
         );
       }
 

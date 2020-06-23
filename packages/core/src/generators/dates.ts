@@ -6,6 +6,8 @@ import {
   dateTimeSortComparer,
 } from '@rschedule/core';
 
+import { IRunNextArgs } from '../recurrence-rules-iterator';
+
 import {
   CollectionIterator,
   ICollectionsArgs,
@@ -15,7 +17,6 @@ import {
   OccurrenceGeneratorRunResult,
   OccurrenceIterator,
 } from './occurrence-generator';
-import { IRecurrenceRulesIteratorNextArgs } from '../recurrence-rules-iterator';
 
 export interface IDatesArgs<D = any> {
   timezone?: string | null;
@@ -212,7 +213,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
 
     const dateCache = dates.slice();
     let date = dateCache.shift();
-    let yieldArgs: IRecurrenceRulesIteratorNextArgs | undefined;
+    let yieldArgs: IRunNextArgs | undefined;
 
     while (date) {
       if (
@@ -238,7 +239,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
       ) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-            '(or smaller, in the case of reverse iteration)',
+          '(or smaller, in the case of reverse iteration)',
         );
       }
 
