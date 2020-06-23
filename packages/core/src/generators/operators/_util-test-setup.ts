@@ -1,10 +1,10 @@
-import { DateAdapterBase, DateTime } from '@rschedule/core';
+import { DateAdapterBase } from '@rschedule/core';
 import {
   IterableWrapper,
+  selectLastIterable,
+  selectNextIterable,
   streamsComparer,
   streamsReverseComparer,
-  selectNextIterable,
-  selectLastIterable,
 } from './_util';
 
 import { Dates } from '@rschedule/core/generators';
@@ -15,10 +15,9 @@ import {
   dateTimeFn,
   dateTimeToAdapterFn,
   isoStringFn,
-  occurrencesToIsoStrings,
   TIMEZONES,
-  toISOStrings,
 } from '../../../../../tests/utilities';
+
 import { IRunArgs } from '../occurrence-generator';
 
 export default function operatorsUtilTests() {

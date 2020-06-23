@@ -4,7 +4,9 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
-- None
+### Feature
+
+- Update typescript to version 3.9.x
 
 ## 1.1.3 FEATURE (2020/6/16)
 

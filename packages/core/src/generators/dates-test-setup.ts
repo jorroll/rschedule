@@ -141,13 +141,13 @@ export default function datesTests() {
 
             let iterator = dates._run();
 
-            expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
+            expect(iterator.next().value!.valueOf()).toEqual(first.valueOf());
             expect(() => iterator.next({ skipToDate: first })).toThrowError();
 
             iterator = dates._run();
 
-            expect(iterator.next().value.valueOf()).toEqual(first.valueOf());
-            expect(iterator.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+            expect(iterator.next().value!.valueOf()).toEqual(first.valueOf());
+            expect(iterator.next({ skipToDate: third }).value!.valueOf()).toEqual(third.valueOf());
             expect(() => iterator.next({ skipToDate: first })).toThrowError();
           });
 

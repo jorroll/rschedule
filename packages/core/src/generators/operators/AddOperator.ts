@@ -1,5 +1,3 @@
-import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
-
 import {
   IOperatorConfig,
   IRunArgs,
@@ -43,7 +41,7 @@ export class AddOperator extends Operator {
 
     while (stream && !stream.done) {
       // yield the current stream's value
-      const yieldArgs: IRecurrenceRulesIteratorNextArgs = yield this.normalizeRunOutput(
+      const yieldArgs = yield this.normalizeRunOutput(
         stream.value!,
       );
 

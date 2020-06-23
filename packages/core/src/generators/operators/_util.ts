@@ -1,5 +1,5 @@
-import { DateTime } from '@rschedule/core';
-import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
+import { DateTime, IRunNextArgs } from '@rschedule/core';
+
 import {
   IRunArgs,
   OccurrenceGenerator,
@@ -21,10 +21,10 @@ export class IterableWrapper {
     this.next();
   }
 
-  next(args?: IRecurrenceRulesIteratorNextArgs) {
+  next(args?: IRunNextArgs) {
     const { done, value } = this.stream.next(args);
 
-    this.done = done;
+    this.done = typeof done === 'boolean' ? done : true;
     this.value = value;
     return { done, value };
   }
@@ -33,7 +33,7 @@ export class IterableWrapper {
 export function processYieldArgs(
   streams: IterableWrapper[],
   options: { reverse?: boolean } = {},
-  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
+  yieldArgs: IRunNextArgs = {},
 ) {
   if (!yieldArgs.skipToDate || streams.length === 0) return;
 
@@ -45,7 +45,7 @@ export function processYieldArgs(
   ) {
     throw new Error(
       'A provided `skipToDate` option must be greater than the last yielded date ' +
-        '(or smaller, in the case of reverse iteration)',
+      '(or smaller, in the case of reverse iteration)',
     );
   }
 
@@ -88,7 +88,7 @@ export function streamsReverseComparer(a: IterableWrapper, b: IterableWrapper) {
 export function selectNextIterable(
   streams: IterableWrapper[],
   options: { reverse?: boolean } = {},
-  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
+  yieldArgs: IRunNextArgs = {},
 ) {
   processYieldArgs(streams, options, yieldArgs);
 
@@ -101,7 +101,7 @@ export function selectNextIterable(
 export function selectLastIterable(
   streams: IterableWrapper[],
   options: { reverse?: boolean } = {},
-  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
+  yieldArgs: IRunNextArgs = {},
 ) {
   processYieldArgs(streams, options, yieldArgs);
 

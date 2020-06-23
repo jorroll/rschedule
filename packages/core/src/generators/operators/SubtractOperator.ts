@@ -1,3 +1,4 @@
+import { IRunNextArgs } from '@rschedule/core';
 import {
   IOperatorConfig,
   IRunArgs,
@@ -8,7 +9,6 @@ import {
 } from '../occurrence-generator';
 import { IterableWrapper, processYieldArgs } from './_util';
 import { AddOperator } from './AddOperator';
-import { IRecurrenceRulesIteratorNextArgs } from '../../recurrence-rules-iterator';
 
 /**
  * An operator function which accepts a spread of occurrence generators
@@ -67,7 +67,7 @@ function cycleStreams(
   inclusion: IterableWrapper,
   exclusion: IterableWrapper,
   options: { reverse?: boolean } = {},
-  yieldArgs: IRecurrenceRulesIteratorNextArgs = {},
+  yieldArgs: IRunNextArgs = {},
 ) {
   processYieldArgs([inclusion, exclusion], options, yieldArgs);
 

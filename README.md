@@ -108,6 +108,13 @@ rule
   - [ ] Internationalization of human readable strings
 - [ ] Create `subtractDuration` operator
 
+## Typescript Version
+
+| rSchedule version | Typescript version |
+| ----------------- | ------------------ |
+| 1.1.3             | 3.5                |
+| master            | 3.9                |
+
 ## About
 
 The library, itself, has been created from scratch by me, John Carroll. Most of the RRULE tests were taken from the excellent [rrule.js](https://github.com/jakubroztocil/rrule) library (which were, themselves, taken from a python library, I believe).

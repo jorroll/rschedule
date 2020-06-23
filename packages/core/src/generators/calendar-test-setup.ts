@@ -141,7 +141,7 @@ export default function calendarTests() {
                   start: expectations[0][0],
                   end:
                     expectations[expectations.length - 1][
-                      expectations[expectations.length - 1].length - 1
+                    expectations[expectations.length - 1].length - 1
                     ],
                 }),
               ).toEqual(toISOStringsCol(expectations));
@@ -156,7 +156,7 @@ export default function calendarTests() {
                     start: expectations[index][0],
                     end:
                       expectations[expectations.length - 1][
-                        expectations[expectations.length - 1].length - 1
+                      expectations[expectations.length - 1].length - 1
                       ],
                   }),
                 ).toEqual(toISOStringsCol(expectations.slice(index)));
@@ -198,13 +198,13 @@ export default function calendarTests() {
 
             const iterator1 = generator1._run();
 
-            expect(iterator1.next().value.valueOf()).toEqual(first.valueOf());
+            expect(iterator1.next().value!.valueOf()).toEqual(first.valueOf());
             expect(() => iterator1.next({ skipToDate: first })).toThrowError();
 
             const iterator2 = generator1._run();
 
-            expect(iterator2.next().value.valueOf()).toEqual(first.valueOf());
-            expect(iterator2.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+            expect(iterator2.next().value!.valueOf()).toEqual(first.valueOf());
+            expect(iterator2.next({ skipToDate: third }).value!.valueOf()).toEqual(third.valueOf());
             expect(() => iterator2.next({ skipToDate: first })).toThrowError();
 
             // test second with a Schedule source
@@ -226,13 +226,13 @@ export default function calendarTests() {
 
             const iterator3 = generator2._run();
 
-            expect(iterator3.next().value.valueOf()).toEqual(first.valueOf());
+            expect(iterator3.next().value!.valueOf()).toEqual(first.valueOf());
             expect(() => iterator3.next({ skipToDate: first })).toThrowError();
 
             const iterator4 = generator2._run();
 
-            expect(iterator4.next().value.valueOf()).toEqual(first.valueOf());
-            expect(iterator4.next({ skipToDate: third }).value.valueOf()).toEqual(third.valueOf());
+            expect(iterator4.next().value!.valueOf()).toEqual(first.valueOf());
+            expect(iterator4.next({ skipToDate: third }).value!.valueOf()).toEqual(third.valueOf());
             expect(() => iterator4.next({ skipToDate: first })).toThrowError();
           });
 

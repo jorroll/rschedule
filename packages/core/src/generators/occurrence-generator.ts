@@ -8,7 +8,7 @@ import {
   DateTime,
   getDifferenceBetweenWeekdays,
   InfiniteLoopError,
-  IRecurrenceRulesIteratorNextArgs,
+  IRunNextArgs,
   normalizeDateTimeTimezone,
 } from '@rschedule/core';
 
@@ -19,19 +19,7 @@ export interface IRunArgs {
   reverse?: boolean;
 }
 
-export type OccurrenceGeneratorRunResult = IterableIterator<DateTime>;
-
-export interface IRunNextArgs {
-  /**
-   * Moves the iterator state forward so that it is equal
-   * to or past the given date. The provided date *must*
-   * be greater than the last yielded date (or, when iterating
-   * in reverse, it must be smaller). This is more efficent then  repeatedly
-   * iterating and throwing away values until the desired date
-   * is reached.
-   */
-  skipToDate?: DateInput;
-}
+export type OccurrenceGeneratorRunResult = Iterator<DateTime, undefined, IRunNextArgs | undefined> & { [Symbol.iterator](): Iterator<DateTime, undefined, IRunNextArgs | undefined>; };
 
 export abstract class OccurrenceGenerator {
   abstract readonly isInfinite: boolean;
@@ -305,8 +293,8 @@ export abstract class OccurrenceGenerator {
       if (this.isInfinite && !args.before) {
         throw new ArgumentError(
           'When calling `occursOn()` with a `weekday` argument ' +
-            'and an occurrence object that has infinite occurrences, ' +
-            'you must include a `before` argument as well.',
+          'and an occurrence object that has infinite occurrences, ' +
+          'you must include a `before` argument as well.',
         );
       }
 
@@ -516,8 +504,8 @@ export abstract class OccurrenceGenerator {
     if (!Number.isInteger(maxDuration!)) {
       throw new ArgumentError(
         `When an occurrence generator ` +
-          `has a duration, a 'maxDuration' argument must be supplied ` +
-          `to ${method}().`,
+        `has a duration, a 'maxDuration' argument must be supplied ` +
+        `to ${method}().`,
       );
     }
 
@@ -532,9 +520,21 @@ export interface IOccurrencesArgs {
   reverse?: boolean;
 }
 
+export interface IOccurrencesNextArgs {
+  /**
+   * Moves the iterator state forward so that it is equal
+   * to or past the given date. The provided date *must*
+   * be greater than the last yielded date (or, when iterating
+   * in reverse, it must be smaller). This is more efficent then  repeatedly
+   * iterating and throwing away values until the desired date
+   * is reached.
+   */
+  skipToDate?: DateInput;
+}
+
 export class OccurrenceIterator<
   G extends ReadonlyArray<OccurrenceGenerator> = ReadonlyArray<OccurrenceGenerator>
-> {
+  > implements Iterator<DateAdapter & { generators: G }, undefined, IOccurrencesNextArgs | undefined> {
   private readonly iterator: OccurrenceGeneratorRunResult;
   private readonly isInfinite: boolean;
 
@@ -545,10 +545,10 @@ export class OccurrenceIterator<
 
   // Need to assert the return type of these methods to prevent typescript from
   // incorrectly reducing them to `DateAdapterBase & { generators: G }`.
-  [Symbol.iterator]: () => IterableIterator<DateAdapter & { generators: G }> = () =>
+  [Symbol.iterator] = () =>
     this.occurrenceIterator();
 
-  next(args?: IRunNextArgs): IteratorResult<DateAdapter & { generators: G }> {
+  next(args?: IOccurrencesNextArgs) {
     return this.occurrenceIterator(args).next();
   }
 
@@ -559,12 +559,12 @@ export class OccurrenceIterator<
 
     throw new InfiniteLoopError(
       'OccurrenceIterator#toArray() can only be called if the iterator ' +
-        'is not infinite, or you provide and `end` argument, or you provide ' +
-        'a `take` argument.',
+      'is not infinite, or you provide and `end` argument, or you provide ' +
+      'a `take` argument.',
     );
   }
 
-  private *occurrenceIterator(rawArgs?: IRunNextArgs) {
+  private *occurrenceIterator(rawArgs?: IOccurrencesNextArgs) {
     let args = this.normalizeRunArgs(rawArgs);
 
     let date = this.iterator.next(args).value;
@@ -576,9 +576,11 @@ export class OccurrenceIterator<
 
       date = this.iterator.next(args).value;
     }
+
+    return undefined;
   }
 
-  private normalizeRunArgs(args?: IRunNextArgs) {
+  private normalizeRunArgs(args?: IOccurrencesNextArgs): IRunNextArgs {
     return {
       skipToDate: this.normalizeDateInput(args && args.skipToDate),
     };
@@ -609,13 +611,13 @@ export type CollectionsGranularity =
 
 export class Collection<
   G extends ReadonlyArray<OccurrenceGenerator> = ReadonlyArray<OccurrenceGenerator>
-> {
+  > {
   constructor(
     readonly dates: (DateAdapter & { generators: G })[] = [],
     readonly granularity: CollectionsGranularity,
     readonly periodStart: DateAdapter & { generators: G },
     readonly periodEnd: DateAdapter & { generators: G },
-  ) {}
+  ) { }
 }
 
 export interface ICollectionsArgs extends IOccurrencesArgs {
@@ -632,7 +634,7 @@ export interface ICollectionsRunArgs extends IRunArgs {
 
 export class CollectionIterator<
   G extends ReadonlyArray<OccurrenceGenerator> = ReadonlyArray<OccurrenceGenerator>
-> {
+  > implements Iterator<Collection<G>, undefined, undefined> {
   readonly granularity: CollectionsGranularity = 'year';
   readonly weekStart?: DateAdapter.Weekday;
   readonly startDate: DateAdapter | null;
@@ -655,7 +657,7 @@ export class CollectionIterator<
     if (args.reverse) {
       throw new Error(
         '`OccurrenceGenerator#collections()` does not support iterating in reverse. ' +
-          'Though `OccurrenceGenerator#occurrences()` does support iterating in reverse.',
+        'Though `OccurrenceGenerator#occurrences()` does support iterating in reverse.',
       );
     }
 
@@ -696,8 +698,8 @@ export class CollectionIterator<
 
     throw new InfiniteLoopError(
       'CollectionIterator#toArray() can only be called if the iterator ' +
-        'is not infinite, or you provide and `end` argument, or you provide ' +
-        'a `take` argument.',
+      'is not infinite, or you provide and `end` argument, or you provide ' +
+      'a `take` argument.',
     );
   }
 
@@ -789,7 +791,7 @@ export class CollectionIterator<
     return date.add(1, this.granularity);
   }
 
-  private occurrenceIterator(): IterableIterator<DateTime> {
+  private occurrenceIterator() {
     let start = this.args.start || this.iterable._run().next().value;
 
     if (!start) return this.iterable._run(this.args);
