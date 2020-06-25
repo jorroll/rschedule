@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/dayjs-date-adapter",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "An rSchedule DateAdapter for \"dayjs\" date objects.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
