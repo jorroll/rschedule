@@ -7,16 +7,8 @@ import {
 } from '@rschedule/core';
 
 import dayjs from 'dayjs';
-// this import only exists for typings and is removed from the build
-// by rollup
 // tslint:disable-next-line: no-submodule-imports
-import utc from 'dayjs/plugin/utc';
-
-if (typeof dayjs.utc === 'undefined') {
-  throw new Error(
-    `The "DayjsDateAdapter" requires the dayjs "UTC" plugin to be loaded.`
-  )
-}
+import type utc from 'dayjs/plugin/utc';
 
 /**
  * The `DayjsDateAdapter` is intended for usage with `dayjs`.
@@ -84,6 +76,12 @@ export class DayjsDateAdapter extends DateAdapterBase {
     options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
   ) {
     super(undefined, options);
+
+    if (typeof dayjs.utc === 'undefined') {
+      throw new Error(
+        `The "DayjsDateAdapter" requires the dayjs "UTC" plugin to be loaded.`
+      );
+    }
 
     this._date = date;
     this.timezone = date.isUTC() ? 'UTC' : null;

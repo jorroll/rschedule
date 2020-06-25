@@ -8,6 +8,10 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - Update typescript to version 3.9.x
 
+### Fixes
+
+- Check presense of dayjs "UTC" plugin at run time rather than at import time ([#44](https://gitlab.com/john.carroll.p/rschedule/issues/44)).
+
 ## 1.1.3 FEATURE (2020/6/16)
 
 ### Feature
