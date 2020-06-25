@@ -113,7 +113,7 @@ rule
 | rSchedule version | Typescript version |
 | ----------------- | ------------------ |
 | 1.1.3             | 3.5                |
-| master            | 3.9                |
+| 1.2.0             | 3.9                |
 
 ## About
 
