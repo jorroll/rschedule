@@ -5,7 +5,7 @@ export default function getNthWeekdayOfYear(
   date: DateTime,
   weekday: DateAdapter.Weekday,
   nth: number,
-) {
+): DateTime {
   let base = date.set('month', 1).set('day', 1);
 
   if (nth < 0) {

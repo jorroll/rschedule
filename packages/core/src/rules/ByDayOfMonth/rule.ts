@@ -3,6 +3,7 @@ import {
   DateTime,
   InvalidDateTime,
   RecurrenceRuleError,
+  RecurrenceRuleResult,
   RuleOption,
   ValidDateTime,
 } from '@rschedule/core';
@@ -28,7 +29,7 @@ export interface INormByDayOfMonthRuleOptions extends INormFrequencyRuleOptions 
 }
 
 export class ByDayOfMonthRule extends RecurrenceRuleBase<INormByDayOfMonthRuleOptions> {
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     const normalizedByDayOfMonth = normalizeByDayOfMonth(
       date,
       this.options.byDayOfMonth!,
@@ -85,7 +86,7 @@ export function normalizeByDayOfMonth(
   date: DateTime,
   byDayOfMonth: RuleOption.ByDayOfMonth[],
   byDayOfWeek?: RuleOption.ByDayOfWeek[],
-) {
+): number[] {
   const lengthOfMonth = date.endGranularity('month').get('day');
 
   let normalizedByDayOfMonth = byDayOfMonth

@@ -23,7 +23,7 @@ export interface INormByMillisecondOfSecondRuleOptions extends INormFrequencyRul
 export class ByMillisecondOfSecondRule extends ByTimeOfUnitRule<
   INormByMillisecondOfSecondRuleOptions
 > {
-  protected readonly baseGranularity = 'second' as DateAdapter.TimeUnit;
-  protected readonly granularity = 'millisecond' as DateAdapter.TimeUnit;
-  protected readonly option = this.options.byMillisecondOfSecond!;
+  protected readonly baseGranularity: DateAdapter.TimeUnit = 'second';
+  protected readonly granularity: DateAdapter.TimeUnit = 'millisecond';
+  protected readonly option: number[] = this.options.byMillisecondOfSecond!;
 }

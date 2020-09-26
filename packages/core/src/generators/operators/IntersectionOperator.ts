@@ -72,7 +72,7 @@ export class IntersectionOperator extends Operator {
     }
   }
 
-  set(_: 'timezone', value: string | null) {
+  set(_: 'timezone', value: string | null): IntersectionOperator {
     return new IntersectionOperator(
       {
         maxFailedIterations: this.maxFailedIterations,
@@ -142,7 +142,7 @@ export class IntersectionOperator extends Operator {
     }
   }
 
-  protected calculateIsInfinite() {
+  protected calculateIsInfinite(): boolean {
     // Note: Array#every() === true when length === 0
     if (!this.config.base) {
       if (this.streams.length === 0) return false;
@@ -153,7 +153,7 @@ export class IntersectionOperator extends Operator {
     return this.config.base.isInfinite && this.streams.every(stream => stream.isInfinite);
   }
 
-  protected calculateHasDuration() {
+  protected calculateHasDuration(): boolean {
     const streamsDuration = this.streams.every(stream => stream.hasDuration);
 
     if (!this.config.base) return streamsDuration;

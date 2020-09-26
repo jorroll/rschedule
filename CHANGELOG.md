@@ -6,6 +6,12 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.2.1 FIX (2020/9/25)
+
+### Fixes
+
+- Explicitly define the return type of functions and methods (issue [#47](https://gitlab.com/john.carroll.p/rschedule/issues/47))
+
 ## 1.2.0 FEATURE (2020/6/25)
 
 ### Feature

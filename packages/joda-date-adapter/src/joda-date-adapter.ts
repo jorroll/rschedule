@@ -27,7 +27,7 @@ export class JodaDateAdapter extends DateAdapterBase {
     return object instanceof ZonedDateTime;
   }
 
-  static fromDate(date: ZonedDateTime, options?: { duration?: number }) {
+  static fromDate(date: ZonedDateTime, options?: { duration?: number }): JodaDateAdapter {
     return new JodaDateAdapter(date, options);
   }
 
@@ -49,7 +49,7 @@ export class JodaDateAdapter extends DateAdapterBase {
     );
   }
 
-  static fromDateTime(datetime: DateTime) {
+  static fromDateTime(datetime: DateTime): JodaDateAdapter {
     const date = JodaDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
     return date;
@@ -88,7 +88,7 @@ export class JodaDateAdapter extends DateAdapterBase {
 
   set(prop: 'timezone', value: string | null): this;
   set(prop: 'duration', value: number): this;
-  set(prop: 'timezone' | 'duration', value: number | string | null) {
+  set(prop: 'timezone' | 'duration', value: number | string | null): JodaDateAdapter {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else {
@@ -115,11 +115,11 @@ export class JodaDateAdapter extends DateAdapterBase {
     throw new ArgumentError(`Unknown prop "${prop}" for JodaDateAdapter#set()`);
   }
 
-  valueOf() {
+  valueOf(): number {
     return this.date.toInstant().toEpochMilli();
   }
 
-  toISOString() {
+  toISOString(): string {
     return this.date.format(DateTimeFormatter.ISO_INSTANT);
   }
 
@@ -142,7 +142,7 @@ export class JodaDateAdapter extends DateAdapterBase {
     return json;
   }
 
-  assertIsValid() {
+  assertIsValid(): true {
     if (this.duration && this.duration <= 0) {
       throw new InvalidDateAdapterError('If provided, duration must be greater than 0.');
     }

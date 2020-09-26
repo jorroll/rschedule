@@ -5,7 +5,7 @@ import { INormByMillisecondOfSecondRuleOptions } from './rule';
 export class RevByMillisecondOfSecondRule extends RevByTimeOfUnitRule<
   INormByMillisecondOfSecondRuleOptions
 > {
-  protected readonly baseGranularity = 'second' as DateAdapter.TimeUnit;
-  protected readonly granularity = 'millisecond' as DateAdapter.TimeUnit;
-  protected readonly option = this.options.byMillisecondOfSecond!.slice().reverse();
+  protected readonly baseGranularity: DateAdapter.TimeUnit = 'second';
+  protected readonly granularity: DateAdapter.TimeUnit = 'millisecond';
+  protected readonly option: number[] = this.options.byMillisecondOfSecond!.slice().reverse();
 }

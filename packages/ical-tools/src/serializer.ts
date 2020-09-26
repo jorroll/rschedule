@@ -1,8 +1,6 @@
 import { DateAdapter, DateAdapterBase, DateInput, DateTime, RuleOption } from '@rschedule/core';
 import { Dates } from '@rschedule/core/generators';
 import { ICalRuleFrequency, IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES';
-import { stringify } from 'ical.js';
-import { VEvent } from './vevent';
 
 export class SerializeICalError extends Error {}
 
@@ -159,11 +157,13 @@ export function ruleOptionsToJCalProp(
   return [type.toLowerCase(), {}, 'recur', stringOptions];
 }
 
-function serializeByDayOfWeek(arg: RuleOption.ByDayOfWeek) {
+function serializeByDayOfWeek(arg: RuleOption.ByDayOfWeek): string {
   return Array.isArray(arg) ? `${arg[1]}${arg[0]}` : arg;
 }
 
-export function dateToJCalDTSTART(date: DateTime) {
+export function dateToJCalDTSTART(
+  date: DateTime,
+): ['dtstart', { tzid?: string }, 'date-time', string] {
   const timezone = date.timezone || 'UTC';
 
   return [
@@ -174,7 +174,18 @@ export function dateToJCalDTSTART(date: DateTime) {
   ];
 }
 
-export function dateToJCalDTEND(date: DateTime) {
+export function dateToJCalDTEND(
+  date: DateTime,
+): Array<
+  [
+    'dtend',
+    {
+      tzid?: string;
+    },
+    'date-time',
+    string,
+  ]
+> {
   const timezone = date.timezone || 'UTC';
 
   return [
@@ -182,7 +193,9 @@ export function dateToJCalDTEND(date: DateTime) {
   ];
 }
 
-export function numberToJCalDURATION(duration: number) {
+export function numberToJCalDURATION(
+  duration: number,
+): Array<['duration', {}, 'duration', string]> {
   const weeks = Math.floor(duration / DateAdapter.MILLISECONDS_IN_WEEK);
   duration = duration - weeks * DateAdapter.MILLISECONDS_IN_WEEK;
   const days = Math.floor(duration / DateAdapter.MILLISECONDS_IN_DAY);
@@ -211,7 +224,7 @@ export function numberToJCalDURATION(duration: number) {
   return [['duration', {}, 'duration', val]];
 }
 
-export function dateTimeToJCal(input: DateTime) {
+export function dateTimeToJCal(input: DateTime): string {
   const ints = [
     input.get('year'),
     input.get('month'),
@@ -230,7 +243,7 @@ export function dateTimeToJCal(input: DateTime) {
   return text;
 }
 
-function normalizeTimeLength(input: number) {
+function normalizeTimeLength(input: number): string {
   const int = input.toString();
 
   return int.length > 1 ? int : `0${int}`;

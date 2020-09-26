@@ -19,7 +19,7 @@ export abstract class RecurrenceRuleBase<
     this.frequency = freqCache.get(this.processor) as FrequencyRule;
   }
 
-  protected validateDate(arg: RecurrenceRuleResult) {
+  protected validateDate(arg: RecurrenceRuleResult): RecurrenceRuleResult {
     return this.frequency.validateDate(arg);
   }
 }
@@ -39,7 +39,7 @@ export abstract class RevRecurrenceRuleBase<
     this.frequency = freqCache.get(this.processor) as RevFrequencyRule;
   }
 
-  protected validateDate(arg: RecurrenceRuleResult) {
+  protected validateDate(arg: RecurrenceRuleResult): RecurrenceRuleResult {
     return this.frequency.validateDate(arg);
   }
 }

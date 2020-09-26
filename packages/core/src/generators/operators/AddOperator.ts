@@ -20,7 +20,7 @@ export function add(...streams: OccurrenceGenerator[]): OperatorFnOutput {
 }
 
 export class AddOperator extends Operator {
-  set(_: 'timezone', value: string | null) {
+  set(_: 'timezone', value: string | null): AddOperator {
     return new AddOperator(this.streams.map(stream => stream.set('timezone', value)), {
       ...this.config,
       base: this.config.base && this.config.base.set('timezone', value),
@@ -41,9 +41,7 @@ export class AddOperator extends Operator {
 
     while (stream && !stream.done) {
       // yield the current stream's value
-      const yieldArgs = yield this.normalizeRunOutput(
-        stream.value!,
-      );
+      const yieldArgs = yield this.normalizeRunOutput(stream.value!);
 
       if (!(yieldArgs && yieldArgs.skipToDate)) {
         // iterate the current stream
@@ -55,14 +53,14 @@ export class AddOperator extends Operator {
     }
   }
 
-  protected calculateIsInfinite() {
+  protected calculateIsInfinite(): boolean {
     return (
       (this.config.base && this.config.base.isInfinite) ||
       this.streams.some(stream => stream.isInfinite)
     );
   }
 
-  protected calculateHasDuration() {
+  protected calculateHasDuration(): boolean {
     const streamsDuration = this.streams.every(stream => stream.hasDuration);
 
     if (!this.config.base) return streamsDuration;

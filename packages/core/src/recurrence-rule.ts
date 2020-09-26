@@ -61,7 +61,7 @@ export interface IRecurrenceRuleModule<Options, NOptions> {
 
 export function recurrenceRulesReducer<T extends readonly IRecurrenceRuleModule<any, any>[]>(
   rules: T,
-) {
+): (iterator: IRecurrenceRulesIterator<NormRecurrenceRulesOptions<T>>) => IRecurrenceRule[] {
   return (iterator: IRecurrenceRulesIterator<NormRecurrenceRulesOptions<T>>) =>
     rules.reduce(
       (prev, curr) => {

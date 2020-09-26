@@ -23,7 +23,7 @@ import { DateTime as LuxonDateTime, LocalZone } from 'luxon';
  */
 export class LuxonDateAdapter extends DateAdapterBase {
   static readonly date: LuxonDateTime;
-  static readonly hasTimezoneSupport = true;
+  static readonly hasTimezoneSupport: true = true;
 
   /**
    * Checks if object is an instance of `LuxonDateTime`
@@ -32,7 +32,7 @@ export class LuxonDateAdapter extends DateAdapterBase {
     return LuxonDateTime.isDateTime(object);
   }
 
-  static fromDate(date: LuxonDateTime, options?: { duration?: number }) {
+  static fromDate(date: LuxonDateTime, options?: { duration?: number }): LuxonDateAdapter {
     return new LuxonDateAdapter(date, options);
   }
 
@@ -63,7 +63,7 @@ export class LuxonDateAdapter extends DateAdapterBase {
    *
    * @param datetime rSchedule DateTime object
    */
-  static fromDateTime(datetime: DateTime) {
+  static fromDateTime(datetime: DateTime): LuxonDateAdapter {
     const date = LuxonDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
     return date;
@@ -100,7 +100,7 @@ export class LuxonDateAdapter extends DateAdapterBase {
 
   set(prop: 'timezone', value: string | null): this;
   set(prop: 'duration', value: number): this;
-  set(prop: 'timezone' | 'duration', value: number | string | null) {
+  set(prop: 'timezone' | 'duration', value: number | string | null): LuxonDateAdapter {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else if (value === null) {
@@ -127,11 +127,11 @@ export class LuxonDateAdapter extends DateAdapterBase {
     throw new ArgumentError(`Unknown prop "${prop}" for LuxonDateAdapter#set()`);
   }
 
-  valueOf() {
+  valueOf(): number {
     return this.date.valueOf();
   }
 
-  toISOString() {
+  toISOString(): string {
     return this.date.toUTC().toISO();
   }
 
@@ -154,7 +154,7 @@ export class LuxonDateAdapter extends DateAdapterBase {
     return json;
   }
 
-  assertIsValid() {
+  assertIsValid(): true {
     if (!this.date.isValid) {
       throw new InvalidDateAdapterError();
     } else if (this.duration && this.duration <= 0) {

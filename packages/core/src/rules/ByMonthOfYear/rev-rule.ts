@@ -1,11 +1,17 @@
-import { DateTime, InvalidDateTime, ValidDateTime } from '@rschedule/core';
+import {
+  DateAdapter,
+  DateTime,
+  InvalidDateTime,
+  RecurrenceRuleResult,
+  ValidDateTime,
+} from '@rschedule/core';
 import { RevRecurrenceRuleBase } from '../utilities/recurrence-rule-base';
 import { INormByMonthOfYearRuleOptions } from './rule';
 
 export class RevByMonthOfYearRule extends RevRecurrenceRuleBase<INormByMonthOfYearRuleOptions> {
-  protected option = this.processor.options.byMonthOfYear!.slice().reverse();
+  protected option: DateAdapter.Month[] = this.processor.options.byMonthOfYear!.slice().reverse();
 
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     const currentMonth = date.get('month');
 
     for (const month of this.option) {

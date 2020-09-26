@@ -16,7 +16,7 @@ import type utc from 'dayjs/plugin/utc';
  */
 export class DayjsDateAdapter extends DateAdapterBase {
   static readonly date: dayjs.Dayjs;
-  static readonly hasTimezoneSupport = false;
+  static readonly hasTimezoneSupport: false = false;
 
   /**
    * Checks if object is an instance of `DateTime`
@@ -25,7 +25,7 @@ export class DayjsDateAdapter extends DateAdapterBase {
     return dayjs.isDayjs(object);
   }
 
-  static fromDate(date: dayjs.Dayjs, options?: { duration?: number }) {
+  static fromDate(date: dayjs.Dayjs, options?: { duration?: number }): DayjsDateAdapter {
     return new DayjsDateAdapter(date, options);
   }
 
@@ -56,13 +56,13 @@ export class DayjsDateAdapter extends DateAdapterBase {
     }
   }
 
-  static fromDateTime(datetime: DateTime) {
+  static fromDateTime(datetime: DateTime): DayjsDateAdapter {
     const date = DayjsDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
     return date;
   }
 
-  get date() {
+  get date(): dayjs.Dayjs {
     return this._date;
   }
 
@@ -103,7 +103,7 @@ export class DayjsDateAdapter extends DateAdapterBase {
 
   set(prop: 'timezone', value: string | null): this;
   set(prop: 'duration', value: number): this;
-  set(prop: 'timezone' | 'duration', value: number | string | null) {
+  set(prop: 'timezone' | 'duration', value: number | string | null): DayjsDateAdapter {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else {
@@ -139,11 +139,11 @@ export class DayjsDateAdapter extends DateAdapterBase {
     throw new ArgumentError(`Unknown prop "${prop}" for DayjsDateAdapter#set()`);
   }
 
-  valueOf() {
+  valueOf(): number {
     return this._date.valueOf();
   }
 
-  toISOString() {
+  toISOString(): string {
     return this._date.toISOString();
   }
 
@@ -166,7 +166,7 @@ export class DayjsDateAdapter extends DateAdapterBase {
     return json;
   }
 
-  assertIsValid() {
+  assertIsValid(): true {
     if (!this._date.isValid()) {
       throw new InvalidDateAdapterError();
     } else if (![null, 'UTC'].includes(this.timezone)) {

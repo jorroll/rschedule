@@ -28,7 +28,7 @@ export interface IDatesArgs<D = any> {
 export class Dates<Data = any> extends OccurrenceGenerator {
   readonly adapters: ReadonlyArray<DateAdapter> = [];
 
-  get length() {
+  get length(): number {
     return this.adapters.length;
   }
 
@@ -42,7 +42,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
     return this.adapters[this.length - 1] || null;
   }
 
-  readonly isInfinite = false;
+  readonly isInfinite: boolean = false;
   readonly hasDuration: boolean;
   readonly maxDuration: number = 0;
   readonly timezone!: string | null; // set by `OccurrenceGenerator`
@@ -93,7 +93,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
     return new CollectionIterator(this, this.normalizeCollectionsArgs(args));
   }
 
-  add(value: DateInput) {
+  add(value: DateInput): Dates<Data> {
     return new Dates({
       dates: [...this.adapters, value],
       timezone: this.timezone,
@@ -101,7 +101,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
     });
   }
 
-  remove(value: DateInput) {
+  remove(value: DateInput): Dates<Data> {
     const dates = this.adapters.slice();
     const input = this.normalizeDateInputToAdapter(value);
     const index = dates.findIndex(date => date.valueOf() === input.valueOf());
@@ -150,7 +150,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
     prop: 'timezone' | 'dates' | 'duration',
     value: DateInput[] | string | number | null | undefined,
     options: { keepLocalTime?: boolean } = {},
-  ) {
+  ): Dates<Data> {
     let timezone = this.timezone;
     let dates: DateInput[] = this.adapters.slice();
 
@@ -184,7 +184,9 @@ export class Dates<Data = any> extends OccurrenceGenerator {
     });
   }
 
-  filter(fn: (date: DateAdapter, index: number, array: ReadonlyArray<DateAdapter>) => boolean) {
+  filter(
+    fn: (date: DateAdapter, index: number, array: ReadonlyArray<DateAdapter>) => boolean,
+  ): Dates<Data> {
     return new Dates({
       dates: this.adapters.filter(fn),
       data: this.data,
@@ -239,7 +241,7 @@ export class Dates<Data = any> extends OccurrenceGenerator {
       ) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-          '(or smaller, in the case of reverse iteration)',
+            '(or smaller, in the case of reverse iteration)',
         );
       }
 

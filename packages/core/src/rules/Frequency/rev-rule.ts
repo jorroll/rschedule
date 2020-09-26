@@ -2,11 +2,11 @@ import { DateTime } from '@rschedule/core';
 import { FrequencyRule, intervalDifferenceBetweenDates } from './rule';
 
 export class RevFrequencyRule extends FrequencyRule {
-  protected setToCurrentInterval() {
+  protected setToCurrentInterval(): DateTime {
     return this.intervalEndDate.subtract(1, 'millisecond');
   }
 
-  protected intervalDifference(date: DateTime) {
+  protected intervalDifference(date: DateTime): number {
     return intervalDifferenceBetweenDates({
       first: this.firstIntervalStartDate,
       second: date,

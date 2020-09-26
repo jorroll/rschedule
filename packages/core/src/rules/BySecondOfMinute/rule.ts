@@ -21,7 +21,7 @@ export interface INormBySecondOfMinuteRuleOptions extends INormFrequencyRuleOpti
 }
 
 export class BySecondOfMinuteRule extends ByTimeOfUnitRule<INormBySecondOfMinuteRuleOptions> {
-  protected readonly baseGranularity = 'minute' as DateAdapter.TimeUnit;
-  protected readonly granularity = 'second' as DateAdapter.TimeUnit;
-  protected readonly option = this.options.bySecondOfMinute!;
+  protected readonly baseGranularity: DateAdapter.TimeUnit = 'minute';
+  protected readonly granularity: DateAdapter.TimeUnit = 'second';
+  protected readonly option: DateAdapter.Minute[] = this.options.bySecondOfMinute!;
 }

@@ -21,7 +21,7 @@ export interface INormByHourOfDayRuleRuleOptions extends INormFrequencyRuleOptio
 }
 
 export class ByHourOfDayRule extends ByTimeOfUnitRule<INormByHourOfDayRuleRuleOptions> {
-  protected readonly baseGranularity = 'day' as DateAdapter.TimeUnit;
-  protected readonly granularity = 'hour' as DateAdapter.TimeUnit;
-  protected readonly option = this.options.byHourOfDay!;
+  protected readonly baseGranularity: DateAdapter.TimeUnit = 'day';
+  protected readonly granularity: DateAdapter.TimeUnit = 'hour';
+  protected readonly option: DateAdapter.Hour[] = this.options.byHourOfDay!;
 }

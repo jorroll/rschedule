@@ -1,4 +1,10 @@
-import { DateAdapter, DateTime, InvalidDateTime, RuleOption, ValidDateTime } from '@rschedule/core';
+import {
+  DateTime,
+  InvalidDateTime,
+  RecurrenceRuleResult,
+  RuleOption,
+  ValidDateTime,
+} from '@rschedule/core';
 import { IFrequencyRuleOptions, INormFrequencyRuleOptions } from '../Frequency';
 import { RecurrenceRuleBase } from '../utilities/recurrence-rule-base';
 import './types';
@@ -18,7 +24,7 @@ export interface INormByMonthOfYearRuleOptions extends INormFrequencyRuleOptions
 }
 
 export class ByMonthOfYearRule extends RecurrenceRuleBase<INormByMonthOfYearRuleOptions> {
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     const currentMonth = date.get('month');
 
     for (const month of this.options.byMonthOfYear!) {

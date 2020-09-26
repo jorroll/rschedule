@@ -8,7 +8,7 @@ import {
 } from '../occurrence-generator';
 import { IterableWrapper } from './_util';
 
-export class SplitDurationOperatorError extends Error { }
+export class SplitDurationOperatorError extends Error {}
 
 /**
  * An operator function which takes an occurrence stream with
@@ -91,13 +91,13 @@ export class SplitDurationOperator extends Operator {
     if (config.base && !config.base.hasDuration) {
       throw new ArgumentError(
         'Base stream provided to SplitDurationOperator does not have an associated duration. ' +
-        'The SplitDurationOperator can only be used with streams which have a duration.',
+          'The SplitDurationOperator can only be used with streams which have a duration.',
       );
     }
   }
 
   /** Not actually used but necessary for IRunnable interface */
-  set(_: 'timezone', value: string | null) {
+  set(_: 'timezone', value: string | null): SplitDurationOperator {
     return new SplitDurationOperator(
       {
         maxDuration: this.maxDuration,
@@ -241,7 +241,7 @@ export class SplitDurationOperator extends Operator {
       if (selectedDate.duration! > this.maxDuration) {
         throw new SplitDurationOperatorError(
           `SplitDurationOperatorError: Occurrence duration exceeded maxDuration of ` +
-          this.maxDuration,
+            this.maxDuration,
         );
       }
 
@@ -256,21 +256,21 @@ export class SplitDurationOperator extends Operator {
       ) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-          '(or smaller, in the case of reverse iteration)',
+            '(or smaller, in the case of reverse iteration)',
         );
       }
     }
   }
 
-  protected calculateIsInfinite() {
+  protected calculateIsInfinite(): boolean {
     return !!(this.config.base && this.config.base.isInfinite);
   }
 
-  protected calculateHasDuration() {
+  protected calculateHasDuration(): boolean {
     return true;
   }
 
-  protected splitDate(date: DateTime, reverse: boolean) {
+  protected splitDate(date: DateTime, reverse: boolean): DateTime[] {
     const dates = this.splitFn(date);
 
     let valid: boolean;
@@ -286,9 +286,9 @@ export class SplitDurationOperator extends Operator {
     if (!valid) {
       throw new Error(
         'The provided SplitDurationOperator split function ' +
-        'must return an array of DateTimes with length > 0 ' +
-        'where the total duration of the new dates equals the duration of ' +
-        'the original date.',
+          'must return an array of DateTimes with length > 0 ' +
+          'where the total duration of the new dates equals the duration of ' +
+          'the original date.',
       );
     }
 
@@ -305,12 +305,16 @@ export class SplitDurationOperator extends Operator {
 function datePastEnd(
   date: DateTime,
   options: { reverse?: boolean; start?: DateTime; end?: DateTime },
-) {
+): boolean {
   return !!(options.reverse
     ? options.start && date.isBefore(options.start)
     : options.end && date.isAfter(options.end));
 }
 
-function datePastSkipToDate(date: DateTime, skipToDate: DateTime, options: { reverse?: boolean }) {
+function datePastSkipToDate(
+  date: DateTime,
+  skipToDate: DateTime,
+  options: { reverse?: boolean },
+): boolean {
   return !!(options.reverse ? skipToDate.isAfterOrEqual(date) : skipToDate.isBeforeOrEqual(date));
 }

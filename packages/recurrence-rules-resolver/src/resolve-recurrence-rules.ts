@@ -26,7 +26,7 @@ function processDependencies(
   processed: Set<string>,
   nodes: Map<string, IRecurrenceRuleModule<any, any>>,
   edges: Map<string, Set<string>>,
-) {
+): void {
   for (const ruleModule of ruleModules) {
     processed.add(ruleModule.name);
     const deps = ruleModule.deps();

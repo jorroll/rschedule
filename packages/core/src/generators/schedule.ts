@@ -227,7 +227,7 @@ export class Schedule<Data = any> extends ScheduleBase<Data> {
 
   add(prop: 'rrule' | 'exrule', value: Rule): Schedule<Data>;
   add(prop: 'rdate' | 'exdate', value: DateInput): Schedule<Data>;
-  add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule | DateInput) {
+  add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule | DateInput): Schedule<Data> {
     const rrules = this.rrules.slice();
     const exrules = this.exrules.slice();
     let rdates = this.rdates;
@@ -260,7 +260,7 @@ export class Schedule<Data = any> extends ScheduleBase<Data> {
 
   remove(prop: 'rrule' | 'exrule', value: Rule): Schedule<Data>;
   remove(prop: 'rdate' | 'exdate', value: DateInput): Schedule<Data>;
-  remove(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule | DateInput) {
+  remove(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: Rule | DateInput): Schedule<Data> {
     let rrules = this.rrules;
     let exrules = this.exrules;
     let rdates = this.rdates;
@@ -302,7 +302,7 @@ export class Schedule<Data = any> extends ScheduleBase<Data> {
     prop: 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
     value: string | null | Rule[] | Dates,
     options: { keepLocalTime?: boolean } = {},
-  ) {
+  ): Schedule<Data> {
     let timezone = this.timezone;
     let rrules = this.rrules;
     let exrules = this.exrules;

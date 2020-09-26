@@ -25,7 +25,9 @@ declare module '@rschedule/core/generators' {
   }
 }
 
-MergeDurationOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}) {
+MergeDurationOperator.prototype.toJSON = function serialize(
+  opts: ISerializeToJSONOptions = {},
+): MergeDurationOperator.JSON {
   const json: MergeDurationOperator.JSON = {
     type: 'MergeDurationOperator',
     maxDuration: this.maxDuration,
@@ -43,7 +45,7 @@ MergeDurationOperator.prototype.toJSON = function serialize(opts: ISerializeToJS
 MergeDurationOperator.fromJSON = function parse(
   json: MergeDurationOperator.JSON,
   options: { timezone?: string | null } = {},
-) {
+): MergeDurationOperator {
   if (json.type !== 'MergeDurationOperator') {
     throw new ParseJSONError('Invalid MergeDurationOperator JSON.');
   }

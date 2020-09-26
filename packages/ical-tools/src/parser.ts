@@ -1,8 +1,6 @@
 import { DateAdapter, DateAdapterBase, RuleOption } from '@rschedule/core';
 import { ICalRuleFrequency, IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES';
-import { parse } from 'ical.js';
 import { IJCalComponent, IJCalProperty } from './serializer';
-// import { IVEventRuleOptions, VEvent } from './vevent';
 
 export class ParseICalError extends Error {}
 
@@ -22,7 +20,12 @@ export interface IParsedVEventArgs {
   data: { jCal: IJCalComponent };
 }
 
-export function parseJCal(input: IJCalComponent | IJCalComponent[]) {
+export function parseJCal(
+  input: IJCalComponent | IJCalComponent[],
+): {
+  vEvents: IParsedVEventArgs[];
+  jCal: IJCalComponent[];
+} {
   const root =
     typeof (input as any)[0] === 'string' ? [input as IJCalComponent] : (input as IJCalComponent[]);
 
@@ -46,7 +49,7 @@ export function parseJCal(input: IJCalComponent | IJCalComponent[]) {
   return parsedJCal;
 }
 
-function parseVEvent(rawInput: IJCalComponent) {
+function parseVEvent(rawInput: IJCalComponent): IParsedVEventArgs {
   const input = cloneJSON(rawInput);
 
   const dtstartIndex = input[1].findIndex(property => property[0] === 'dtstart');
@@ -203,7 +206,7 @@ export function parseDTEND(input: IJCalProperty): DateAdapter {
   return dates[0];
 }
 
-export function parseDURATION(input: IJCalProperty) {
+export function parseDURATION(input: IJCalProperty): number {
   const durationString = input[3];
   let weeks = 0;
   let days = 0;
@@ -292,7 +295,7 @@ export function parseRule(input: IJCalProperty, dtstart: IDtstartProperty): IVEv
   return result;
 }
 
-export function parseFrequency(text: string) {
+export function parseFrequency(text: string): ICalRuleFrequency {
   if (!['SECONDLY', 'MINUTELY', 'HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(text)) {
     throw new ParseICalError(`Invalid FREQ value "${text}"`);
   } else {
@@ -302,7 +305,7 @@ export function parseFrequency(text: string) {
 
 // Here we say that the type `T` must be a constructor that returns a DateAdapter
 // complient type
-export function parseUNTIL(input: IJCalProperty, dtstart: IDtstartProperty) {
+export function parseUNTIL(input: IJCalProperty, dtstart: IDtstartProperty): DateAdapter {
   const until = jCalDateTimeToDateAdapter(['until', {}, dtstart[2], input[3].until], {
     timezone: dtstart.processedValue.timezone,
   });
@@ -318,21 +321,21 @@ export function parseUNTIL(input: IJCalProperty, dtstart: IDtstartProperty) {
   return until[0];
 }
 
-export function parseCOUNT(int: number) {
+export function parseCOUNT(int: number): RuleOption.Count {
   if (typeof int !== 'number' || isNaN(int) || int < 1) {
     throw new ParseICalError(`Invalid COUNT value "${int}"`);
   }
   return int;
 }
 
-export function parseINTERVAL(int: number) {
+export function parseINTERVAL(int: number): RuleOption.Interval {
   if (typeof int !== 'number' || isNaN(int) || int < 1) {
     throw new ParseICalError(`Invalid INTERVAL value "${int}"`);
   }
   return int;
 }
 
-export function parseBYSECOND(input: number | number[]) {
+export function parseBYSECOND(input: number | number[]): RuleOption.BySecondOfMinute[] {
   if (!Array.isArray(input)) {
     input = [input];
   }
@@ -346,7 +349,7 @@ export function parseBYSECOND(input: number | number[]) {
   return input as RuleOption.BySecondOfMinute[];
 }
 
-export function parseBYMINUTE(input: number | number[]) {
+export function parseBYMINUTE(input: number | number[]): RuleOption.ByMinuteOfHour[] {
   if (!Array.isArray(input)) {
     input = [input];
   }
@@ -360,7 +363,7 @@ export function parseBYMINUTE(input: number | number[]) {
   return input as RuleOption.ByMinuteOfHour[];
 }
 
-export function parseBYHOUR(input: number | number[]) {
+export function parseBYHOUR(input: number | number[]): RuleOption.ByHourOfDay[] {
   if (!Array.isArray(input)) {
     input = [input];
   }
@@ -374,7 +377,7 @@ export function parseBYHOUR(input: number | number[]) {
   return input as RuleOption.ByHourOfDay[];
 }
 
-export function parseBYDAY(input: string | string[]) {
+export function parseBYDAY(input: string | string[]): RuleOption.ByDayOfWeek[] {
   if (!Array.isArray(input)) {
     input = [input];
   }
@@ -405,7 +408,7 @@ export function parseBYDAY(input: string | string[]) {
   });
 }
 
-export function parseBYMONTHDAY(input: number | number[]) {
+export function parseBYMONTHDAY(input: number | number[]): RuleOption.ByDayOfMonth[] {
   if (!Array.isArray(input)) {
     input = [input];
   }
@@ -419,12 +422,11 @@ export function parseBYMONTHDAY(input: number | number[]) {
   return input as RuleOption.ByDayOfMonth[];
 }
 
-export function parseBYYEARDAY(input: any) {
-  console.error(`Parsing "BYYEARDAY" rrule property is not implemented.`);
-  return input;
+export function parseBYYEARDAY(_: any): never {
+  throw new Error(`Parsing "BYYEARDAY" rrule property is not implemented.`);
 }
 
-export function parseBYMONTH(input: number | number[]) {
+export function parseBYMONTH(input: number | number[]): RuleOption.ByMonthOfYear[] {
   if (!Array.isArray(input)) {
     input = [input];
   }
@@ -438,17 +440,15 @@ export function parseBYMONTH(input: number | number[]) {
   return input as RuleOption.ByMonthOfYear[];
 }
 
-export function parseBYWEEKNO(input: any) {
-  console.error(`Parsing "BYWEEKNO" rrule property is not implemented.`);
-  return input;
+export function parseBYWEEKNO(_: any): never {
+  throw new Error(`Parsing "BYWEEKNO" rrule property is not implemented.`);
 }
 
-export function parseBYSETPOS(input: any) {
-  console.error(`Parsing "BYSETPOS" rrule property is not implemented.`);
-  return input;
+export function parseBYSETPOS(_: any): never {
+  throw new Error(`Parsing "BYSETPOS" rrule property is not implemented.`);
 }
 
-export function parseWKST(input: number) {
+export function parseWKST(input: number): DateAdapter.Weekday {
   if (typeof input !== 'number' || input > 7 || input < 1) {
     throw new ParseICalError(`Invalid WKST value "${input}"`);
   }

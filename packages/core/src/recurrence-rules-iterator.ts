@@ -40,7 +40,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
   protected readonly rules: IRecurrenceRule[] = [];
 
-  protected iterator =
+  protected iterator: Generator<DateTime, undefined, IRunNextArgs | undefined> =
     // prettier-ignore
     this.options.count === undefined ? this.iterate() :
       this.args.reverse ? this.iterateWithReverseCount() :
@@ -75,7 +75,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     if (this.args.reverse && !(options.count !== undefined || this.end)) {
       throw new Error(
         'When iterating in reverse, the rule must have an `end` or `count` ' +
-        'property or you must provide an `end` argument.',
+          'property or you must provide an `end` argument.',
       );
     }
 
@@ -84,11 +84,11 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     this.rules = Array.isArray(recurrenceRules) ? recurrenceRules : recurrenceRules(this);
   }
 
-  [Symbol.iterator]() {
+  [Symbol.iterator](): Generator<DateTime, undefined, IRunNextArgs | undefined> {
     return this.iterator;
   }
 
-  next(args?: IRunNextArgs) {
+  next(args?: IRunNextArgs): IteratorResult<DateTime, undefined> {
     return this.iterator.next(args);
   }
 
@@ -117,7 +117,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
    * there's anything to be done about this.
    */
 
-  private *iterateWithReverseCount() {
+  private *iterateWithReverseCount(): Generator<DateTime, undefined, IRunNextArgs | undefined> {
     const dates = Array.from(this.iterateWithCount()).reverse();
 
     let yieldArgs: IRunNextArgs | undefined;
@@ -135,7 +135,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
       if (yieldArgs && yieldArgs.skipToDate && yieldArgs.skipToDate.isAfterOrEqual(date)) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-          '(or smaller, in the case of reverse iteration)',
+            '(or smaller, in the case of reverse iteration)',
         );
       }
 
@@ -145,7 +145,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     return undefined;
   }
 
-  private *iterateWithCount() {
+  private *iterateWithCount(): Generator<DateTime, undefined, IRunNextArgs | undefined> {
     if (this.options.count === 0) return;
 
     const iterable = this.iterate();
@@ -173,7 +173,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
       if (yieldArgs && yieldArgs.skipToDate && yieldArgs.skipToDate.isBeforeOrEqual(date)) {
         throw new Error(
           'A provided `skipToDate` option must be greater than the last yielded date ' +
-          '(or smaller, in the case of reverse iteration)',
+            '(or smaller, in the case of reverse iteration)',
         );
       }
 
@@ -183,7 +183,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     return undefined;
   }
 
-  private *iterate() {
+  private *iterate(): Generator<DateTime, undefined, IRunNextArgs | undefined> {
     let startingDate = this.start;
 
     if (this.reverse) startingDate = this.end!;
@@ -206,7 +206,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
 
           throw new Error(
             'A provided `skipToDate` option must be greater than the last yielded date ' +
-            '(or smaller, in the case of reverse iteration)',
+              '(or smaller, in the case of reverse iteration)',
           );
         }
 
@@ -242,16 +242,16 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     if (result instanceof InvalidDateTime) {
       throw new RecurrenceRuleError(
         `Failed to find a matching occurrence in ${index} iterations. ` +
-        `Last iterated date: "${result.date.toISOString()}"`,
+          `Last iterated date: "${result.date.toISOString()}"`,
       );
     }
 
     if (this.reverse ? start.isBefore(result.date) : start.isAfter(result.date)) {
       throw new RecurrenceRuleError(
         'An error occurred in a recurrence rule. If this happened using ' +
-        'the rSchedule provided recurrence rules, you should ' +
-        'open an issue in the rSchedule repo. The maintainer is going to ' +
-        'want to know how to recreate the error.',
+          'the rSchedule provided recurrence rules, you should ' +
+          'open an issue in the rSchedule repo. The maintainer is going to ' +
+          'want to know how to recreate the error.',
       );
     }
 
@@ -262,7 +262,7 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
    * Performs one run of the recurrence rules and returns the result.
    * It's a slightly optimized reducer function.
    */
-  private runRules(start: DateTime) {
+  private runRules(start: DateTime): RecurrenceRuleResult {
     let result = new ValidDateTime(start) as RecurrenceRuleResult;
 
     for (const rule of this.rules) {
@@ -276,15 +276,20 @@ export class RecurrenceRulesIterator<T extends INormRuleOptionsBase>
     return result;
   }
 
-  private isDatePastEnd(date: DateTime) {
+  private isDatePastEnd(date: DateTime): boolean | undefined {
     return this.reverse ? date.isBefore(this.start) : this.end && date.isAfter(this.end);
   }
 
-  private normalizeRunOutput(date: DateTime) {
+  private normalizeRunOutput(date: DateTime): DateTime {
     return this.hasDuration ? date.set('duration', this.options.duration!) : date;
   }
 
-  private normalizeDateTimeArgs(args: IRecurrenceRulesIteratorArgs) {
+  private normalizeDateTimeArgs(
+    args: IRecurrenceRulesIteratorArgs,
+  ): {
+    start: DateTime | undefined;
+    end: DateTime | undefined;
+  } {
     return {
       start: args.start && normalizeDateTimeTimezone(args.start, this.options.start.timezone),
       end: args.end && normalizeDateTimeTimezone(args.end, this.options.start.timezone),

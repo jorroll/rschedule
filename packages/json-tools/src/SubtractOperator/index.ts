@@ -25,7 +25,9 @@ declare module '@rschedule/core/generators' {
   }
 }
 
-SubtractOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}) {
+SubtractOperator.prototype.toJSON = function serialize(
+  opts: ISerializeToJSONOptions = {},
+): SubtractOperator.JSON {
   const json: SubtractOperator.JSON = {
     type: 'SubtractOperator',
     streams: this.streams.map(stream => stream.toJSON({ ...opts, nested: true })),
@@ -43,7 +45,7 @@ SubtractOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOpt
 SubtractOperator.fromJSON = function parse(
   json: SubtractOperator.JSON,
   options: { timezone?: string | null } = {},
-) {
+): SubtractOperator {
   if (json.type !== 'SubtractOperator') {
     throw new ParseJSONError('Invalid SubtractOperator JSON.');
   }

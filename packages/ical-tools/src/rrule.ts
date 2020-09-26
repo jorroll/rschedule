@@ -161,7 +161,7 @@ export class RRule<Data = any> extends RuleBase<IRRuleOptions, INormRRuleOptions
     prop: Prop,
     value: IRRuleOptions[Exclude<Prop, 'timezone' | 'options'>] | number | string | null,
     tzoptions: { keepLocalTime?: boolean } = {},
-  ) {
+  ): RRule<Data> {
     let options = cloneRuleOptions(this.options);
     let timezone = this.timezone;
     let duration = this.duration;

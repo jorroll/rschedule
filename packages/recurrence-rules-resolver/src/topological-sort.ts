@@ -12,7 +12,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-function assert(value: boolean, msg: string) {
+function assert(value: boolean, msg: string): void {
   if (!value) throw new Error(msg);
 }
 
@@ -36,15 +36,15 @@ export class TopologicalSort<KeyType, ValueType> {
     this.addMultipleInternalNodes(nodes);
   }
 
-  addNode(key: KeyType, node: ValueType) {
+  addNode(key: KeyType, node: ValueType): this {
     return this.addInternalNode(key, node);
   }
 
-  addNodes(nodes: Map<KeyType, ValueType>) {
+  addNodes(nodes: Map<KeyType, ValueType>): void {
     this.addMultipleInternalNodes(nodes);
   }
 
-  addEdge(fromKey: KeyType, toKey: KeyType) {
+  addEdge(fromKey: KeyType, toKey: KeyType): void {
     assert(this.nodes.has(fromKey), `Source node with ${fromKey} key should exist`);
     assert(this.nodes.has(toKey), `Target node with ${toKey} key should exist`);
 
@@ -79,7 +79,7 @@ export class TopologicalSort<KeyType, ValueType> {
     return output;
   }
 
-  private exploreNode(nodeKey: KeyType, explorePath: KeyType[]) {
+  private exploreNode(nodeKey: KeyType, explorePath: KeyType[]): void {
     const newExplorePath = [...explorePath, nodeKey];
 
     // we should check circular dependencies starting from node 2
@@ -106,7 +106,7 @@ export class TopologicalSort<KeyType, ValueType> {
     this.sortedKeysStack.push(nodeKey);
   }
 
-  private addInternalNode(key: KeyType, node: ValueType) {
+  private addInternalNode(key: KeyType, node: ValueType): this {
     assert(!this.nodes.has(key), `Node ${key} already exists`);
 
     this.nodes.set(key, {
@@ -117,7 +117,7 @@ export class TopologicalSort<KeyType, ValueType> {
     return this;
   }
 
-  private addMultipleInternalNodes(nodes: Map<KeyType, ValueType>) {
+  private addMultipleInternalNodes(nodes: Map<KeyType, ValueType>): void {
     const nodesFlat = [...nodes];
 
     for (let i = nodes.size - 1; i >= 0; i--) {

@@ -1,4 +1,10 @@
-import { DateAdapter, DateTime, InvalidDateTime, ValidDateTime } from '@rschedule/core';
+import {
+  DateAdapter,
+  DateTime,
+  InvalidDateTime,
+  RecurrenceRuleResult,
+  ValidDateTime,
+} from '@rschedule/core';
 import { INormFrequencyRuleOptions } from '../Frequency';
 import { RecurrenceRuleBase } from './recurrence-rule-base';
 
@@ -13,7 +19,7 @@ export default abstract class ByTimeOfUnitRule<
   protected abstract readonly granularity: DateAdapter.TimeUnit;
   protected abstract readonly option: number[];
 
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     // e.g. const currentTime = date.get('hour');
     const currentTime = date.get(this.granularity as any);
 

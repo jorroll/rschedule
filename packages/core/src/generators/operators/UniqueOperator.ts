@@ -17,7 +17,7 @@ export function unique(): OperatorFnOutput {
 
 export class UniqueOperator extends Operator {
   /** Not actually used but necessary for IRunnable interface */
-  set(_: 'timezone', value: string | null) {
+  set(_: 'timezone', value: string | null): UniqueOperator {
     return new UniqueOperator([], {
       ...this.config,
       base: this.config.base && this.config.base.set('timezone', value),
@@ -31,9 +31,7 @@ export class UniqueOperator extends Operator {
     const stream = new IterableWrapper(this.config.base, args);
 
     while (!stream.done) {
-      const yieldArgs = yield this.normalizeRunOutput(
-        stream.value!,
-      );
+      const yieldArgs = yield this.normalizeRunOutput(stream.value!);
 
       const lastValue = stream.value;
 
@@ -50,11 +48,11 @@ export class UniqueOperator extends Operator {
     }
   }
 
-  protected calculateIsInfinite() {
+  protected calculateIsInfinite(): boolean {
     return !!(this.config.base && this.config.base.isInfinite);
   }
 
-  protected calculateHasDuration() {
+  protected calculateHasDuration(): boolean {
     return !!(this.config.base && this.config.base.hasDuration);
   }
 }
