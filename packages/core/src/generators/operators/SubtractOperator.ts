@@ -22,7 +22,7 @@ export function subtract(...streams: OccurrenceGenerator[]): OperatorFnOutput {
 
 export class SubtractOperator extends Operator {
   /** Not actually used but necessary for IRunnable interface */
-  set(_: 'timezone', value: string | null) {
+  set(_: 'timezone', value: string | null): SubtractOperator {
     return new SubtractOperator(this.streams.map(stream => stream.set('timezone', value)), {
       ...this.config,
       base: this.config.base && this.config.base.set('timezone', value),
@@ -54,11 +54,11 @@ export class SubtractOperator extends Operator {
     }
   }
 
-  protected calculateIsInfinite() {
+  protected calculateIsInfinite(): boolean {
     return !!(this.config.base && this.config.base.isInfinite);
   }
 
-  protected calculateHasDuration() {
+  protected calculateHasDuration(): boolean {
     return !!(this.config.base && this.config.base.hasDuration);
   }
 }
@@ -68,7 +68,7 @@ function cycleStreams(
   exclusion: IterableWrapper,
   options: { reverse?: boolean } = {},
   yieldArgs: IRunNextArgs = {},
-) {
+): void {
   processYieldArgs([inclusion, exclusion], options, yieldArgs);
 
   iterateExclusion(inclusion, exclusion, options);
@@ -83,7 +83,7 @@ function iterateExclusion(
   inclusion: IterableWrapper,
   exclusion: IterableWrapper,
   options: { reverse?: boolean } = {},
-) {
+): void {
   if (options.reverse) {
     while (!exclusion.done && !inclusion.done && exclusion.value!.isAfter(inclusion.value!)) {
       exclusion.next();

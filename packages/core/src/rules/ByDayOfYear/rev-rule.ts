@@ -1,9 +1,15 @@
-import { DateTime, InvalidDateTime, RecurrenceRuleError, ValidDateTime } from '@rschedule/core';
+import {
+  DateTime,
+  InvalidDateTime,
+  RecurrenceRuleError,
+  RecurrenceRuleResult,
+  ValidDateTime,
+} from '@rschedule/core';
 import { RevRecurrenceRuleBase } from '../utilities/recurrence-rule-base';
 import { INormByDayOfYearRuleOptions, normalizeByDayOfYear } from './rule';
 
 export class RevByDayOfYearRule extends RevRecurrenceRuleBase<INormByDayOfYearRuleOptions> {
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     const normalizedByDayOfYear = normalizeByDayOfYear(date, this.options.byDayOfYear!).reverse();
 
     const currentDay = date.get('yearday');

@@ -22,7 +22,9 @@ declare module '@rschedule/core/generators' {
   }
 }
 
-AddOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}) {
+AddOperator.prototype.toJSON = function serialize(
+  opts: ISerializeToJSONOptions = {},
+): AddOperator.JSON {
   const json: AddOperator.JSON = {
     type: 'AddOperator',
     streams: this.streams.map(stream => stream.toJSON({ ...opts, nested: true })),
@@ -40,7 +42,7 @@ AddOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions 
 AddOperator.fromJSON = function parse(
   json: AddOperator.JSON,
   options: { timezone?: string | null } = {},
-) {
+): AddOperator {
   if (json.type !== 'AddOperator') {
     throw new ParseJSONError('Invalid AddOperator JSON.');
   }

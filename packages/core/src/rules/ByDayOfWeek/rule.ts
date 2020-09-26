@@ -4,6 +4,7 @@ import {
   dateTimeSortComparer,
   InvalidDateTime,
   RecurrenceRuleError,
+  RecurrenceRuleResult,
   RuleOption,
   uniqDateTimes,
   ValidDateTime,
@@ -32,7 +33,7 @@ export interface INormByDayOfWeekRuleOptions extends INormFrequencyRuleOptions {
 }
 
 export class ByDayOfWeekRule extends RecurrenceRuleBase<INormByDayOfWeekRuleOptions> {
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     if (this.options.frequency === 'YEARLY') {
       return this.options.byMonthOfYear === undefined
         ? this.expandYearly(date)
@@ -44,7 +45,7 @@ export class ByDayOfWeekRule extends RecurrenceRuleBase<INormByDayOfWeekRuleOpti
     return this.expand(date);
   }
 
-  private expandYearly(date: DateTime) {
+  private expandYearly(date: DateTime): RecurrenceRuleResult {
     let next: DateTime | undefined = getNextWeekdaysOfYear(date, this.options.byDayOfWeek!)[0];
 
     let index = 0;
@@ -69,7 +70,7 @@ export class ByDayOfWeekRule extends RecurrenceRuleBase<INormByDayOfWeekRuleOpti
     return this.result(date, next);
   }
 
-  private expandMonthly(date: DateTime) {
+  private expandMonthly(date: DateTime): RecurrenceRuleResult {
     let next: DateTime | undefined = getNextWeekdaysOfMonth(date, this.options.byDayOfWeek!)[0];
 
     let index = 0;
@@ -98,7 +99,7 @@ export class ByDayOfWeekRule extends RecurrenceRuleBase<INormByDayOfWeekRuleOpti
     return this.result(date, next);
   }
 
-  private expand(date: DateTime) {
+  private expand(date: DateTime): RecurrenceRuleResult {
     const next = this.options
       .byDayOfWeek!.map(weekday => getNextWeekday(date, weekday as DateAdapter.Weekday))
       .sort(dateTimeSortComparer)[0];
@@ -106,7 +107,7 @@ export class ByDayOfWeekRule extends RecurrenceRuleBase<INormByDayOfWeekRuleOpti
     return this.result(date, next);
   }
 
-  private result(date: DateTime, next: DateTime) {
+  private result(date: DateTime, next: DateTime): RecurrenceRuleResult {
     if (next.isEqual(date)) {
       return this.validateDate(new ValidDateTime(date));
     }
@@ -116,7 +117,10 @@ export class ByDayOfWeekRule extends RecurrenceRuleBase<INormByDayOfWeekRuleOpti
 }
 
 /** For each byDayOfWeek entry, find the next DateTime */
-export function getNextWeekdaysOfYear(date: DateTime, byDayOfWeek: RuleOption.ByDayOfWeek[]) {
+export function getNextWeekdaysOfYear(
+  date: DateTime,
+  byDayOfWeek: RuleOption.ByDayOfWeek[],
+): DateTime[] {
   const normalizedNthWeekdaysOfYear = byDayOfWeek
     .filter(entry => Array.isArray(entry))
     .map(entry => getNthWeekdayOfYear(date, ...(entry as [DateAdapter.Weekday, number])));
@@ -132,7 +136,10 @@ export function getNextWeekdaysOfYear(date: DateTime, byDayOfWeek: RuleOption.By
 }
 
 /** For each byDayOfWeek entry, find the next DateTime */
-export function getNextWeekdaysOfMonth(date: DateTime, byDayOfWeek: RuleOption.ByDayOfWeek[]) {
+export function getNextWeekdaysOfMonth(
+  date: DateTime,
+  byDayOfWeek: RuleOption.ByDayOfWeek[],
+): DateTime[] {
   const normalizedNthWeekdaysOfMonth = byDayOfWeek
     .filter(entry => Array.isArray(entry))
     .map(entry => getNthWeekdayOfMonth(date, ...(entry as [DateAdapter.Weekday, number])));

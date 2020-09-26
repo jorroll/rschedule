@@ -56,7 +56,7 @@ Rule.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}): 
 Rule.fromJSON = function fromJSON(
   json: Rule.JSON,
   options: { timezone?: string | null; data?: (json: OccurrenceGenerator.JSON) => any } = {},
-) {
+): Rule<any> {
   const config = {
     ...json.config,
     start: DateAdapterBase.adapter.fromJSON(json.config.start),

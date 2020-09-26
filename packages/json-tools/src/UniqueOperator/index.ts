@@ -24,7 +24,9 @@ declare module '@rschedule/core/generators' {
   }
 }
 
-UniqueOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}) {
+UniqueOperator.prototype.toJSON = function serialize(
+  opts: ISerializeToJSONOptions = {},
+): UniqueOperator.JSON {
   const json: UniqueOperator.JSON = {
     type: 'UniqueOperator',
     base: this.config.base!.toJSON(opts),
@@ -38,7 +40,7 @@ UniqueOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptio
 UniqueOperator.fromJSON = function parse(
   json: UniqueOperator.JSON,
   options: { timezone?: string | null } = {},
-) {
+): UniqueOperator {
   if (json.type !== 'UniqueOperator') {
     throw new ParseJSONError('Invalid UniqueOperator JSON.');
   }

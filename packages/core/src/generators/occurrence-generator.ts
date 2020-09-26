@@ -1,6 +1,7 @@
 import {
   ArgumentError,
   DateAdapter,
+  DateAdapterCTor,
   DateAdapterBase,
   DateInput,
   dateInputToDateAdapter,
@@ -19,7 +20,11 @@ export interface IRunArgs {
   reverse?: boolean;
 }
 
-export type OccurrenceGeneratorRunResult = Iterator<DateTime, undefined, IRunNextArgs | undefined> & { [Symbol.iterator](): Iterator<DateTime, undefined, IRunNextArgs | undefined>; };
+export type OccurrenceGeneratorRunResult = Iterator<
+  DateTime,
+  undefined,
+  IRunNextArgs | undefined
+> & { [Symbol.iterator](): Iterator<DateTime, undefined, IRunNextArgs | undefined> };
 
 export abstract class OccurrenceGenerator {
   abstract readonly isInfinite: boolean;
@@ -208,7 +213,7 @@ export abstract class OccurrenceGenerator {
     startInput: DateInput,
     endInput: DateInput,
     options: { excludeEnds?: boolean; maxDuration?: number } = {},
-  ) {
+  ): boolean {
     const start = this.normalizeDateInput(startInput);
     const end = this.normalizeDateInput(endInput);
 
@@ -293,8 +298,8 @@ export abstract class OccurrenceGenerator {
       if (this.isInfinite && !args.before) {
         throw new ArgumentError(
           'When calling `occursOn()` with a `weekday` argument ' +
-          'and an occurrence object that has infinite occurrences, ' +
-          'you must include a `before` argument as well.',
+            'and an occurrence object that has infinite occurrences, ' +
+            'you must include a `before` argument as well.',
         );
       }
 
@@ -362,7 +367,10 @@ export abstract class OccurrenceGenerator {
    * here), then any occurrence that's end time is after/equal to the provided
    * datetime return true.
    */
-  occursAfter(date: DateInput, options: { excludeStart?: boolean; maxDuration?: number } = {}) {
+  occursAfter(
+    date: DateInput,
+    options: { excludeStart?: boolean; maxDuration?: number } = {},
+  ): boolean {
     const adapter = this.normalizeDateInput(date);
 
     if (this.hasDuration && !options.excludeStart) {
@@ -400,7 +408,7 @@ export abstract class OccurrenceGenerator {
    * also provided, then this will only return true if an occurrence
    * both starts and ends before the provided datetime.
    */
-  occursBefore(date: DateInput, options: { excludeStart?: boolean } = {}) {
+  occursBefore(date: DateInput, options: { excludeStart?: boolean } = {}): boolean {
     const adapter = this.normalizeDateInput(date);
 
     if (this.hasDuration && options.excludeStart) {
@@ -424,11 +432,18 @@ export abstract class OccurrenceGenerator {
     return false;
   }
 
-  protected get dateAdapter() {
+  protected get dateAdapter(): DateAdapterCTor {
     return DateAdapterBase.adapter;
   }
 
-  protected normalizeOccurrencesArgs(rawArgs: IOccurrencesArgs) {
+  protected normalizeOccurrencesArgs(
+    rawArgs: IOccurrencesArgs,
+  ): {
+    start: DateTime | undefined;
+    end: DateTime | undefined;
+    take?: number | undefined;
+    reverse?: boolean | undefined;
+  } {
     return {
       ...rawArgs,
       start: this.normalizeDateInput(rawArgs.start),
@@ -436,7 +451,17 @@ export abstract class OccurrenceGenerator {
     };
   }
 
-  protected normalizeCollectionsArgs(rawArgs: ICollectionsArgs) {
+  protected normalizeCollectionsArgs(
+    rawArgs: ICollectionsArgs,
+  ): {
+    start: DateTime | undefined;
+    end: DateTime | undefined;
+    granularity?: CollectionsGranularity;
+    weekStart?: DateAdapter.Weekday;
+    skipEmptyPeriods?: boolean;
+    take?: number;
+    reverse?: boolean;
+  } {
     if (rawArgs.reverse !== undefined) {
       throw new ArgumentError(
         '`collections()` does not support the `reverse` option at this time.',
@@ -460,7 +485,15 @@ export abstract class OccurrenceGenerator {
       excludeDates?: Array<DateInput>;
       maxDuration?: number;
     } = {},
-  ) {
+  ): {
+    date: DateTime | undefined;
+    after: DateTime | undefined;
+    before: DateTime | undefined;
+    excludeDates: DateTime[] | undefined;
+    weekday?: DateAdapter.Weekday;
+    excludeEnds?: boolean;
+    maxDuration?: number;
+  } {
     return {
       ...rawArgs,
       date: this.normalizeDateInput(rawArgs.date),
@@ -472,7 +505,14 @@ export abstract class OccurrenceGenerator {
     };
   }
 
-  protected normalizeRunArgs(args: IRunArgs) {
+  protected normalizeRunArgs(
+    args: IRunArgs,
+  ): {
+    start: DateTime | undefined;
+    end: DateTime | undefined;
+    take?: number | undefined;
+    reverse?: boolean | undefined;
+  } {
     return {
       ...args,
       start: this.normalizeDateInput(args.start),
@@ -488,24 +528,24 @@ export abstract class OccurrenceGenerator {
 
   protected normalizeDateInputToAdapter(date: DateInput): DateAdapter;
   protected normalizeDateInputToAdapter(date?: DateInput): undefined;
-  protected normalizeDateInputToAdapter(date?: DateInput) {
+  protected normalizeDateInputToAdapter(date?: DateInput): DateAdapter | undefined {
     if (!date) return;
 
     return dateInputToDateAdapter(date);
   }
 
-  protected normalizeRunOutput(date: DateTime) {
+  protected normalizeRunOutput(date: DateTime): DateTime {
     return normalizeDateTimeTimezone(date, this.timezone);
   }
 
-  private getMaxDuration(method: string, options: { maxDuration?: number }) {
+  private getMaxDuration(method: string, options: { maxDuration?: number }): number {
     const maxDuration = options.maxDuration || this.maxDuration;
 
     if (!Number.isInteger(maxDuration!)) {
       throw new ArgumentError(
         `When an occurrence generator ` +
-        `has a duration, a 'maxDuration' argument must be supplied ` +
-        `to ${method}().`,
+          `has a duration, a 'maxDuration' argument must be supplied ` +
+          `to ${method}().`,
       );
     }
 
@@ -534,7 +574,9 @@ export interface IOccurrencesNextArgs {
 
 export class OccurrenceIterator<
   G extends ReadonlyArray<OccurrenceGenerator> = ReadonlyArray<OccurrenceGenerator>
-  > implements Iterator<DateAdapter & { generators: G }, undefined, IOccurrencesNextArgs | undefined> {
+>
+  implements
+    Iterator<DateAdapter & { generators: G }, undefined, IOccurrencesNextArgs | undefined> {
   private readonly iterator: OccurrenceGeneratorRunResult;
   private readonly isInfinite: boolean;
 
@@ -545,10 +587,9 @@ export class OccurrenceIterator<
 
   // Need to assert the return type of these methods to prevent typescript from
   // incorrectly reducing them to `DateAdapterBase & { generators: G }`.
-  [Symbol.iterator] = () =>
-    this.occurrenceIterator();
+  [Symbol.iterator] = () => this.occurrenceIterator();
 
-  next(args?: IOccurrencesNextArgs) {
+  next(args?: IOccurrencesNextArgs): IteratorResult<DateAdapter & { generators: G }, undefined> {
     return this.occurrenceIterator(args).next();
   }
 
@@ -559,12 +600,20 @@ export class OccurrenceIterator<
 
     throw new InfiniteLoopError(
       'OccurrenceIterator#toArray() can only be called if the iterator ' +
-      'is not infinite, or you provide and `end` argument, or you provide ' +
-      'a `take` argument.',
+        'is not infinite, or you provide and `end` argument, or you provide ' +
+        'a `take` argument.',
     );
   }
 
-  private *occurrenceIterator(rawArgs?: IOccurrencesNextArgs) {
+  private *occurrenceIterator(
+    rawArgs?: IOccurrencesNextArgs,
+  ): Generator<
+    DateAdapter & {
+      generators: G;
+    },
+    undefined,
+    unknown
+  > {
     let args = this.normalizeRunArgs(rawArgs);
 
     let date = this.iterator.next(args).value;
@@ -572,7 +621,7 @@ export class OccurrenceIterator<
     while (date) {
       const yieldArgs = yield this.normalizeDateOutput(date);
 
-      args = this.normalizeRunArgs(yieldArgs);
+      args = this.normalizeRunArgs(yieldArgs as IOccurrencesNextArgs | undefined);
 
       date = this.iterator.next(args).value;
     }
@@ -586,16 +635,18 @@ export class OccurrenceIterator<
     };
   }
 
-  private normalizeDateInput(date?: DateInput) {
+  private normalizeDateInput(date?: DateInput): DateTime | undefined {
     return date ? dateInputToDateTime(date, this.iterable.timezone) : undefined;
   }
 
   private normalizeDateOutput(date: DateTime): DateAdapter & { generators: G };
   private normalizeDateOutput(date?: DateTime): undefined;
-  private normalizeDateOutput(date?: DateTime) {
+  private normalizeDateOutput(date?: DateTime): (DateAdapter & { generators: G }) | undefined {
     if (!date) return;
 
-    return date ? DateAdapterBase.adapter.fromDateTime(date) : undefined;
+    return date
+      ? (DateAdapterBase.adapter.fromDateTime(date) as DateAdapter & { generators: G })
+      : undefined;
   }
 }
 
@@ -611,13 +662,13 @@ export type CollectionsGranularity =
 
 export class Collection<
   G extends ReadonlyArray<OccurrenceGenerator> = ReadonlyArray<OccurrenceGenerator>
-  > {
+> {
   constructor(
     readonly dates: (DateAdapter & { generators: G })[] = [],
     readonly granularity: CollectionsGranularity,
     readonly periodStart: DateAdapter & { generators: G },
     readonly periodEnd: DateAdapter & { generators: G },
-  ) { }
+  ) {}
 }
 
 export interface ICollectionsArgs extends IOccurrencesArgs {
@@ -634,7 +685,7 @@ export interface ICollectionsRunArgs extends IRunArgs {
 
 export class CollectionIterator<
   G extends ReadonlyArray<OccurrenceGenerator> = ReadonlyArray<OccurrenceGenerator>
-  > implements Iterator<Collection<G>, undefined, undefined> {
+> implements Iterator<Collection<G>, undefined, undefined> {
   readonly granularity: CollectionsGranularity = 'year';
   readonly weekStart?: DateAdapter.Weekday;
   readonly startDate: DateAdapter | null;
@@ -657,7 +708,7 @@ export class CollectionIterator<
     if (args.reverse) {
       throw new Error(
         '`OccurrenceGenerator#collections()` does not support iterating in reverse. ' +
-        'Though `OccurrenceGenerator#occurrences()` does support iterating in reverse.',
+          'Though `OccurrenceGenerator#occurrences()` does support iterating in reverse.',
       );
     }
 
@@ -676,7 +727,7 @@ export class CollectionIterator<
 
   [Symbol.iterator] = () => this.iterator;
 
-  next() {
+  next(): IteratorResult<Collection<G>, any> {
     return this.iterator.next();
   }
 
@@ -685,7 +736,7 @@ export class CollectionIterator<
    * `toArray()` does not share state and always returns the whole
    * collections array.
    */
-  toArray() {
+  toArray(): Collection<G>[] {
     if (this.args.end || this.args.take || !this.iterable.isInfinite) {
       const collections: Collection<G>[] = [];
 
@@ -698,20 +749,20 @@ export class CollectionIterator<
 
     throw new InfiniteLoopError(
       'CollectionIterator#toArray() can only be called if the iterator ' +
-      'is not infinite, or you provide and `end` argument, or you provide ' +
-      'a `take` argument.',
+        'is not infinite, or you provide and `end` argument, or you provide ' +
+        'a `take` argument.',
     );
   }
 
   private normalizeDateOutput(date: DateTime): DateAdapter & { generators: G };
   private normalizeDateOutput(date?: DateTime): undefined;
-  private normalizeDateOutput(date?: DateTime) {
+  private normalizeDateOutput(date?: DateTime): DateAdapter & { generators: G } | undefined {
     if (!date) return;
 
-    return DateAdapterBase.adapter.fromDateTime(date);
+    return DateAdapterBase.adapter.fromDateTime(date) as DateAdapter & { generators: G };
   }
 
-  private *collectionIterator() {
+  private *collectionIterator(): Generator<Collection<G>, void, unknown> {
     if (!this.startDate) return;
 
     let iterator = this.occurrenceIterator();
@@ -769,7 +820,13 @@ export class CollectionIterator<
     }
   }
 
-  private getPeriod(date: DateTime) {
+  private getPeriod(
+    date: DateTime,
+  ): {
+    start: DateTime;
+    end: DateTime;
+    period: DateTime;
+  } {
     let start: DateTime;
     let end: DateTime;
     let period: DateTime;
@@ -787,11 +844,11 @@ export class CollectionIterator<
     return { start, end, period };
   }
 
-  private incrementPeriod(date: DateTime) {
+  private incrementPeriod(date: DateTime): DateTime {
     return date.add(1, this.granularity);
   }
 
-  private occurrenceIterator() {
+  private occurrenceIterator(): OccurrenceGeneratorRunResult {
     let start = this.args.start || this.iterable._run().next().value;
 
     if (!start) return this.iterable._run(this.args);
@@ -840,13 +897,13 @@ export abstract class Operator extends OccurrenceGenerator {
 
   protected normalizeDateInput(date: DateInput): DateTime;
   protected normalizeDateInput(date?: DateInput): undefined;
-  protected normalizeDateInput(date?: DateInput) {
+  protected normalizeDateInput(date?: DateInput): DateTime | undefined {
     if (!date) return;
 
     return dateInputToDateTime(date, this.timezone);
   }
 
-  protected normalizeRunOutput(date: DateTime) {
+  protected normalizeRunOutput(date: DateTime): DateTime {
     return normalizeDateTimeTimezone(date, this.timezone);
   }
 }

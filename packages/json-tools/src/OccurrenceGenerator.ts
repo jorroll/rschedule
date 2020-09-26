@@ -85,7 +85,7 @@ export function serializeDataToJSON(
 export function registerJSONSerializerFn(
   name: string,
   fn: (json: any, options?: { [key: string]: any }) => any,
-) {
+): void {
   if (OccurrenceGenerator.JSON_FN_MAP.has(name)) {
     throw new Error(
       `Attempting to set a global json parser function for "${name}" ` + 'but one already exists.',

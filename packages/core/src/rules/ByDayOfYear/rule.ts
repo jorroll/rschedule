@@ -2,6 +2,7 @@ import {
   DateTime,
   InvalidDateTime,
   RecurrenceRuleError,
+  RecurrenceRuleResult,
   RuleOption,
   ValidDateTime,
 } from '@rschedule/core';
@@ -25,7 +26,7 @@ export interface INormByDayOfYearRuleOptions extends INormFrequencyRuleOptions {
 }
 
 export class ByDayOfYearRule extends RecurrenceRuleBase<INormByDayOfYearRuleOptions> {
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     const normalizedByDayOfYear = normalizeByDayOfYear(date, this.options.byDayOfYear!);
 
     const currentDay = date.get('yearday');
@@ -67,7 +68,10 @@ export class ByDayOfYearRule extends RecurrenceRuleBase<INormByDayOfYearRuleOpti
  * 2. converts negative entries to positive ones
  */
 
-export function normalizeByDayOfYear(date: DateTime, byDayOfYear: RuleOption.ByDayOfYear[]) {
+export function normalizeByDayOfYear(
+  date: DateTime,
+  byDayOfYear: RuleOption.ByDayOfYear[],
+): number[] {
   const lengthOfYear = getDaysInYear(date.get('year'));
 
   return byDayOfYear

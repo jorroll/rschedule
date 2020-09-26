@@ -283,7 +283,7 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
 
   add(prop: 'rrule' | 'exrule', value: RRule): VEvent<Data>;
   add(prop: 'rdate' | 'exdate', value: DateInput): VEvent<Data>;
-  add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: RRule | DateInput) {
+  add(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: RRule | DateInput): VEvent<Data> {
     const rrules = this.rrules.slice();
     const exrules = this.exrules.slice();
     let rdates = this.rdates;
@@ -316,7 +316,7 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
 
   remove(prop: 'rrule' | 'exrule', value: RRule): VEvent<Data>;
   remove(prop: 'rdate' | 'exdate', value: DateInput): VEvent<Data>;
-  remove(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: RRule | DateInput) {
+  remove(prop: 'rdate' | 'exdate' | 'rrule' | 'exrule', value: RRule | DateInput): VEvent<Data> {
     let rrules = this.rrules;
     let exrules = this.exrules;
     let rdates = this.rdates;
@@ -355,7 +355,7 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
     prop: 'start' | 'timezone' | 'rrules' | 'exrules' | 'rdates' | 'exdates',
     value: DateInput | string | null | RRule[] | Dates,
     options: { keepLocalTime?: boolean } = {},
-  ) {
+  ): VEvent<Data> {
     let start = this.start;
     let rrules = this.rrules;
     let exrules = this.exrules;
@@ -412,7 +412,7 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
     return serializeToICal(this);
   }
 
-  protected normalizeRunOutput(date: DateTime) {
+  protected normalizeRunOutput(date: DateTime): DateTime {
     if (this._duration) {
       return super.normalizeRunOutput(date).set('duration', this._duration);
     }

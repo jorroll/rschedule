@@ -8,13 +8,16 @@ import {
 
 export class StandardDateAdapter extends DateAdapterBase {
   static readonly date: Date;
-  static readonly hasTimezoneSupport = false;
+  static readonly hasTimezoneSupport: false = false;
 
   static isDate(object: unknown): object is Date {
     return Object.prototype.toString.call(object) === '[object Date]';
   }
 
-  static fromDate(date: Date, options?: { timezone?: string | null; duration?: number }) {
+  static fromDate(
+    date: Date,
+    options?: { timezone?: string | null; duration?: number },
+  ): StandardDateAdapter {
     return new StandardDateAdapter(date, options);
   }
 
@@ -51,13 +54,13 @@ export class StandardDateAdapter extends DateAdapterBase {
     }
   }
 
-  static fromDateTime(datetime: DateTime) {
+  static fromDateTime(datetime: DateTime): StandardDateAdapter {
     const date = StandardDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
     return date;
   }
 
-  get date() {
+  get date(): Date {
     return new Date(this._date);
   }
 
@@ -103,7 +106,7 @@ export class StandardDateAdapter extends DateAdapterBase {
 
   set(prop: 'timezone', value: string | null): this;
   set(prop: 'duration', value: number): this;
-  set(prop: 'timezone' | 'duration', value: number | string | null) {
+  set(prop: 'timezone' | 'duration', value: number | string | null): StandardDateAdapter {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else {
@@ -127,11 +130,11 @@ export class StandardDateAdapter extends DateAdapterBase {
     throw new ArgumentError(`Unknown prop "${prop}" for StandardDateAdapter#set()`);
   }
 
-  valueOf() {
+  valueOf(): number {
     return this._date.valueOf();
   }
 
-  toISOString() {
+  toISOString(): string {
     return this._date.toISOString();
   }
 
@@ -169,7 +172,7 @@ export class StandardDateAdapter extends DateAdapterBase {
     return json;
   }
 
-  assertIsValid() {
+  assertIsValid(): true {
     if (!StandardDateAdapter.isDate(this._date) || isNaN(this._date.valueOf())) {
       throw new InvalidDateAdapterError('StandardDateAdapter has invalid date.');
     } else if (![null, 'UTC'].includes(this.timezone)) {

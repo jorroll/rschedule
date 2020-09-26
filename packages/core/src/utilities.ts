@@ -3,7 +3,7 @@ import { DateAdapter, DateAdapterBase, DateInput, DateTime } from './DateAdapter
 export class ArgumentError extends Error {}
 export class InfiniteLoopError extends Error {}
 
-export function numberSortComparer(a: number, b: number) {
+export function numberSortComparer(a: number, b: number): 0 | 1 | -1 {
   if (a > b) {
     return 1;
   } else if (b > a) {
@@ -13,7 +13,7 @@ export function numberSortComparer(a: number, b: number) {
   }
 }
 
-export function freqToGranularity(freq: string) {
+export function freqToGranularity(freq: string): DateAdapter.TimeUnit | 'week' {
   switch (freq) {
     case 'YEARLY':
       return 'year';

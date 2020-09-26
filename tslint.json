@@ -10,7 +10,10 @@
     "no-var-keyword": true,
     "no-parameter-reassignment": false,
     "no-namespace": false,
-    "typedef": [false, "call-signature"],
+    // Explicit typing is necessary because the types will be specified at
+    // build time anyway and, as found in issue #47, they will be built
+    // incorrectly sometimes unless they are specified.
+    "typedef": [true, "call-signature", "member-variable-declaration"],
     /* end tslint-immutable rules */
     "object-literal-sort-keys": false,
     "max-classes-per-file": false,
@@ -22,6 +25,7 @@
     "jsdoc-format": false,
     "unified-signatures": false,
     "prefer-object-spread": false,
+    // "explicit-function-return-type": true,
     "trailing-comma": [
       true,
       {

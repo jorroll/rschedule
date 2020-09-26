@@ -46,7 +46,9 @@ export interface INormFrequencyRuleOptions extends INormRuleOptionsBase {
 }
 
 export class FrequencyRule extends RecurrenceRule<INormFrequencyRuleOptions> {
-  protected readonly intervalUnit = freqToGranularity(this.options.frequency);
+  protected readonly intervalUnit: DateAdapter.TimeUnit | 'week' = freqToGranularity(
+    this.options.frequency,
+  );
 
   protected firstIntervalStartDate: DateTime;
   protected intervalStartDate: DateTime;
@@ -65,11 +67,11 @@ export class FrequencyRule extends RecurrenceRule<INormFrequencyRuleOptions> {
     this.skipToInterval(this.initDate);
   }
 
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     return this.validateDate(new ValidDateTime(date));
   }
 
-  validateDate(arg: RecurrenceRuleResult) {
+  validateDate(arg: RecurrenceRuleResult): RecurrenceRuleResult {
     const { date } = arg;
 
     if (arg instanceof ValidDateTime && this.dateIsWithinInterval(date)) {
@@ -84,11 +86,11 @@ export class FrequencyRule extends RecurrenceRule<INormFrequencyRuleOptions> {
     );
   }
 
-  protected setToCurrentInterval() {
+  protected setToCurrentInterval(): DateTime {
     return this.intervalStartDate;
   }
 
-  protected normalizedStartDate(date: DateTime) {
+  protected normalizedStartDate(date: DateTime): DateTime {
     if (this.options.frequency === 'WEEKLY') {
       return date.granularity('week', { weekStart: this.options.weekStart });
     }
@@ -96,7 +98,7 @@ export class FrequencyRule extends RecurrenceRule<INormFrequencyRuleOptions> {
     return date.granularity(this.intervalUnit as DateAdapter.TimeUnit);
   }
 
-  protected normalizedEndDate(start: DateTime) {
+  protected normalizedEndDate(start: DateTime): DateTime {
     switch (this.options.frequency) {
       case 'YEARLY':
         return start.add(1, 'year');
@@ -119,7 +121,7 @@ export class FrequencyRule extends RecurrenceRule<INormFrequencyRuleOptions> {
     }
   }
 
-  protected skipToInterval(date: DateTime) {
+  protected skipToInterval(date: DateTime): void {
     const amount = this.intervalDifference(date);
 
     this.intervalStartDate = this.firstIntervalStartDate.add(amount, this.intervalUnit);
@@ -127,11 +129,11 @@ export class FrequencyRule extends RecurrenceRule<INormFrequencyRuleOptions> {
     this.intervalEndDate = this.normalizedEndDate(this.intervalStartDate);
   }
 
-  protected dateIsWithinInterval(date: DateTime) {
+  protected dateIsWithinInterval(date: DateTime): boolean {
     return this.intervalStartDate.isBeforeOrEqual(date) && this.intervalEndDate.isAfter(date);
   }
 
-  protected intervalDifference(date: DateTime) {
+  protected intervalDifference(date: DateTime): number {
     return intervalDifferenceBetweenDates({
       first: this.firstIntervalStartDate,
       second: date,
@@ -171,7 +173,7 @@ export function intervalDifferenceBetweenDates({
   interval: number;
   weekStart: DateAdapter.Weekday;
   direction: 'after' | 'before';
-}) {
+}): number {
   let difference = (() => {
     let intervalDuration: number;
     let months: number;

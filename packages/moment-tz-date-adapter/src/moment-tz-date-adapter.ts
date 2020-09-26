@@ -25,7 +25,7 @@ export class MomentTZDateAdapter extends DateAdapterBase {
     return moment.isMoment(object);
   }
 
-  static fromDate(date: moment.Moment, options?: { duration?: number }) {
+  static fromDate(date: moment.Moment, options?: { duration?: number }): MomentTZDateAdapter {
     return new MomentTZDateAdapter(date, options);
   }
 
@@ -48,13 +48,13 @@ export class MomentTZDateAdapter extends DateAdapterBase {
     }
   }
 
-  static fromDateTime(datetime: DateTime) {
+  static fromDateTime(datetime: DateTime): MomentTZDateAdapter {
     const date = MomentTZDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
     return date;
   }
 
-  get date() {
+  get date(): moment.Moment {
     return this._date.clone();
   }
 
@@ -89,7 +89,7 @@ export class MomentTZDateAdapter extends DateAdapterBase {
 
   set(prop: 'timezone', value: string | null): this;
   set(prop: 'duration', value: number): this;
-  set(prop: 'timezone' | 'duration', value: number | string | null) {
+  set(prop: 'timezone' | 'duration', value: number | string | null): MomentTZDateAdapter {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else {
@@ -120,11 +120,11 @@ export class MomentTZDateAdapter extends DateAdapterBase {
     throw new ArgumentError(`Unknown prop "${prop}" for MomentTZDateAdapter#set()`);
   }
 
-  valueOf() {
+  valueOf(): number {
     return this._date.valueOf();
   }
 
-  toISOString() {
+  toISOString(): string {
     return this._date.toISOString();
   }
 
@@ -147,7 +147,7 @@ export class MomentTZDateAdapter extends DateAdapterBase {
     return json;
   }
 
-  assertIsValid() {
+  assertIsValid(): true {
     if (!this._date.isValid()) {
       throw new InvalidDateAdapterError();
     } else if (this.duration && this.duration <= 0) {

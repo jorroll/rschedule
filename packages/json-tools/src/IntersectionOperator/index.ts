@@ -26,7 +26,9 @@ declare module '@rschedule/core/generators' {
   }
 }
 
-IntersectionOperator.prototype.toJSON = function serialize(opts: ISerializeToJSONOptions = {}) {
+IntersectionOperator.prototype.toJSON = function serialize(
+  opts: ISerializeToJSONOptions = {},
+): IntersectionOperator.JSON {
   const json: IntersectionOperator.JSON = {
     type: 'IntersectionOperator',
     streams: this.streams.map(stream => stream.toJSON({ ...opts, nested: true })),
@@ -45,7 +47,7 @@ IntersectionOperator.prototype.toJSON = function serialize(opts: ISerializeToJSO
 IntersectionOperator.fromJSON = function parse(
   json: IntersectionOperator.JSON,
   options: { timezone?: string | null } = {},
-) {
+): IntersectionOperator {
   if (json.type !== 'IntersectionOperator') {
     throw new ParseJSONError('Invalid IntersectionOperator JSON.');
   }

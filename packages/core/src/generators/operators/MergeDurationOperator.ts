@@ -89,7 +89,7 @@ export class MergeDurationOperator extends Operator {
   }
 
   /** Not actually used but necessary for IRunnable interface */
-  set(_: 'timezone', value: string | null) {
+  set(_: 'timezone', value: string | null): MergeDurationOperator {
     return new MergeDurationOperator(
       {
         maxDuration: this.maxDuration,
@@ -106,11 +106,11 @@ export class MergeDurationOperator extends Operator {
     return args.reverse ? this.reverseRun(args) : this.forwardRun(args);
   }
 
-  protected calculateIsInfinite() {
+  protected calculateIsInfinite(): boolean {
     return !!(this.config.base && this.config.base.isInfinite);
   }
 
-  protected calculateHasDuration() {
+  protected calculateHasDuration(): boolean {
     return true;
   }
 

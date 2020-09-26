@@ -89,7 +89,7 @@ export class Calendar<Data = any> extends OccurrenceGenerator {
     prop: 'timezone' | 'schedules',
     value: ReadonlyArray<OccurrenceGenerator> | OccurrenceGenerator | string | null,
     options?: { keepLocalTime?: boolean },
-  ) {
+  ): Calendar<Data> {
     if (prop === 'timezone') {
       return new Calendar({
         schedules: this.schedules.map(schedule =>

@@ -26,7 +26,7 @@ export class MomentDateAdapter extends DateAdapterBase {
     return moment.isMoment(object);
   }
 
-  static fromDate(date: moment.Moment, options?: { duration?: number }) {
+  static fromDate(date: moment.Moment, options?: { duration?: number }): MomentDateAdapter {
     return new MomentDateAdapter(date, options);
   }
 
@@ -57,13 +57,13 @@ export class MomentDateAdapter extends DateAdapterBase {
     }
   }
 
-  static fromDateTime(datetime: DateTime) {
+  static fromDateTime(datetime: DateTime): MomentDateAdapter {
     const date = MomentDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
     return date;
   }
 
-  get date() {
+  get date(): moment.Moment {
     return this._date.clone();
   }
 
@@ -98,7 +98,7 @@ export class MomentDateAdapter extends DateAdapterBase {
 
   set(prop: 'timezone', value: string | null): this;
   set(prop: 'duration', value: number): this;
-  set(prop: 'timezone' | 'duration', value: number | string | null) {
+  set(prop: 'timezone' | 'duration', value: number | string | null): MomentDateAdapter {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else {
@@ -134,11 +134,11 @@ export class MomentDateAdapter extends DateAdapterBase {
     throw new ArgumentError(`Unknown prop "${prop}" for MomentDateAdapter#set()`);
   }
 
-  valueOf() {
+  valueOf(): number {
     return this._date.valueOf();
   }
 
-  toISOString() {
+  toISOString(): string {
     return this._date.toISOString();
   }
 
@@ -161,7 +161,7 @@ export class MomentDateAdapter extends DateAdapterBase {
     return json;
   }
 
-  assertIsValid() {
+  assertIsValid(): true {
     if (!this._date.isValid()) {
       throw new InvalidDateAdapterError();
     } else if (![null, 'UTC'].includes(this.timezone)) {

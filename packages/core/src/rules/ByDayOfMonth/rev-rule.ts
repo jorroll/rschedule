@@ -1,9 +1,15 @@
-import { DateTime, InvalidDateTime, RecurrenceRuleError, ValidDateTime } from '@rschedule/core';
+import {
+  DateTime,
+  InvalidDateTime,
+  RecurrenceRuleError,
+  RecurrenceRuleResult,
+  ValidDateTime,
+} from '@rschedule/core';
 import { RevRecurrenceRuleBase } from '../utilities/recurrence-rule-base';
 import { INormByDayOfMonthRuleOptions, normalizeByDayOfMonth } from './rule';
 
 export class RevByDayOfMonthRule extends RevRecurrenceRuleBase<INormByDayOfMonthRuleOptions> {
-  run(date: DateTime) {
+  run(date: DateTime): RecurrenceRuleResult {
     const normalizedByDayOfMonth = normalizeByDayOfMonth(
       date,
       this.options.byDayOfMonth!,
