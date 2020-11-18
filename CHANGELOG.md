@@ -4,7 +4,9 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
-- None
+### Fixes
+
+- Do not throw error when reregistering a JSON serializer (issue [#53](https://gitlab.com/john.carroll.p/rschedule/-/issues/53))
 
 ## 1.2.1 FIX (2020/9/25)
 
