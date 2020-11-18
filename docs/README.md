@@ -29,7 +29,7 @@ npm install @rschedule/core @rschedule/standard-date-adapter
 
 ### Setup
 
-rSchedule supports multiple date libraries though a [`DateAdapter`](./date-adapter) interface. To get started, you need to import the date adapter for your chosen date library (see the [`DateAdapter`](./date-adapter) section for more information).
+rSchedule supports multiple date libraries though a [`DateAdapter`](./date-adapter) interface. To get started, you need to import the date adapter for your chosen date library (see the [`DateAdapter`](./date-adapter) section for more information). _Note: you can only use one date adapter at a time in a project._
 
 Create an `rschedule.ts` (or `rschedule.js`) file in your project which configures rSchedule locally. Instead of importing objects from `@rschedule/core`, you'll import them from this local file.
 

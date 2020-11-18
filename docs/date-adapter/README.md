@@ -17,7 +17,7 @@ rSchedule is date library agnostic. It needs a `DateAdapter` constructor to proc
 
 ### Standard Setup
 
-Before you can make use of rSchedule, you must set it up with a date adapter. Each of the provided date adapter packages has a `*/setup` entry point which will not only configure the date adapter for you, but also configure the rSchedule `Rule` object with all the recurrence rules.
+Before you can make use of rSchedule, you must set it up with a date adapter. Each of the provided date adapter packages has a `*/setup` entry point which will not only configure the date adapter for you, but also configure the rSchedule `Rule` object with all the recurrence rules. _Note: you can only use one date adapter at a time in a project. Attempting to setup multiple date adapters will result in a runtime error._
 
 Example usage:
 
