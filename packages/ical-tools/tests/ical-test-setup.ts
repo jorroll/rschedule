@@ -795,9 +795,9 @@ export default function icalTests() {
         describe('deserializes | serializes | deserializes', () => {
           const icalLocal = [
             'BEGIN:VEVENT',
-            'DTSTART:20101010T000000',
+            'DTSTART:20101010T100000',
             'RRULE:FREQ=DAILY',
-            'RDATE:20101010T000000',
+            'RDATE:20101010T100000',
             'END:VEVENT',
           ]
             .join('\n')
