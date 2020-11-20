@@ -169,7 +169,7 @@ export default function dateAdapterTests() {
             describe('dateUTC', () => {
               it('', () => {
                 expect(typeof dateUTC.toISOString()).toBe('string');
-                expect(dateUTC.toISOString()).toBe(new Date(1997, 8, 2, 9).toISOString());
+                expect(dateUTC.toISOString()).toBe(new Date(Date.UTC(1997, 8, 2, 9)).toISOString());
               });
             });
           });
@@ -244,7 +244,7 @@ export default function dateAdapterTests() {
             describe('dateUTC', () => {
               it('', () => {
                 expect(typeof dateUTC.valueOf()).toBe('number');
-                expect(dateUTC.valueOf()).toBe(new Date(1997, 8, 2, 9).valueOf());
+                expect(dateUTC.valueOf()).toBe(Date.UTC(1997, 8, 2, 9));
               });
             });
           });

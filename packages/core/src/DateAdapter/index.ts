@@ -9,9 +9,9 @@ export interface DateAdapterCTorType {
 }
 
 // taken from https://stackoverflow.com/a/50375286/5490505
-export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((
-  k: infer I,
-) => void)
+export type UnionToIntersection<U> = (U extends any
+? (k: U) => void
+: never) extends (k: infer I) => void
   ? I
   : never;
 
@@ -118,7 +118,17 @@ export abstract class DateAdapterBase {
 
   abstract valueOf(): number;
 
-  abstract toISOString(): string;
+  /**
+   * Returns a string in simplified extended ISO format (ISO 8601).
+   *
+   * _Note: this method is intended for testing and its
+   * implementation isn't particularly performant._
+   */
+  toISOString(): string {
+    return this.set('timezone', 'UTC')
+      .toDateTime()
+      .toISOString();
+  }
 
   toDateTime(): DateTime {
     const date = DateTime.fromJSON({ ...this.toJSON(), generators: this.generators });

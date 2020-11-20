@@ -119,10 +119,6 @@ export class JodaDateAdapter extends DateAdapterBase {
     return this.date.toInstant().toEpochMilli();
   }
 
-  toISOString(): string {
-    return this.date.format(DateTimeFormatter.ISO_INSTANT);
-  }
-
   toJSON(): DateAdapter.JSON {
     const json: DateAdapter.JSON = {
       timezone: this.timezone,
