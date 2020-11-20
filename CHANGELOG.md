@@ -6,10 +6,12 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
-## FIX
+## 1.2.3 FIX (2020/11/19)
 
-- Standardize toISOString() implementation. Previously, different date adapters (apparently) were returning slightly different formatting (e.g. `joda-date-adapter`).
-- Fix `DatejsDateAdapter#set('timezone', value)`. Previously, attempting to set a new timezone value for a `DayjsDateAdapter` was ignored.
+## Fixes
+
+- Standardize toISOString() implementation. Previously, different date adapters (apparently) were returning slightly different formatting (e.g. `joda-date-adapter`) ([!62](https://gitlab.com/john.carroll.p/rschedule/-/merge_requests/62)).
+- Fix `DatejsDateAdapter#set('timezone', value)`. Previously, attempting to set a new timezone value for a `DayjsDateAdapter` was ignored ([!62](https://gitlab.com/john.carroll.p/rschedule/-/merge_requests/62)).
 
 ## 1.2.2 FIX (2020/11/18)
 
