@@ -1,5 +1,5 @@
 module.exports = {
-  testRegex: '(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$',
+  // testRegex: '(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$',
   moduleDirectories: ['node_modules'],
   moduleFileExtensions: ['js', 'ts', 'tsx'],
   modulePathIgnorePatterns: ['tmp'],
@@ -51,6 +51,6 @@ module.exports = {
     },
   },
   preset: 'ts-jest',
-  testMatch: null,
+  testMatch: ['**/*.test.ts'],
   testEnvironment: 'node',
 };

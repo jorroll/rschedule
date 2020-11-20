@@ -134,10 +134,6 @@ export class StandardDateAdapter extends DateAdapterBase {
     return this._date.valueOf();
   }
 
-  toISOString(): string {
-    return this._date.toISOString();
-  }
-
   toJSON(): DateAdapter.JSON {
     let json: DateAdapter.JSON;
 

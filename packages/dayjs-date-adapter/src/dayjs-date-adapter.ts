@@ -107,13 +107,7 @@ export class DayjsDateAdapter extends DateAdapterBase {
     if (prop === 'timezone') {
       if (this.timezone === value) return this;
       else {
-        const date = this._date.clone();
-
-        if (value === 'UTC') {
-          date.utc();
-        } else if (value === null) {
-          date.local();
-        } else {
+        if (!(value === 'UTC' || value === null)) {
           throw new InvalidDateAdapterError(
             `DayjsDateAdapter only supports "UTC" and undefined ` +
             `(local) timezones but "${value}" was provided. ` +
@@ -121,7 +115,8 @@ export class DayjsDateAdapter extends DateAdapterBase {
           );
         }
 
-        return new DayjsDateAdapter(date, {
+        // dayjs is immutable
+        return new DayjsDateAdapter(value === 'UTC' ? this._date.utc() : this._date.local(), {
           duration: this.duration,
           generators: this.generators,
         });
@@ -141,10 +136,6 @@ export class DayjsDateAdapter extends DateAdapterBase {
 
   valueOf(): number {
     return this._date.valueOf();
-  }
-
-  toISOString(): string {
-    return this._date.toISOString();
   }
 
   toJSON(): DateAdapter.JSON {

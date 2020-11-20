@@ -1,5 +1,4 @@
-import '@js-joda/timezone';
-import '@rschedule/joda-date-adapter/setup';
+import './test-setup';
 import tests from '../../json-tools/tests/json-tools-test-setup';
 
 tests();

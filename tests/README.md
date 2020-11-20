@@ -1,1 +1,0 @@
-Note, this folder does not contain all of the tests in this repo. I'm slowly moving tests out of this folder and into the appropriate package (to live next to the files being tested).

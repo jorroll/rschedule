@@ -131,10 +131,6 @@ export class LuxonDateAdapter extends DateAdapterBase {
     return this.date.valueOf();
   }
 
-  toISOString(): string {
-    return this.date.toUTC().toISO();
-  }
-
   toJSON(): DateAdapter.JSON {
     const json: DateAdapter.JSON = {
       timezone: this.timezone,

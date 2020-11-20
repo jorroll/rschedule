@@ -124,10 +124,6 @@ export class MomentTZDateAdapter extends DateAdapterBase {
     return this._date.valueOf();
   }
 
-  toISOString(): string {
-    return this._date.toISOString();
-  }
-
   toJSON(): DateAdapter.JSON {
     const json: DateAdapter.JSON = {
       timezone: this.timezone,
