@@ -9,7 +9,7 @@
   "scripts": {
     "postinstall": "rm -rf node_modules/@rschedule",
     "pub": "yarn test && yarn lerna version && yarn build && yarn lerna publish from-git --yes --contents build",
-    "pubcanary": "yarn test && yarn lerna version --preid next -c && yarn build && yarn lerna publish from-git --yes --contents build",
+    "pubcanary": "yarn test && yarn lerna version --preid next -c && yarn build && yarn lerna publish from-git --yes --dist-tag next --contents build",
     "prebuild": "yarn --cwd='./packages/core' build",
     "build": "run-s build:*",
     "build:ical-tools": "yarn --cwd='./packages/ical-tools' build",
