@@ -276,9 +276,10 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
       add(this.rdates),
       subtract(this.exdates),
       unique(),
-    ].reduce((prev, curr) => curr({ base: prev, timezone: this.timezone }), undefined as
-      | OccurrenceGenerator
-      | undefined) as OccurrenceGenerator;
+    ].reduce(
+      (prev, curr) => curr({ base: prev, timezone: this.timezone }),
+      undefined as OccurrenceGenerator | undefined,
+    ) as OccurrenceGenerator;
   }
 
   add(prop: 'rrule' | 'exrule', value: RRule): VEvent<Data>;
@@ -381,6 +382,8 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
           return this;
         }
 
+        rrules = this.rrules.map(rrule => rrule.set('start', newStart));
+        exrules = this.exrules.map(rrule => rrule.set('start', newStart));
         start = newStart;
         break;
       }
