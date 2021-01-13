@@ -2,7 +2,8 @@ import { DateAdapter, DateAdapterBase } from '@rschedule/core';
 
 import { context, dateAdapterFn, TIMEZONES, toISOStrings } from '../../../tests/utilities';
 
-import { VEvent } from '@rschedule/ical-tools';
+import { VEvent, RRule } from '@rschedule/ical-tools';
+import { Dates } from '@rschedule/core/generators';
 
 export default function veventTests() {
   function testOccurrences(name: string, schedule: VEvent, expectation: DateAdapter[]) {
@@ -61,7 +62,9 @@ export default function veventTests() {
 
   describe('VEvent', () => {
     context(DateAdapterBase.adapter.name, () => {
-      // const timezones: (string | null)[] = !DateAdapterBase.adapter.hasTimezoneSupport ? ['UTC'] : ['UTC'];
+      // const timezones: (string | null)[] = !DateAdapterBase.adapter.hasTimezoneSupport
+      //   ? ['UTC']
+      //   : ['UTC'];
 
       const timezones = !DateAdapterBase.adapter.hasTimezoneSupport ? [null, 'UTC'] : TIMEZONES;
 
@@ -72,6 +75,150 @@ export default function veventTests() {
           describe('VEventClass', () => {
             it('is instantiable', () => {
               expect(new VEvent({ start: dateAdapter() })).toBeInstanceOf(VEvent);
+            });
+          });
+
+          describe('set', () => {
+            let vEvent: VEvent;
+
+            beforeEach(() => {
+              vEvent = new VEvent({
+                start: dateAdapter(2012, 5, 24),
+                rrules: [
+                  {
+                    frequency: 'WEEKLY',
+                    end: dateAdapter(2012, 6, 30),
+                  },
+                ],
+              });
+            });
+
+            it('timezone', () => {
+              expect(vEvent.timezone).toEqual(timezone);
+
+              for (const rule of vEvent.rrules) {
+                expect(rule.timezone).toEqual(timezone);
+              }
+
+              const newTimezone = 'UTC';
+
+              vEvent = vEvent.set('timezone', newTimezone);
+
+              expect(vEvent.timezone).toEqual(newTimezone);
+
+              for (const rule of vEvent.rrules) {
+                expect(rule.timezone).toEqual(newTimezone);
+              }
+            });
+
+            it('start', () => {
+              const start = dateAdapter(2012, 5, 24);
+
+              expect(vEvent.start).toEqual(start);
+
+              for (const rule of vEvent.rrules) {
+                expect(rule.options.start).toEqual(start);
+              }
+
+              const newStart = dateAdapter(2012, 6, 10);
+
+              vEvent = vEvent.set('start', newStart);
+
+              expect(vEvent.start).toEqual(newStart);
+
+              for (const rule of vEvent.rrules) {
+                expect(rule.options.start).toEqual(newStart);
+              }
+            });
+
+            it('rrules', () => {
+              expect(vEvent.rrules).toEqual([
+                new RRule({
+                  start: dateAdapter(2012, 5, 24),
+                  frequency: 'WEEKLY',
+                  end: dateAdapter(2012, 6, 30),
+                }),
+              ]);
+
+              expect(() => {
+                vEvent.set('rrules', [
+                  new RRule({
+                    start: dateAdapter(2011, 1, 3),
+                    frequency: 'DAILY',
+                  }),
+                ]);
+              }).toThrow();
+
+              const rrules = [
+                new RRule({
+                  start: dateAdapter(2012, 5, 24),
+                  frequency: 'DAILY',
+                }),
+                new RRule({
+                  start: dateAdapter(2012, 5, 24),
+                  frequency: 'WEEKLY',
+                  end: dateAdapter(2012, 6, 30),
+                }),
+              ];
+
+              vEvent = vEvent.set('rrules', rrules);
+
+              expect(vEvent.rrules).toEqual(rrules);
+            });
+
+            it('exrules', () => {
+              expect(vEvent.exrules).toEqual([]);
+
+              expect(() => {
+                vEvent.set('exrules', [
+                  new RRule({
+                    start: dateAdapter(2011, 1, 3),
+                    frequency: 'DAILY',
+                  }),
+                ]);
+              }).toThrow();
+
+              const exrules = [
+                new RRule({
+                  start: dateAdapter(2012, 5, 24),
+                  frequency: 'DAILY',
+                }),
+                new RRule({
+                  start: dateAdapter(2012, 5, 24),
+                  frequency: 'WEEKLY',
+                  end: dateAdapter(2012, 6, 30),
+                }),
+              ];
+
+              vEvent = vEvent.set('exrules', exrules);
+
+              expect(vEvent.exrules).toEqual(exrules);
+            });
+
+            it('rdates', () => {
+              expect(vEvent.rdates).toEqual(new Dates({ timezone }));
+
+              const rdates = new Dates({
+                dates: [dateAdapter(2015, 1, 12)],
+                timezone,
+              });
+
+              vEvent = vEvent.set('rdates', rdates);
+
+              expect(vEvent.rdates).toEqual(rdates);
+            });
+
+            it('exdates', () => {
+              expect(vEvent.exdates).toEqual(new Dates({ timezone }));
+
+              const exdates = new Dates({
+                dates: [dateAdapter(2015, 1, 12)],
+                timezone,
+              });
+
+              vEvent = vEvent.set('exdates', exdates);
+
+              expect(vEvent.exdates).toEqual(exdates);
             });
           });
 
