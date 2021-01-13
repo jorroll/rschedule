@@ -6,6 +6,12 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.2.4 FIX (2021/1/12)
+
+## Fixes
+
+- Ensure `VEvent#set('start', )` also updates rrules/exrules (issue [#56](https://gitlab.com/john.carroll.p/rschedule/-/issues/56)).
+
 ## 1.2.3 FIX (2020/11/19)
 
 ## Fixes
