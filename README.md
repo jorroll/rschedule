@@ -76,11 +76,7 @@ const dates = new Dates({
 });
 
 rule
-  .pipe(
-    add(secondRule),
-    subtract(dates),
-    unique(),
-  )
+  .pipe(add(secondRule), subtract(dates), unique())
   .occursOn({ weekday: 'MO', before: new Date(2013, 10, 15) }); // true
 ```
 
@@ -117,9 +113,9 @@ rule
 
 ## About
 
-The library, itself, has been created from scratch by me, John Carroll. Most of the RRULE tests were taken from the excellent [rrule.js](https://github.com/jakubroztocil/rrule) library (which were, themselves, taken from a python library, I believe).
+See the [contributors list](https://gitlab.com/john.carroll.p/rschedule/-/graphs/master) for an up-to-date record of contributions to this repo. The initial version of rSchedule was created by [John Carroll](https://gitlab.com/john.carroll.p). Most of the RRULE tests were taken from the excellent [rrule.js](https://github.com/jakubroztocil/rrule) library (which were, themselves, taken from a python library, I believe).
 
-This library was built using the [typescript starter repo](https://github.com/bitjson/typescript-starter). My implementation strategy has drawn inspiration from the [Angular Material2](https://github.com/angular/material2) Date Picker component (which makes use of date adapters to support different javascript date libraries), as well as [rrulejs](https://github.com/jakubroztocil/rrule) and [ice_cube](https://github.com/seejohnrun/ice_cube).
+This library was built using the [typescript starter repo](https://github.com/bitjson/typescript-starter). The implementation strategy drew inspiration from the [Angular Material2](https://github.com/angular/material2) Date Picker component (which makes use of date adapters to support different javascript date libraries), as well as [rrulejs](https://github.com/jakubroztocil/rrule) and [ice_cube](https://github.com/seejohnrun/ice_cube).
 
 _This project is not affiliated with any of these projects._
 
