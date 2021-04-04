@@ -224,13 +224,13 @@ export function parseDURATION(input: IJCalProperty): number {
   if (match) days = parseInt(match[0].match(/\d+/)![0], 10);
 
   if (time) {
-    time.match(/\d+[Hh]/);
+    match = time.match(/\d+[Hh]/);
     if (match) hours = parseInt(match[0].match(/\d+/)![0], 10);
 
-    time.match(/\d+[Mm]/);
+    match = time.match(/\d+[Mm]/);
     if (match) minutes = parseInt(match[0].match(/\d+/)![0], 10);
 
-    time.match(/\d+[Ss]/);
+    match = time.match(/\d+[Ss]/);
     if (match) seconds = parseInt(match[0].match(/\d+/)![0], 10);
   }
 

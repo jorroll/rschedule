@@ -1,7 +1,6 @@
-import { DateAdapter, DateAdapterBase, DateTime } from '@rschedule/core';
-
 import { context, dateAdapterFn, test, TIMEZONES } from '@local-tests/utilities';
-
+import { DateAdapter, DateAdapterBase, DateTime } from '@rschedule/core';
+import { IRRuleOptions, VEvent } from '@rschedule/ical-tools';
 import {
   parseBYDAY,
   parseBYHOUR,
@@ -10,15 +9,12 @@ import {
   parseBYMONTHDAY,
   parseBYSECOND,
   parseCOUNT,
+  parseDURATION,
   parseINTERVAL,
   parseUNTIL,
-  parseWKST,
+  parseWKST
 } from '../src/parser';
-
-import { IRRuleOptions, VEvent } from '@rschedule/ical-tools';
-
 import { dateTimeToJCal, IJCalProperty, ruleOptionsToJCalProp } from '../src/serializer';
-
 import { serializeToJCal } from '../src/vevent';
 
 function toTwoCharString(int: number) {
@@ -386,6 +382,39 @@ export default function icalTests() {
 
             test([1, 3], text => {
               expect(() => parseWKST(text as any)).toThrowError(`Invalid WKST value "${text}"`);
+            });
+          });
+        });
+
+        describe('parseDURATION()', () => {
+          describe('VALID', () => {
+            test('PT1H', text => {
+              expect(parseDURATION(['', {}, 'duration', 'PT1H'])).toEqual(
+                DateAdapter.MILLISECONDS_IN_HOUR,
+              );
+            });
+            test('PT1H30M', text => {
+              expect(parseDURATION(['', {}, 'duration', 'PT1H30M'])).toEqual(
+                DateAdapter.MILLISECONDS_IN_HOUR * 1.5,
+              );
+            });
+            test('P1DT1H', text => {
+              expect(parseDURATION(['', {}, 'duration', 'P1DT1H'])).toEqual(
+                DateAdapter.MILLISECONDS_IN_DAY + DateAdapter.MILLISECONDS_IN_HOUR,
+              );
+            });
+            test('P1W1DT2H', text => {
+              expect(parseDURATION(['', {}, 'duration', 'P1W1DT2H'])).toEqual(
+                DateAdapter.MILLISECONDS_IN_WEEK +
+                  DateAdapter.MILLISECONDS_IN_DAY +
+                  DateAdapter.MILLISECONDS_IN_HOUR * 2,
+              );
+            });
+          });
+
+          describe('INVALID', () => {
+            test('1F', text => {
+              expect(parseDURATION(['', {}, 'duration', '1F'])).toEqual(0);
             });
           });
         });
