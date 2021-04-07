@@ -82,13 +82,13 @@ rule
 
 ## Docs
 
-- [Version 1.x docs (current)](https://gitlab.com/john.carroll.p/rschedule/tree/v1/docs)
+- [Version 1.x docs (current)](https://dynodocs.dev/gitlab/john.carroll.p/rschedule/branch/v1/docs/1.%20Introduction.md)
 - [Version 0.12 docs](https://gitlab.com/john.carroll.p/rschedule/tree/v0.12/docs)
 - [Version 0.11 docs](https://gitlab.com/john.carroll.p/rschedule/tree/v0.11/docs)
 - [Version 0.10 docs](https://gitlab.com/john.carroll.p/rschedule/tree/f46bf244370dd476633b944e424096a6ae629305/docs)
 - [Version 0.9 docs](https://gitlab.com/john.carroll.p/rschedule/tree/a80b576c981570710def8f83575a4932b12f8f34/docs)
 
-[Master branch docs (unreleased)](https://gitlab.com/john.carroll.p/rschedule/tree/master/docs)
+[Master branch docs (unreleased)](https://dynodocs.dev/gitlab/john.carroll.p/rschedule/branch/master/docs/1.%20Introduction.md)
 
 ## Known Limitations
 
