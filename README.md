@@ -4,6 +4,8 @@
 
 ### [View docs](#docs)
 
+_The canonical version of this repo is hosted on [Gitlab](https://gitlab.com/john.carroll.p/rschedule), but there is also a [Github mirror](https://github.com/jorroll/rschedule). Issues and merge requests should be created in the [Gitlab repo](https://gitlab.com/john.carroll.p/rschedule)._
+
 A javascript library, written in typescript, for working with recurring dates. The library is "date agnostic" and usable with `Date`, [Moment](https://momentjs.com), [luxon](https://moment.github.io/luxon/), [dayjs](https://day.js.org/), or [js-joda](https://github.com/js-joda/js-joda) objects. If your chosen date library supports time zones, rSchedule supports time zones. All objects in rSchedule are immutable. rSchedule supports creating schedules with durations. rSchedule is modular, tree-shakable, and extensible. It supports JSON and [ICAL](https://tools.ietf.org/html/rfc5545) serialization as well as custom recurrence rules.
 
 ```bash
