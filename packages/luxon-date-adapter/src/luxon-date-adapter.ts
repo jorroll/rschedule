@@ -6,7 +6,7 @@ import {
   InvalidDateAdapterError,
 } from '@rschedule/core';
 
-import { DateTime as LuxonDateTime, LocalZone } from 'luxon';
+import { DateTime as LuxonDateTime, SystemZone } from 'luxon';
 
 /**
  * The `LuxonDateAdapter` is a DateAdapter for `luxon` DateTime
@@ -40,17 +40,21 @@ export class LuxonDateAdapter extends DateAdapterBase {
     const zone = json.timezone === null ? 'local' : json.timezone === 'UTC' ? 'utc' : json.timezone;
 
     return new LuxonDateAdapter(
-      LuxonDateTime.fromObject({
-        zone,
-        year: json.year,
-        month: json.month,
-        day: json.day,
-        hour: json.hour,
-        minute: json.minute,
-        second: json.second,
-        millisecond: json.millisecond,
-      }),
-      { duration: json.duration },
+      LuxonDateTime.fromObject(
+        {
+          year: json.year,
+          month: json.month,
+          day: json.day,
+          hour: json.hour,
+          minute: json.minute,
+          second: json.second,
+          millisecond: json.millisecond,
+        },
+        { zone },
+      ),
+      {
+        duration: json.duration,
+      },
     );
   }
 
@@ -81,7 +85,7 @@ export class LuxonDateAdapter extends DateAdapterBase {
     super(undefined, options);
 
     this.date = date;
-    this.timezone = date.zone instanceof LocalZone ? null : date.zoneName;
+    this.timezone = date.zone instanceof SystemZone ? null : date.zoneName;
 
     this.assertIsValid();
   }

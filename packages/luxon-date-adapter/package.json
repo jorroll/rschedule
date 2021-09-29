@@ -33,7 +33,7 @@
   },
   "peerDependencies": {
     "@rschedule/core": "^1.0.0",
-    "luxon": "^1.3.3"
+    "luxon": "^2.0.2"
   },
   "devDependencies": {
     "rollup": "^1.7.4",
