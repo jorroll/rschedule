@@ -37,7 +37,8 @@ export class LuxonDateAdapter extends DateAdapterBase {
   }
 
   static fromJSON(json: DateAdapter.JSON): LuxonDateAdapter {
-    const zone = json.timezone === null ? 'local' : json.timezone === 'UTC' ? 'utc' : json.timezone;
+    const zone =
+      json.timezone === null ? 'system' : json.timezone === 'UTC' ? 'utc' : json.timezone;
 
     return new LuxonDateAdapter(
       LuxonDateTime.fromObject(
