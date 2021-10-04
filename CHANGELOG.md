@@ -6,6 +6,13 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.3.0 FEATURE (2021/10/3)
+
+### Feature
+
+- `@rschedule/luxon-date-adapter` support both luxon `v1.x` and `v2.x`. If you want to use rSchedule with luxon v2, you can do so with the new `v2` entrypoint in the `@rschedule/luxon-date-adapter` package.
+  - e.g. `import "@rschedule/luxon-date-adapter/v2/setup"`
+
 ## 1.2.4 FIX (2021/1/12)
 
 ## Fixes
