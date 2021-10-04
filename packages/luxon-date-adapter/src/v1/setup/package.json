@@ -1,7 +1,6 @@
 {
-  "name": "@rschedule/luxon-date-adapter/setup",
+  "name": "@rschedule/luxon-date-adapter/v1/setup",
   "main": "../umd/v1-setup.js",
   "module": "../es2015/v1-setup.js",
-  "types": "../v1/setup/index.d.ts",
   "sideEffects": true
 }

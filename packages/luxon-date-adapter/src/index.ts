@@ -1,1 +1,1 @@
-export { LuxonDateAdapter } from './luxon-date-adapter';
+export * from './v1/index';

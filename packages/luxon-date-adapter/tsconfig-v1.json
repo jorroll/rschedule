@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "outDir": "build/umd",
+    "declarationDir": "build/umd"
+  },
+  "files": ["./src/v1/index.ts", "./src/v1/setup/index.ts"]
+}

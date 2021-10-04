@@ -18,11 +18,14 @@
     "typescript"
   ],
   "sideEffects": [
-    "./umd/setup.js",
-    "./es2015/setup.js"
+    "./umd/v1-setup.js",
+    "./es2015/v1-setup.js",
+    "./umd/v2-setup.js",
+    "./es2015/v2-setup.js"
   ],
-  "main": "./umd/main.js",
-  "module": "./es2015/main.js",
+  "main": "./umd/v1-main.js",
+  "module": "./es2015/v1-main.js",
+  "types": "../v1/index.d.ts",
   "engines": {
     "node": ">=8.9"
   },
@@ -33,7 +36,7 @@
   },
   "peerDependencies": {
     "@rschedule/core": "^1.0.0",
-    "luxon": "^1.3.3"
+    "luxon": "^1.3.3 || ^2.0.2"
   },
   "devDependencies": {
     "rollup": "^1.7.4",
