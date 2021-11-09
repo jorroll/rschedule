@@ -6,6 +6,12 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.3.1 FIX (2021/11/9)
+
+### Fix
+
+- `@rschedule/luxon-date-adapter` fix typo in `@rschedule/luxon-date-adapter/v1/setup` and `@rschedule/luxon-date-adapter/v2/setup` package.json files
+
 ## 1.3.0 FEATURE (2021/10/3)
 
 ### Feature
