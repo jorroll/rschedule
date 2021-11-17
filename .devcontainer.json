@@ -1,8 +1,8 @@
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.122.1/containers/typescript-node-12
 {
-  "name": "Node.js 12 & TypeScript",
-  "dockerFile": "Dockerfile",
+  "name": "rSchedule",
+  "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:16-bullseye",
 
   // Set *default* container specific settings.json values on container create.
   "settings": {
