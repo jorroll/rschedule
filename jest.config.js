@@ -1,3 +1,5 @@
+/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
+
 module.exports = {
   // testRegex: '(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$',
   moduleDirectories: ['node_modules'],
@@ -47,7 +49,7 @@ module.exports = {
   },
   globals: {
     'ts-jest': {
-      tsConfig: 'tsconfig.jest.json',
+      tsconfig: 'tsconfig.jest.json',
     },
   },
   preset: 'ts-jest',

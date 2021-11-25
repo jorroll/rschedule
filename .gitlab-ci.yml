@@ -6,7 +6,7 @@ stages:
 # coverage: '/All\sfiles.*?\s+(\d+.\d+)/'
 
 build:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: build
   cache:
     untracked: true
@@ -15,7 +15,7 @@ build:
     - yarn install
 
 core:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -24,7 +24,7 @@ core:
     - TZ='America/Los_Angeles' yarn test:core
 
 dayjs_date_adapter:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -33,7 +33,7 @@ dayjs_date_adapter:
     - TZ='America/Los_Angeles' yarn test:dayjs-date-adapter
 
 joda_date_adapter:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -42,7 +42,7 @@ joda_date_adapter:
     - TZ='America/Los_Angeles' yarn test:joda-date-adapter
 
 luxon_date_adapter:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -51,7 +51,7 @@ luxon_date_adapter:
     - TZ='America/Los_Angeles' yarn test:luxon-date-adapter
 
 moment_date_adapter:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -60,7 +60,7 @@ moment_date_adapter:
     - TZ='America/Los_Angeles' yarn test:moment-date-adapter
 
 recurrence_rules_resolver:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -69,7 +69,7 @@ recurrence_rules_resolver:
     - TZ='America/Los_Angeles' yarn test:recurrence-rules-resolver
 
 standard_date_adapter:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -78,7 +78,7 @@ standard_date_adapter:
     - TZ='America/Los_Angeles' yarn test:standard-date-adapter
 
 UTC:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -87,7 +87,7 @@ UTC:
     - TZ='UTC' yarn test:moment-tz-date-adapter
 
 Africa/Johannesburg:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -96,7 +96,7 @@ Africa/Johannesburg:
     - TZ='Africa/Johannesburg' yarn test:moment-tz-date-adapter
 
 America/Los_Angeles:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -105,7 +105,7 @@ America/Los_Angeles:
     - TZ='America/Los_Angeles' yarn test:moment-tz-date-adapter
 
 America/New_York:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -114,7 +114,7 @@ America/New_York:
     - TZ='America/New_York' yarn test:moment-tz-date-adapter
 
 America/Santiago:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -123,7 +123,7 @@ America/Santiago:
     - TZ='America/Santiago' yarn test:moment-tz-date-adapter
 
 Europe/London:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -132,7 +132,7 @@ Europe/London:
     - TZ='Europe/London' yarn test:moment-tz-date-adapter
 
 Asia/Shanghai:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -141,7 +141,7 @@ Asia/Shanghai:
     - TZ='Asia/Shanghai' yarn test:moment-tz-date-adapter
 
 Asia/Jakarta:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
@@ -150,7 +150,7 @@ Asia/Jakarta:
     - TZ='Asia/Jakarta' yarn test:moment-tz-date-adapter
 
 Australia/Melbourne:
-  image: node:12.16.3-alpine
+  image: node:16-alpine
   stage: test
   cache:
     untracked: true
