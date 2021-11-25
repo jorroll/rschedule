@@ -4,6 +4,7 @@ import { context, dateAdapterFn, TIMEZONES, toISOStrings } from '../../../tests/
 
 import { VEvent, RRule } from '@rschedule/ical-tools';
 import { Dates } from '@rschedule/core/generators';
+import MockDate from 'mockdate';
 
 export default function veventTests() {
   function testOccurrences(name: string, schedule: VEvent, expectation: DateAdapter[]) {
@@ -219,6 +220,50 @@ export default function veventTests() {
               vEvent = vEvent.set('exdates', exdates);
 
               expect(vEvent.exdates).toEqual(exdates);
+            });
+          });
+
+          describe('specific bugs', () => {
+            describe.skip('generates an RFC-compliant occurrence of an event in the BST->GMT boundary when generating it at a local time', () => {
+              /**
+               * This test was added in response to https://gitlab.com/john.carroll.p/rschedule/-/issues/66.
+               * It appears to be a bug with the Luxon library and not with rSchedule based solely off the fact that
+               * moment-timezone and js-joda are not affected. Since work was put into adding the test, I'm going to keep it
+               * but skip it because the LuxonDateAdapter is currently failing.
+               */
+              function runTest() {
+                if (!DateAdapterBase.adapter.hasTimezoneSupport) return;
+
+                const start = dateAdapter(2021, 10, 30, 23, { timezone: 'UTC' });
+                const end = dateAdapter(2021, 10, 31, 23, 59, 59, 999, { timezone: 'UTC' });
+
+                const vEvent =
+                  'BEGIN:VEVENT\n' +
+                  'DTSTART;TZID=Europe/London:20210628T014500\n' +
+                  'DTEND;TZID=Europe/London:20210628T020000\n' +
+                  'RRULE:FREQ=DAILY\n' +
+                  'END:VEVENT';
+
+                const parsed = VEvent.fromICal(vEvent)[0];
+
+                const occurrences = parsed.occurrences({ start, end }).toArray();
+
+                expect(occurrences[0].toISOString()).toEqual(
+                  dateAdapter(2021, 10, 31, 0, 45, { timezone: 'UTC' }).toISOString(),
+                );
+              }
+
+              it('before the change', () => {
+                MockDate.set(new Date(2021, 9, 31));
+                runTest();
+                MockDate.reset();
+              });
+
+              it('after the change', () => {
+                MockDate.set(new Date(2021, 10, 1));
+                runTest();
+                MockDate.reset();
+              });
             });
           });
 
