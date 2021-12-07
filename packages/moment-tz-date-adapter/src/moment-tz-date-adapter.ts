@@ -19,7 +19,7 @@ export class MomentTZDateAdapter extends DateAdapterBase {
   static readonly hasTimezoneSupport = true;
 
   /**
-   * Checks if object is an instance of `DateTime`
+   * Checks if object is an instance of `Moment`
    */
   static isDate(object: any): object is moment.Moment {
     return moment.isMoment(object);
