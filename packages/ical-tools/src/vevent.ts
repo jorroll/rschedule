@@ -38,6 +38,10 @@ export class VEvent<Data = any> extends ScheduleBase<Data> {
     return parseICal(iCal).vEvents;
   }
 
+  static fromJCal(jCal: IJCalComponent | IJCalComponent[]): VEvent<{ jCal: IJCalComponent }>[] {
+    return parseJCal(jCal).vEvents.map(args => new VEvent(args));
+  }
+
   // For some reason, error is thrown if typed as `readonly Rule[]`
   readonly rrules: ReadonlyArray<RRule> = [];
   readonly exrules: ReadonlyArray<RRule> = [];
