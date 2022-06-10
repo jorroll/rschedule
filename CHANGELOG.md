@@ -6,6 +6,12 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.4.0 FEATURE (2022/6/9)
+
+### Feature
+
+- `@rschedule/ical-tools` Add `VEvent.fromJCal()` static method. See [#70](https://gitlab.com/john.carroll.p/rschedule/-/issues/70) for additional information. I don't expect many people to benefit from this.
+
 ## 1.3.1 FIX (2021/11/9)
 
 ### Fix
