@@ -101,6 +101,13 @@ export abstract class DateAdapterBase {
   // get typed as `never`). This would prevent passing a variable to `Calendar#schedules`.
   readonly generators: ReadonlyArray<unknown>;
 
+  /**
+   * The metadata property is intended to store arbitrary data
+   * related to this DateAdapter. Unlike other properties, the
+   * metadata property is intended to be mutable.
+   */
+  readonly metadata: Record<string | symbol, any> = {};
+
   protected constructor(
     _date: unknown,
     options?: { duration?: number; generators?: ReadonlyArray<unknown> },
@@ -131,7 +138,12 @@ export abstract class DateAdapterBase {
   }
 
   toDateTime(): DateTime {
-    const date = DateTime.fromJSON({ ...this.toJSON(), generators: this.generators });
+    const date = DateTime.fromJSON({
+      ...this.toJSON(),
+      generators: this.generators,
+      metadata: this.metadata,
+    });
+
     return date;
   }
 
@@ -176,6 +188,7 @@ export namespace DateAdapter {
     minute: number;
     second: number;
     millisecond: number;
+    metadata?: Record<string | symbol, unknown>;
   }
 
   export type Year = number;
@@ -327,7 +340,12 @@ export class DateTime {
   //   return !!(object && object[DATETIME_ID]);
   // }
 
-  static fromJSON(json: DateAdapter.JSON & { generators?: ReadonlyArray<unknown> }): DateTime {
+  static fromJSON(
+    json: DateAdapter.JSON & {
+      generators?: ReadonlyArray<unknown>;
+      metadata?: Record<string | symbol, unknown>;
+    },
+  ): DateTime {
     const date = new Date(
       Date.UTC(
         json.year,
@@ -340,12 +358,20 @@ export class DateTime {
       ),
     );
 
-    return new DateTime(date, json.timezone, json.duration, json.generators);
+    return new DateTime(date, json.timezone, json.duration, json.generators, {
+      metadata: json.metadata,
+    });
   }
 
   static fromDateAdapter(adapter: DateAdapter): DateTime {
-    return DateTime.fromJSON({ ...adapter.toJSON(), generators: adapter.generators });
+    return DateTime.fromJSON({
+      ...adapter.toJSON(),
+      generators: adapter.generators,
+      metadata: adapter.metadata,
+    });
   }
+
+  readonly metadata: Record<string | symbol, unknown> = {};
 
   readonly date: Date;
 
@@ -375,6 +401,7 @@ export class DateTime {
     timezone?: string | null,
     duration?: number,
     generators?: ReadonlyArray<unknown>,
+    options: { metadata?: Record<string | symbol, unknown> } = {},
   ) {
     this.date = new Date(date);
     this.timezone = timezone || null;
@@ -383,6 +410,10 @@ export class DateTime {
 
     if (!Number.isInteger(this.duration) || this.duration < 0) {
       throw new InvalidDateTimeError('duration must be a non-negative integer');
+    }
+
+    if (options.metadata) {
+      Object.assign(this.metadata, options.metadata);
     }
 
     this.assertIsValid();

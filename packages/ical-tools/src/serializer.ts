@@ -17,6 +17,18 @@ export interface IJCalComponent {
   [2]: IJCalComponent[];
 }
 
+export const DATE_ADAPTER_METADATA_KEY = '@rschedule/ical-tools';
+
+export interface IICalToolsMetadata {
+  isICalType?: 'date-time' | 'date';
+}
+
+function doesMetadataContainICalToolsData(
+  metadata: Record<string | symbol, unknown>,
+): metadata is { [DATE_ADAPTER_METADATA_KEY]: IICalToolsMetadata } {
+  return typeof metadata[DATE_ADAPTER_METADATA_KEY] === 'object';
+}
+
 /**
  * Serializes an array of date adapters into JCal format.
  *
@@ -41,7 +53,12 @@ export function datesToJCalProps(type: 'RDATE' | 'EXDATE', dates: Dates): IJCalP
       }
     })
     .forEach(date => {
-      const timezone = date.timezone || 'local';
+      const dateType =
+        (doesMetadataContainICalToolsData(date.metadata) &&
+          date.metadata[DATE_ADAPTER_METADATA_KEY].isICalType) ||
+        'date-time';
+
+      const timezone = dateType === 'date' ? 'DATE' : date.timezone || 'LOCAL';
 
       if (!timezones.has(timezone)) {
         timezones.set(timezone, []);
@@ -53,7 +70,9 @@ export function datesToJCalProps(type: 'RDATE' | 'EXDATE', dates: Dates): IJCalP
   const result: Array<[string, {} | { tzid: string }, string, ...string[]]> = [];
 
   for (const [timezone, dateStrings] of timezones) {
-    if (timezone === 'local' || timezone === 'UTC') {
+    if (timezone === 'DATE') {
+      result.push([type.toLowerCase(), {}, 'date', ...dateStrings]);
+    } else if (timezone === 'LOCAL' || timezone === 'UTC') {
       result.push([type.toLowerCase(), {}, 'date-time', ...dateStrings]);
     } else {
       result.push([type.toLowerCase(), { tzid: timezone }, 'date-time', ...dateStrings]);
@@ -163,15 +182,15 @@ function serializeByDayOfWeek(arg: RuleOption.ByDayOfWeek): string {
 
 export function dateToJCalDTSTART(
   date: DateTime,
-): ['dtstart', { tzid?: string }, 'date-time', string] {
+): ['dtstart', { tzid?: string }, 'date-time' | 'date', string] {
+  const type =
+    (doesMetadataContainICalToolsData(date.metadata) &&
+      date.metadata[DATE_ADAPTER_METADATA_KEY].isICalType) ||
+    'date-time';
+
   const timezone = date.timezone || 'UTC';
 
-  return [
-    'dtstart',
-    timezone !== 'UTC' ? { tzid: timezone } : {},
-    'date-time',
-    dateTimeToJCal(date),
-  ];
+  return ['dtstart', timezone !== 'UTC' ? { tzid: timezone } : {}, type, dateTimeToJCal(date)];
 }
 
 export function dateToJCalDTEND(
@@ -182,15 +201,18 @@ export function dateToJCalDTEND(
     {
       tzid?: string;
     },
-    'date-time',
+    'date-time' | 'date',
     string,
   ]
 > {
+  const type =
+    (doesMetadataContainICalToolsData(date.metadata) &&
+      date.metadata[DATE_ADAPTER_METADATA_KEY].isICalType) ||
+    'date-time';
+
   const timezone = date.timezone || 'UTC';
 
-  return [
-    ['dtend', timezone !== 'UTC' ? { tzid: timezone } : {}, 'date-time', dateTimeToJCal(date)],
-  ];
+  return [['dtend', timezone !== 'UTC' ? { tzid: timezone } : {}, type, dateTimeToJCal(date)]];
 }
 
 export function numberToJCalDURATION(
@@ -233,6 +255,13 @@ export function dateTimeToJCal(input: DateTime): string {
     input.get('minute'),
     input.get('second'),
   ].map(int => normalizeTimeLength(int));
+
+  if (
+    doesMetadataContainICalToolsData(input.metadata) &&
+    input.metadata[DATE_ADAPTER_METADATA_KEY].isICalType === 'date'
+  ) {
+    return `${ints[0]}-${ints[1]}-${ints[2]}`;
+  }
 
   let text = `${ints[0]}-${ints[1]}-${ints[2]}T` + `${ints[3]}:${ints[4]}:${ints[5]}`;
 

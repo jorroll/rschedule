@@ -41,11 +41,15 @@ export class MomentDateAdapter extends DateAdapterBase {
       json.millisecond,
     ];
 
+    let date: MomentDateAdapter;
+
     switch (json.timezone) {
       case 'UTC':
-        return new MomentDateAdapter(moment.utc(args), { duration: json.duration });
+        date = new MomentDateAdapter(moment.utc(args), { duration: json.duration });
+        break;
       case null:
-        return new MomentDateAdapter(moment(args), { duration: json.duration });
+        date = new MomentDateAdapter(moment(args), { duration: json.duration });
+        break;
       default:
         throw new InvalidDateAdapterError(
           'The `MomentDateAdapter` only supports datetimes in ' +
@@ -55,11 +59,20 @@ export class MomentDateAdapter extends DateAdapterBase {
             'with the `moment-timezone` package installed.',
         );
     }
+
+    if (json.metadata) {
+      Object.assign(date.metadata, json.metadata);
+    }
+
+    return date;
   }
 
   static fromDateTime(datetime: DateTime): MomentDateAdapter {
     const date = MomentDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
+    if (datetime.metadata) {
+      Object.assign(date.metadata, datetime.metadata);
+    }
     return date;
   }
 
@@ -74,12 +87,20 @@ export class MomentDateAdapter extends DateAdapterBase {
 
   constructor(
     date: moment.Moment,
-    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+    options: {
+      duration?: number;
+      generators?: ReadonlyArray<unknown>;
+      metadata?: DateAdapterBase['metadata'];
+    } = {},
   ) {
     super(undefined, options);
 
     this._date = date.clone();
     this.timezone = date.isUTC() ? 'UTC' : null;
+
+    if (options.metadata) {
+      Object.assign(this.metadata, options.metadata);
+    }
 
     this.assertIsValid();
   }

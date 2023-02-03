@@ -1,6 +1,11 @@
 import { DateAdapter, DateAdapterBase, RuleOption } from '@rschedule/core';
 import { ICalRuleFrequency, IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES';
-import { IJCalComponent, IJCalProperty } from './serializer';
+import {
+  DATE_ADAPTER_METADATA_KEY,
+  IICalToolsMetadata,
+  IJCalComponent,
+  IJCalProperty,
+} from './serializer';
 
 export class ParseICalError extends Error {}
 
@@ -123,8 +128,6 @@ function parseJCalDateTime(input: IJCalProperty): DateAdapter.JSON[] {
     regex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/;
   } else if (type === 'date') {
     regex = /^(\d{4})-(\d{2})-(\d{2})/;
-  } else if (type === 'time') {
-    regex = /^(\d{2}):(\d{2}):(\d{2})/;
   } else {
     throw new ParseICalError(`Invalid date/time property value type "${type}".`);
   }
@@ -133,7 +136,7 @@ function parseJCalDateTime(input: IJCalProperty): DateAdapter.JSON[] {
     const match = value.match(regex);
 
     if (!(match && match.shift())) {
-      throw new ParseICalError(`Invalid date/time value "${input}"`);
+      throw new ParseICalError(`Invalid ${type} value "${input}"`);
     }
 
     const result: DateAdapter.JSON = {
@@ -141,14 +144,24 @@ function parseJCalDateTime(input: IJCalProperty): DateAdapter.JSON[] {
       year: parseInt(match[0], 10),
       month: parseInt(match[1], 10),
       day: parseInt(match[2], 10),
-      hour: parseInt(match[3], 10),
-      minute: parseInt(match[4], 10),
-      second: parseInt(match[5], 10),
+      hour: parseInt(match[3] || '0', 10),
+      minute: parseInt(match[4] || '0', 10),
+      second: parseInt(match[5] || '0', 10),
       millisecond: 0,
     };
 
     if (value[value.length - 1] === 'Z') {
       result.timezone = 'UTC';
+    }
+
+    if (type === 'date') {
+      const metadata: IICalToolsMetadata = {
+        isICalType: 'date',
+      };
+
+      result.metadata = {
+        [DATE_ADAPTER_METADATA_KEY]: metadata,
+      };
     }
 
     results.push(result);

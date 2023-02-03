@@ -1,6 +1,6 @@
 {
   "name": "@rschedule/json-tools",
-  "version": "1.2.3",
+  "version": "1.5.0",
   "description": "Utility functions for parsing/serializing rSchedule objects in JSON format.",
   "author": "John Carroll <john.carroll.p@gmail.com>",
   "homepage": "https://gitlab.com/john.carroll.p/rschedule",
@@ -27,7 +27,7 @@
     "clean:build": "rm -rf build && rm -rf .rpt2_cache"
   },
   "peerDependencies": {
-    "@rschedule/core": "^1.0.0"
+    "@rschedule/core": "^1.5.0"
   },
   "devDependencies": {
     "rollup": "^1.7.4",

@@ -32,18 +32,24 @@ export class StandardDateAdapter extends DateAdapterBase {
       json.millisecond,
     ];
 
+    let date: StandardDateAdapter;
+
     switch (json.timezone) {
       case 'UTC': {
-        return new StandardDateAdapter(new Date(Date.UTC(...args)), {
+        date = new StandardDateAdapter(new Date(Date.UTC(...args)), {
           timezone: 'UTC',
           duration: json.duration,
         });
+
+        break;
       }
       case null: {
-        return new StandardDateAdapter(new Date(...args), {
+        date = new StandardDateAdapter(new Date(...args), {
           timezone: null,
           duration: json.duration,
         });
+
+        break;
       }
       default:
         throw new InvalidDateAdapterError(
@@ -52,11 +58,20 @@ export class StandardDateAdapter extends DateAdapterBase {
             `with timezone "${json.timezone}".`,
         );
     }
+
+    if (json.metadata) {
+      Object.assign(date.metadata, json.metadata);
+    }
+
+    return date;
   }
 
   static fromDateTime(datetime: DateTime): StandardDateAdapter {
     const date = StandardDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
+    if (datetime.metadata) {
+      Object.assign(date.metadata, datetime.metadata);
+    }
     return date;
   }
 
@@ -75,6 +90,7 @@ export class StandardDateAdapter extends DateAdapterBase {
       timezone?: string | null;
       duration?: number;
       generators?: ReadonlyArray<unknown>;
+      metadata?: DateAdapterBase['metadata'];
     } = {},
   ) {
     super(undefined, options);
@@ -88,6 +104,10 @@ export class StandardDateAdapter extends DateAdapterBase {
 
     this._date = new Date(date);
     this.timezone = options.timezone !== undefined ? (options.timezone as 'UTC') : null;
+
+    if (options.metadata) {
+      Object.assign(this.metadata, options.metadata);
+    }
 
     this.assertIsValid();
   }

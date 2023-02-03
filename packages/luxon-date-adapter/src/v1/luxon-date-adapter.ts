@@ -39,7 +39,7 @@ export class LuxonDateAdapter extends DateAdapterBase {
   static fromJSON(json: DateAdapter.JSON): LuxonDateAdapter {
     const zone = json.timezone === null ? 'local' : json.timezone === 'UTC' ? 'utc' : json.timezone;
 
-    return new LuxonDateAdapter(
+    const date = new LuxonDateAdapter(
       LuxonDateTime.fromObject({
         zone,
         year: json.year,
@@ -52,6 +52,12 @@ export class LuxonDateAdapter extends DateAdapterBase {
       }),
       { duration: json.duration },
     );
+
+    if (json.metadata) {
+      Object.assign(date.metadata, json.metadata);
+    }
+
+    return date;
   }
 
   /**
@@ -66,6 +72,9 @@ export class LuxonDateAdapter extends DateAdapterBase {
   static fromDateTime(datetime: DateTime): LuxonDateAdapter {
     const date = LuxonDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
+    if (datetime.metadata) {
+      Object.assign(date.metadata, datetime.metadata);
+    }
     return date;
   }
 
@@ -76,12 +85,20 @@ export class LuxonDateAdapter extends DateAdapterBase {
 
   constructor(
     date: LuxonDateTime,
-    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+    options: {
+      duration?: number;
+      generators?: ReadonlyArray<unknown>;
+      metadata?: DateAdapterBase['metadata'];
+    } = {},
   ) {
     super(undefined, options);
 
     this.date = date;
     this.timezone = date.zone instanceof LocalZone ? null : date.zoneName;
+
+    if (options.metadata) {
+      Object.assign(this.metadata, options.metadata);
+    }
 
     this.assertIsValid();
   }

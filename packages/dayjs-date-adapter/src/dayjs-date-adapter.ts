@@ -40,11 +40,15 @@ export class DayjsDateAdapter extends DateAdapterBase {
       json.millisecond,
     ];
 
+    let date: DayjsDateAdapter;
+
     switch (json.timezone) {
       case 'UTC':
-        return new DayjsDateAdapter(dayjs.utc(Date.UTC(...(args as [any, any]))), { duration: json.duration });
+        date = new DayjsDateAdapter(dayjs.utc(Date.UTC(...(args as [any, any]))), { duration: json.duration });
+        break;
       case null:
-        return new DayjsDateAdapter(dayjs(new Date(...(args as [any, any]))), { duration: json.duration });
+        date = new DayjsDateAdapter(dayjs(new Date(...(args as [any, any]))), { duration: json.duration });
+        break;
       default:
         throw new InvalidDateAdapterError(
           'The `DayjsDateAdapter` only supports datetimes in ' +
@@ -54,11 +58,22 @@ export class DayjsDateAdapter extends DateAdapterBase {
           'with the `dayjs-timezone` package installed.',
         );
     }
+    
+    if (json.metadata) {
+      Object.assign(date.metadata, json.metadata);
+    }
+
+    return date;
   }
 
   static fromDateTime(datetime: DateTime): DayjsDateAdapter {
     const date = DayjsDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
+    
+    if (datetime.metadata) {
+      Object.assign(date.metadata, datetime.metadata);
+    }
+
     return date;
   }
 
@@ -73,7 +88,11 @@ export class DayjsDateAdapter extends DateAdapterBase {
 
   constructor(
     date: dayjs.Dayjs,
-    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+    options: { 
+      duration?: number; 
+      generators?: ReadonlyArray<unknown>; 
+      metadata?: DateAdapterBase['metadata'];
+    } = {},
   ) {
     super(undefined, options);
 
@@ -85,6 +104,10 @@ export class DayjsDateAdapter extends DateAdapterBase {
 
     this._date = date;
     this.timezone = date.isUTC() ? 'UTC' : null;
+
+    if (options.metadata) {
+      Object.assign(this.metadata, options.metadata);
+    }
 
     this.assertIsValid();
   }
