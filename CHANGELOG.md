@@ -6,6 +6,16 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 - None
 
+## 1.5.0 FEATURE (2023/2/3)
+
+### Feature
+
+- `@rschedule/core` Adds a `metadata` property to `DateAdapterBase` that can be used to store metadata related to a specific date adapter. Currently this property is just used by the ical-tools package to remember if a given DateAdapter should be serialized as a "date" or "date-time" value. Package consumers can also use this property to store data if they wish.
+
+### Fixes
+
+- `@rschedule/ical-tools` fixes a bug which prevented the proper parsing and serializing of ical "date" values (e.g. `"DTSTART;VALUE=DATE:20210909"`).
+
 ## 1.4.0 FEATURE (2022/6/9)
 
 ### Feature
@@ -14,7 +24,7 @@ This repo attempts to follow [semantic versioning](https://semver.org/).
 
 ## 1.3.1 FIX (2021/11/9)
 
-### Fix
+### Fixes
 
 - `@rschedule/luxon-date-adapter` fix typo in `@rschedule/luxon-date-adapter/v1/setup` and `@rschedule/luxon-date-adapter/v2/setup` package.json files
 

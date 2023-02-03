@@ -9,10 +9,11 @@ import {
   parseBYMONTHDAY,
   parseBYSECOND,
   parseCOUNT,
+  parseDTSTART,
   parseDURATION,
   parseINTERVAL,
   parseUNTIL,
-  parseWKST
+  parseWKST,
 } from '../src/parser';
 import { dateTimeToJCal, IJCalProperty, ruleOptionsToJCalProp } from '../src/serializer';
 import { serializeToJCal } from '../src/vevent';
@@ -120,6 +121,62 @@ export default function icalTests() {
       }
 
       context(zone, timezone => {
+        describe('parseDTSTART()', () => {
+          describe('VALID', () => {
+            test('date', () => {
+              const jcalDTSTART: IJCalProperty = ['dtstart', {}, 'date', '2021-09-09'];
+
+              expect(parseDTSTART(jcalDTSTART).toISOString()).toEqual(
+                dateAdapter(2021, 9, 9, 0, 0, 0, { timezone: null }).toISOString(),
+              );
+            });
+
+            test('date-time', () => {
+              const jcalDTSTART: IJCalProperty = [
+                'dtstart',
+                {},
+                'date-time',
+                '1997-09-02T09:00:00',
+              ];
+
+              expect(parseDTSTART(jcalDTSTART).toISOString()).toEqual(
+                dateAdapter(1997, 9, 2, 9, 0, 0, { timezone: null }).toISOString(),
+              );
+            });
+
+            test('date-time UTC', () => {
+              const jcalDTSTART: IJCalProperty = [
+                'dtstart',
+                {},
+                'date-time',
+                '1997-09-05T09:00:00Z',
+              ];
+
+              expect(parseDTSTART(jcalDTSTART).toISOString()).toEqual(
+                dateAdapter(1997, 9, 5, 9, 0, 0, { timezone: 'UTC' }).toISOString(),
+              );
+            });
+          });
+
+          describe('INVALID', () => {
+            test('date', () => {
+              const jcalDTSTART: IJCalProperty = ['dtstart', {}, 'date', '2021-09-1'];
+
+              expect(() => parseDTSTART(jcalDTSTART).toISOString()).toThrowError(
+                `Invalid date value "2021-09-1"`,
+              );
+            });
+
+            test('date-time', () => {
+              const jcalDTSTART: IJCalProperty = ['dtstart', {}, 'date-time', '1997-09-0209:00:00'];
+
+              expect(() => parseDTSTART(jcalDTSTART).toISOString()).toThrowError(
+                `Invalid date-time value "1997-09-0209:00:00"`,
+              );
+            });
+          });
+        });
+
         describe('parseUNTIL()', () => {
           describe('VALID', () => {
             test('2010-10-10T00:00:00Z', () => {
@@ -157,7 +214,7 @@ export default function icalTests() {
                   ['rrule', {}, 'recur', { until: '1997-09-02T09::' }],
                   buildDTSTART(1997, 9, 3, 9, 0, 0),
                 ).toISOString(),
-              ).toThrowError(`Invalid date/time value "1997-09-02T09::"`);
+              ).toThrowError(`Invalid date-time value "1997-09-02T09::"`);
 
               expect(() =>
                 parseUNTIL(
@@ -948,6 +1005,23 @@ export default function icalTests() {
           const serialized = schedule.toICal();
 
           expect(serialized).toBe(ical.join('\n').concat('\n'));
+        });
+
+        it('parses & serializes ICal "date" value', () => {
+          const icalLocal = [
+            'BEGIN:VEVENT',
+            'DTSTART;VALUE=DATE:19971102',
+            'RRULE:FREQ=YEARLY',
+            'END:VEVENT',
+          ]
+            .join('\n')
+            .concat('\n');
+
+          const parsed = VEvent.fromICal(icalLocal)[0] as VEvent;
+
+          const serialized = parsed.toICal();
+
+          expect(serialized).toBe(icalLocal);
         });
       });
     });

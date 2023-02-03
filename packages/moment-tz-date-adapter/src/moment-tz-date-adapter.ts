@@ -40,17 +40,30 @@ export class MomentTZDateAdapter extends DateAdapterBase {
       json.millisecond,
     ];
 
+    let date: MomentTZDateAdapter;
+
     switch (json.timezone) {
       case null:
-        return new MomentTZDateAdapter(moment(args), { duration: json.duration });
+        date = new MomentTZDateAdapter(moment(args), { duration: json.duration });
+        break;
       default:
-        return new MomentTZDateAdapter(moment.tz(args, json.timezone), { duration: json.duration });
+        date = new MomentTZDateAdapter(moment.tz(args, json.timezone), { duration: json.duration });
+        break;
     }
+
+    if (json.metadata) {
+      Object.assign(date.metadata, json.metadata);
+    }
+
+    return date;
   }
 
   static fromDateTime(datetime: DateTime): MomentTZDateAdapter {
     const date = MomentTZDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
+    if (datetime.metadata) {
+      Object.assign(date.metadata, datetime.metadata);
+    }
     return date;
   }
 
@@ -65,12 +78,20 @@ export class MomentTZDateAdapter extends DateAdapterBase {
 
   constructor(
     date: moment.Moment,
-    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+    options: {
+      duration?: number;
+      generators?: ReadonlyArray<unknown>;
+      metadata?: DateAdapterBase['metadata'];
+    } = {},
   ) {
     super(undefined, options);
 
     this._date = date.clone();
     this.timezone = date.tz() || null;
+
+    if (options.metadata) {
+      Object.assign(this.metadata, options.metadata);
+    }
 
     this.assertIsValid();
   }

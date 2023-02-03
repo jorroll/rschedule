@@ -34,7 +34,7 @@ export class JodaDateAdapter extends DateAdapterBase {
   static fromJSON(json: DateAdapter.JSON): JodaDateAdapter {
     const zone = json.timezone === null ? ZoneId.SYSTEM : ZoneId.of(json.timezone);
 
-    return new JodaDateAdapter(
+    const date = new JodaDateAdapter(
       ZonedDateTime.of(
         json.year,
         json.month,
@@ -47,11 +47,20 @@ export class JodaDateAdapter extends DateAdapterBase {
       ),
       { duration: json.duration },
     );
+
+    if (json.metadata) {
+      Object.assign(date.metadata, json.metadata);
+    }
+
+    return date;
   }
 
   static fromDateTime(datetime: DateTime): JodaDateAdapter {
     const date = JodaDateAdapter.fromJSON(datetime.toJSON());
     (date.generators as any).push(...datetime.generators);
+    if (datetime.metadata) {
+      Object.assign(date.metadata, datetime.metadata);
+    }
     return date;
   }
 
@@ -62,7 +71,11 @@ export class JodaDateAdapter extends DateAdapterBase {
 
   constructor(
     date: ZonedDateTime,
-    options: { duration?: number; generators?: ReadonlyArray<unknown> } = {},
+    options: {
+      duration?: number;
+      generators?: ReadonlyArray<unknown>;
+      metadata?: DateAdapterBase['metadata'];
+    } = {},
   ) {
     super(undefined, options);
 
@@ -71,6 +84,10 @@ export class JodaDateAdapter extends DateAdapterBase {
 
     if (this.timezone === 'Z') {
       this.timezone = 'UTC';
+    }
+
+    if (options.metadata) {
+      Object.assign(this.metadata, options.metadata);
     }
 
     this.assertIsValid();
