@@ -12,7 +12,8 @@ import { AddOperator } from './AddOperator';
 
 /**
  * An operator function which accepts a spread of occurrence generators
- * and removes their occurrences from the output.
+ * and removes their occurrences from the output. This operator ignores 
+ * duration.
  *
  * @param streams a spread of occurrence generators
  */

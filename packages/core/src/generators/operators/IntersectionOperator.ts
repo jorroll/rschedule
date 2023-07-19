@@ -12,6 +12,7 @@ import { IterableWrapper, selectLastIterable, selectNextIterable } from './_util
 /**
  * An operator function, which takes a spread of occurrence generators and only
  * returns the dates which intersect every occurrence generator.
+ * This operator ignores duration.
  *
  * Because it's possible for all the generators to never intersect,
  * and because the intersection operator can't detect this lack of intersection,

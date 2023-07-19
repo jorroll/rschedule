@@ -11,7 +11,7 @@ import { IterableWrapper, selectNextIterable } from './_util';
 
 /**
  * An operator function which accepts a spread of occurrence generators
- * and adds their occurrences to the output.
+ * and adds their occurrences to the output. This operator ignores duration.
  *
  * @param streams a spread of occurrence generators
  */
